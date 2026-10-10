@@ -74,6 +74,12 @@ Dump dan restore lokal berhasil. Container sementara dihapus setelah pemeriksaan
 
 E2E memakai PostgreSQL 17 dan Redis 7 sementara pada port lokal khusus, lalu menjalankan migrasi serta fixture. Container dan volume sementara dibersihkan setelah tes. Jalur keluarga/penyelenggara tetap kompatibel dengan draft lama karena data undangan disimpan sebagai JSON dan field baru memiliki nilai default kosong. Pemeriksaan ini lokal; tidak mencakup deployment atau layanan staging.
 
+## E2E penuh — 11 Oktober 2026
+
+`npm run test:e2e` menyelesaikan seluruh 45 skenario di Chromium desktop, Chromium mobile, dan WebKit profil iPhone: **43 lulus, 2 dilewati, 0 gagal**. Dua skenario yang dilewati adalah lifecycle pembayaran pada Chromium mobile dan WebKit; fixture callback pembayaran hanya boleh berjalan sekali per database sementara dan skenario tersebut sudah dijalankan pada Chromium desktop.
+
+Suite menggunakan PostgreSQL 17 dan Redis 7 sementara, fixture lokal, serta mock untuk layanan pembayaran dan penyimpanan objek. E2E ini tidak mengakses staging atau layanan eksternal. Pengujian domain, pemulihan dari backup R2, pembayaran Xendit Test Mode, smoke test publik, dan load test tetap menunggu konfigurasi staging.
+
 ## Gate yang belum dibuktikan
 
 - Backup terenkripsi melalui `age`, upload ke Cloudflare R2, lalu pemulihan dari objek R2 ke database baru.
