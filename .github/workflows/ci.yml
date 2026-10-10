@@ -29,6 +29,8 @@ jobs:
       - run: npm ci
       - name: Validate Docker Compose configuration
         run: docker compose --env-file .env.example config --quiet
+      - name: Validate local Compose override
+        run: docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.local.yml config --quiet
       - name: Require a database password
         shell: bash
         env:

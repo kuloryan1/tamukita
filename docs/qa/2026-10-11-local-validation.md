@@ -12,7 +12,7 @@ Catatan ini merekam hasil validasi lokal pada workspace. Hasil lokal bukan bukti
 | `npm run build` | Lulus; Next.js membuat 37 halaman statis. |
 | `npm run test:e2e` | Lulus; 37 tes lulus, 2 dilewati, 0 gagal dari 39 tes lintas desktop Chromium, mobile Chromium, dan WebKit. Durasi 9,4 menit. |
 | Assertion menu Custom Domain | Lulus; 3 tes editor lulus di desktop Chromium, mobile Chromium, dan WebKit. Item menampilkan “Custom Domain — Coming Soon” tanpa tautan. |
-| `docker compose --profile app config --quiet` | Lulus dengan nilai dummy CI; struktur Compose dan interpolasi konfigurasi valid. Ini belum menjalankan atau memverifikasi deployment. |
+| Production dan local Compose config | `docker compose --env-file .env.example config --quiet` dan Compose dengan `docker-compose.local.yml` lulus. Stack utama mencakup web, worker, migrasi, PostgreSQL, dan Redis; override lokal hanya menambahkan port loopback untuk PostgreSQL/Redis. Ini belum menjalankan atau memverifikasi deployment. |
 | `bash -n scripts/backup-postgres.sh scripts/restore-postgres.sh` | Kedua skrip lolos pemeriksaan sintaks Bash di container Alpine sementara. Ini belum menjalankan transfer ke R2. |
 | `npm ci --omit=dev --ignore-scripts --offline --dry-run` | Lulus; simulasi instalasi produksi tidak menghapus `tsx` dari pohon dependency. Mode `dry-run` tidak mengubah `node_modules`. |
 | Build dan runtime Docker web/worker | Kedua target Docker berhasil dibangun. Worker berjalan dengan `tsx v4.23.15`; heartbeat Redis bernilai `1` dengan TTL 45 detik. Web `/api/health` mengembalikan database, Redis, dan worker `ok`. |

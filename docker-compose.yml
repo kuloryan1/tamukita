@@ -6,8 +6,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-tamukita}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD before starting the application stack}
       POSTGRES_DB: ${POSTGRES_DB:-tamukita}
-    ports:
-      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - tamukita-postgres:/var/lib/postgresql/data
     healthcheck:
@@ -20,8 +18,6 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
-    ports:
-      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
       - tamukita-redis:/data
     healthcheck:
@@ -31,7 +27,6 @@ services:
       retries: 10
 
   migrate:
-    profiles: ["app"]
     build:
       context: .
       dockerfile: Dockerfile
@@ -46,7 +41,6 @@ services:
     restart: "no"
 
   web:
-    profiles: ["app"]
     build:
       context: .
       dockerfile: Dockerfile
@@ -73,8 +67,8 @@ services:
       R2_PUBLIC_BUCKET_NAME: ${R2_PUBLIC_BUCKET_NAME:-}
       R2_PUBLIC_BASE_URL: ${R2_PUBLIC_BASE_URL:-}
       R2_BUCKET_NAME: ${R2_BUCKET_NAME:-}
-    ports:
-      - "${APP_PORT:-3000}:3000"
+    expose:
+      - "3000"
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -89,7 +83,6 @@ services:
       start_period: 30s
 
   worker:
-    profiles: ["app"]
     build:
       context: .
       dockerfile: Dockerfile

@@ -6,25 +6,27 @@ Platform awal TamuKita untuk membuat dan membagikan undangan digital. Aplikasi m
 
 Gunakan Node.js 22.12 atau lebih baru.
 
-```powershell
-Copy-Item .env.example .env
-docker compose up -d
-npm install
-npm run db:migrate
-npm run dev
-```
-
-Buka `http://localhost:3000`. Jalankan `npm run worker` di terminal kedua untuk memproses email dan unggahan media melalui Redis. Worker media juga memerlukan konfigurasi R2 yang tercantum di bawah; email memerlukan `RESEND_API_KEY` dan `EMAIL_FROM`. Buat nilai rahasia untuk `AUTH_SECRET`, misalnya dengan:
+Buat nilai rahasia lokal untuk `AUTH_SECRET`, lalu masukkan hasilnya ke `.env` sebelum menjalankan aplikasi:
 
 ```powershell
 node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"
 ```
 
-Masukkan hasilnya ke `.env`. Aplikasi menyimpan akun, workspace, draft, versi undangan, pesanan, lisensi template, pembayaran, RSVP, audit log, dan metrik kunjungan di PostgreSQL.
+```powershell
+Copy-Item .env.example .env
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d postgres redis
+npm install
+npm run db:migrate
+npm run dev
+```
+
+Buka `http://localhost:3000`. Jalankan `npm run worker` di terminal kedua untuk memproses email dan unggahan media melalui Redis. Worker media juga memerlukan konfigurasi R2 yang tercantum di bawah; email memerlukan `RESEND_API_KEY` dan `EMAIL_FROM`. Aplikasi menyimpan akun, workspace, draft, versi undangan, pesanan, lisensi template, pembayaran, RSVP, audit log, dan metrik kunjungan di PostgreSQL.
+
+`docker-compose.local.yml` hanya memublikasikan PostgreSQL dan Redis ke loopback untuk server development lokal. Compose utama tetap menjadi stack deployment yang dipakai Dokploy.
 
 ## Deployment Docker
 
-Dockerfile membangun Next.js standalone, proses worker, dan target migrasi. Untuk menjalankan seluruh stack Compose, salin `.env.example` ke `.env`, ganti `POSTGRES_PASSWORD` dengan secret acak URL-safe, isi URL publik HTTPS serta secret produksi, lalu jalankan `docker compose --profile app up --build -d`. Compose menolak memulai stack jika password database belum disetel; nilai contoh hanya untuk pengembangan lokal dan harus diganti sebelum deployment. Compose menunggu PostgreSQL dan Redis sehat, menerapkan migrasi sebelum memulai web dan worker, serta mempertahankan data pada volume. Di Dokploy, gunakan file Compose yang sama dan masukkan nilai rahasia melalui pengaturan environment platform. Skrip backup dan restore PostgreSQL tersedia di `scripts/`, beserta unit systemd harian yang dapat dipasang pada host deployment.
+Dockerfile membangun Next.js standalone, proses worker, dan target migrasi. Untuk menjalankan seluruh stack Compose produksi, salin `.env.example` ke `.env`, ganti `POSTGRES_PASSWORD` dan `AUTH_SECRET`, isi `NEXT_PUBLIC_APP_URL` dengan origin HTTPS, lalu jalankan `docker compose up --build -d`. File `docker-compose.yml` menjalankan migrasi, web, worker, PostgreSQL, dan Redis tanpa memerlukan aktivasi profil tambahan; hanya port web 3000 yang diekspos ke jaringan Compose, sedangkan database dan Redis tetap internal. Untuk Dokploy, gunakan `./docker-compose.yml`, lalu atur domain melalui tab Domains dan arahkan ke service `web` pada port 3000. Masukkan kredensial produksi melalui pengaturan environment/secret Dokploy, bukan ke repository. Skrip backup dan restore PostgreSQL tersedia di `scripts/`, beserta unit systemd harian yang dapat dipasang pada host deployment.
 
 Pull request dan perubahan ke branch utama menjalankan GitHub Actions untuk validasi Prisma, lint Biome, typecheck, unit test Vitest, QA renderer template, production build, serta E2E Playwright dengan Chromium desktop, Chromium viewport ponsel, dan WebKit profil iPhone. E2E mencakup beranda, draft pelanggan yang tersimpan dan pulih setelah reload, undo/redo serta personalisasi editor, autosave berurutan saat PATCH sebelumnya tertunda agar draft lama tidak menimpa perubahan terbaru, pemeriksaan isolasi draft antar akun, upload/crop foto, hasil WebP dari worker, pemulihan metadata crop setelah reload, edit ulang foto dari sumber privat tanpa upload ulang, RSVP publik, moderasi ucapan, callback pembayaran lisensi dan top-up reseller yang diulang untuk memeriksa idempotensi, status expired, retry sebelum sesi tersimpan, refund sukses/gagal beserta pemulihan kredit, request checkout melalui mock lokal, pembatalan order ketika provider menolak sesi, serta perilaku URL kembali checkout yang tidak menerbitkan undangan sebelum webhook tervalidasi. E2E juga memeriksa token webhook Xendit, pembuatan workspace dan draft admin, permintaan akses reseller yang disetujui pelanggan sebelum aktivasi draft dengan kredit Premium, serta pengajuan template developer yang direview dan diterbitkan admin. Versi aktif lama tetap dipakai sampai kandidat baru disetujui, dan reseller lain tidak dapat melihat atau mengaktifkan draft pelanggan tersebut. Workflow E2E menyiapkan PostgreSQL dan Redis sementara, mock lokal Xendit dan R2, serta worker media; workflow memasang Chromium dan WebKit di runner CI. Untuk E2E lokal, siapkan `DATABASE_URL` dan `REDIS_URL`, jalankan migrasi dan `npm run db:seed:e2e`, lalu build sebelum menjalankan `npm run test:e2e`; Playwright otomatis menyalakan mock dan server. Port aplikasi lokal dapat diubah lewat `PLAYWRIGHT_TEST_PORT` jika port 3000 sedang dipakai. Browser tidak diperlukan untuk unit test. `.github/workflows/production-smoke.yml` memeriksa endpoint health tiap jam setelah repository variable `PRODUCTION_HEALTH_URL` diisi dengan URL HTTPS publik yang berakhiran `/api/health`; workflow juga dapat dijalankan manual. Jika repository secret `PRODUCTION_ALERT_WEBHOOK_URL` diisi dengan endpoint HTTPS yang menerima payload JSON `{"text": ...}`, workflow mengirim alert saat pemeriksaan gagal; tanpa secret itu kegagalan tetap tercatat di GitHub Actions.
 
