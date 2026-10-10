@@ -40,8 +40,14 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   expect(creationResponse.status()).toBe(201);
   const result = await creationResponse.json() as { customerCreated?: boolean; onboardingEmailSent?: boolean; invitation?: { slug: string } };
   expect(result.customerCreated).toBe(true);
-  expect(result.onboardingEmailSent).toBe(false);
+  expect(result.onboardingEmailSent).toBe(true);
   expect(result.invitation?.slug).toBe(invitationSlug);
+  const onboardingEmailResponse = await page.request.get(`http://127.0.0.1:3140/messages?to=${encodeURIComponent(customerEmail)}`);
+  expect(onboardingEmailResponse.status()).toBe(200);
+  const onboardingEmailPayload = await onboardingEmailResponse.json() as { messages: Array<{ subject: string; text: string }> };
+  expect(onboardingEmailPayload.messages.some((message) =>
+    message.subject === "Atur kata sandi TamuKita" && message.text.includes(`${new URL(page.url()).origin}/reset-password?token=`),
+  )).toBe(true);
   await expect(page.getByRole("status")).toContainText("Akun pelanggan dibuat");
 
   const existingInvitationSlug = `e2e-managed-existing-${suffix}`;
