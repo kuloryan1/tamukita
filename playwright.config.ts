@@ -13,6 +13,8 @@ const e2eMediaEnvironment = {
   R2_PRIVATE_BUCKET_NAME: "private",
   R2_PUBLIC_BUCKET_NAME: "public",
   R2_PUBLIC_BASE_URL: "http://127.0.0.1:3138/public",
+  RESEND_API_KEY: "",
+  EMAIL_FROM: "",
   REDIS_URL: process.env.REDIS_URL ?? "redis://127.0.0.1:6379",
   ...(process.env.DATABASE_URL ? { DATABASE_URL: process.env.DATABASE_URL } : {}),
 };
@@ -28,6 +30,12 @@ const localWebServers = configuredBaseURL
       {
         command: "node scripts/e2e-r2-mock.mjs",
         url: "http://127.0.0.1:3138/health",
+        reuseExistingServer: false,
+        timeout: 60_000,
+      },
+      {
+        command: "node scripts/e2e-email-mock.mjs",
+        url: "http://127.0.0.1:3140/health",
         reuseExistingServer: false,
         timeout: 60_000,
       },
@@ -57,6 +65,9 @@ const localWebServers = configuredBaseURL
           ...(process.env.DATABASE_URL ? { DATABASE_URL: process.env.DATABASE_URL } : {}),
           ...(process.env.XENDIT_WEBHOOK_TOKEN ? { XENDIT_WEBHOOK_TOKEN: process.env.XENDIT_WEBHOOK_TOKEN } : {}),
           ...(process.env.XENDIT_REFUND_WEBHOOK_TOKEN ? { XENDIT_REFUND_WEBHOOK_TOKEN: process.env.XENDIT_REFUND_WEBHOOK_TOKEN } : {}),
+          RESEND_API_KEY: "e2e-local-only",
+          EMAIL_FROM: "TamuKita E2E <noreply@tamukita.test>",
+          E2E_EMAIL_MOCK: "true",
           HOSTNAME: "127.0.0.1",
           NEXT_PUBLIC_APP_URL: baseURL,
           PORT: localAppPort,

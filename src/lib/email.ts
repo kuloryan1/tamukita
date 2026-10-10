@@ -7,7 +7,12 @@ export async function sendTransactionalEmail(message: TransactionalEmail) {
   const from = process.env.EMAIL_FROM;
   if (!apiKey || !from) return false;
 
-  const response = await fetch("https://api.resend.com/emails", {
+  const appUrl = new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000");
+  const usesLocalE2eEmailMock = process.env.E2E_EMAIL_MOCK === "true"
+    && appUrl.protocol === "http:"
+    && ["127.0.0.1", "localhost", "::1"].includes(appUrl.hostname);
+  const endpoint = usesLocalE2eEmailMock ? "http://127.0.0.1:3140/emails" : "https://api.resend.com/emails";
+  const response = await fetch(endpoint, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({ from, to: [message.to], subject: message.subject, html: message.html, text: message.text }),
