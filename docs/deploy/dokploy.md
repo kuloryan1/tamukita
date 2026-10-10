@@ -35,6 +35,8 @@ Jangan menganggap pembuatan environment atau service sebagai deployment yang ber
 5. Aktifkan smoke check eksternal dan alert setelah URL health serta endpoint webhook tersedia.
 6. Nyalakan auto-deploy hanya setelah prosedur rilis dan rollback production ditetapkan.
 
+Sesudah container production pertama berjalan, temukan nama Compose project yang dipakai Dokploy dengan `docker ps --filter 'label=com.docker.compose.service=postgres' --format '{{.Names}} {{.Label "com.docker.compose.project"}}'`. Isi nama itu ke `BACKUP_COMPOSE_PROJECT_NAME` pada `/etc/tamukita/backup.env`; helper backup/restore mencari satu container PostgreSQL berdasarkan label project tersebut dan service `postgres`, tanpa bergantung pada nama direktori Compose di host.
+
 ## Gate yang belum selesai
 
 - Operator belum memberikan origin HTTPS staging maupun path undangan publik untuk QA.

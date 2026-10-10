@@ -19,6 +19,7 @@ fi
 
 temporary_directory="$(mktemp -d)"
 trap 'rm -rf "$temporary_directory"' EXIT
+postgres_container_id="$(bash "$project_root/scripts/find-postgres-container.sh")"
 endpoint="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
 
 AWS_ACCESS_KEY_ID="$R2_BACKUP_ACCESS_KEY_ID" \
@@ -33,7 +34,7 @@ aws --endpoint-url "$endpoint" s3 cp "s3://${BACKUP_BUCKET}/${BACKUP_OBJECT}.sha
 (cd "$temporary_directory" && sha256sum --check database.dump.age.sha256)
 age --decrypt --identity "$BACKUP_AGE_IDENTITY_FILE" --output "$temporary_directory/database.dump" "$temporary_directory/database.dump.age"
 
-docker compose exec -T -e RESTORE_DATABASE="$RESTORE_DATABASE" postgres sh -ec 'createdb --owner="$POSTGRES_USER" "$RESTORE_DATABASE"'
-docker compose exec -T -e RESTORE_DATABASE="$RESTORE_DATABASE" postgres sh -ec 'pg_restore --username="$POSTGRES_USER" --dbname="$RESTORE_DATABASE" --no-owner --exit-on-error' < "$temporary_directory/database.dump"
+docker exec -e RESTORE_DATABASE="$RESTORE_DATABASE" "$postgres_container_id" sh -ec 'createdb --owner="$POSTGRES_USER" "$RESTORE_DATABASE"'
+docker exec -i -e RESTORE_DATABASE="$RESTORE_DATABASE" "$postgres_container_id" sh -ec 'pg_restore --username="$POSTGRES_USER" --dbname="$RESTORE_DATABASE" --no-owner --exit-on-error' < "$temporary_directory/database.dump"
 
 printf 'Backup restored into new database %s. Review it before switching application traffic.\n' "$RESTORE_DATABASE"

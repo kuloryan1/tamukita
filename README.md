@@ -44,9 +44,9 @@ Target LCP ponsel diukur terpisah dari load test HTTP dengan 20 pemuatan undanga
 
 ## Backup dan restore database
 
-Skrip memerlukan Bash, Docker Compose, AWS CLI, dan `age`. Buat bucket R2 khusus backup dan age key pair. Simpan recipient publik di `BACKUP_AGE_RECIPIENT`; simpan file private identity di luar repository dan image deployment, lalu atur `BACKUP_AGE_IDENTITY_FILE` hanya pada mesin pemulihan. Atur `R2_ACCOUNT_ID`, `R2_BACKUP_ACCESS_KEY_ID`, `R2_BACKUP_SECRET_ACCESS_KEY`, `BACKUP_BUCKET`, dan opsional `BACKUP_PREFIX` di `.env` atau secret store. `BACKUP_ALERT_WEBHOOK_URL` opsional mengirim pemberitahuan JSON bergaya Slack jika backup gagal; endpoint harus memakai HTTPS. Host backup memerlukan `curl` untuk mengirim alert.
+Skrip memerlukan Bash, Docker CLI, AWS CLI, dan `age`. Buat bucket R2 khusus backup dan age key pair. Simpan recipient publik di `BACKUP_AGE_RECIPIENT`; simpan file private identity di luar repository dan image deployment, lalu atur `BACKUP_AGE_IDENTITY_FILE` hanya pada mesin pemulihan. Atur `BACKUP_COMPOSE_PROJECT_NAME` ke nama project Compose yang benar-benar dipakai Dokploy; project produksi dan staging memiliki nama berbeda. Untuk melihat label project container PostgreSQL, jalankan `docker ps --filter 'label=com.docker.compose.service=postgres' --format '{{.Names}} {{.Label "com.docker.compose.project"}}'`. Atur juga `R2_ACCOUNT_ID`, `R2_BACKUP_ACCESS_KEY_ID`, `R2_BACKUP_SECRET_ACCESS_KEY`, `BACKUP_BUCKET`, dan opsional `BACKUP_PREFIX` di secret store. `BACKUP_POSTGRES_SERVICE` default ke `postgres`. `BACKUP_ALERT_WEBHOOK_URL` opsional mengirim pemberitahuan JSON bergaya Slack jika backup gagal; endpoint harus memakai HTTPS. Host backup memerlukan `curl` untuk mengirim alert.
 
-Jalankan backup dari host yang dapat menjalankan Docker Compose. Contoh berikut memuat nilai `.env` ke shell Bash:
+Jalankan backup dari host yang dapat mengakses Docker socket. Helper mencari tepat satu container berjalan dengan label `com.docker.compose.project=$BACKUP_COMPOSE_PROJECT_NAME` dan service `postgres`, sehingga tidak bergantung pada nama direktori checkout atau file Compose lokal. Contoh berikut memuat nilai konfigurasi backup ke shell Bash:
 
 ```bash
 set -a
@@ -75,7 +75,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now tamukita-backup@deploy.timer
 ```
 
-Akun `deploy` pada contoh tersebut perlu membaca `.env` proyek dan memiliki akses ke Docker socket; ganti `deploy` dengan nama akun yang dipakai host. Periksa jadwal dengan `systemctl list-timers` dan hasil backup dengan `journalctl -u tamukita-backup@deploy.service`. Gunakan [perintah retensi R2](#retensi-unggahan-sementara-di-r2) untuk objek sementara, atur `BACKUP_ALERT_WEBHOOK_URL` untuk kegagalan backup dan secret `PRODUCTION_ALERT_WEBHOOK_URL` untuk health check, lalu lakukan uji restore berkala.
+Akun `deploy` pada contoh tersebut perlu membaca checkout skrip di `/opt/tamukita.io` dan memiliki akses ke Docker socket; ganti `deploy` dengan nama akun yang dipakai host. Nilai `BACKUP_COMPOSE_PROJECT_NAME` pada `/etc/tamukita/backup.env` harus sama persis dengan label project container database production yang ditampilkan perintah di atas. Periksa jadwal dengan `systemctl list-timers` dan hasil backup dengan `journalctl -u tamukita-backup@deploy.service`. Gunakan [perintah retensi R2](#retensi-unggahan-sementara-di-r2) untuk objek sementara, atur `BACKUP_ALERT_WEBHOOK_URL` untuk kegagalan backup dan secret `PRODUCTION_ALERT_WEBHOOK_URL` untuk health check, lalu lakukan uji restore berkala.
 
 ## Retensi unggahan sementara di R2
 

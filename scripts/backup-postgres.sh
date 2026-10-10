@@ -43,8 +43,9 @@ prefix="${BACKUP_PREFIX:-tamukita/postgres}"
 timestamp="$(date -u +'%Y%m%dT%H%M%SZ')"
 object_key="${prefix%/}/${timestamp}.dump.age"
 temporary_directory="$(mktemp -d)"
+postgres_container_id="$(bash "$project_root/scripts/find-postgres-container.sh")"
 
-docker compose exec -T postgres sh -ec 'pg_dump --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" --format=custom --no-owner --no-acl' > "$temporary_directory/database.dump"
+docker exec "$postgres_container_id" sh -ec 'pg_dump --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" --format=custom --no-owner --no-acl' > "$temporary_directory/database.dump"
 age --recipient "$BACKUP_AGE_RECIPIENT" --output "$temporary_directory/database.dump.age" "$temporary_directory/database.dump"
 (cd "$temporary_directory" && sha256sum database.dump.age > database.dump.age.sha256)
 

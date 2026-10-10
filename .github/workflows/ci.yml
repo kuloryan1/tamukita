@@ -33,6 +33,8 @@ jobs:
         run: docker compose --env-file .env.example config --quiet
       - name: Validate local Compose override
         run: docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.local.yml config --quiet
+      - name: Test Dokploy PostgreSQL container discovery
+        run: bash tests/ops/find-postgres-container.test.sh
       - name: Require a database password
         shell: bash
         env:
