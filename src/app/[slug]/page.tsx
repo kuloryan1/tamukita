@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type { Metadata } from "next";
 import { after } from "next/server";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { PublicInvitation } from "@/components/public-invitation";
 import { createInitialDraft, reservedSlugs } from "@/lib/invitations";
 import { parseInvitationDraft } from "@/lib/invitation-server";
@@ -28,7 +29,7 @@ function invitationMetadata(slug: string, title: string, description: string): M
   };
 }
 
-async function findPublished(slug: string) {
+const findPublished = cache(async (slug: string) => {
   const invitation = await getPrismaClient().invitation.findFirst({
     where: { slug, status: "PUBLISHED", deletedAt: null, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }], organization: { status: "ACTIVE" } },
     select: {
@@ -51,7 +52,7 @@ async function findPublished(slug: string) {
     : getTemplate(invitation.templateVersion.template.slug);
   if (draft && draft.templateId !== invitation.templateVersion.template.slug) return null;
   return { ...invitation, draft, template };
-}
+});
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;

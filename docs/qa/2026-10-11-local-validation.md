@@ -111,6 +111,19 @@ Integration drill memakai PostgreSQL 17 dan MinIO sementara pada network Docker 
 
 Job `backup-restore` ditambahkan ke CI agar drill lokal ini berjalan pada push dan pull request. Ini belum membuktikan kredensial, endpoint, lifecycle, atau pemulihan dari bucket Cloudflare R2 yang dipakai deployment.
 
+## Pembacaan undangan publik bersama metadata — 11 Oktober 2026
+
+Lookup undangan terbit kini memakai `React.cache` per render request. `generateMetadata` dan halaman publik menggunakan hasil lookup yang sama, sehingga metadata tidak perlu mengulang query Prisma yang sama saat merender halaman. Ini mengikuti mekanisme memoization yang didokumentasikan Next.js untuk data yang dibaca oleh metadata dan halaman. Penggunaan cache ini hanya untuk satu render request; status publikasi dan masa hosting tetap diperiksa ulang pada request berikutnya.
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| `npm run typecheck` | Lulus. |
+| Lint route undangan publik | Lulus; 1 file. |
+| `npm run build` | Lulus; 38 route. |
+| `npm run test:e2e -- e2e/public-guest.spec.ts` | Lulus; 3 dari 3 profil browser: Chromium desktop, Chromium mobile, dan WebKit iPhone. Mencakup HTTP 200 halaman publik, metrik kunjungan setelah respons, RSVP, dan moderasi ucapan. |
+
+Pengujian berjalan lokal dengan PostgreSQL 17 dan Redis 7 sementara; kedua container dibersihkan setelahnya. E2E ini memeriksa perilaku, bukan jumlah query atau LCP. Pengukuran performa dan beban staging tetap menunggu origin staging serta undangan publik yang disiapkan operator.
+
 ## Gate yang belum dibuktikan
 
 - Backup terenkripsi, upload, dan restore dari Cloudflare R2 nyata; yang sudah diverifikasi hanya MinIO lokal.
