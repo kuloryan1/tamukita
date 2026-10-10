@@ -210,3 +210,19 @@ Halaman `/admin/analytics` kini merangkum publikasi undangan per kategori templa
 | `npm test` | Lulus; 10 file dan 29 tes. |
 | `npm run build` | Lulus; 39 route, termasuk `/admin/analytics`. |
 | `npm run test:e2e -- e2e/admin-managed.spec.ts` | Lulus; 3 dari 3 profil browser. Super Admin dan Finance melihat bagian kategori template. |
+
+## Page view katalog marketplace — 11 Oktober 2026
+
+Halaman katalog template dan detail template kini mencatat page view harian pada tabel agregat platform. Baris metrik hanya menyimpan tanggal, nama metrik, dan jumlah; pencatatan tidak menyimpan ID akun, alamat IP, referrer, token undangan, atau data pengunjung. Admin dan Finance melihat jumlah katalog serta detail sebagai page view, bukan pengunjung unik.
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| `npx prisma validate` | Lulus. |
+| Migrasi database E2E | Lulus; seluruh 14 migrasi, termasuk `platform_analytics_daily`, diterapkan pada PostgreSQL 17 sementara. |
+| `npm run lint` | Lulus; 180 file diperiksa tanpa peringatan. |
+| `npm run typecheck` | Lulus. |
+| `npm test` | Lulus; 10 file dan 29 tes. |
+| `npm run build` | Lulus; build production memproses 39 route. |
+| E2E `public-guest.spec.ts` dan `admin-managed.spec.ts` | Lulus; 6 tes pada Chromium desktop, Chromium mobile, dan WebKit iPhone. Tes memeriksa kenaikan page view undangan, katalog, dan detail setelah respons serta tampilan metrik untuk Super Admin dan Finance. |
+
+E2E memakai PostgreSQL 17 dan Redis 7 sementara pada port terpisah; container dihentikan dan dihapus setelah tes. Ini validasi lokal dan belum mengukur visitor unik, LCP staging, atau beban produksi.

@@ -25,6 +25,19 @@ async function readInvitationViewCount(date: string) {
   return Number(result.rows[0]?.value ?? "0");
 }
 
+async function readPlatformViewCount(metricKey: "template_catalog_views" | "template_detail_views", date: string) {
+  if (!analyticsPool) throw new Error("The disposable E2E database is required.");
+  const result = await analyticsPool.query<{ value: string }>(
+    `SELECT COALESCE((
+      SELECT "metricValue"
+      FROM platform_analytics_daily
+      WHERE date = $1::date AND "metricKey" = $2
+    ), 0)::text AS value`,
+    [date, metricKey],
+  );
+  return Number(result.rows[0]?.value ?? "0");
+}
+
 test.afterAll(async () => {
   await analyticsPool?.end();
 });
@@ -37,7 +50,7 @@ async function signIn(page: Page, email: string, password: string) {
   await page.waitForURL(/\/dashboard(?:\/|$)/);
 }
 
-test("guest can RSVP, report an approved message, and content reviewers can moderate it", async ({ page, browser }) => {
+test("public guest flows and marketplace page view metrics work, and content reviewers can moderate reports", async ({ page, browser }) => {
   test.setTimeout(90_000);
   const customerEmail = process.env.E2E_CUSTOMER_EMAIL;
   const customerPassword = process.env.E2E_CUSTOMER_PASSWORD;
@@ -61,6 +74,19 @@ test("guest can RSVP, report an approved message, and content reviewers can mode
   const response = await page.goto(`/${invitationSlug}?g=${encodeURIComponent(guestToken)}`);
   expect(response?.status()).toBe(200);
   await expect.poll(() => readInvitationViewCount(metricDate), { timeout: 5_000 }).toBe(previousViewCount + 1);
+
+  const previousCatalogViews = await readPlatformViewCount("template_catalog_views", metricDate);
+  const catalogResponse = await page.goto("/templates");
+  expect(catalogResponse?.status()).toBe(200);
+  await expect.poll(() => readPlatformViewCount("template_catalog_views", metricDate), { timeout: 5_000 }).toBe(previousCatalogViews + 1);
+  const templateDetailPath = await page.locator(".template-card-art").first().getAttribute("href");
+  if (!templateDetailPath?.startsWith("/templates/")) throw new Error("The published catalog did not render a template detail link.");
+  const previousTemplateDetailViews = await readPlatformViewCount("template_detail_views", metricDate);
+  const templateDetailResponse = await page.goto(templateDetailPath);
+  expect(templateDetailResponse?.status()).toBe(200);
+  await expect.poll(() => readPlatformViewCount("template_detail_views", metricDate), { timeout: 5_000 }).toBe(previousTemplateDetailViews + 1);
+
+  await page.goto(`/${invitationSlug}?g=${encodeURIComponent(guestToken)}`);
   await expect(page.locator(".public-hero-names")).toContainText("E2E Mempelai");
   const initialRsvpCountText = await page.locator(".rsvp-count").innerText();
   const initialRsvpCount = Number(initialRsvpCountText.match(/^\d+/)?.[0] ?? 0);

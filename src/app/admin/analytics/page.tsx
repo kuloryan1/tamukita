@@ -23,7 +23,7 @@ export default async function AdminAnalyticsPage() {
   const periodStart = new Date(now.getTime() - periodMs);
   const publicViewsStart = new Date(Date.UTC(periodStart.getUTCFullYear(), periodStart.getUTCMonth(), periodStart.getUTCDate()));
   const settledStatuses = ["PAID", "PARTIALLY_REFUNDED", "REFUNDED", "CANCELED", "EXPIRED"] as const;
-  const [newAccounts, newWorkspaces, newDrafts, publishedDrafts, settledOrderCount, paidOrderCount, paidSummary, refundSummary, resellerSales, publicViews, rsvpCount, contentReportCount, templateGroups, customerPayments, resellerTopUps] = await Promise.all([
+  const [newAccounts, newWorkspaces, newDrafts, publishedDrafts, settledOrderCount, paidOrderCount, paidSummary, refundSummary, resellerSales, publicViews, platformViews, rsvpCount, contentReportCount, templateGroups, customerPayments, resellerTopUps] = await Promise.all([
     prisma.user.count({ where: { createdAt: { gte: periodStart } } }),
     prisma.organization.count({ where: { type: "PERSONAL", createdAt: { gte: periodStart } } }),
     prisma.invitation.count({ where: { deletedAt: null, createdAt: { gte: periodStart } } }),
@@ -34,6 +34,11 @@ export default async function AdminAnalyticsPage() {
     prisma.refund.aggregate({ where: { currency: "IDR", status: "SUCCEEDED", updatedAt: { gte: periodStart } }, _sum: { amount: true } }),
     prisma.resellerSale.aggregate({ where: { createdAt: { gte: periodStart }, voidedAt: null }, _sum: { amountIdr: true }, _count: { _all: true } }),
     prisma.analyticsDaily.aggregate({ where: { metricKey: "invitation_views", date: { gte: publicViewsStart } }, _sum: { metricValue: true } }),
+    prisma.platformAnalyticsDaily.groupBy({
+      by: ["metricKey"],
+      where: { metricKey: { in: ["template_catalog_views", "template_detail_views"] }, date: { gte: publicViewsStart } },
+      _sum: { metricValue: true },
+    }),
     prisma.rSVP.count({ where: { respondedAt: { gte: periodStart }, invitation: { deletedAt: null } } }),
     prisma.contentReport.count({ where: { createdAt: { gte: periodStart } } }),
     prisma.invitation.groupBy({
@@ -73,6 +78,7 @@ export default async function AdminAnalyticsPage() {
   const templateCategories = [...categoryCounts]
     .map(([name, publishedCount]) => ({ name, publishedCount }))
     .sort((a, b) => b.publishedCount - a.publishedCount || a.name.localeCompare(b.name, "id"));
+  const platformViewsByKey = new Map(platformViews.map((metric) => [metric.metricKey, metric._sum.metricValue ?? BigInt(0)]));
 
   const grossPayments = paidSummary._sum.totalAmount ?? 0;
   const successfulRefunds = refundSummary._sum.amount ?? 0;
@@ -89,6 +95,8 @@ export default async function AdminAnalyticsPage() {
         { label: "Draft undangan dibuat", value: newDrafts.toLocaleString("id-ID"), detail: "Tidak termasuk yang dihapus" },
         { label: "Konversi draft ke publikasi", value: rate(publishedDrafts, newDrafts), detail: `${publishedDrafts.toLocaleString("id-ID")} dari draft dalam kohor` },
         { label: "Konversi checkout", value: rate(paidOrderCount, settledOrderCount), detail: `${paidOrderCount.toLocaleString("id-ID")} order dibayar dari ${settledOrderCount.toLocaleString("id-ID")} order final` },
+        { label: "Tampilan katalog template", value: (platformViewsByKey.get("template_catalog_views") ?? BigInt(0)).toLocaleString("id-ID"), detail: "Page view halaman marketplace, bukan pengunjung unik" },
+        { label: "Tampilan detail template", value: (platformViewsByKey.get("template_detail_views") ?? BigInt(0)).toLocaleString("id-ID"), detail: "Page view halaman detail, bukan pengunjung unik" },
         { label: "Tampilan halaman undangan", value: (publicViews._sum.metricValue ?? BigInt(0)).toLocaleString("id-ID"), detail: "Page view, bukan pengunjung unik" },
         { label: "RSVP masuk", value: rsvpCount.toLocaleString("id-ID"), detail: "Respons tamu dalam periode" },
         { label: "Laporan konten", value: contentReportCount.toLocaleString("id-ID"), detail: "Laporan yang dibuat dalam periode" },

@@ -919,6 +919,16 @@ model AnalyticsDaily {
   @@map("analytics_daily")
 }
 
+model PlatformAnalyticsDaily {
+  id          String   @id @default(uuid()) @db.Uuid
+  date        DateTime @db.Date
+  metricKey   String
+  metricValue BigInt   @default(0)
+
+  @@unique([date, metricKey])
+  @@map("platform_analytics_daily")
+}
+
 model RateLimitBucket {
   key             String   @id @db.VarChar(64)
   hits            Int      @default(0)
