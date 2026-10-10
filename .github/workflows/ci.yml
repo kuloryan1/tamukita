@@ -27,6 +27,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Audit locked dependencies
+        run: npm audit --audit-level=moderate
       - name: Validate Docker Compose configuration
         run: docker compose --env-file .env.example config --quiet
       - name: Validate local Compose override

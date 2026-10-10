@@ -8,6 +8,7 @@ Catatan ini merekam hasil validasi lokal pada workspace. Hasil lokal bukan bukti
 | --- | --- |
 | `npm run lint` | Lulus; Biome memeriksa 165 file. |
 | `npm run typecheck` | Lulus. |
+| `npm audit --json` | Lulus; npm melaporkan 0 kerentanan pada dependency yang terkunci saat pemeriksaan. CI kini mengulang audit dan gagal untuk severity moderate atau lebih tinggi. |
 | `npm test` | Lulus; 6 file dan 18 tes. |
 | `npm run build` | Lulus; Next.js membuat 37 halaman statis. |
 | `npm run test:e2e` | Lulus; 37 tes lulus, 2 dilewati, 0 gagal dari 39 tes lintas desktop Chromium, mobile Chromium, dan WebKit. Durasi 9,4 menit. |
