@@ -186,3 +186,15 @@ Halaman `/admin/audit` menyediakan pencarian audit dengan filter aktor, tipe tar
 - Review kesiapan produksi serta keputusan operator/legal. Kebijakan tersebut sengaja tetap terbuka sesuai arahan operator.
 
 Untuk menjalankan gate staging, workflow memerlukan HTTPS origin staging, path undangan publik yang sudah terbit, URL health produksi, dan konfirmasi bahwa target terisolasi serta siap menerima beban uji.
+
+## Profil pengukuran LCP ponsel — 11 Oktober 2026
+
+Pengujian undangan publik sekarang memakai 20 pemuatan dingin pada viewport Chromium 390×844 @2x dengan profil lab tetap: RTT 150 ms, unduh 1,6 Mbps, unggah 750 Kbps, dan perlambatan CPU 4×. P75 tetap harus ≤2.500 ms. Nilai ini adalah pengukuran sintetis, bukan data lapangan dari ponsel pengguna.
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| `npm run lint` | Lulus; cakupan Biome diperluas ke 179 file termasuk tes performa. |
+| `npm run typecheck` | Lulus. |
+| `npm test` | Lulus; 10 file dan 29 tes. |
+| Chromium CDP throttling probe | Lulus; network condition, status navigator, dan CPU slowdown diterapkan pada Chromium lokal 156.0.8078.4. |
+| Sampel LCP staging | Belum dijalankan; origin HTTPS dan path undangan staging belum dikonfigurasi. |
