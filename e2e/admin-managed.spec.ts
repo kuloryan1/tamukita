@@ -20,6 +20,27 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   await page.goto("/admin");
   await expect(page.getByRole("heading", { name: "Admin TamuKita" })).toBeVisible();
   await expect(page.getByText("Publikasi awal 30 hari", { exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Analitik" }).click();
+  await expect(page.getByRole("heading", { name: "Analitik platform" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Nilai per saluran" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Template paling banyak dipublikasikan" })).toBeVisible();
+  await page.goto("/admin");
+
+  const financePage = await browser.newPage();
+  try {
+    await financePage.goto(new URL("/login", page.url()).toString());
+    await financePage.getByLabel("Alamat email").fill(process.env.E2E_FINANCE_EMAIL ?? "");
+    await financePage.getByLabel("Kata sandi").fill(process.env.E2E_FINANCE_PASSWORD ?? "");
+    await financePage.getByRole("button", { name: "Masuk" }).click();
+    await financePage.waitForURL(/\/dashboard/);
+    await financePage.goto(new URL("/admin/analytics", page.url()).toString());
+    await expect(financePage.getByRole("heading", { name: "Analitik platform" })).toBeVisible();
+    await financePage.goto(new URL("/admin", page.url()).toString());
+    await financePage.waitForURL(/\/dashboard/);
+    await expect(financePage.getByRole("heading", { name: "Admin TamuKita" })).toHaveCount(0);
+  } finally {
+    await financePage.close();
+  }
 
   const suffix = randomUUID().slice(0, 8);
   const customerEmail = `e2e-managed-${suffix}@example.test`;

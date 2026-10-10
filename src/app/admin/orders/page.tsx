@@ -15,5 +15,5 @@ export default async function AdminOrdersPage() {
   if (!userId) redirect("/login");
   const user = await getPrismaClient().user.findUnique({ where: { id: userId }, select: { platformRole: true } });
   if (user?.platformRole !== "SUPER_ADMIN" && user?.platformRole !== "FINANCE") redirect("/dashboard");
-  return <div className="admin-page"><Link className="admin-back-link" href="/admin"><ArrowLeft size={15} /> Kembali ke admin</Link><div className="dashboard-page-heading"><div><p className="dashboard-date">ADMIN PLATFORM · FINANCE</p><h1><ReceiptText size={24} /> Order & refund</h1><p>Lihat transaksi dan ajukan refund penuh atau sebagian.</p></div></div><AdminOrders /></div>;
+  return <div className="admin-page"><Link className="admin-back-link" href="/admin"><ArrowLeft size={15} /> Kembali ke admin</Link><div className="dashboard-page-heading"><div><p className="dashboard-date">ADMIN PLATFORM · FINANCE</p><h1><ReceiptText size={24} /> Order & refund</h1><p>Lihat transaksi dan ajukan refund penuh atau sebagian.</p></div><Link className="button button--outline button--small" href="/admin/analytics">Analitik</Link></div><AdminOrders /></div>;
 }

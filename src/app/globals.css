@@ -987,6 +987,11 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .dashboard-heading-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; }
 .admin-quick-links { align-items: center; display: flex; flex-wrap: wrap; gap: 7px; }
 .admin-metric-grid { display: grid; gap: 10px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 18px 0; }
+.admin-analytics-metrics .admin-metric-card { grid-template-columns: minmax(0, 1fr); }
+.admin-analytics-metrics .admin-metric-card strong { grid-column: 1; }
+.admin-analytics-period { color: #858b82; font-size: 10px; line-height: 1.7; margin: 0 0 12px; }
+.admin-analytics-period strong { color: #526256; font-weight: 600; }
+.admin-analytics-card { margin: 16px 0 0; }
 .admin-media-metrics { display: grid; gap: 10px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 18px 0; }
 .admin-media-page { margin: 0 auto; max-width: 1200px; }
 .admin-media-note { color: #90968d; font-size: 9px; line-height: 1.6; margin: -6px 0 16px; }

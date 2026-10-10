@@ -10,6 +10,8 @@ const connectionString = process.env.DATABASE_URL;
 const authSecret = process.env.AUTH_SECRET ?? "";
 const adminEmail = process.env.E2E_ADMIN_EMAIL?.trim().toLowerCase();
 const adminPassword = process.env.E2E_ADMIN_PASSWORD;
+const financeEmail = process.env.E2E_FINANCE_EMAIL?.trim().toLowerCase();
+const financePassword = process.env.E2E_FINANCE_PASSWORD;
 const customerEmail = process.env.E2E_CUSTOMER_EMAIL?.trim().toLowerCase();
 const customerPassword = process.env.E2E_CUSTOMER_PASSWORD;
 const otherCustomerEmail = process.env.E2E_OTHER_CUSTOMER_EMAIL?.trim().toLowerCase();
@@ -33,6 +35,9 @@ if (
   || !adminEmail
   || !adminPassword
   || adminPassword.length < 12
+  || !financeEmail
+  || !financePassword
+  || financePassword.length < 12
   || !customerEmail
   || !customerPassword
   || customerPassword.length < 12
@@ -58,11 +63,12 @@ if (
   || !refundResellerPassword
   || refundResellerPassword.length < 12
 ) {
-  throw new Error("Set DATABASE_URL, AUTH_SECRET, and all E2E admin/customer/template-developer/content-reviewer/refund-reseller/WebKit-customer/reseller-report-owner emails and passwords; every password must have at least 12 characters.");
+  throw new Error("Set DATABASE_URL, AUTH_SECRET, and all E2E admin/finance/customer/template-developer/content-reviewer/refund-reseller/WebKit-customer/reseller-report-owner emails and passwords; every password must have at least 12 characters.");
 }
 
 const e2eAccounts = {
   admin: { email: adminEmail, password: adminPassword },
+  finance: { email: financeEmail, password: financePassword },
   customer: { email: customerEmail, password: customerPassword },
   otherCustomer: { email: otherCustomerEmail, password: otherCustomerPassword },
   mobileCustomer: { email: mobileCustomerEmail, password: mobileCustomerPassword },
@@ -86,7 +92,7 @@ try {
     email: string;
     password: string;
     name: string;
-    platformRole: "CUSTOMER" | "SUPER_ADMIN" | "TEMPLATE_DEVELOPER" | "CONTENT_REVIEWER";
+    platformRole: "CUSTOMER" | "SUPER_ADMIN" | "FINANCE" | "TEMPLATE_DEVELOPER" | "CONTENT_REVIEWER";
   }): Promise<{ userId: string; organizationId: string }> {
     const now = new Date();
     const passwordHash = await hashPassword(password);
@@ -96,7 +102,7 @@ try {
       create: { id: randomUUID(), name, email, emailVerified: now, passwordHash, platformRole },
       select: { id: true },
     });
-    const accountType = platformRole === "SUPER_ADMIN" ? "admin" : platformRole === "TEMPLATE_DEVELOPER" ? "developer" : platformRole === "CONTENT_REVIEWER" ? "content-reviewer" : "customer";
+    const accountType = platformRole === "SUPER_ADMIN" ? "admin" : platformRole === "FINANCE" ? "finance" : platformRole === "TEMPLATE_DEVELOPER" ? "developer" : platformRole === "CONTENT_REVIEWER" ? "content-reviewer" : "customer";
     const organizationSlug = `e2e-${accountType}-${user.id.slice(0, 8)}`;
     const organization = await prisma.organization.upsert({
       where: { slug: organizationSlug },
@@ -113,6 +119,7 @@ try {
   }
 
   await seedAccount({ ...e2eAccounts.admin, name: "E2E Admin", platformRole: "SUPER_ADMIN" });
+  await seedAccount({ ...e2eAccounts.finance, name: "E2E Finance", platformRole: "FINANCE" });
   const customer = await seedAccount({ ...e2eAccounts.customer, name: "E2E Customer", platformRole: "CUSTOMER" });
   const otherCustomer = await seedAccount({ ...e2eAccounts.otherCustomer, name: "E2E Other Customer", platformRole: "CUSTOMER" });
   const mobileCustomer = await seedAccount({ ...e2eAccounts.mobileCustomer, name: "E2E Mobile Customer", platformRole: "CUSTOMER" });
