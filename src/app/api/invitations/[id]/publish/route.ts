@@ -72,7 +72,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         const eventData = { title: invitationTitle(checkedDraft), startsAt: eventStartsAt(checkedDraft), venue: checkedDraft.venue, address: checkedDraft.address, mapsUrl: checkedDraft.mapsUrl || null };
         const events = await tx.event.updateMany({ where: { invitationId: id }, data: eventData });
         if (events.count === 0) await tx.event.create({ data: { invitationId: id, ...eventData } });
-        await tx.auditLog.create({ data: { organizationId: invitation.organizationId, actorId: userId, action: "invitation.published", targetType: "Invitation", targetId: id } });
+        await tx.auditLog.create({
+          data: {
+            organizationId: invitation.organizationId,
+            actorId: userId,
+            action: invitation.status === "DRAFT" ? "invitation.published_with_existing_license" : "invitation.published",
+            targetType: "Invitation",
+            targetId: id,
+          },
+        });
       });
     } catch (error) {
       if (error instanceof PublishConflict) return NextResponse.json({ error: "Status undangan berubah. Muat ulang halaman dan periksa kembali." }, { status: 409 });

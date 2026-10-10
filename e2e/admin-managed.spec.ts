@@ -16,6 +16,7 @@ test("admin creates a customer workspace and a draft invitation", async ({ page 
   await page.waitForURL(/\/dashboard/);
   await page.goto("/admin");
   await expect(page.getByRole("heading", { name: "Admin TamuKita" })).toBeVisible();
+  await expect(page.getByText("Publikasi awal 30 hari", { exact: true })).toBeVisible();
 
   const suffix = randomUUID().slice(0, 8);
   const customerEmail = `e2e-managed-${suffix}@example.test`;

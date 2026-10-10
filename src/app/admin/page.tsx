@@ -28,7 +28,7 @@ export default async function AdminPage() {
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const publicViewsStart = new Date(Date.UTC(thirtyDaysAgo.getUTCFullYear(), thirtyDaysAgo.getUTCMonth(), thirtyDaysAgo.getUTCDate()));
-  const [profiles, userCount, newUserCount, organizationCount, activeInvitationCount, publicViews, paidOrderSummary, successfulRefundSummary, pendingOrderCount, pendingPaymentCount, liveResellerCount, templatesInReviewCount, failedMediaCount, failedNotificationCount, recentOrders, recentAudit, recentInvitations, templateRows] = await Promise.all([
+  const [profiles, userCount, newUserCount, organizationCount, activeInvitationCount, initialPublicationCount, publicViews, paidOrderSummary, successfulRefundSummary, pendingOrderCount, pendingPaymentCount, liveResellerCount, templatesInReviewCount, failedMediaCount, failedNotificationCount, recentOrders, recentAudit, recentInvitations, templateRows] = await Promise.all([
     prisma.resellerProfile.findMany({
       where: { status: "PENDING" },
       orderBy: { createdAt: "asc" },
@@ -38,6 +38,13 @@ export default async function AdminPage() {
     prisma.user.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
     prisma.organization.count({ where: { type: { not: "PLATFORM" }, status: "ACTIVE" } }),
     prisma.invitation.count({ where: { deletedAt: null, status: "PUBLISHED", OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] } }),
+    prisma.auditLog.count({
+      where: {
+        targetType: "Invitation",
+        action: { in: ["invitation.published_free_template", "invitation.published_after_payment", "invitation.published_with_existing_license", "invitation.published_by_reseller"] },
+        createdAt: { gte: thirtyDaysAgo },
+      },
+    }),
     prisma.analyticsDaily.aggregate({ where: { metricKey: "invitation_views", date: { gte: publicViewsStart } }, _sum: { metricValue: true } }),
     prisma.order.aggregate({ where: { currency: "IDR", paidAt: { not: null }, status: { in: ["PAID", "PARTIALLY_REFUNDED", "REFUNDED"] } }, _count: { _all: true }, _sum: { totalAmount: true } }),
     prisma.refund.aggregate({ where: { currency: "IDR", status: "SUCCEEDED" }, _sum: { amount: true } }),
@@ -87,6 +94,7 @@ export default async function AdminPage() {
     { label: "Akun baru 30 hari", value: newUserCount, detail: "Akun yang mendaftar 30 hari terakhir", icon: "users" as const },
     { label: "Workspace", value: organizationCount, detail: "Workspace aktif", icon: "store" as const },
     { label: "Undangan aktif", value: activeInvitationCount, detail: "Halaman publik", icon: "invite" as const },
+    { label: "Publikasi awal 30 hari", value: initialPublicationCount, detail: "Aktivasi awal; edit undangan aktif tidak dihitung", icon: "invite" as const },
     { label: "Tampilan publik 30 hari", value: (publicViews._sum.metricValue ?? BigInt(0)).toLocaleString("id-ID"), detail: "Total tampilan, bukan pengunjung unik", icon: "invite" as const },
     { label: "Pembayaran sukses", value: paidOrderSummary._count._all, detail: "Order IDR yang telah dibayar", icon: "payment" as const },
     { label: "Penerimaan neto (IDR)", value: netPayments, detail: `${rupiah.format(grossPayments)} diterima · ${rupiah.format(successfulRefunds)} refund sukses · sebelum biaya gateway`, icon: "payment" as const },
