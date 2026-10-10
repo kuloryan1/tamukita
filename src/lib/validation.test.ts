@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
-import { createInitialDraft } from "@/lib/invitations";
+import { readdirSync } from "node:fs";
+import { createInitialDraft, isSlugAllowed, reservedSlugs } from "@/lib/invitations";
 import { validateInvitationDraft } from "@/lib/validation";
 
 test("accepts a complete valid wedding draft", () => {
@@ -38,4 +39,15 @@ test("rejects insecure map links and reserved public slugs", () => {
 
   expect(validateInvitationDraft(insecureMap).step).toBe(1);
   expect(validateInvitationDraft(reservedSlug).step).toBe(3);
+});
+
+test("reserves every static root route from invitation slugs", () => {
+  const staticRoutes = readdirSync(new URL("../app", import.meta.url), { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith("[") && !entry.name.startsWith("(") && !entry.name.startsWith("@"))
+    .map((entry) => entry.name);
+
+  for (const route of staticRoutes) {
+    expect(reservedSlugs.has(route), `/${route} must be reserved`).toBe(true);
+    expect(isSlugAllowed(route), `/${route} must not be an invitation slug`).toBe(false);
+  }
 });

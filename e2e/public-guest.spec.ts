@@ -34,6 +34,9 @@ test("guest can RSVP, report an approved message, and content reviewers can mode
   const response = await page.goto(`/${invitationSlug}?g=${encodeURIComponent(guestToken)}`);
   expect(response?.status()).toBe(200);
   await expect(page.locator(".public-hero-names")).toContainText("E2E Mempelai");
+  const initialRsvpCountText = await page.locator(".rsvp-count").innerText();
+  const initialRsvpCount = Number(initialRsvpCountText.match(/^\d+/)?.[0] ?? 0);
+  const expectedRsvpCountText = `${initialRsvpCount + 1} tamu telah mengirim RSVP`;
 
   await page.setExtraHTTPHeaders({ "x-forwarded-for": `198.51.100.${1 + Math.floor(Math.random() * 253)}` });
   await page.getByRole("button", { name: "Konfirmasi kehadiran" }).click();
@@ -47,7 +50,7 @@ test("guest can RSVP, report an approved message, and content reviewers can mode
   expect(firstRsvpResponse.status()).toBe(201);
   expect(await firstRsvpResponse.json()).toMatchObject({ saved: true, created: true });
   await expect(page.getByRole("heading", { name: `Terima kasih, ${guestName}!` })).toBeVisible();
-  await expect(page.locator(".rsvp-count")).toContainText("1 tamu telah mengirim RSVP");
+  await expect(page.locator(".rsvp-count")).toContainText(expectedRsvpCountText);
   await page.getByRole("button", { name: "Selesai" }).click();
   await expect(page.getByRole("dialog")).toBeHidden();
 
@@ -60,7 +63,7 @@ test("guest can RSVP, report an approved message, and content reviewers can mode
   const repeatedRsvpResponse = await repeatedRsvpPromise;
   expect(repeatedRsvpResponse.status()).toBe(201);
   expect(await repeatedRsvpResponse.json()).toMatchObject({ saved: true, created: false });
-  await expect(page.locator(".rsvp-count")).toContainText("1 tamu telah mengirim RSVP");
+  await expect(page.locator(".rsvp-count")).toContainText(expectedRsvpCountText);
 
   const guestbookMessage = `Semoga selalu bahagia ${randomUUID().slice(0, 8)}`;
   await page.getByLabel("Namamu").fill(guestName);

@@ -49,10 +49,13 @@ export const reservedSlugs = new Set([
   "api",
   "dashboard",
   "developers",
+  "forgot-password",
   "login",
   "register",
   "reseller",
+  "reset-password",
   "templates",
+  "verify-email",
 ]);
 
 export function createInitialDraft(): InvitationDraft {
