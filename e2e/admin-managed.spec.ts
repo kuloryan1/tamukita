@@ -24,10 +24,14 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   const suffix = randomUUID().slice(0, 8);
   const customerEmail = `e2e-managed-${suffix}@example.test`;
   const invitationSlug = `e2e-managed-${suffix}`;
+  const newCustomerFamilyDetails = `Keluarga Khitan ${suffix}`;
   await page.getByLabel("Nama pelanggan").fill("Pelanggan Uji");
   await page.getByLabel("Email akun pelanggan").fill(customerEmail);
-  await page.getByLabel("Nama pertama").fill("Nara");
-  await page.getByLabel("Nama kedua").fill("Dimas");
+  await page.getByLabel("Jenis acara").selectOption("Khitan");
+  await expect(page.getByLabel("Judul acara")).toBeVisible();
+  await expect(page.getByLabel("Nama keluarga / orang tua")).toBeVisible();
+  await page.getByLabel("Judul acara").fill("Khitan Nara");
+  await page.getByLabel("Nama keluarga / orang tua").fill(newCustomerFamilyDetails);
   await page.getByLabel("Tanggal").fill("2027-06-22");
   await page.getByLabel("Tempat acara").fill("The Garden House");
   await page.getByLabel("Alamat lengkap").fill("Jl. Kebun Raya No. 1, Jakarta");
@@ -40,9 +44,11 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   const creationResponse = await creationResponsePromise;
   expect(creationResponse.status()).toBe(201);
   const result = await creationResponse.json() as { customerCreated?: boolean; onboardingEmailSent?: boolean; invitation?: { slug: string } };
+  const newCustomerRequest = creationResponse.request().postDataJSON() as { draft?: { eventKind?: string; familyDetails?: string } };
   expect(result.customerCreated).toBe(true);
   expect(result.onboardingEmailSent).toBe(true);
   expect(result.invitation?.slug).toBe(invitationSlug);
+  expect(newCustomerRequest.draft).toMatchObject({ eventKind: "Khitan", familyDetails: newCustomerFamilyDetails });
   const onboardingEmailResponse = await page.request.get(`http://127.0.0.1:3140/messages?to=${encodeURIComponent(customerEmail)}`);
   expect(onboardingEmailResponse.status()).toBe(200);
   const onboardingEmailPayload = await onboardingEmailResponse.json() as { messages: Array<{ subject: string; text: string }> };
@@ -52,10 +58,13 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   await expect(page.getByRole("status")).toContainText("Akun pelanggan dibuat");
 
   const existingInvitationSlug = `e2e-managed-existing-${suffix}`;
+  const existingFamilyDetails = `Keluarga Nara dan Dimas ${suffix}`;
   await page.getByLabel("Nama pelanggan").fill("Pelanggan Uji");
   await page.getByLabel("Email akun pelanggan").fill(existingCustomerEmail);
+  await page.getByLabel("Jenis acara").selectOption("Pernikahan");
   await page.getByLabel("Nama pertama").fill(`Nara ${suffix}`);
   await page.getByLabel("Nama kedua").fill(`Dimas ${suffix}`);
+  await page.getByLabel("Keluarga yang turut mengundang").fill(existingFamilyDetails);
   await page.getByLabel("Tautan undangan").fill(existingInvitationSlug);
   const existingCreationResponsePromise = page.waitForResponse((response) =>
     response.url().endsWith("/api/admin/invitations") && response.request().method() === "POST",
@@ -91,6 +100,8 @@ test("admin creates customer drafts and notifies an existing customer", async ({
     });
     await expect(invitationRow).toHaveCount(1);
     await expect(invitationRow).toBeVisible();
+    await customerPage.goto(new URL(`/dashboard/invitations/${existingResult.invitation?.id}/edit`, page.url()).toString());
+    await expect(customerPage.getByLabel("Keluarga yang turut mengundang")).toHaveValue(existingFamilyDetails);
   } finally {
     await customerPage.close();
   }

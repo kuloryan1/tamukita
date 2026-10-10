@@ -70,6 +70,7 @@ Dump dan restore lokal berhasil. Container sementara dihapus setelah pemeriksaan
 | Unit test renderer template dan validasi draft | Lulus; 2 file dan 7 tes. |
 | `npm run build` | Lulus; Next.js membuat build production dan memproses 38 route. |
 | `npm run test:e2e -- e2e/editor-experience.spec.ts` | Lulus; 6 tes di Chromium desktop, Chromium ponsel, dan WebKit profil iPhone. Memeriksa field yang berubah saat memilih Khitan, keterangan keluarga di pratinjau, autosave ke API, dan urutan penyimpanan saat PATCH bertumpuk. |
+| `npm run test:e2e -- e2e/admin-managed.spec.ts` | Lulus; 3 tes di tiga profil browser. Admin membuat draft Khitan dan pernikahan, lalu pemilik membuka ulang draft pernikahan dan melihat keterangan keluarga yang tersimpan. |
 
 E2E memakai PostgreSQL 17 dan Redis 7 sementara pada port lokal khusus, lalu menjalankan migrasi serta fixture. Container dan volume sementara dibersihkan setelah tes. Jalur keluarga/penyelenggara tetap kompatibel dengan draft lama karena data undangan disimpan sebagai JSON dan field baru memiliki nilai default kosong. Pemeriksaan ini lokal; tidak mencakup deployment atau layanan staging.
 
