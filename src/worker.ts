@@ -52,6 +52,7 @@ type NotificationPayload = {
 
 type ResellerStaffPayload = { to: string; name: string; resellerName: string; dashboardPath: "/reseller" };
 type ResellerCustomerAccessPayload = { to: string; name: string; resellerName: string; customerName: string; decision: "APPROVED" | "DECLINED" | "REVOKED"; dashboardPath: "/reseller" };
+type AdminManagedInvitationPayload = { to: string; name: string; invitationId: string; invitationTitle: string };
 type RsvpReceivedPayload = { to: string; ownerName: string; invitationId: string; invitationTitle: string; guestName: string; attendance: "ATTENDING" | "DECLINED"; attendeeCount: number };
 type EventReminderPayload = { to: string; ownerName: string; invitationTitle: string; invitationSlug: string; eventTitle: string; startsAt: string; venue: string };
 
@@ -88,6 +89,17 @@ function parseResellerStaffPayload(value: unknown): ResellerStaffPayload | null 
 function parseResellerCustomerAccessPayload(value: unknown): ResellerCustomerAccessPayload | null {
   if (!isRecord(value) || typeof value.to !== "string" || !value.to.includes("@") || typeof value.name !== "string" || typeof value.resellerName !== "string" || typeof value.customerName !== "string" || !["APPROVED", "DECLINED", "REVOKED"].includes(String(value.decision)) || value.dashboardPath !== "/reseller") return null;
   return { to: value.to, name: value.name, resellerName: value.resellerName, customerName: value.customerName, decision: value.decision as ResellerCustomerAccessPayload["decision"], dashboardPath: "/reseller" };
+}
+
+function parseAdminManagedInvitationPayload(value: unknown): AdminManagedInvitationPayload | null {
+  if (!isRecord(value)
+    || typeof value.to !== "string"
+    || !value.to.includes("@")
+    || typeof value.name !== "string"
+    || typeof value.invitationId !== "string"
+    || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.invitationId)
+    || typeof value.invitationTitle !== "string") return null;
+  return { to: value.to, name: value.name, invitationId: value.invitationId, invitationTitle: value.invitationTitle };
 }
 
 function parseRsvpReceivedPayload(value: unknown): RsvpReceivedPayload | null {
@@ -186,6 +198,18 @@ async function sendResellerCustomerAccessEmail(payload: ResellerCustomerAccessPa
   await sendEmail(payload.to, subject, text, html);
 }
 
+async function sendAdminManagedInvitationEmail(payload: AdminManagedInvitationPayload) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const link = new URL(`/dashboard/invitations/${encodeURIComponent(payload.invitationId)}/edit`, appUrl).toString();
+  const name = payload.name.replace(/[\r\n]+/g, " ").trim();
+  const greeting = name ? `Halo ${name},` : "Halo,";
+  const invitationTitle = payload.invitationTitle.replace(/[\r\n]+/g, " ").trim();
+  const subject = `Draft undangan siap ditinjau · ${invitationTitle} · TamuKita`;
+  const text = `${greeting}\n\nTim TamuKita telah menyiapkan draft undangan “${invitationTitle}” untukmu. Masuk ke akunmu untuk meninjau dan melengkapi detail, foto, atau musik, lalu lanjutkan pembayaran dan terbitkan saat sudah siap.\n\nBuka draft undangan: ${link}`;
+  const html = `<div style="font-family:Arial,sans-serif;line-height:1.65;color:#35473b"><p>${escapeHtml(greeting)}</p><p>Tim TamuKita telah menyiapkan draft undangan <b>${escapeHtml(invitationTitle)}</b> untukmu.</p><p>Masuk ke akunmu untuk meninjau dan melengkapi detail, foto, atau musik, lalu lanjutkan pembayaran dan terbitkan saat sudah siap.</p><p><a href="${escapeHtml(link)}" style="display:inline-block;background:#35473b;color:#fff;padding:12px 18px;text-decoration:none">Tinjau draft undangan</a></p></div>`;
+  await sendEmail(payload.to, subject, text, html);
+}
+
 async function sendRsvpReceivedEmail(payload: RsvpReceivedPayload) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const link = new URL(`/dashboard/invitations/${payload.invitationId}/guests`, appUrl).toString();
@@ -239,6 +263,10 @@ async function processJob(job: Job<{ notificationJobId: string }>) {
       const payload = parseResellerCustomerAccessPayload(notification.payload);
       if (!payload) throw new Error("Data notifikasi akses reseller tidak valid.");
       await sendResellerCustomerAccessEmail(payload);
+    } else if (notification.jobType === "ADMIN_MANAGED_INVITATION_EMAIL") {
+      const payload = parseAdminManagedInvitationPayload(notification.payload);
+      if (!payload) throw new Error("Data pemberitahuan undangan admin tidak valid.");
+      await sendAdminManagedInvitationEmail(payload);
     } else if (notification.jobType === "RSVP_RECEIVED_EMAIL") {
       const payload = parseRsvpReceivedPayload(notification.payload);
       if (!payload) throw new Error("Data notifikasi RSVP tidak valid.");

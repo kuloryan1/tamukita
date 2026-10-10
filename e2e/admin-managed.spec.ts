@@ -1,10 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 
-test("admin creates a customer workspace and a draft invitation", async ({ page }) => {
+test("admin creates customer drafts and notifies an existing customer", async ({ page, browser }) => {
   const email = process.env.E2E_ADMIN_EMAIL;
   const password = process.env.E2E_ADMIN_PASSWORD;
-  if (!email || !password) {
+  const existingCustomerEmail = process.env.E2E_CUSTOMER_EMAIL;
+  const existingCustomerPassword = process.env.E2E_CUSTOMER_PASSWORD;
+  if (!email || !password || !existingCustomerEmail || !existingCustomerPassword) {
     test.skip(true, "Requires the disposable PostgreSQL E2E fixture.");
     return;
   }
@@ -41,4 +43,38 @@ test("admin creates a customer workspace and a draft invitation", async ({ page 
   expect(result.onboardingEmailSent).toBe(false);
   expect(result.invitation?.slug).toBe(invitationSlug);
   await expect(page.getByRole("status")).toContainText("Akun pelanggan dibuat");
+
+  const existingInvitationSlug = `e2e-managed-existing-${suffix}`;
+  await page.getByLabel("Nama pelanggan").fill("Pelanggan Uji");
+  await page.getByLabel("Email akun pelanggan").fill(existingCustomerEmail);
+  await page.getByLabel("Nama pertama").fill(`Nara ${suffix}`);
+  await page.getByLabel("Nama kedua").fill(`Dimas ${suffix}`);
+  await page.getByLabel("Tautan undangan").fill(existingInvitationSlug);
+  const existingCreationResponsePromise = page.waitForResponse((response) =>
+    response.url().endsWith("/api/admin/invitations") && response.request().method() === "POST",
+  );
+  await page.getByRole("button", { name: "Buat draft pelanggan" }).click();
+  const existingCreationResponse = await existingCreationResponsePromise;
+  expect(existingCreationResponse.status()).toBe(201);
+  const existingResult = await existingCreationResponse.json() as { customerCreated?: boolean; invitationNotificationQueued?: boolean; invitation?: { id: string; title: string; slug: string } };
+  expect(existingResult.customerCreated).toBe(false);
+  expect(existingResult.invitationNotificationQueued).toBe(true);
+  expect(existingResult.invitation?.slug).toBe(existingInvitationSlug);
+  await expect(page.getByRole("status")).toContainText("email pemberitahuan sudah masuk antrean");
+
+  const customerPage = await browser.newPage();
+  try {
+    await customerPage.goto(new URL("/login", page.url()).toString());
+    await customerPage.getByLabel("Alamat email").fill(existingCustomerEmail);
+    await customerPage.getByLabel("Kata sandi").fill(existingCustomerPassword);
+    await customerPage.getByRole("button", { name: "Masuk" }).click();
+    await customerPage.waitForURL(/\/dashboard/);
+    const invitationRow = customerPage.locator(".invitation-row").filter({
+      has: customerPage.getByRole("heading", { name: existingResult.invitation?.title ?? "", exact: true }),
+    });
+    await expect(invitationRow).toHaveCount(1);
+    await expect(invitationRow).toBeVisible();
+  } finally {
+    await customerPage.close();
+  }
 });

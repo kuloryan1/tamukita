@@ -56,6 +56,7 @@ export async function POST(request: Request) {
         select: {
           id: true,
           name: true,
+          email: true,
           memberships: { where: { role: "OWNER", organization: { type: "PERSONAL", status: "ACTIVE" } }, take: 1, select: { organizationId: true } },
         },
       });
@@ -67,7 +68,7 @@ export async function POST(request: Request) {
         const organizationIdForNewCustomer = randomUUID();
         customer = await tx.user.create({
           data: { id: customerId, name: parsed.data.customerName, email: parsed.data.customerEmail, passwordHash: null },
-          select: { id: true, name: true, memberships: { select: { organizationId: true } } },
+          select: { id: true, name: true, email: true, memberships: { select: { organizationId: true } } },
         });
         await tx.organization.create({
           data: { id: organizationIdForNewCustomer, name: `Ruang ${parsed.data.customerName}`, slug: workspaceSlug(parsed.data.customerName, customerId), type: "PERSONAL" },
@@ -103,7 +104,22 @@ export async function POST(request: Request) {
       await tx.auditLog.create({
         data: { organizationId, actorId: userId, action: "admin.invitation_created_for_customer", targetType: "Invitation", targetId: id, metadata: { templateSlug: template.template.slug, customerId: customer.id } },
       });
-      return { invitation, customerCreated };
+      const invitationNotificationQueued = !customerCreated && Boolean(customer.email);
+      if (invitationNotificationQueued && customer.email) {
+        await tx.notificationJob.create({
+          data: {
+            jobKey: `admin-managed-invitation:${invitation.id}:${customer.id}`,
+            jobType: "ADMIN_MANAGED_INVITATION_EMAIL",
+            payload: {
+              to: customer.email,
+              name: customer.name ?? "",
+              invitationId: invitation.id,
+              invitationTitle: invitation.title,
+            },
+          },
+        });
+      }
+      return { invitation, customerCreated, invitationNotificationQueued };
     });
     let onboardingEmailSent = false;
     if (created.customerCreated) {
@@ -113,7 +129,13 @@ export async function POST(request: Request) {
         onboardingEmailSent = false;
       }
     }
-    return NextResponse.json({ created: true, invitation: created.invitation, customerCreated: created.customerCreated, onboardingEmailSent }, { status: 201 });
+    return NextResponse.json({
+      created: true,
+      invitation: created.invitation,
+      customerCreated: created.customerCreated,
+      onboardingEmailSent,
+      invitationNotificationQueued: created.invitationNotificationQueued,
+    }, { status: 201 });
   } catch (error) {
     if (error instanceof Error && error.message === "CUSTOMER_WORKSPACE_MISSING") {
       return NextResponse.json({ error: "Akun pelanggan tidak memiliki workspace pribadi yang aktif." }, { status: 409 });

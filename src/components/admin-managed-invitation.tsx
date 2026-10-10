@@ -72,14 +72,16 @@ export function AdminManagedInvitation({ templates }: { templates: TemplateOptio
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setError(""); setSuccess("");
     const response = await fetch("/api/admin/invitations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ customerName, customerEmail, draft }) }).catch(() => null);
-    const result = await response?.json().catch(() => null) as { error?: string; customerCreated?: boolean; onboardingEmailSent?: boolean; invitation?: { title: string; slug: string } } | null;
+    const result = await response?.json().catch(() => null) as { error?: string; customerCreated?: boolean; onboardingEmailSent?: boolean; invitationNotificationQueued?: boolean; invitation?: { title: string; slug: string } } | null;
     setBusy(false);
     if (!response?.ok || !result?.invitation) { setError(result?.error ?? "Draft belum berhasil dibuat."); return; }
     const onboardingMessage = result.customerCreated
       ? result.onboardingEmailSent
         ? " Akun pelanggan dibuat dan tautan pengaturan kata sandi telah dikirim ke emailnya."
         : " Akun pelanggan dibuat, tetapi email pengaturan kata sandi belum terkirim. Minta pelanggan memakai fitur lupa kata sandi setelah email dikonfigurasi."
-      : " Draft masuk ke dashboard akun pelanggan.";
+      : result.invitationNotificationQueued
+        ? " Draft masuk ke dashboard akun pelanggan dan email pemberitahuan sudah masuk antrean pengiriman."
+        : " Draft masuk ke dashboard akun pelanggan.";
     setSuccess(`Draft “${result.invitation.title}” dengan tautan tamukita.io/${result.invitation.slug} dibuat.${onboardingMessage}`);
     setCustomerEmail("");
     setCustomerName("");

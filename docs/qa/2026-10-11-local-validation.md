@@ -24,6 +24,21 @@ Dua tes yang dilewati adalah skenario lifecycle pembayaran pada mobile Chromium 
 
 E2E memakai PostgreSQL dan Redis sementara, server aplikasi lokal, serta mock Xendit dan R2. Layanan sementara dihentikan setelah tes selesai.
 
+## E2E terfokus Admin Managed — 11 Oktober 2026
+
+Setelah menambahkan pemberitahuan draft admin untuk akun pelanggan yang sudah ada, pemeriksaan berikut lulus:
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| `npm run typecheck` | Lulus. |
+| `npm run lint -- src/app/api/admin/invitations/route.ts src/components/admin-managed-invitation.tsx src/worker.ts e2e/admin-managed.spec.ts` | Lulus; empat file diperiksa. |
+| `npm run build` | Lulus. |
+| `npx playwright test e2e/admin-managed.spec.ts` | Lulus; 3 dari 3 profil browser, Chromium desktop, Chromium ponsel, dan WebKit profil iPhone. |
+
+Skenario membuat akun baru dan draft untuk akun pelanggan lama. Untuk akun lama, draft dan pekerjaan email dibuat dalam transaksi yang sama; pemilik kemudian berhasil masuk dan melihat draft pada dashboard. Pengiriman ke penyedia email eksternal tidak dilakukan oleh tes lokal; pengiriman memerlukan `RESEND_API_KEY` dan `EMAIL_FROM` pada deployment.
+
+Tes menggunakan PostgreSQL 17 dan Redis 7 sementara pada port lokal terpisah. Kedua container dihentikan dan dihapus setelah tes selesai; container Docker lain tetap berjalan.
+
 ## Drill dump dan restore PostgreSQL lokal
 
 1. Membuat database PostgreSQL sementara dengan PostgreSQL 17 Alpine.
