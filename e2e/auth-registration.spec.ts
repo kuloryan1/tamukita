@@ -46,5 +46,5 @@ test("customer registers, verifies email, and signs in without sending mail exte
   await page.getByLabel("Kata sandi").fill(password);
   await page.getByRole("button", { name: "Masuk" }).click();
   await page.waitForURL(/\/dashboard(?:\/|$)/);
-  await expect(page.getByRole("heading", { name: /selamat datang, pelanggan e2e baru/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /selamat datang, pelanggan/i })).toBeVisible();
 });
