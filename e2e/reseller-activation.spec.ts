@@ -114,8 +114,10 @@ test("reseller sales reports are visible to managers and auditable when correcte
   const ownerPassword = process.env.E2E_CUSTOMER_PASSWORD;
   const staffEmail = process.env.E2E_MOBILE_CUSTOMER_EMAIL;
   const staffPassword = process.env.E2E_MOBILE_CUSTOMER_PASSWORD;
-  if (!ownerEmail || !ownerPassword || !staffEmail || !staffPassword) {
-    test.skip(true, "Requires the disposable reseller owner and staff fixtures.");
+  const otherResellerEmail = process.env.E2E_OTHER_CUSTOMER_EMAIL;
+  const otherResellerPassword = process.env.E2E_OTHER_CUSTOMER_PASSWORD;
+  if (!ownerEmail || !ownerPassword || !staffEmail || !staffPassword || !otherResellerEmail || !otherResellerPassword) {
+    test.skip(true, "Requires disposable reseller owner, staff, and second-reseller fixtures.");
     return;
   }
 
@@ -130,9 +132,27 @@ test("reseller sales reports are visible to managers and auditable when correcte
     response.url().endsWith("/api/reseller/sales") && response.request().method() === "POST",
   );
   await page.getByRole("button", { name: "Catat penjualan" }).click();
-  expect((await createResponsePromise).status()).toBe(201);
+  const createResponse = await createResponsePromise;
+  expect(createResponse.status()).toBe(201);
+  const createdSale = await createResponse.json() as { sale?: { id: string } };
+  expect(createdSale.sale?.id).toMatch(/^[0-9a-f-]{36}$/i);
+  if (!createdSale.sale?.id) throw new Error("The reseller sale report did not include its ID.");
   const saleRow = report.locator(".reseller-sale-row").filter({ hasText: description });
   await expect(saleRow).toContainText("1.500.000");
+
+  const otherResellerContext = await browser.newContext({ baseURL: new URL(page.url()).origin });
+  try {
+    const otherResellerPage = await otherResellerContext.newPage();
+    await signIn(otherResellerPage, otherResellerEmail, otherResellerPassword);
+    const otherSalesResponse = await otherResellerPage.request.get("/api/reseller/sales");
+    expect(otherSalesResponse.status()).toBe(200);
+    const otherSales = await otherSalesResponse.json() as { sales?: Array<{ id: string }> };
+    expect(otherSales.sales?.some(({ id }) => id === createdSale.sale?.id)).toBe(false);
+    const crossTenantCorrection = await otherResellerPage.request.patch(`/api/reseller/sales/${createdSale.sale.id}`, { data: { reason: "Cross-tenant E2E check" } });
+    expect(crossTenantCorrection.status()).toBe(404);
+  } finally {
+    await otherResellerContext.close();
+  }
 
   await saleRow.getByRole("button", { name: "Koreksi" }).click();
   await saleRow.getByLabel("Alasan koreksi").fill("Catatan E2E dibatalkan untuk validasi.");
