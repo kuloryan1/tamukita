@@ -65,12 +65,12 @@ export function PublicInvitation({ slug, initialDraft, initialRsvpCount, initial
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ name: guestName.trim(), ...(guestToken ? { guestToken } : {}), attendance: attendance === "Hadir" ? "ATTENDING" : "DECLINED", attendeeCount }),
     }).catch(() => null);
-    const result = await response?.json().catch(() => ({})) as { error?: string } | undefined;
+    const result = await response?.json().catch(() => ({})) as { error?: string; created?: boolean } | undefined;
     if (!response?.ok) {
       setRsvpError(result?.error ?? "RSVP belum dapat dikirim. Periksa koneksi dan coba lagi.");
       return;
     }
-    setRsvpCount((count) => count + 1);
+    if (result?.created) setRsvpCount((count) => count + 1);
     setSubmitted(true);
   };
 

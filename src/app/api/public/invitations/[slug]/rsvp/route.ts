@@ -47,8 +47,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   }
 
   const ownerEmail = invitation.owner.email;
-  await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     let rsvpId: string;
+    let created = false;
     const respondedAt = new Date();
     if (guestId) {
       const previous = await tx.rSVP.findFirst({ where: { invitationId: invitation.id, guestId }, select: { id: true } });
@@ -56,18 +57,20 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
         await tx.rSVP.update({ where: { id: previous.id }, data: { displayName, attendance: parsed.data.attendance, attendeeCount: parsed.data.attendeeCount, respondedAt } });
         rsvpId = previous.id;
       } else {
-        const created = await tx.rSVP.create({
+        const createdRsvp = await tx.rSVP.create({
           data: { invitationId: invitation.id, guestId, displayName, attendance: parsed.data.attendance, attendeeCount: parsed.data.attendeeCount, respondedAt },
           select: { id: true },
         });
-        rsvpId = created.id;
+        rsvpId = createdRsvp.id;
+        created = true;
       }
     } else {
-      const created = await tx.rSVP.create({
+      const createdRsvp = await tx.rSVP.create({
         data: { invitationId: invitation.id, displayName, attendance: parsed.data.attendance, attendeeCount: parsed.data.attendeeCount, respondedAt },
         select: { id: true },
       });
-      rsvpId = created.id;
+      rsvpId = createdRsvp.id;
+      created = true;
     }
 
     if (ownerEmail) {
@@ -88,6 +91,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
         },
       });
     }
+
+    return { created };
   });
-  return NextResponse.json({ saved: true }, { status: 201 });
+  return NextResponse.json({ saved: true, created: result.created }, { status: 201 });
 }

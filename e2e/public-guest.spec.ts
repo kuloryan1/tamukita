@@ -23,23 +23,44 @@ test("guest can RSVP, report an approved message, and content reviewers can mode
     return;
   }
 
-  const response = await page.goto(`/${invitationSlug}`);
+  await signIn(page, customerEmail, customerPassword);
+  const guestName = `Tamu ${randomUUID().slice(0, 8)}`;
+  const guestResponse = await page.request.post(`/api/invitations/${invitationId}/guests`, { data: { names: [guestName] } });
+  expect(guestResponse.status()).toBe(201);
+  const guestBody = await guestResponse.json() as { guests: Array<{ token: string }> };
+  const guestToken = guestBody.guests[0]?.token;
+  if (!guestToken) throw new Error("The guest fixture did not receive a private RSVP token.");
+
+  const response = await page.goto(`/${invitationSlug}?g=${encodeURIComponent(guestToken)}`);
   expect(response?.status()).toBe(200);
   await expect(page.locator(".public-hero-names")).toContainText("E2E Mempelai");
 
-  await page.setExtraHTTPHeaders({ "x-real-ip": `e2e-${randomUUID()}` });
-  const guestName = `Tamu ${randomUUID().slice(0, 8)}`;
+  await page.setExtraHTTPHeaders({ "x-forwarded-for": `198.51.100.${1 + Math.floor(Math.random() * 253)}` });
   await page.getByRole("button", { name: "Konfirmasi kehadiran" }).click();
-  await page.getByLabel("Nama lengkap").fill(guestName);
+  await expect(page.getByLabel("Undangan untuk")).toHaveValue(guestName);
   await page.getByLabel("Jumlah tamu yang hadir").selectOption("2");
   const rsvpResponsePromise = page.waitForResponse((candidate) =>
     candidate.url().endsWith(`/api/public/invitations/${invitationSlug}/rsvp`) && candidate.request().method() === "POST",
   );
   await page.getByRole("button", { name: "Kirim konfirmasi" }).click();
-  expect((await rsvpResponsePromise).status()).toBe(201);
+  const firstRsvpResponse = await rsvpResponsePromise;
+  expect(firstRsvpResponse.status()).toBe(201);
+  expect(await firstRsvpResponse.json()).toMatchObject({ saved: true, created: true });
   await expect(page.getByRole("heading", { name: `Terima kasih, ${guestName}!` })).toBeVisible();
+  await expect(page.locator(".rsvp-count")).toContainText("1 tamu telah mengirim RSVP");
   await page.getByRole("button", { name: "Selesai" }).click();
   await expect(page.getByRole("dialog")).toBeHidden();
+
+  await page.getByRole("button", { name: "Konfirmasi kehadiran" }).click();
+  await page.getByRole("button", { name: "Mohon maaf berhalangan" }).click();
+  const repeatedRsvpPromise = page.waitForResponse((candidate) =>
+    candidate.url().endsWith(`/api/public/invitations/${invitationSlug}/rsvp`) && candidate.request().method() === "POST",
+  );
+  await page.getByRole("button", { name: "Kirim konfirmasi" }).click();
+  const repeatedRsvpResponse = await repeatedRsvpPromise;
+  expect(repeatedRsvpResponse.status()).toBe(201);
+  expect(await repeatedRsvpResponse.json()).toMatchObject({ saved: true, created: false });
+  await expect(page.locator(".rsvp-count")).toContainText("1 tamu telah mengirim RSVP");
 
   const guestbookMessage = `Semoga selalu bahagia ${randomUUID().slice(0, 8)}`;
   await page.getByLabel("Namamu").fill(guestName);
@@ -51,7 +72,6 @@ test("guest can RSVP, report an approved message, and content reviewers can mode
   expect((await guestbookResponsePromise).status()).toBe(201);
   await expect(page.getByRole("status")).toContainText("menunggu persetujuan");
 
-  await signIn(page, customerEmail, customerPassword);
   await page.goto(`/dashboard/invitations/${invitationId}/guestbook`);
   const entry = page.locator(".guestbook-admin-entry").filter({ hasText: guestbookMessage });
   await expect(entry).toBeVisible();
@@ -67,7 +87,6 @@ test("guest can RSVP, report an approved message, and content reviewers can mode
   await page.goto(`/${invitationSlug}`);
   await expect(page.locator(".guestbook-entry").filter({ hasText: guestbookMessage })).toBeVisible();
 
-  await page.setExtraHTTPHeaders({ "x-real-ip": `e2e-${randomUUID()}` });
   const messageEntry = page.locator(".guestbook-entry").filter({ hasText: guestbookMessage });
   await messageEntry.getByRole("button", { name: "Laporkan ucapan" }).click();
   await page.getByLabel("Alasan laporan").selectOption("PERSONAL_INFORMATION");
