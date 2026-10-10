@@ -1,12 +1,16 @@
 import "server-only";
 
 import { createHmac } from "node:crypto";
+import { isIP } from "node:net";
 import { getPrismaClient } from "@/lib/prisma";
 
 export function getRequestAddress(request: Request) {
-  return request.headers.get("x-real-ip")
-    ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-    ?? "unknown";
+  // Dokploy's Traefik proxy appends the address of its direct client to this
+  // header. The left side may contain values supplied by the original client,
+  // so only use the final, proxy-appended address for rate-limit keys.
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  const candidate = forwardedFor?.slice(-1024).split(",").at(-1)?.trim();
+  return candidate && isIP(candidate) ? candidate : "unknown";
 }
 
 export async function allowRequest(key: string, limit: number, windowSeconds: number) {

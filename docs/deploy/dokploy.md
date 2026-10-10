@@ -9,6 +9,8 @@
 - Auto-deploy mati pada layanan yang disiapkan. Setup ini belum menjalankan deployment, menambahkan domain, atau memasukkan kredensial aplikasi staging.
 - Layanan Compose mengekspos web secara internal pada port `3000`. PostgreSQL dan Redis tidak memublikasikan port ke host.
 
+Rate limit memakai alamat dari elemen terakhir `X-Forwarded-For`, yang ditambahkan Traefik dari alamat peer yang terhubung langsung. Aplikasi mengabaikan `X-Real-IP` dan mengembalikan `unknown` jika nilai terakhir bukan alamat IP yang valid. Pertahankan lalu lintas aplikasi melalui Traefik Dokploy dan jangan aktifkan `forwardedHeaders.notAppendXForwardedFor`; bila ada proxy lain di depan Traefik, konfigurasikan proxy itu sebagai sumber forwarded header tepercaya pada Traefik.
+
 Pemisahan environment Dokploy belum berarti staging siap menerima trafik. Sebelum deploy, pastikan konfigurasi aplikasi, penyimpanan, database, dan kredensial staging terpisah dari production.
 
 ## Persiapan staging
