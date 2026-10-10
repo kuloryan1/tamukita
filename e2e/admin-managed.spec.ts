@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 
 test("admin creates customer drafts and notifies an existing customer", async ({ page, browser }) => {
+  test.setTimeout(60_000);
   const email = process.env.E2E_ADMIN_EMAIL;
   const password = process.env.E2E_ADMIN_PASSWORD;
   const existingCustomerEmail = process.env.E2E_CUSTOMER_EMAIL;
@@ -67,6 +68,16 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   expect(existingResult.invitationNotificationQueued).toBe(true);
   expect(existingResult.invitation?.slug).toBe(existingInvitationSlug);
   await expect(page.getByRole("status")).toContainText("email pemberitahuan sudah masuk antrean");
+  await expect.poll(async () => {
+    const notificationEmailResponse = await page.request.get(`http://127.0.0.1:3140/messages?to=${encodeURIComponent(existingCustomerEmail)}`);
+    if (!notificationEmailResponse.ok()) return false;
+    const notificationEmailPayload = await notificationEmailResponse.json() as { messages: Array<{ subject: string; text: string }> };
+    const invitationId = existingResult.invitation?.id;
+    return Boolean(invitationId && notificationEmailPayload.messages.some((message) =>
+      message.subject.startsWith("Draft undangan siap ditinjau · ")
+      && message.text.includes(`/dashboard/invitations/${invitationId}/edit`),
+    ));
+  }, { timeout: 20_000, message: "the worker should deliver the managed invitation email to the local mock" }).toBe(true);
 
   const customerPage = await browser.newPage();
   try {

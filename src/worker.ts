@@ -5,6 +5,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { Queue, Worker, type Job } from "bullmq";
 import IORedis from "ioredis";
 import { PrismaClient } from "./generated/prisma/client";
+import { getTransactionalEmailEndpoint } from "./lib/email-transport";
 import { WORKER_HEARTBEAT_KEY, WORKER_HEARTBEAT_TTL_SECONDS } from "./lib/worker-health";
 import {
   failMediaEdit,
@@ -168,7 +169,7 @@ async function sendEmail(to: string, subject: string, text: string, html: string
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
   if (!apiKey || !from) throw new Error("Layanan email belum dikonfigurasi.");
-  const response = await fetch("https://api.resend.com/emails", {
+  const response = await fetch(getTransactionalEmailEndpoint(), {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({ from, to: [to], subject, html, text }),

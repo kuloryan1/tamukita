@@ -18,6 +18,12 @@ const e2eMediaEnvironment = {
   REDIS_URL: process.env.REDIS_URL ?? "redis://127.0.0.1:6379",
   ...(process.env.DATABASE_URL ? { DATABASE_URL: process.env.DATABASE_URL } : {}),
 };
+const e2eEmailEnvironment = {
+  RESEND_API_KEY: "e2e-local-only",
+  EMAIL_FROM: "TamuKita E2E <noreply@tamukita.test>",
+  E2E_EMAIL_MOCK: "true",
+  NEXT_PUBLIC_APP_URL: baseURL,
+};
 const localWebServers = configuredBaseURL
   ? undefined
   : [
@@ -46,6 +52,7 @@ const localWebServers = configuredBaseURL
         timeout: 60_000,
         env: {
           ...e2eMediaEnvironment,
+          ...e2eEmailEnvironment,
           AUTH_SECRET: process.env.AUTH_SECRET ?? "local-e2e-only-secret",
         },
       },
@@ -65,11 +72,8 @@ const localWebServers = configuredBaseURL
           ...(process.env.DATABASE_URL ? { DATABASE_URL: process.env.DATABASE_URL } : {}),
           ...(process.env.XENDIT_WEBHOOK_TOKEN ? { XENDIT_WEBHOOK_TOKEN: process.env.XENDIT_WEBHOOK_TOKEN } : {}),
           ...(process.env.XENDIT_REFUND_WEBHOOK_TOKEN ? { XENDIT_REFUND_WEBHOOK_TOKEN: process.env.XENDIT_REFUND_WEBHOOK_TOKEN } : {}),
-          RESEND_API_KEY: "e2e-local-only",
-          EMAIL_FROM: "TamuKita E2E <noreply@tamukita.test>",
-          E2E_EMAIL_MOCK: "true",
+          ...e2eEmailEnvironment,
           HOSTNAME: "127.0.0.1",
-          NEXT_PUBLIC_APP_URL: baseURL,
           PORT: localAppPort,
         },
       },
