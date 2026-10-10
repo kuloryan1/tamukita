@@ -52,6 +52,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
     let created = false;
     const respondedAt = new Date();
     if (guestId) {
+      // Serialize submissions for a personalized guest link so two concurrent
+      // requests cannot both observe an empty RSVP slot and create duplicates.
+      await tx.$queryRaw<Array<{ id: string }>>`SELECT "id" FROM "guests" WHERE "id" = ${guestId}::uuid FOR UPDATE`;
       const previous = await tx.rSVP.findFirst({ where: { invitationId: invitation.id, guestId }, select: { id: true } });
       if (previous) {
         await tx.rSVP.update({ where: { id: previous.id }, data: { displayName, attendance: parsed.data.attendance, attendeeCount: parsed.data.attendeeCount, respondedAt } });

@@ -64,6 +64,8 @@ test("guest can RSVP, report an approved message, and content reviewers can mode
   expect(repeatedRsvpResponse.status()).toBe(201);
   expect(await repeatedRsvpResponse.json()).toMatchObject({ saved: true, created: false });
   await expect(page.locator(".rsvp-count")).toContainText(expectedRsvpCountText);
+  await page.getByRole("button", { name: "Selesai" }).click();
+  await expect(page.getByRole("dialog")).toBeHidden();
 
   const guestbookMessage = `Semoga selalu bahagia ${randomUUID().slice(0, 8)}`;
   await page.getByLabel("Namamu").fill(guestName);
