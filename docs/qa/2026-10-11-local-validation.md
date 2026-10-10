@@ -163,6 +163,20 @@ Halaman `/admin/analytics` menampilkan metrik agregat 30 hari: akun dan workspac
 | `npm run build` | Lulus; 39 route, termasuk `/admin/analytics`. |
 | GitHub E2E smoke pada commit `c57cc82` | Lulus; mengunjungi halaman analitik sebagai Super Admin dan Finance, lalu memastikan Finance diarahkan keluar dari `/admin`. [Workflow](https://github.com/kuloryan1/tamukita/actions/runs/38091181120). |
 
+## Audit log admin — 11 Oktober 2026
+
+Halaman `/admin/audit` menyediakan pencarian audit dengan filter aktor, tipe target, workspace, dan rentang tanggal Jakarta. Hanya Super Admin yang dapat membuka halaman; Finance diarahkan keluar. Pagination memakai cursor stabil pada `createdAt` dan `id`, dan query hanya mengambil kolom yang ditampilkan sehingga metadata audit mentah tidak ikut dimuat.
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| `npx prisma validate` | Lulus. |
+| `npm run lint` | Lulus; 176 file. |
+| `npm run typecheck` | Lulus. |
+| `npm test` | Lulus; 10 file dan 29 tes. |
+| `npm run build` | Lulus; 39 route, termasuk `/admin/audit`. |
+| GitHub CI pada commit `27b28f5` | Lulus. [Workflow](https://github.com/kuloryan1/tamukita/actions/runs/38091872520). |
+| GitHub E2E smoke pada commit `27b28f5` | Lulus; membuka Audit Log sebagai Super Admin dan memastikan Finance diarahkan keluar. [Workflow](https://github.com/kuloryan1/tamukita/actions/runs/38091872443). |
+
 ## Gate yang belum dibuktikan
 
 - Backup terenkripsi, upload, dan restore dari Cloudflare R2 nyata; yang sudah diverifikasi hanya MinIO lokal.
