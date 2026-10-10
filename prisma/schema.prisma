@@ -1,0 +1,899 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PlatformRole {
+  CUSTOMER
+  SUPER_ADMIN
+  FINANCE
+  SUPPORT
+  CONTENT_REVIEWER
+  TEMPLATE_DEVELOPER
+}
+
+enum OrganizationType {
+  PERSONAL
+  RESELLER
+  PLATFORM
+}
+
+enum OrganizationStatus {
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  EDITOR
+  VIEWER
+  RESELLER_STAFF
+}
+
+enum TemplateStatus {
+  DRAFT
+  IN_REVIEW
+  UPDATE_DRAFT
+  UPDATE_IN_REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum TemplateLicenseType {
+  FREE
+  PAID_PER_INVITATION
+}
+
+enum InvitationStatus {
+  DRAFT
+  PUBLISHED
+  SUSPENDED
+  EXPIRED
+  ARCHIVED
+}
+
+enum InvitationVersionType {
+  DRAFT
+  PUBLISHED
+}
+
+enum MediaStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+  DELETED
+}
+
+enum MediaVisibility {
+  PRIVATE_SOURCE
+  PUBLIC_VARIANT
+}
+
+enum GuestAttendance {
+  ATTENDING
+  DECLINED
+  MAYBE
+}
+
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  HIDDEN
+}
+
+enum ContentReportStatus {
+  PENDING
+  DISMISSED
+  HIDDEN
+  RESTORED
+}
+
+enum ContentReportReason {
+  SPAM
+  HARASSMENT
+  PERSONAL_INFORMATION
+  OTHER
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  EXPIRED
+  CANCELED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum OrderItemType {
+  TEMPLATE_LICENSE
+  ACTIVATION
+  RENEWAL
+  RESELLER_CREDIT
+}
+
+enum PaymentProvider {
+  XENDIT
+}
+
+enum PaymentStatus {
+  CREATED
+  PENDING
+  SUCCEEDED
+  FAILED
+  EXPIRED
+  REFUNDED
+}
+
+enum RefundStatus {
+  INITIATING
+  PENDING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+enum RefundReason {
+  FRAUDULENT
+  DUPLICATE
+  REQUESTED_BY_CUSTOMER
+  CANCELLATION
+  OTHERS
+}
+
+enum ResellerStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum ResellerCustomerStatus {
+  PENDING
+  ACTIVE
+  DECLINED
+  REVOKED
+}
+
+enum CreditSku {
+  BASIC_ACTIVATION
+  PREMIUM_ACTIVATION
+}
+
+enum CreditLedgerType {
+  TOP_UP
+  ACTIVATION
+  REFUND
+  ADJUSTMENT
+}
+
+enum EntitlementStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+}
+
+enum AccountTokenPurpose {
+  VERIFY_EMAIL
+  PASSWORD_RESET
+}
+
+model User {
+  id                  String               @id @default(uuid()) @db.Uuid
+  name                String?
+  email               String?              @unique
+  emailVerified       DateTime?
+  image               String?
+  passwordHash        String?              @db.Text
+  platformRole        PlatformRole         @default(CUSTOMER)
+  failedLoginAttempts Int                  @default(0)
+  lockedUntil         DateTime?
+  authVersion         Int                  @default(0)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  accounts            Account[]
+  sessions            Session[]
+  memberships         Membership[]
+  ownedInvitations    Invitation[]         @relation("InvitationOwner")
+  createdInvitations  Invitation[]         @relation("InvitationCreator")
+  authoredTemplates   Template[]           @relation("TemplateAuthor")
+  invitationVersions  InvitationVersion[]
+  uploadedMedia       MediaAsset[]         @relation("MediaUploader")
+  auditLogs           AuditLog[]
+  supportAccessGrants SupportAccessGrant[] @relation("SupportAccessAdmin")
+  orders              Order[]
+  accountTokens       AccountToken[]
+  requestedRefunds    Refund[]             @relation("RefundRequestedBy")
+  platformSettings    PlatformSetting[]    @relation("PlatformSettingUpdater")
+
+  @@index([platformRole])
+  @@map("users")
+}
+
+model AccountToken {
+  id         String              @id @default(uuid()) @db.Uuid
+  userId     String              @db.Uuid
+  purpose    AccountTokenPurpose
+  tokenHash  String              @unique
+  expiresAt  DateTime
+  createdAt  DateTime            @default(now())
+  consumedAt DateTime?
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose, consumedAt])
+  @@index([expiresAt])
+  @@map("account_tokens")
+}
+
+model Account {
+  id                String  @id @default(uuid()) @db.Uuid
+  userId            String  @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid()) @db.Uuid
+  sessionToken String   @unique
+  userId       String   @db.Uuid
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Organization {
+  id                  String               @id @default(uuid()) @db.Uuid
+  name                String
+  slug                String               @unique
+  type                OrganizationType     @default(PERSONAL)
+  status              OrganizationStatus   @default(ACTIVE)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  memberships         Membership[]
+  invitations         Invitation[]         @relation("InvitationWorkspace")
+  resellerInvitations Invitation[]         @relation("ResellerInvitations")
+  guests              Guest[]
+  mediaAssets         MediaAsset[]
+  orders              Order[]
+  licenses            TemplateLicense[]
+  entitlements        Entitlement[]
+  resellerProfile     ResellerProfile?
+  resellerCustomers   ResellerCustomer[]   @relation("ResellerOrganization")
+  customerOfResellers ResellerCustomer[]   @relation("CustomerOrganization")
+  creditLedger        CreditLedger[]
+  auditLogs           AuditLog[]
+  supportAccessGrants SupportAccessGrant[]
+  analyticsDaily      AnalyticsDaily[]
+
+  @@index([type, status])
+  @@map("organizations")
+}
+
+model Membership {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @db.Uuid
+  userId         String         @db.Uuid
+  role           MembershipRole @default(EDITOR)
+  createdAt      DateTime       @default(now())
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId, role])
+  @@map("memberships")
+}
+
+model Template {
+  id              String              @id @default(uuid()) @db.Uuid
+  slug            String              @unique
+  name            String
+  description     String              @db.Text
+  category        String
+  licenseType     TemplateLicenseType @default(FREE)
+  priceIdr        Int                 @default(0)
+  status          TemplateStatus      @default(DRAFT)
+  authorId        String?             @db.Uuid
+  activeVersionId String?             @unique @db.Uuid
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  author          User?               @relation("TemplateAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  versions        TemplateVersion[]   @relation("TemplateVersions")
+  activeVersion   TemplateVersion?    @relation("ActiveTemplateVersion", fields: [activeVersionId], references: [id], onDelete: SetNull)
+  licenses        TemplateLicense[]
+  orderItems      OrderItem[]
+
+  @@index([status, category])
+  @@map("templates")
+}
+
+model TemplateVersion {
+  id            String            @id @default(uuid()) @db.Uuid
+  templateId    String            @db.Uuid
+  version       String
+  schemaVersion Int
+  sdkVersion    String
+  manifest      Json
+  sourceRef     String?
+  publishedAt   DateTime?
+  createdAt     DateTime          @default(now())
+  template      Template          @relation("TemplateVersions", fields: [templateId], references: [id], onDelete: Cascade)
+  activeFor     Template?         @relation("ActiveTemplateVersion")
+  invitations   Invitation[]
+  licenses      TemplateLicense[]
+  orderItems    OrderItem[]
+
+  @@unique([templateId, version])
+  @@index([templateId, publishedAt])
+  @@map("template_versions")
+}
+
+model Invitation {
+  id                  String               @id @default(uuid()) @db.Uuid
+  organizationId      String               @db.Uuid
+  ownerId             String               @db.Uuid
+  createdById         String               @db.Uuid
+  resellerOrgId       String?              @db.Uuid
+  templateVersionId   String               @db.Uuid
+  slug                String               @unique
+  title               String
+  status              InvitationStatus     @default(DRAFT)
+  draftData           Json
+  publishedSnapshot   Json?
+  publishedAt         DateTime?
+  startsAt            DateTime?
+  expiresAt           DateTime?
+  deletedAt           DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  organization        Organization         @relation("InvitationWorkspace", fields: [organizationId], references: [id], onDelete: Restrict)
+  owner               User                 @relation("InvitationOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  createdBy           User                 @relation("InvitationCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  reseller            Organization?        @relation("ResellerInvitations", fields: [resellerOrgId], references: [id], onDelete: SetNull)
+  templateVersion     TemplateVersion      @relation(fields: [templateVersionId], references: [id], onDelete: Restrict)
+  versions            InvitationVersion[]
+  events              Event[]
+  mediaAssets         MediaAsset[]
+  guestLinks          GuestLink[]
+  rsvps               RSVP[]
+  guestbook           GuestbookEntry[]
+  orders              Order[]
+  licenses            TemplateLicense[]
+  entitlements        Entitlement[]
+  supportAccessGrants SupportAccessGrant[]
+
+  @@index([organizationId, status, updatedAt])
+  @@index([ownerId, status])
+  @@index([resellerOrgId, createdAt])
+  @@map("invitations")
+}
+
+model InvitationVersion {
+  id           String                @id @default(uuid()) @db.Uuid
+  invitationId String                @db.Uuid
+  version      Int
+  type         InvitationVersionType
+  snapshot     Json
+  createdById  String?               @db.Uuid
+  createdAt    DateTime              @default(now())
+  invitation   Invitation            @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  createdBy    User?                 @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([invitationId, version])
+  @@index([invitationId, type, createdAt])
+  @@map("invitation_versions")
+}
+
+model Event {
+  id           String     @id @default(uuid()) @db.Uuid
+  invitationId String     @db.Uuid
+  title        String
+  startsAt     DateTime
+  endsAt       DateTime?
+  venue        String
+  address      String     @db.Text
+  mapsUrl      String?
+  sortOrder    Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  rsvps        RSVP[]
+
+  @@index([invitationId, startsAt])
+  @@map("events")
+}
+
+model MediaAsset {
+  id                  String          @id @default(uuid()) @db.Uuid
+  organizationId      String          @db.Uuid
+  invitationId        String?         @db.Uuid
+  uploadedById        String          @db.Uuid
+  storageKey          String          @unique
+  originalName        String
+  mimeType            String
+  sizeBytes           BigInt
+  status              MediaStatus     @default(PENDING)
+  visibility          MediaVisibility @default(PRIVATE_SOURCE)
+  metadata            Json?
+  processingStartedAt DateTime?
+  createdAt           DateTime        @default(now())
+  deletedAt           DateTime?
+  organization        Organization    @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  invitation          Invitation?     @relation(fields: [invitationId], references: [id], onDelete: SetNull)
+  uploadedBy          User            @relation("MediaUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+  variants            MediaVariant[]
+  edits               MediaEdit[]
+
+  @@index([organizationId, createdAt])
+  @@index([invitationId, status])
+  @@map("media_assets")
+}
+
+model MediaVariant {
+  id           String     @id @default(uuid()) @db.Uuid
+  mediaAssetId String     @db.Uuid
+  variantKey   String
+  storageKey   String     @unique
+  mimeType     String
+  sizeBytes    BigInt
+  width        Int?
+  height       Int?
+  createdAt    DateTime   @default(now())
+  mediaAsset   MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaAssetId, variantKey])
+  @@map("media_variants")
+}
+
+model MediaEdit {
+  id           String     @id @default(uuid()) @db.Uuid
+  mediaAssetId String     @db.Uuid
+  revision     Int
+  editData     Json
+  createdAt    DateTime   @default(now())
+  mediaAsset   MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaAssetId, revision])
+  @@map("media_edits")
+}
+
+model Guest {
+  id               String           @id @default(uuid()) @db.Uuid
+  organizationId   String           @db.Uuid
+  name             String
+  phoneCiphertext  Bytes?
+  emailCiphertext  Bytes?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  organization     Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  links            GuestLink[]
+  rsvps            RSVP[]
+  guestbookEntries GuestbookEntry[]
+
+  @@index([organizationId, name])
+  @@map("guests")
+}
+
+model GuestLink {
+  id           String     @id @default(uuid()) @db.Uuid
+  invitationId String     @db.Uuid
+  guestId      String     @db.Uuid
+  tokenHash    String     @unique
+  sentAt       DateTime?
+  createdAt    DateTime   @default(now())
+  invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  guest        Guest      @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  @@unique([invitationId, guestId])
+  @@index([invitationId, createdAt])
+  @@map("guest_links")
+}
+
+model RSVP {
+  id            String          @id @default(uuid()) @db.Uuid
+  invitationId  String          @db.Uuid
+  eventId       String?         @db.Uuid
+  guestId       String?         @db.Uuid
+  displayName   String
+  attendance    GuestAttendance
+  attendeeCount Int             @default(1)
+  message       String?         @db.Text
+  respondedAt   DateTime        @default(now())
+  invitation    Invitation      @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  event         Event?          @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  guest         Guest?          @relation(fields: [guestId], references: [id], onDelete: SetNull)
+
+  @@index([invitationId, respondedAt])
+  @@index([guestId])
+  @@map("rsvps")
+}
+
+model GuestbookEntry {
+  id           String           @id @default(uuid()) @db.Uuid
+  invitationId String           @db.Uuid
+  guestId      String?          @db.Uuid
+  displayName  String
+  message      String           @db.Text
+  status       ModerationStatus @default(PENDING)
+  createdAt    DateTime         @default(now())
+  reviewedAt   DateTime?
+  invitation   Invitation       @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  guest        Guest?           @relation(fields: [guestId], references: [id], onDelete: SetNull)
+  reports      ContentReport[]
+
+  @@index([invitationId, status, createdAt])
+  @@map("guestbook")
+}
+
+model ContentReport {
+  id                    String              @id @default(uuid()) @db.Uuid
+  guestbookEntryId      String              @db.Uuid
+  reporterFingerprint   String              @db.VarChar(64)
+  reason                ContentReportReason
+  status                ContentReportStatus @default(PENDING)
+  createdAt             DateTime            @default(now())
+  reviewedAt            DateTime?
+  guestbookEntry        GuestbookEntry      @relation(fields: [guestbookEntryId], references: [id], onDelete: Cascade)
+
+  @@unique([guestbookEntryId, reporterFingerprint])
+  @@index([status, createdAt])
+  @@index([guestbookEntryId, status])
+  @@map("content_reports")
+}
+
+model Order {
+  id              String            @id @default(uuid()) @db.Uuid
+  organizationId  String            @db.Uuid
+  buyerId         String            @db.Uuid
+  invitationId    String?           @db.Uuid
+  status          OrderStatus       @default(PENDING)
+  currency        String            @default("IDR")
+  totalAmount     Int               @default(0)
+  idempotencyKey  String            @unique
+  priceSnapshot   Json
+  paidAt          DateTime?
+  canceledAt      DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  organization    Organization      @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  buyer           User              @relation(fields: [buyerId], references: [id], onDelete: Restrict)
+  invitation      Invitation?       @relation(fields: [invitationId], references: [id], onDelete: SetNull)
+  items           OrderItem[]
+  paymentSessions PaymentSession[]
+  paymentEvents   PaymentEvent[]
+  refunds         Refund[]
+  licenses        TemplateLicense[]
+  entitlements    Entitlement[]
+  creditLedger    CreditLedger[]
+
+  @@index([organizationId, status, createdAt])
+  @@index([buyerId, createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id                  String            @id @default(uuid()) @db.Uuid
+  orderId             String            @db.Uuid
+  itemType            OrderItemType
+  sku                 String
+  quantity            Int               @default(1)
+  unitPriceIdr        Int
+  totalPriceIdr       Int
+  templateId          String?           @db.Uuid
+  templateVersionId   String?           @db.Uuid
+  entitlementSnapshot Json
+  createdAt           DateTime          @default(now())
+  order               Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  template            Template?         @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  templateVersion     TemplateVersion?  @relation(fields: [templateVersionId], references: [id], onDelete: SetNull)
+  licenses            TemplateLicense[]
+
+  @@index([orderId, itemType])
+  @@map("order_items")
+}
+
+model PaymentSession {
+  id                       String          @id @default(uuid()) @db.Uuid
+  orderId                  String          @db.Uuid
+  provider                 PaymentProvider @default(XENDIT)
+  providerSessionId        String?         @unique
+  providerPaymentId        String?         @unique
+  providerPaymentRequestId String?         @unique
+  status                   PaymentStatus   @default(CREATED)
+  checkoutUrl              String?         @db.Text
+  amountIdr                Int
+  currency                 String          @default("IDR")
+  expiresAt                DateTime?
+  requestSnapshot          Json?
+  responseSnapshot         Json?
+  createdAt                DateTime        @default(now())
+  updatedAt                DateTime        @updatedAt
+  order                    Order           @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  events                   PaymentEvent[]
+  refunds                  Refund[]
+
+  @@index([orderId, status])
+  @@map("payment_sessions")
+}
+
+model Refund {
+  id               String         @id @default(uuid()) @db.Uuid
+  orderId          String         @db.Uuid
+  paymentSessionId String         @db.Uuid
+  requestedById    String         @db.Uuid
+  providerRefundId String?        @unique
+  referenceId      String         @unique
+  amount           Int
+  currency         String         @default("IDR")
+  reason           RefundReason
+  adminNote        String?        @db.Text
+  status           RefundStatus   @default(INITIATING)
+  failureCode      String?
+  requestSnapshot  Json?
+  responseSnapshot Json?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  order            Order          @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  paymentSession   PaymentSession @relation(fields: [paymentSessionId], references: [id], onDelete: Restrict)
+  requestedBy      User           @relation("RefundRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict)
+
+  @@index([orderId, status, createdAt])
+  @@map("refunds")
+}
+
+model PaymentEvent {
+  id               String          @id @default(uuid()) @db.Uuid
+  provider         PaymentProvider @default(XENDIT)
+  providerEventId  String
+  eventType        String
+  paymentSessionId String?         @db.Uuid
+  orderId          String?         @db.Uuid
+  payload          Json
+  receivedAt       DateTime        @default(now())
+  processedAt      DateTime?
+  processingError  String?         @db.Text
+  paymentSession   PaymentSession? @relation(fields: [paymentSessionId], references: [id], onDelete: SetNull)
+  order            Order?          @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, providerEventId])
+  @@index([processedAt, receivedAt])
+  @@map("payment_events")
+}
+
+model TemplateLicense {
+  id                String          @id @default(uuid()) @db.Uuid
+  organizationId    String          @db.Uuid
+  invitationId      String          @db.Uuid
+  templateId        String          @db.Uuid
+  templateVersionId String          @db.Uuid
+  orderId           String?         @db.Uuid
+  orderItemId       String?         @db.Uuid
+  licenseSnapshot   Json
+  purchasedAt       DateTime        @default(now())
+  organization      Organization    @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  invitation        Invitation      @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  template          Template        @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  templateVersion   TemplateVersion @relation(fields: [templateVersionId], references: [id], onDelete: Restrict)
+  order             Order?          @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  orderItem         OrderItem?      @relation(fields: [orderItemId], references: [id], onDelete: SetNull)
+
+  @@unique([invitationId, templateVersionId])
+  @@index([organizationId, purchasedAt])
+  @@map("template_licenses")
+}
+
+model Plan {
+  id           String            @id @default(uuid()) @db.Uuid
+  key          String            @unique
+  name         String
+  description  String?           @db.Text
+  priceIdr     Int               @default(0)
+  durationDays Int               @default(365)
+  isActive     Boolean           @default(true)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  entitlements PlanEntitlement[]
+  grants       Entitlement[]
+
+  @@map("plans")
+}
+
+model PlanEntitlement {
+  id         String @id @default(uuid()) @db.Uuid
+  planId     String @db.Uuid
+  featureKey String
+  value      Json
+  plan       Plan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, featureKey])
+  @@map("plan_entitlements")
+}
+
+model Entitlement {
+  id             String            @id @default(uuid()) @db.Uuid
+  organizationId String            @db.Uuid
+  invitationId   String?           @db.Uuid
+  planId         String?           @db.Uuid
+  orderId        String?           @db.Uuid
+  featureKey     String
+  value          Json
+  status         EntitlementStatus @default(ACTIVE)
+  startsAt       DateTime          @default(now())
+  expiresAt      DateTime?
+  createdAt      DateTime          @default(now())
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  invitation     Invitation?       @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  plan           Plan?             @relation(fields: [planId], references: [id], onDelete: SetNull)
+  order          Order?            @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, featureKey, status])
+  @@index([invitationId, expiresAt])
+  @@map("entitlements")
+}
+
+model ResellerProfile {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @unique @db.Uuid
+  status         ResellerStatus @default(PENDING)
+  businessName   String
+  approvedAt     DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("reseller_profiles")
+}
+
+model ResellerCustomer {
+  id            String                 @id @default(uuid()) @db.Uuid
+  resellerOrgId String                 @db.Uuid
+  customerOrgId String                 @db.Uuid
+  status        ResellerCustomerStatus @default(PENDING)
+  approvedAt    DateTime?
+  createdAt     DateTime               @default(now())
+  reseller      Organization           @relation("ResellerOrganization", fields: [resellerOrgId], references: [id], onDelete: Cascade)
+  customer      Organization           @relation("CustomerOrganization", fields: [customerOrgId], references: [id], onDelete: Cascade)
+
+  @@unique([resellerOrgId, customerOrgId])
+  @@index([customerOrgId])
+  @@map("reseller_customers")
+}
+
+model CreditLedger {
+  id            String           @id @default(uuid()) @db.Uuid
+  resellerOrgId String           @db.Uuid
+  orderId       String?          @db.Uuid
+  sourceTopUpId String?          @db.Uuid
+  sku           CreditSku
+  type          CreditLedgerType
+  unitsDelta    Int
+  reference     String
+  metadata      Json?
+  createdAt     DateTime         @default(now())
+  reseller      Organization     @relation(fields: [resellerOrgId], references: [id], onDelete: Restrict)
+  order         Order?           @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  sourceTopUp   CreditLedger?    @relation("CreditLotActivity", fields: [sourceTopUpId], references: [id], onDelete: Restrict)
+  lotActivities CreditLedger[]   @relation("CreditLotActivity")
+
+  @@unique([resellerOrgId, reference])
+  @@index([resellerOrgId, sku, createdAt])
+  @@index([sourceTopUpId])
+  @@map("credit_ledger")
+}
+
+model AuditLog {
+  id             String        @id @default(uuid()) @db.Uuid
+  organizationId String?       @db.Uuid
+  actorId        String?       @db.Uuid
+  action         String
+  targetType     String
+  targetId       String?
+  metadata       Json?
+  createdAt      DateTime      @default(now())
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  actor          User?         @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("audit_logs")
+}
+
+model PlatformSetting {
+  key         String   @id
+  value       Json
+  updatedById String?  @db.Uuid
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  updatedBy   User?    @relation("PlatformSettingUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([updatedById, updatedAt])
+  @@map("platform_settings")
+}
+
+model SupportAccessGrant {
+  id             String       @id @default(uuid()) @db.Uuid
+  adminId        String       @db.Uuid
+  organizationId String       @db.Uuid
+  invitationId   String       @db.Uuid
+  reason         String       @db.Text
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  lastAccessedAt DateTime?
+  createdAt      DateTime     @default(now())
+  admin          User         @relation("SupportAccessAdmin", fields: [adminId], references: [id], onDelete: Restrict)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitation     Invitation   @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+
+  @@index([adminId, expiresAt, revokedAt])
+  @@index([invitationId, createdAt])
+  @@map("support_access_grants")
+}
+
+model NotificationJob {
+  id          String    @id @default(uuid()) @db.Uuid
+  jobKey      String    @unique
+  jobType     String
+  payload     Json
+  attempts    Int       @default(0)
+  availableAt DateTime  @default(now())
+  completedAt DateTime?
+  failedAt    DateTime?
+  lastError   String?   @db.Text
+  createdAt   DateTime  @default(now())
+
+  @@index([completedAt, failedAt, availableAt])
+  @@map("notification_jobs")
+}
+
+model AnalyticsDaily {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @db.Uuid
+  date           DateTime     @db.Date
+  metricKey      String
+  metricValue    BigInt       @default(0)
+  dimensions     Json?
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, date, metricKey])
+  @@index([date, metricKey])
+  @@map("analytics_daily")
+}
+
+model RateLimitBucket {
+  key             String   @id @db.VarChar(64)
+  hits            Int      @default(0)
+  windowStartedAt DateTime @default(now())
+
+  @@index([windowStartedAt])
+  @@map("rate_limit_buckets")
+}

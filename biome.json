@@ -1,0 +1,30 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": {
+    "enabled": false
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": [
+      "src/**/*.{ts,tsx}",
+      "!src/generated",
+      "e2e/**/*.{ts,tsx}",
+      "scripts/**/*.ts",
+      "next.config.ts",
+      "playwright.config.ts",
+      "prisma.config.ts"
+    ]
+  },
+  "formatter": {
+    "enabled": false
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended"
+    }
+  },
+  "assist": {
+    "enabled": false
+  }
+}

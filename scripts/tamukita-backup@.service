@@ -1,0 +1,16 @@
+[Unit]
+Description=TamuKita encrypted PostgreSQL backup
+Wants=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User=%i
+WorkingDirectory=/opt/tamukita.io
+EnvironmentFile=/etc/tamukita/backup.env
+ExecStart=/usr/bin/bash scripts/backup-postgres.sh
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/tmp

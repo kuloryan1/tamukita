@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/tamukita?schema=public
+      AUTH_SECRET: ci-only-secret-not-for-deployment
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Validate Docker Compose configuration
+        run: docker compose --env-file .env.example config --quiet
+      - name: Require a database password
+        shell: bash
+        env:
+          POSTGRES_PASSWORD: ""
+        run: |
+          if output="$(docker compose --env-file .env.example config --quiet 2>&1)"; then
+            echo "Docker Compose accepted an empty database password." >&2
+            exit 1
+          fi
+          if ! grep -q "POSTGRES_PASSWORD" <<<"$output"; then
+            echo "$output" >&2
+            exit 1
+          fi
+      - run: npx prisma validate
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build

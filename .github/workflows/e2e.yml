@@ -1,0 +1,86 @@
+name: E2E smoke
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/tamukita?schema=public
+      REDIS_URL: redis://localhost:6379
+      AUTH_SECRET: ci-only-secret-not-for-deployment
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:23300
+      PLAYWRIGHT_TEST_PORT: 23300
+      E2E_ADMIN_EMAIL: e2e-admin@tamukita.test
+      E2E_ADMIN_PASSWORD: ci-only-e2e-password-123
+      E2E_CUSTOMER_EMAIL: e2e-customer@tamukita.test
+      E2E_CUSTOMER_PASSWORD: ci-only-customer-password-123
+      E2E_OTHER_CUSTOMER_EMAIL: e2e-other-customer@tamukita.test
+      E2E_OTHER_CUSTOMER_PASSWORD: ci-only-other-customer-password-123
+      E2E_MOBILE_CUSTOMER_EMAIL: e2e-mobile-customer@tamukita.test
+      E2E_MOBILE_CUSTOMER_PASSWORD: ci-only-mobile-customer-password-123
+      E2E_WEBKIT_CUSTOMER_EMAIL: e2e-webkit-customer@tamukita.test
+      E2E_WEBKIT_CUSTOMER_PASSWORD: ci-only-webkit-customer-password-123
+      E2E_TEMPLATE_DEVELOPER_EMAIL: e2e-template-developer@tamukita.test
+      E2E_TEMPLATE_DEVELOPER_PASSWORD: ci-only-template-developer-password-123
+      E2E_CONTENT_REVIEWER_EMAIL: e2e-content-reviewer@tamukita.test
+      E2E_CONTENT_REVIEWER_PASSWORD: ci-only-content-reviewer-password-123
+      E2E_REFUND_RESELLER_EMAIL: e2e-refund-reseller@tamukita.test
+      E2E_REFUND_RESELLER_PASSWORD: ci-only-refund-reseller-password-123
+      E2E_XENDIT_WEBHOOK_TOKEN: ci-only-xendit-callback-token
+      E2E_XENDIT_REFUND_WEBHOOK_TOKEN: ci-only-xendit-refund-callback-token
+      XENDIT_WEBHOOK_TOKEN: ci-only-xendit-callback-token
+      XENDIT_REFUND_WEBHOOK_TOKEN: ci-only-xendit-refund-callback-token
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: tamukita
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d tamukita"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run db:deploy
+      - run: npm run db:seed:e2e
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run build
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-failure-artifacts
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7

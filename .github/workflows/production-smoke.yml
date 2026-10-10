@@ -1,0 +1,51 @@
+name: Production smoke check
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    if: ${{ vars.PRODUCTION_HEALTH_URL != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      PRODUCTION_HEALTH_URL: ${{ vars.PRODUCTION_HEALTH_URL }}
+    steps:
+      - name: Check production dependencies
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          const raw = process.env.PRODUCTION_HEALTH_URL;
+          if (!raw) throw new Error("Set the PRODUCTION_HEALTH_URL repository variable.");
+          const target = new URL(raw);
+          if (target.protocol !== "https:" || target.pathname !== "/api/health" || target.search || target.hash || target.username || target.password) {
+            throw new Error("PRODUCTION_HEALTH_URL must be an HTTPS /api/health URL without credentials, query, or fragment.");
+          }
+          NODE
+          curl --fail-with-body --show-error --silent \
+            --max-time 20 --retry 2 --retry-all-errors --retry-delay 5 \
+            "$PRODUCTION_HEALTH_URL"
+      - name: Notify configured webhook on failure
+        if: failure()
+        shell: bash
+        env:
+          PRODUCTION_ALERT_WEBHOOK_URL: ${{ secrets.PRODUCTION_ALERT_WEBHOOK_URL }}
+        run: |
+          if [[ -z "$PRODUCTION_ALERT_WEBHOOK_URL" ]]; then
+            echo "No production alert webhook configured; failure remains visible in GitHub Actions."
+            exit 0
+          fi
+          case "$PRODUCTION_ALERT_WEBHOOK_URL" in
+            https://*) ;;
+            *) echo "PRODUCTION_ALERT_WEBHOOK_URL must use HTTPS" >&2; exit 2 ;;
+          esac
+          curl --fail-with-body --show-error --silent --output /dev/null \
+            --max-time 10 \
+            -H "Content-Type: application/json" \
+            --data-raw '{"text":"TamuKita production dependency health check failed. Inspect the GitHub Actions run for details."}' \
+            "$PRODUCTION_ALERT_WEBHOOK_URL"
