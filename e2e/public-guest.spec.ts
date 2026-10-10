@@ -25,7 +25,7 @@ async function readInvitationViewCount(date: string) {
   return Number(result.rows[0]?.value ?? "0");
 }
 
-async function readPlatformViewCount(metricKey: "template_catalog_views" | "template_detail_views", date: string) {
+async function readPlatformViewCount(metricKey: "template_catalog_views" | "template_detail_views" | "template_catalog_unique_visitors", date: string) {
   if (!analyticsPool) throw new Error("The disposable E2E database is required.");
   const result = await analyticsPool.query<{ value: string }>(
     `SELECT COALESCE((
@@ -75,10 +75,37 @@ test("public guest flows and marketplace page view metrics work, and content rev
   expect(response?.status()).toBe(200);
   await expect.poll(() => readInvitationViewCount(metricDate), { timeout: 5_000 }).toBe(previousViewCount + 1);
 
+  const previousMarketplaceVisitors = await readPlatformViewCount("template_catalog_unique_visitors", metricDate);
+  const crossOriginVisit = await page.request.post("/api/analytics/marketplace-visit", {
+    headers: { origin: "https://outside.example" },
+    data: {},
+  });
+  expect(crossOriginVisit.status()).toBe(403);
+  await expect.poll(() => readPlatformViewCount("template_catalog_unique_visitors", metricDate), { timeout: 5_000 }).toBe(previousMarketplaceVisitors);
+
   const previousCatalogViews = await readPlatformViewCount("template_catalog_views", metricDate);
+  const uniqueVisitorResponsePromise = page.waitForResponse((candidate) =>
+    candidate.url().endsWith("/api/analytics/marketplace-visit") && candidate.request().method() === "POST",
+  );
   const catalogResponse = await page.goto("/templates");
   expect(catalogResponse?.status()).toBe(200);
+  const uniqueVisitorResponse = await uniqueVisitorResponsePromise;
+  expect(uniqueVisitorResponse.status()).toBe(204);
+  const setCookieHeader = (await uniqueVisitorResponse.allHeaders())["set-cookie"]?.toLowerCase() ?? "";
+  expect(setCookieHeader).toContain("httponly");
+  expect(setCookieHeader).toContain("samesite=lax");
+  expect(setCookieHeader).toContain("path=/api/analytics/marketplace-visit");
+  await expect.poll(() => readPlatformViewCount("template_catalog_unique_visitors", metricDate), { timeout: 5_000 }).toBe(previousMarketplaceVisitors + 1);
   await expect.poll(() => readPlatformViewCount("template_catalog_views", metricDate), { timeout: 5_000 }).toBe(previousCatalogViews + 1);
+  const visitorCookie = (await page.context().cookies()).find((cookie) => cookie.name === "tk_marketplace_seen_day");
+  expect(visitorCookie).toMatchObject({ httpOnly: true, path: "/api/analytics/marketplace-visit" });
+  const repeatedUniqueVisitorResponsePromise = page.waitForResponse((candidate) =>
+    candidate.url().endsWith("/api/analytics/marketplace-visit") && candidate.request().method() === "POST",
+  );
+  await page.reload();
+  expect((await repeatedUniqueVisitorResponsePromise).status()).toBe(204);
+  await expect.poll(() => readPlatformViewCount("template_catalog_unique_visitors", metricDate), { timeout: 5_000 }).toBe(previousMarketplaceVisitors + 1);
+
   const templateDetailPath = await page.locator(".template-card-art").first().getAttribute("href");
   if (!templateDetailPath?.startsWith("/templates/")) throw new Error("The published catalog did not render a template detail link.");
   const previousTemplateDetailViews = await readPlatformViewCount("template_detail_views", metricDate);

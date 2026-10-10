@@ -27,6 +27,7 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   await expect(page.getByRole("heading", { name: "Template digunakan per kategori" })).toBeVisible();
   await expect(page.getByText("Tampilan katalog template", { exact: true })).toBeVisible();
   await expect(page.getByText("Tampilan detail template", { exact: true })).toBeVisible();
+  await expect(page.getByText("Pengunjung marketplace harian", { exact: true })).toBeVisible();
   await page.goto("/admin");
   await page.getByRole("link", { name: "Audit log" }).click();
   await expect(page.getByRole("heading", { name: "Audit log" })).toBeVisible();
@@ -44,6 +45,7 @@ test("admin creates customer drafts and notifies an existing customer", async ({
     await expect(financePage.getByRole("heading", { name: "Analitik platform" })).toBeVisible();
     await expect(financePage.getByRole("heading", { name: "Template digunakan per kategori" })).toBeVisible();
     await expect(financePage.getByText("Tampilan katalog template", { exact: true })).toBeVisible();
+    await expect(financePage.getByText("Pengunjung marketplace harian", { exact: true })).toBeVisible();
     await financePage.goto(new URL("/admin", page.url()).toString());
     await financePage.waitForURL(/\/dashboard/);
     await expect(financePage.getByRole("heading", { name: "Admin TamuKita" })).toHaveCount(0);

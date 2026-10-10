@@ -26,6 +26,7 @@ Bergantung pada fitur yang digunakan, data dapat mencakup:
 - **Media:** nama berkas, tipe dan ukuran berkas, varian hasil pemrosesan, metadata teknis/crop, dan status pemrosesan.
 - **Transaksi:** item dan nilai pesanan, mata uang, status pembayaran/refund, referensi sesi/pembayaran dari penyedia, serta catatan audit transaksi. TamuKita tidak meminta pengguna memasukkan nomor kartu ke formulir aplikasi; metode pembayaran dikelola penyedia pembayaran.
 - **Keamanan dan operasi:** catatan audit admin, permintaan akses sementara yang diaudit, data kesehatan layanan, penghitung kunjungan agregat per undangan/hari, dan metadata teknis yang mungkin dicatat oleh infrastruktur hosting.
+- **Analitik marketplace:** jumlah page view katalog/detail dan jumlah browser yang mengunjungi katalog per hari UTC saat JavaScript aktif. Browser menerima cookie first-party HTTP-only berisi tanggal UTC, berlaku hanya sampai pergantian hari, dan dikirim hanya ke endpoint hitung marketplace. Nilai cookie tidak memuat pengenal acak dan kedaluwarsa tiap hari; tabel metrik hanya menyimpan agregat hitungan, tanpa alamat IP, ID akun, atau referrer. Kesesuaian pemberitahuan, dasar pemrosesan, dan kebutuhan persetujuan masih harus ditinjau operator/penasihat hukum sebelum peluncuran.
 
 Operator harus memverifikasi jenis data yang dicatat oleh proxy, hosting, database, penyedia email, penyimpanan objek, dan alat pemantauan sebelum bagian ini diterbitkan.
 
@@ -40,6 +41,7 @@ Data berasal dari pemilik akun, anggota workspace, pelanggan yang membuat undang
 - mengirim email transaksi atau operasional yang diminta;
 - memberi dukungan, mencegah penyalahgunaan, menyelidiki insiden, dan memenuhi kewajiban hukum;
 - menghitung penggunaan layanan dan memperbaiki keandalan platform.
+- menghitung page view marketplace dan browser harian secara agregat untuk memahami jangkauan katalog.
 
 Dasar pemrosesan dan pemberitahuan pada saat pengumpulan harus disesuaikan per tujuan oleh operator setelah tinjauan hukum.
 

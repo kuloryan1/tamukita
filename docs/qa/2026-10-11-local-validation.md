@@ -211,18 +211,18 @@ Halaman `/admin/analytics` kini merangkum publikasi undangan per kategori templa
 | `npm run build` | Lulus; 39 route, termasuk `/admin/analytics`. |
 | `npm run test:e2e -- e2e/admin-managed.spec.ts` | Lulus; 3 dari 3 profil browser. Super Admin dan Finance melihat bagian kategori template. |
 
-## Page view katalog marketplace — 11 Oktober 2026
+## Pengunjung dan page view marketplace — 11 Oktober 2026
 
-Halaman katalog template dan detail template kini mencatat page view harian pada tabel agregat platform. Baris metrik hanya menyimpan tanggal, nama metrik, dan jumlah; pencatatan tidak menyimpan ID akun, alamat IP, referrer, token undangan, atau data pengunjung. Admin dan Finance melihat jumlah katalog serta detail sebagai page view, bukan pengunjung unik.
+Halaman katalog template dan detail template mencatat page view harian pada tabel agregat platform. Kunjungan katalog juga dihitung satu kali per browser per hari UTC saat JavaScript aktif dan cookie tersedia. Cookie first-party berisi tanggal dan kedaluwarsa pada tengah malam UTC; cookie dikirim hanya ke endpoint metrik. Tabel metrik hanya menyimpan tanggal, nama metrik, dan jumlah; pencatatan tidak menyimpan ID browser, akun, alamat IP, referrer, token undangan, atau data pengunjung. Ringkasan 30 hari menjumlahkan pengunjung harian, sehingga browser yang sama dapat muncul lagi pada hari berikutnya.
 
 | Pemeriksaan | Hasil |
 | --- | --- |
 | `npx prisma validate` | Lulus. |
 | Migrasi database E2E | Lulus; seluruh 14 migrasi, termasuk `platform_analytics_daily`, diterapkan pada PostgreSQL 17 sementara. |
-| `npm run lint` | Lulus; 180 file diperiksa tanpa peringatan. |
+| `npm run lint` | Lulus; 182 file diperiksa tanpa peringatan. |
 | `npm run typecheck` | Lulus. |
 | `npm test` | Lulus; 10 file dan 29 tes. |
-| `npm run build` | Lulus; build production memproses 39 route. |
-| E2E `public-guest.spec.ts` dan `admin-managed.spec.ts` | Lulus; 6 tes pada Chromium desktop, Chromium mobile, dan WebKit iPhone. Tes memeriksa kenaikan page view undangan, katalog, dan detail setelah respons serta tampilan metrik untuk Super Admin dan Finance. |
+| `npm run build` | Lulus; build production memproses 40 route. |
+| E2E `public-guest.spec.ts` dan `admin-managed.spec.ts` | Lulus; 6 tes pada Chromium desktop, Chromium mobile, dan WebKit iPhone. Tes memeriksa kenaikan pengunjung marketplace satu kali, penolakan origin luar, tidak menghitung ulang saat browser yang sama memuat ulang katalog, kenaikan page view undangan/katalog/detail setelah respons, atribut cookie harian, dan tampilan metrik untuk Super Admin serta Finance. |
 
-E2E memakai PostgreSQL 17 dan Redis 7 sementara pada port terpisah; container dihentikan dan dihapus setelah tes. Ini validasi lokal dan belum mengukur visitor unik, LCP staging, atau beban produksi.
+E2E memakai PostgreSQL 17 dan Redis 7 sementara pada port terpisah; container dihentikan dan dihapus setelah tes. Hitungan unik berlaku per browser per hari; belum ada deduplikasi identitas lintas perangkat atau hari. Ini validasi lokal dan belum mengukur LCP staging atau beban produksi.

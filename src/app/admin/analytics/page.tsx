@@ -36,7 +36,7 @@ export default async function AdminAnalyticsPage() {
     prisma.analyticsDaily.aggregate({ where: { metricKey: "invitation_views", date: { gte: publicViewsStart } }, _sum: { metricValue: true } }),
     prisma.platformAnalyticsDaily.groupBy({
       by: ["metricKey"],
-      where: { metricKey: { in: ["template_catalog_views", "template_detail_views"] }, date: { gte: publicViewsStart } },
+      where: { metricKey: { in: ["template_catalog_views", "template_detail_views", "template_catalog_unique_visitors"] }, date: { gte: publicViewsStart } },
       _sum: { metricValue: true },
     }),
     prisma.rSVP.count({ where: { respondedAt: { gte: periodStart }, invitation: { deletedAt: null } } }),
@@ -95,6 +95,7 @@ export default async function AdminAnalyticsPage() {
         { label: "Draft undangan dibuat", value: newDrafts.toLocaleString("id-ID"), detail: "Tidak termasuk yang dihapus" },
         { label: "Konversi draft ke publikasi", value: rate(publishedDrafts, newDrafts), detail: `${publishedDrafts.toLocaleString("id-ID")} dari draft dalam kohor` },
         { label: "Konversi checkout", value: rate(paidOrderCount, settledOrderCount), detail: `${paidOrderCount.toLocaleString("id-ID")} order dibayar dari ${settledOrderCount.toLocaleString("id-ID")} order final` },
+        { label: "Pengunjung marketplace harian", value: (platformViewsByKey.get("template_catalog_unique_visitors") ?? BigInt(0)).toLocaleString("id-ID"), detail: "Total hitungan harian 30 hari; browser dengan JavaScript aktif dihitung sekali per hari UTC" },
         { label: "Tampilan katalog template", value: (platformViewsByKey.get("template_catalog_views") ?? BigInt(0)).toLocaleString("id-ID"), detail: "Page view halaman marketplace, bukan pengunjung unik" },
         { label: "Tampilan detail template", value: (platformViewsByKey.get("template_detail_views") ?? BigInt(0)).toLocaleString("id-ID"), detail: "Page view halaman detail, bukan pengunjung unik" },
         { label: "Tampilan halaman undangan", value: (publicViews._sum.metricValue ?? BigInt(0)).toLocaleString("id-ID"), detail: "Page view, bukan pengunjung unik" },

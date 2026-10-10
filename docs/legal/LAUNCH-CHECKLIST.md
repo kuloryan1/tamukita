@@ -14,6 +14,7 @@
 ## Privasi dan sistem elektronik
 
 - [ ] Tetapkan peran operator dan pelanggan untuk tiap tujuan/data (pengendali/pemroses bila relevan), dasar pemrosesan, pemberitahuan, kontrak/instruksi, serta proses permintaan subjek data.
+- [ ] Tinjau cookie analitik marketplace yang berisi tanggal UTC dan kedaluwarsa harian: tentukan dasar pemrosesan/pemberitahuan dan kebutuhan persetujuan sebelum mengaktifkannya untuk publik.
 - [ ] Isi jadwal retensi terukur dan implementasikan purge untuk akun, draf, RSVP, buku tamu, kontak, file sumber/varian R2, laporan konten, log, audit, transaksi, dan backup.
 - [ ] Tetapkan proses ekspor/koreksi/penghapusan, verifikasi identitas, pengecualian legal hold, SLA, dan bukti penyelesaian. Saat ini belum teridentifikasi penghapusan akun mandiri atau purge lengkap.
 - [ ] Inventarisasikan subprosesor, lokasi data, akses admin/vendor, transfer lintas negara, kontrak pemrosesan, dan masa simpan provider untuk deployment yang benar-benar dipakai.
