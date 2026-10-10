@@ -18,6 +18,20 @@ export async function getApprovedReseller(userId: string) {
   });
 }
 
+export async function getApprovedResellerManager(userId: string) {
+  return getPrismaClient().resellerProfile.findFirst({
+    where: {
+      status: "APPROVED",
+      organization: {
+        type: "RESELLER",
+        status: "ACTIVE",
+        memberships: { some: { userId, role: { in: ["OWNER", "ADMIN"] } } },
+      },
+    },
+    select: { organizationId: true, businessName: true },
+  });
+}
+
 export async function hasResellerMembership(userId: string) {
   return getPrismaClient().membership.findFirst({
     where: {

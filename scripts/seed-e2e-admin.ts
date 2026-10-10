@@ -308,11 +308,30 @@ try {
     update: { role: "OWNER" },
     create: { organizationId: resellerOrganization.id, userId: customer.userId, role: "OWNER" },
   });
+  await prisma.membership.upsert({
+    where: { organizationId_userId: { organizationId: resellerOrganization.id, userId: mobileCustomer.userId } },
+    update: { role: "RESELLER_STAFF" },
+    create: { organizationId: resellerOrganization.id, userId: mobileCustomer.userId, role: "RESELLER_STAFF" },
+  });
   await prisma.resellerProfile.upsert({
     where: { organizationId: resellerOrganization.id },
     update: { status: "APPROVED", businessName: "E2E Reseller", approvedAt: now },
     create: { organizationId: resellerOrganization.id, status: "APPROVED", businessName: "E2E Reseller", approvedAt: now },
   });
+  const previousSalesFixtures = await prisma.resellerSale.findMany({
+    where: { resellerOrgId: resellerOrganization.id, description: { startsWith: "E2E sales report " } },
+    select: { id: true },
+  });
+  if (previousSalesFixtures.length > 0) {
+    await prisma.auditLog.deleteMany({
+      where: {
+        organizationId: resellerOrganization.id,
+        targetType: "ResellerSale",
+        targetId: { in: previousSalesFixtures.map(({ id }) => id) },
+      },
+    });
+    await prisma.resellerSale.deleteMany({ where: { id: { in: previousSalesFixtures.map(({ id }) => id) } } });
+  }
   const activationResellerOrganization = await prisma.organization.upsert({
     where: { slug: "e2e-activation-reseller" },
     update: { name: "E2E Activation Reseller", type: "RESELLER", status: "ACTIVE" },

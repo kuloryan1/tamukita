@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2, CircleHelp, Coins, ShoppingBag, Sparkles, Users } from "lucide-react";
+import { ArrowRight, Ban, CheckCircle2, CircleHelp, Coins, ReceiptText, ShoppingBag, Sparkles, Users } from "lucide-react";
 
 const currency = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
 
@@ -28,14 +28,17 @@ type ResellerOrder = { id: string; status: string; totalAmount: number; createdA
 type CustomerInvitation = { id: string; title: string; slug: string; status: "DRAFT" | "PUBLISHED"; alreadyAssigned: boolean; activationSku: "BASIC_ACTIVATION" | "PREMIUM_ACTIVATION" | null };
 type ResellerCustomer = { organizationId: string; name: string; email: string; invitations: CustomerInvitation[] };
 type ResellerStaff = { id: string; name: string; email: string; createdAt: string };
+type ResellerSale = { id: string; amountIdr: number; description: string; createdAt: string; voidedAt: string | null; voidReason: string | null; customerName: string | null; invitationTitle: string | null };
+type ResellerSalesSummary = { activeTotalIdr: number; activeSaleCount: number; monthToDateIdr: number };
 
-export function ResellerDashboard({ businessName, basicCredits, premiumCredits, activationCount, customerCount, canManageStaff, basicUnitPrice, premiumUnitPrice, orders }: {
+export function ResellerDashboard({ businessName, basicCredits, premiumCredits, activationCount, customerCount, canManageStaff, canViewSales, basicUnitPrice, premiumUnitPrice, orders }: {
   businessName: string;
   basicCredits: number;
   premiumCredits: number;
   activationCount: number;
   customerCount: number;
   canManageStaff: boolean;
+  canViewSales: boolean;
   basicUnitPrice: number | null;
   premiumUnitPrice: number | null;
   orders: ResellerOrder[];
@@ -57,6 +60,19 @@ export function ResellerDashboard({ businessName, basicCredits, premiumCredits, 
   const [staffError, setStaffError] = useState("");
   const [staffNotice, setStaffNotice] = useState("");
   const [removingStaffId, setRemovingStaffId] = useState("");
+  const [sales, setSales] = useState<ResellerSale[]>([]);
+  const [salesSummary, setSalesSummary] = useState<ResellerSalesSummary>({ activeTotalIdr: 0, activeSaleCount: 0, monthToDateIdr: 0 });
+  const [saleAmount, setSaleAmount] = useState("");
+  const [saleDescription, setSaleDescription] = useState("");
+  const [saleCustomerOrgId, setSaleCustomerOrgId] = useState("");
+  const [saleInvitationId, setSaleInvitationId] = useState("");
+  const [saleBusy, setSaleBusy] = useState(false);
+  const [saleError, setSaleError] = useState("");
+  const [saleNotice, setSaleNotice] = useState("");
+  const [voidingSaleId, setVoidingSaleId] = useState("");
+  const [voidReason, setVoidReason] = useState("");
+  const [voidBusy, setVoidBusy] = useState(false);
+  const [voidError, setVoidError] = useState("");
   const unitPrice = sku === "BASIC_ACTIVATION" ? basicUnitPrice : premiumUnitPrice;
 
   const loadCustomers = useCallback(async () => {
@@ -71,7 +87,16 @@ export function ResellerDashboard({ businessName, basicCredits, premiumCredits, 
     if (response?.ok && result?.staff) setStaff(result.staff);
   }, []);
 
-  useEffect(() => { void loadCustomers(); void loadStaff(); }, [loadCustomers, loadStaff]);
+  const loadSales = useCallback(async () => {
+    const response = await fetch("/api/reseller/sales", { cache: "no-store" }).catch(() => null);
+    const result = await response?.json().catch(() => null) as { sales?: ResellerSale[]; summary?: ResellerSalesSummary } | null;
+    if (response?.ok && result?.sales && result.summary) {
+      setSales(result.sales);
+      setSalesSummary(result.summary);
+    }
+  }, []);
+
+  useEffect(() => { void loadCustomers(); void loadStaff(); if (canViewSales) void loadSales(); }, [canViewSales, loadCustomers, loadSales, loadStaff]);
 
   async function checkout() {
     setBusy(true); setError("");
@@ -123,6 +148,42 @@ export function ResellerDashboard({ businessName, basicCredits, premiumCredits, 
     await loadStaff(); router.refresh();
   }
 
+  async function recordSale(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setSaleBusy(true); setSaleError(""); setSaleNotice("");
+    const response = await fetch("/api/reseller/sales", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        amountIdr: Number(saleAmount),
+        description: saleDescription,
+        ...(saleCustomerOrgId ? { customerOrgId: saleCustomerOrgId } : {}),
+        ...(saleInvitationId ? { invitationId: saleInvitationId } : {}),
+      }),
+    }).catch(() => null);
+    const result = await response?.json().catch(() => null) as { error?: string } | null;
+    setSaleBusy(false);
+    if (!response?.ok) { setSaleError(result?.error ?? "Catatan penjualan belum tersimpan."); return; }
+    setSaleAmount(""); setSaleDescription(""); setSaleInvitationId("");
+    setSaleNotice("Catatan berhasil disimpan sebagai laporan reseller.");
+    await loadSales();
+  }
+
+  async function voidSale(event: FormEvent<HTMLFormElement>, id: string) {
+    event.preventDefault(); setVoidBusy(true); setVoidError("");
+    const response = await fetch(`/api/reseller/sales/${id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ reason: voidReason }),
+    }).catch(() => null);
+    const result = await response?.json().catch(() => null) as { error?: string } | null;
+    setVoidBusy(false);
+    if (!response?.ok) { setVoidError(result?.error ?? "Catatan belum dapat dikoreksi."); return; }
+    setVoidingSaleId(""); setVoidReason("");
+    await loadSales();
+  }
+
+  const selectedCustomer = customers.find((customer) => customer.organizationId === saleCustomerOrgId);
+
   return <div className="reseller-dashboard">
     <div className="dashboard-page-heading"><div><p className="dashboard-date">WORKSPACE MITRA</p><h1>{businessName} <span>✳</span></h1><p>Kelola kredit aktivasi dan pantau pembelianmu.</p></div><span className="status-pill status-pill--live"><i />Reseller disetujui</span></div>
     <div className="dashboard-stat-grid reseller-credit-grid"><div className="stat-card"><div className="stat-card-top"><span className="stat-icon stat-icon--sage"><Coins size={17} /></span><span className="stat-period">Basic</span></div><strong>{basicCredits.toLocaleString("id-ID")}</strong><span className="stat-label">Kredit aktivasi Basic</span></div><div className="stat-card"><div className="stat-card-top"><span className="stat-icon stat-icon--gold"><Sparkles size={17} /></span><span className="stat-period">Premium</span></div><strong>{premiumCredits.toLocaleString("id-ID")}</strong><span className="stat-label">Kredit aktivasi Premium</span></div><div className="stat-card"><div className="stat-card-top"><span className="stat-icon stat-icon--rose"><Users size={17} /></span><span className="stat-period">Pelanggan</span></div><strong>{customerCount.toLocaleString("id-ID")}</strong><span className="stat-label">Workspace pelanggan</span></div><div className="stat-card stat-card--soft"><div className="stat-card-top"><span className="stat-icon stat-icon--rose"><ShoppingBag size={17} /></span><span className="stat-period">Aktivasi</span></div><strong>{activationCount.toLocaleString("id-ID")}</strong><span className="stat-label">Kredit yang digunakan</span></div></div>
@@ -136,6 +197,27 @@ export function ResellerDashboard({ businessName, basicCredits, premiumCredits, 
     </section>
     <section className="reseller-topup-card"><div><span className="eyebrow">BELI KREDIT</span><h2>Isi saldo aktivasi.</h2><p>Kredit baru ditambahkan setelah webhook Xendit memverifikasi pembayaran.</p><div className="reseller-credit-note"><CircleHelp size={15} /><span>Harga ditetapkan melalui konfigurasi server. Kredit tidak dapat ditarik atau dipindahkan.</span></div></div><div className="reseller-topup-form"><label className="editor-field"><span className="field-label">Jenis kredit</span><select className="text-input" value={sku} onChange={(event) => setSku(event.target.value as typeof sku)}><option value="BASIC_ACTIVATION">Basic · {basicUnitPrice ? currency.format(basicUnitPrice) : "harga belum diatur"} / unit</option><option value="PREMIUM_ACTIVATION">Premium · {premiumUnitPrice ? currency.format(premiumUnitPrice) : "harga belum diatur"} / unit</option></select></label><label className="editor-field"><span className="field-label">Jumlah unit</span><input className="text-input" type="number" min="1" max="100" value={quantity} onChange={(event) => setQuantity(Math.min(100, Math.max(1, Number(event.target.value))))} /></label><div className="reseller-total-row"><span>Total</span><b>{unitPrice ? currency.format(unitPrice * quantity) : "Belum tersedia"}</b></div>{error && <div className="editor-error" role="alert">{error}</div>}<button className="button button--dark" type="button" disabled={busy || !unitPrice} onClick={() => void checkout()}>{busy ? "Membuka checkout..." : "Lanjut ke Xendit"} <ArrowRight size={15} /></button></div></section>
     {canManageStaff && <section className="dashboard-content-card reseller-staff-card"><div className="card-heading"><div><h2>Staf reseller</h2><p>Staf dapat mengelola pelanggan dan aktivasi. Top up tetap khusus pemilik atau admin.</p></div></div><form className="reseller-customer-form" onSubmit={addStaff}><label className="editor-field"><span className="field-label">Email akun staf</span><input className="text-input" type="email" required maxLength={254} value={staffEmail} onChange={(event) => setStaffEmail(event.target.value)} placeholder="staf@email.com" /></label><button className="button button--dark" type="submit" disabled={staffBusy}>{staffBusy ? "Menambahkan..." : "Tambah staf"} <ArrowRight size={15} /></button></form><p className="reseller-customer-hint">Staf harus sudah memiliki akun TamuKita. Pemilik dapat mencabut akses dari daftar ini.</p>{staffError && <div className="editor-error" role="alert">{staffError}</div>}{staffNotice && <p className="reseller-customer-notice" role="status">{staffNotice}</p>}{staff.length === 0 ? <div className="dashboard-empty-state"><h3>Belum ada staf</h3><p>Tambahkan anggota tim untuk membantu menangani pelanggan.</p></div> : staff.map((member) => <div className="reseller-staff-row" key={member.id}><div><b>{member.name}</b><small>{member.email}</small></div><button className="button button--outline button--small" type="button" disabled={Boolean(removingStaffId)} onClick={() => void removeStaff(member.id)}>{removingStaffId === member.id ? "Mencabut..." : "Cabut akses"}</button></div>)}</section>}
+    {canViewSales && <section className="dashboard-content-card reseller-sales-card">
+      <div className="card-heading"><div><h2>Laporan penjualan</h2><p>Catat nilai penjualan yang kamu laporkan kepada pelanggan.</p></div><span className="reseller-sales-label"><ReceiptText size={14} /> Laporan reseller</span></div>
+      <p className="reseller-sales-disclaimer">Data ini diinput oleh reseller dan belum diverifikasi TamuKita. Pembayaran pelanggan tidak diproses melalui laporan ini. Ringkasan menghitung semua catatan aktif; daftar menampilkan 100 catatan terbaru.</p>
+      <div className="reseller-sales-summary">
+        <div><span>Total aktif tercatat</span><strong>{currency.format(salesSummary.activeTotalIdr)}</strong><small>{salesSummary.activeSaleCount.toLocaleString("id-ID")} catatan</small></div>
+        <div><span>Dicatat bulan ini</span><strong>{currency.format(salesSummary.monthToDateIdr)}</strong><small>Berdasarkan tanggal input</small></div>
+      </div>
+      <form className="reseller-sales-form" onSubmit={recordSale}>
+        <label className="editor-field"><span className="field-label">Deskripsi penjualan</span><input className="text-input" required minLength={2} maxLength={160} value={saleDescription} onChange={(event) => setSaleDescription(event.target.value)} placeholder="Contoh: Paket undangan pernikahan" /></label>
+        <label className="editor-field"><span className="field-label">Nilai yang dilaporkan (IDR)</span><input className="text-input" type="number" required min="1" max="2147483647" step="1" value={saleAmount} onChange={(event) => setSaleAmount(event.target.value)} placeholder="Contoh: 1500000" /></label>
+        <label className="editor-field"><span className="field-label">Pelanggan tertaut <small>opsional</small></span><select className="text-input" value={saleCustomerOrgId} onChange={(event) => { setSaleCustomerOrgId(event.target.value); setSaleInvitationId(""); }}><option value="">Tanpa pelanggan tertaut</option>{customers.map((customer) => <option key={customer.organizationId} value={customer.organizationId}>{customer.name}</option>)}</select></label>
+        <label className="editor-field"><span className="field-label">Undangan <small>opsional</small></span><select className="text-input" value={saleInvitationId} disabled={!selectedCustomer || selectedCustomer.invitations.length === 0} onChange={(event) => setSaleInvitationId(event.target.value)}><option value="">Tanpa undangan tertaut</option>{selectedCustomer?.invitations.map((invitation) => <option key={invitation.id} value={invitation.id}>{invitation.title}</option>)}</select></label>
+        <div className="reseller-sales-submit">{saleError && <div className="editor-error" role="alert">{saleError}</div>}{saleNotice && <p className="reseller-customer-notice" role="status">{saleNotice}</p>}<button className="button button--dark" type="submit" disabled={saleBusy}>{saleBusy ? "Menyimpan..." : "Catat penjualan"} <ArrowRight size={15} /></button></div>
+      </form>
+      {sales.length === 0 ? <div className="dashboard-empty-state"><h3>Belum ada laporan penjualan</h3><p>Catatan yang kamu buat akan tampil di sini.</p></div> : <div className="reseller-sales-list">{sales.map((sale) => <article className="reseller-sale-row" key={sale.id}>
+        <div className="reseller-sale-details"><b>{sale.description}</b><small>{new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Jakarta" }).format(new Date(sale.createdAt))}{sale.customerName ? ` · ${sale.customerName}` : ""}{sale.invitationTitle ? ` · ${sale.invitationTitle}` : ""}</small>{sale.voidedAt && <small className="reseller-sale-void-reason">Dibatalkan: {sale.voidReason}</small>}</div>
+        <strong className={sale.voidedAt ? "is-voided" : ""}>{currency.format(sale.amountIdr)}</strong>
+        {sale.voidedAt ? <span className="reseller-sale-voided"><Ban size={13} /> Dibatalkan</span> : <button className="button button--outline button--small" type="button" onClick={() => { setVoidingSaleId(sale.id); setVoidReason(""); setVoidError(""); }}>Koreksi</button>}
+        {voidingSaleId === sale.id && <form className="reseller-sale-void-form" onSubmit={(event) => void voidSale(event, sale.id)}><label className="editor-field"><span className="field-label">Alasan koreksi</span><input className="text-input" required minLength={3} maxLength={240} value={voidReason} onChange={(event) => setVoidReason(event.target.value)} placeholder="Jelaskan mengapa catatan dibatalkan" /></label>{voidError && <div className="editor-error" role="alert">{voidError}</div>}<div><button className="button button--outline button--small" type="button" disabled={voidBusy} onClick={() => { setVoidingSaleId(""); setVoidError(""); }}>Kembali</button><button className="button button--dark button--small" type="submit" disabled={voidBusy}>{voidBusy ? "Menyimpan..." : "Batalkan catatan"}</button></div></form>}
+      </article>)}</div>}
+    </section>}
     <section className="dashboard-content-card reseller-order-card"><div className="card-heading"><div><h2>Riwayat kredit</h2><p>Order berubah menjadi lunas setelah notifikasi Xendit tervalidasi.</p></div></div>{orders.length === 0 ? <div className="dashboard-empty-state"><h3>Belum ada pembelian</h3><p>Top up kredit akan muncul di daftar ini.</p></div> : orders.map((order) => <div className="reseller-order-row" key={order.id}><div><b>{order.units} kredit {order.sku === "BASIC_ACTIVATION" ? "Basic" : "Premium"}</b><small>{new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeZone: "Asia/Jakarta" }).format(new Date(order.createdAt))}</small></div><strong>{currency.format(order.totalAmount)}</strong><span className={`status-pill ${order.status === "PAID" ? "status-pill--live" : "status-pill--draft"}`}><i />{order.status === "PAID" ? <><CheckCircle2 size={12} /> Lunas</> : order.status === "EXPIRED" || order.status === "CANCELED" ? "Kedaluwarsa" : "Menunggu"}</span></div>)}</section>
   </div>;
 }

@@ -107,3 +107,50 @@ test("reseller access is approved by the customer before the reseller activates 
     await customerContext.close();
   }
 });
+
+test("reseller sales reports are visible to managers and auditable when corrected", async ({ page, browser }, testInfo) => {
+  const ownerEmail = process.env.E2E_CUSTOMER_EMAIL;
+  const ownerPassword = process.env.E2E_CUSTOMER_PASSWORD;
+  const staffEmail = process.env.E2E_MOBILE_CUSTOMER_EMAIL;
+  const staffPassword = process.env.E2E_MOBILE_CUSTOMER_PASSWORD;
+  if (!ownerEmail || !ownerPassword || !staffEmail || !staffPassword) {
+    test.skip(true, "Requires the disposable reseller owner and staff fixtures.");
+    return;
+  }
+
+  await signIn(page, ownerEmail, ownerPassword);
+  await page.goto("/reseller");
+  const report = page.locator(".reseller-sales-card");
+  await expect(report.getByRole("heading", { name: "Laporan penjualan" })).toBeVisible();
+  const description = `E2E sales report ${testInfo.project.name} ${Date.now()}`;
+  await page.getByLabel("Deskripsi penjualan").fill(description);
+  await page.getByLabel("Nilai yang dilaporkan (IDR)").fill("1500000");
+  const createResponsePromise = page.waitForResponse((response) =>
+    response.url().endsWith("/api/reseller/sales") && response.request().method() === "POST",
+  );
+  await page.getByRole("button", { name: "Catat penjualan" }).click();
+  expect((await createResponsePromise).status()).toBe(201);
+  const saleRow = report.locator(".reseller-sale-row").filter({ hasText: description });
+  await expect(saleRow).toContainText("1.500.000");
+
+  await saleRow.getByRole("button", { name: "Koreksi" }).click();
+  await saleRow.getByLabel("Alasan koreksi").fill("Catatan E2E dibatalkan untuk validasi.");
+  const voidResponsePromise = page.waitForResponse((response) =>
+    response.url().includes("/api/reseller/sales/") && response.request().method() === "PATCH",
+  );
+  await saleRow.getByRole("button", { name: "Batalkan catatan" }).click();
+  expect((await voidResponsePromise).status()).toBe(200);
+  await expect(saleRow).toContainText("Dibatalkan");
+
+  const staffContext = await browser.newContext({ baseURL: new URL(page.url()).origin });
+  try {
+    const staffPage = await staffContext.newPage();
+    await signIn(staffPage, staffEmail, staffPassword);
+    await staffPage.goto("/reseller");
+    await expect(staffPage.locator(".reseller-sales-card")).toHaveCount(0);
+    expect((await staffPage.request.get("/api/reseller/sales")).status()).toBe(403);
+    expect((await staffPage.request.post("/api/reseller/sales", { data: { amountIdr: 1000, description: "Staf tidak boleh melaporkan" } })).status()).toBe(403);
+  } finally {
+    await staffContext.close();
+  }
+});

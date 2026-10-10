@@ -38,6 +38,7 @@ export default async function ResellerPage() {
   ]);
   const basicCredits = balances.find((balance) => balance.sku === "BASIC_ACTIVATION")?._sum.unitsDelta ?? 0;
   const premiumCredits = balances.find((balance) => balance.sku === "PREMIUM_ACTIVATION")?._sum.unitsDelta ?? 0;
+  const memberRole = profile.organization.memberships[0]?.role;
   const resellerOrders = orders.map((order) => ({
     id: order.id,
     status: order.status,
@@ -52,7 +53,8 @@ export default async function ResellerPage() {
     premiumCredits={premiumCredits}
     activationCount={activationCount}
     customerCount={customerCount}
-    canManageStaff={profile.organization.memberships[0]?.role === "OWNER"}
+    canManageStaff={memberRole === "OWNER"}
+    canViewSales={memberRole === "OWNER" || memberRole === "ADMIN"}
     basicUnitPrice={configuredPrice(process.env.RESELLER_BASIC_ACTIVATION_PRICE_IDR)}
     premiumUnitPrice={configuredPrice(process.env.RESELLER_PREMIUM_ACTIVATION_PRICE_IDR)}
     orders={resellerOrders}

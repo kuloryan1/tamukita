@@ -212,6 +212,8 @@ model User {
   accountTokens       AccountToken[]
   requestedRefunds    Refund[]             @relation("RefundRequestedBy")
   platformSettings    PlatformSetting[]    @relation("PlatformSettingUpdater")
+  recordedResellerSales ResellerSale[]     @relation("ResellerSaleRecorder")
+  voidedResellerSales   ResellerSale[]     @relation("ResellerSaleVoider")
 
   @@index([platformRole])
   @@map("users")
@@ -295,6 +297,8 @@ model Organization {
   auditLogs           AuditLog[]
   supportAccessGrants SupportAccessGrant[]
   analyticsDaily      AnalyticsDaily[]
+  resellerSales       ResellerSale[]       @relation("ResellerSales")
+  salesAsCustomer     ResellerSale[]       @relation("ResellerSaleCustomer")
 
   @@index([type, status])
   @@map("organizations")
@@ -391,6 +395,7 @@ model Invitation {
   licenses            TemplateLicense[]
   entitlements        Entitlement[]
   supportAccessGrants SupportAccessGrant[]
+  resellerSales       ResellerSale[]
 
   @@index([organizationId, status, updatedAt])
   @@index([ownerId, status])
@@ -787,6 +792,30 @@ model ResellerCustomer {
   @@unique([resellerOrgId, customerOrgId])
   @@index([customerOrgId])
   @@map("reseller_customers")
+}
+
+model ResellerSale {
+  id             String        @id @default(uuid()) @db.Uuid
+  resellerOrgId  String        @db.Uuid
+  customerOrgId  String?       @db.Uuid
+  invitationId   String?       @db.Uuid
+  recordedById   String?       @db.Uuid
+  amountIdr      Int
+  description    String        @db.VarChar(160)
+  createdAt      DateTime      @default(now())
+  voidedAt       DateTime?
+  voidReason     String?       @db.VarChar(240)
+  voidedById     String?       @db.Uuid
+  reseller       Organization  @relation("ResellerSales", fields: [resellerOrgId], references: [id], onDelete: Restrict)
+  customer       Organization? @relation("ResellerSaleCustomer", fields: [customerOrgId], references: [id], onDelete: SetNull)
+  invitation     Invitation?   @relation(fields: [invitationId], references: [id], onDelete: SetNull)
+  recordedBy     User?         @relation("ResellerSaleRecorder", fields: [recordedById], references: [id], onDelete: SetNull)
+  voidedBy       User?         @relation("ResellerSaleVoider", fields: [voidedById], references: [id], onDelete: SetNull)
+
+  @@index([resellerOrgId, createdAt])
+  @@index([customerOrgId, createdAt])
+  @@index([invitationId])
+  @@map("reseller_sales")
 }
 
 model CreditLedger {
