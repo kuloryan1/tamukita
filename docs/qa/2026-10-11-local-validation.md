@@ -151,6 +151,18 @@ PATCH editor kini memverifikasi sesi, kepemilikan undangan, dan membership works
 | Lint route PATCH dan tesnya | Lulus; 2 file. |
 | `npm run build` | Lulus; 38 route. |
 
+## Analitik bisnis admin — 11 Oktober 2026
+
+Halaman `/admin/analytics` menampilkan metrik agregat 30 hari: akun dan workspace baru, kohor draft-ke-publikasi, konversi order final, page view undangan, RSVP, laporan konten, pembayaran/refund, penjualan reseller yang mereka laporkan, dan template yang dipublikasikan. Super Admin dan Finance dapat membuka halaman ini; Finance tetap tidak mendapat akses ke konsol Super Admin. Nilai pembayaran Rp0 tidak dihitung sebagai checkout sukses. Kanal akuisisi belum dicatat dan penjualan reseller tetap ditandai sebagai laporan reseller, bukan penerimaan platform.
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| `npm run lint` | Lulus; 175 file. |
+| `npm run typecheck` | Lulus. |
+| `npm test` | Lulus; 10 file dan 29 tes. |
+| `npm run build` | Lulus; 39 route, termasuk `/admin/analytics`. |
+| GitHub E2E smoke pada commit `c57cc82` | Lulus; mengunjungi halaman analitik sebagai Super Admin dan Finance, lalu memastikan Finance diarahkan keluar dari `/admin`. [Workflow](https://github.com/kuloryan1/tamukita/actions/runs/38091181120). |
+
 ## Gate yang belum dibuktikan
 
 - Backup terenkripsi, upload, dan restore dari Cloudflare R2 nyata; yang sudah diverifikasi hanya MinIO lokal.
