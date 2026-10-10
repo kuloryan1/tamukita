@@ -16,8 +16,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!body.ok) return NextResponse.json({ error: "Isi draft tidak valid atau terlalu besar." }, { status: body.status });
   const parsed = invitationDraftSchema.omit({ id: true, updatedAt: true, publishedAt: true, isPublished: true }).safeParse(body.value);
   if (!parsed.success) return NextResponse.json({ error: "Detail draft undangan tidak valid." }, { status: 400 });
-  const template = await ensureTemplateVersion(parsed.data.templateId);
-  if (!template) return NextResponse.json({ error: "Template tidak tersedia." }, { status: 400 });
 
   const prisma = getPrismaClient();
   const existing = await prisma.invitation.findFirst({
@@ -25,6 +23,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     select: { slug: true, status: true, draftData: true },
   });
   if (!existing) return NextResponse.json({ error: "Draft tidak ditemukan atau aksesnya sudah tidak tersedia." }, { status: 404 });
+  const template = await ensureTemplateVersion(parsed.data.templateId);
+  if (!template) return NextResponse.json({ error: "Template tidak tersedia." }, { status: 400 });
   const legacyCover = typeof existing.draftData === "object" && existing.draftData !== null && !Array.isArray(existing.draftData)
     ? (existing.draftData as Record<string, unknown>).coverPhoto
     : undefined;

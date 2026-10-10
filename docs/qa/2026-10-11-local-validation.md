@@ -139,6 +139,18 @@ Lookup workspace yang dipakai untuk membuat draft self-service kini hanya memili
 
 E2E berjalan dengan PostgreSQL 17 dan Redis 7 sementara. Fixture organisasi reseller tambahan dihapus setelah tes; kedua container sementara juga dibersihkan.
 
+## Otorisasi sebelum sinkronisasi template — 11 Oktober 2026
+
+PATCH editor kini memverifikasi sesi, kepemilikan undangan, dan membership workspace aktif sebelum memanggil sinkronisasi versi template. Permintaan tanpa sesi berhenti sebelum query database; sesi tanpa akses berhenti setelah lookup terikat kepemilikan dan sebelum sinkronisasi template.
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| Unit test `src/app/api/invitations/[id]/route.test.ts` | Lulus; 2 tes memastikan permintaan tanpa sesi tidak membaca undangan, dan sesi tanpa kepemilikan tidak menyinkronkan template. |
+| `npm test` | Lulus; 10 file dan 29 tes. |
+| `npm run typecheck` | Lulus. |
+| Lint route PATCH dan tesnya | Lulus; 2 file. |
+| `npm run build` | Lulus; 38 route. |
+
 ## Gate yang belum dibuktikan
 
 - Backup terenkripsi, upload, dan restore dari Cloudflare R2 nyata; yang sudah diverifikasi hanya MinIO lokal.
