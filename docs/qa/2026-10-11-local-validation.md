@@ -80,6 +80,20 @@ E2E memakai PostgreSQL 17 dan Redis 7 sementara pada port lokal khusus, lalu men
 
 Suite menggunakan PostgreSQL 17 dan Redis 7 sementara, fixture lokal, serta mock untuk layanan pembayaran dan penyimpanan objek. E2E ini tidak mengakses staging atau layanan eksternal. Pengujian domain, pemulihan dari backup R2, pembayaran Xendit Test Mode, smoke test publik, dan load test tetap menunggu konfigurasi staging.
 
+## Pencatatan tampilan publik setelah respons — 11 Oktober 2026
+
+Halaman undangan kini menjadwalkan kenaikan agregat `invitation_views` setelah respons HTML selesai. Halaman tetap menampilkan undangan jika penulisan metrik gagal; kegagalan hanya mencatat pesan operasional tanpa data tamu. Query guestbook yang diperlukan untuk render tetap berjalan sebelum respons.
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| `npm run build` | Lulus; Next.js menghasilkan build production dengan 38 route. |
+| `npm run typecheck` | Lulus. |
+| Lint halaman publik dan E2E publik | Lulus; dua file. |
+| `npm test` | Lulus; 8 file dan 25 tes. |
+| `npm run test:e2e -- e2e/public-guest.spec.ts` | Lulus; 3 profil browser. Tes memeriksa undangan merespons HTTP 200 dan metrik bertambah sesudah respons. |
+
+Ini memastikan pembaruan metrik tidak lagi ditunggu oleh halaman, tetapi belum mengukur LCP. Pengukuran LCP tetap menunggu undangan staging di domain HTTPS.
+
 ## Gate yang belum dibuktikan
 
 - Backup terenkripsi melalui `age`, upload ke Cloudflare R2, lalu pemulihan dari objek R2 ke database baru.

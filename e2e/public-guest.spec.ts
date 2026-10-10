@@ -1,8 +1,33 @@
 import { randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
+import { Pool } from "pg";
 
 const invitationId = "10000000-0000-4000-8000-000000000001";
 const invitationSlug = "e2e-public-invite";
+const analyticsPool = process.env.DATABASE_URL ? (() => {
+  const databaseUrl = new URL(process.env.DATABASE_URL);
+  databaseUrl.searchParams.delete("schema");
+  return new Pool({ connectionString: databaseUrl.toString() });
+})() : null;
+
+async function readInvitationViewCount(date: string) {
+  if (!analyticsPool) throw new Error("The disposable E2E database is required.");
+  const result = await analyticsPool.query<{ value: string }>(
+    `SELECT COALESCE((
+      SELECT "metricValue"
+      FROM analytics_daily
+      WHERE "organizationId" = (SELECT "organizationId" FROM invitations WHERE slug = $1)
+        AND date = $2::date
+        AND "metricKey" = 'invitation_views'
+    ), 0)::text AS value`,
+    [invitationSlug, date],
+  );
+  return Number(result.rows[0]?.value ?? "0");
+}
+
+test.afterAll(async () => {
+  await analyticsPool?.end();
+});
 
 async function signIn(page: Page, email: string, password: string) {
   await page.goto("/login");
@@ -18,7 +43,7 @@ test("guest can RSVP, report an approved message, and content reviewers can mode
   const customerPassword = process.env.E2E_CUSTOMER_PASSWORD;
   const reviewerEmail = process.env.E2E_CONTENT_REVIEWER_EMAIL;
   const reviewerPassword = process.env.E2E_CONTENT_REVIEWER_PASSWORD;
-  if (!customerEmail || !customerPassword || !reviewerEmail || !reviewerPassword) {
+  if (!customerEmail || !customerPassword || !reviewerEmail || !reviewerPassword || !analyticsPool) {
     test.skip(true, "Requires the disposable PostgreSQL fixture and seeded customer/content reviewer accounts.");
     return;
   }
@@ -31,8 +56,11 @@ test("guest can RSVP, report an approved message, and content reviewers can mode
   const guestToken = guestBody.guests[0]?.token;
   if (!guestToken) throw new Error("The guest fixture did not receive a private RSVP token.");
 
+  const metricDate = new Date().toISOString().slice(0, 10);
+  const previousViewCount = await readInvitationViewCount(metricDate);
   const response = await page.goto(`/${invitationSlug}?g=${encodeURIComponent(guestToken)}`);
   expect(response?.status()).toBe(200);
+  await expect.poll(() => readInvitationViewCount(metricDate), { timeout: 5_000 }).toBe(previousViewCount + 1);
   await expect(page.locator(".public-hero-names")).toContainText("E2E Mempelai");
   const initialRsvpCountText = await page.locator(".rsvp-count").innerText();
   const initialRsvpCount = Number(initialRsvpCountText.match(/^\d+/)?.[0] ?? 0);

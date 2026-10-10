@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { Metadata } from "next";
+import { after } from "next/server";
 import { notFound } from "next/navigation";
 import { PublicInvitation } from "@/components/public-invitation";
 import { createInitialDraft, reservedSlugs } from "@/lib/invitations";
@@ -81,18 +82,22 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
   const now = new Date();
   const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const prisma = getPrismaClient();
-  const [, guestbook] = await Promise.all([
-    prisma.analyticsDaily.upsert({
-      where: { organizationId_date_metricKey: { organizationId: record.organizationId, date, metricKey: "invitation_views" } },
-      create: { organizationId: record.organizationId, date, metricKey: "invitation_views", metricValue: BigInt(1), dimensions: { invitationId: record.id } },
-      update: { metricValue: { increment: BigInt(1) } },
-    }),
-    prisma.guestbookEntry.findMany({
-      where: { invitationId: record.id, status: "APPROVED" },
-      orderBy: { createdAt: "desc" },
-      take: 30,
-      select: { id: true, displayName: true, message: true, createdAt: true },
-    }),
-  ]);
+  after(async () => {
+    try {
+      await prisma.analyticsDaily.upsert({
+        where: { organizationId_date_metricKey: { organizationId: record.organizationId, date, metricKey: "invitation_views" } },
+        create: { organizationId: record.organizationId, date, metricKey: "invitation_views", metricValue: BigInt(1), dimensions: { invitationId: record.id } },
+        update: { metricValue: { increment: BigInt(1) } },
+      });
+    } catch {
+      console.error("Failed to record public invitation view analytics.");
+    }
+  });
+  const guestbook = await prisma.guestbookEntry.findMany({
+    where: { invitationId: record.id, status: "APPROVED" },
+    orderBy: { createdAt: "desc" },
+    take: 30,
+    select: { id: true, displayName: true, message: true, createdAt: true },
+  });
   return <PublicInvitation slug={slug} initialDraft={record.draft} initialRsvpCount={record._count.rsvps} initialGuestbook={guestbook.map((entry) => ({ ...entry, createdAt: entry.createdAt.toISOString() }))} recipientName={guestLink?.guest.name} guestToken={guestLink ? candidateToken ?? undefined : undefined} template={record.template} />;
 }
