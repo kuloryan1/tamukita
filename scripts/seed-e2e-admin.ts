@@ -18,6 +18,8 @@ const mobileCustomerEmail = process.env.E2E_MOBILE_CUSTOMER_EMAIL?.trim().toLowe
 const mobileCustomerPassword = process.env.E2E_MOBILE_CUSTOMER_PASSWORD;
 const webkitCustomerEmail = process.env.E2E_WEBKIT_CUSTOMER_EMAIL?.trim().toLowerCase();
 const webkitCustomerPassword = process.env.E2E_WEBKIT_CUSTOMER_PASSWORD;
+const resellerReportOwnerEmail = process.env.E2E_RESELLER_REPORT_OWNER_EMAIL?.trim().toLowerCase();
+const resellerReportOwnerPassword = process.env.E2E_RESELLER_REPORT_OWNER_PASSWORD;
 const templateDeveloperEmail = process.env.E2E_TEMPLATE_DEVELOPER_EMAIL?.trim().toLowerCase();
 const templateDeveloperPassword = process.env.E2E_TEMPLATE_DEVELOPER_PASSWORD;
 const contentReviewerEmail = process.env.E2E_CONTENT_REVIEWER_EMAIL?.trim().toLowerCase();
@@ -43,6 +45,9 @@ if (
   || !webkitCustomerEmail
   || !webkitCustomerPassword
   || webkitCustomerPassword.length < 12
+  || !resellerReportOwnerEmail
+  || !resellerReportOwnerPassword
+  || resellerReportOwnerPassword.length < 12
   || !templateDeveloperEmail
   || !templateDeveloperPassword
   || templateDeveloperPassword.length < 12
@@ -53,7 +58,7 @@ if (
   || !refundResellerPassword
   || refundResellerPassword.length < 12
 ) {
-  throw new Error("Set DATABASE_URL, AUTH_SECRET, and all E2E admin/customer/template-developer/content-reviewer/refund-reseller/WebKit-customer emails and passwords; every password must have at least 12 characters.");
+  throw new Error("Set DATABASE_URL, AUTH_SECRET, and all E2E admin/customer/template-developer/content-reviewer/refund-reseller/WebKit-customer/reseller-report-owner emails and passwords; every password must have at least 12 characters.");
 }
 
 const e2eAccounts = {
@@ -62,6 +67,7 @@ const e2eAccounts = {
   otherCustomer: { email: otherCustomerEmail, password: otherCustomerPassword },
   mobileCustomer: { email: mobileCustomerEmail, password: mobileCustomerPassword },
   webkitCustomer: { email: webkitCustomerEmail, password: webkitCustomerPassword },
+  resellerReportOwner: { email: resellerReportOwnerEmail, password: resellerReportOwnerPassword },
   templateDeveloper: { email: templateDeveloperEmail, password: templateDeveloperPassword },
   contentReviewer: { email: contentReviewerEmail, password: contentReviewerPassword },
   refundReseller: { email: refundResellerEmail, password: refundResellerPassword },
@@ -114,6 +120,7 @@ try {
   const templateDeveloper = await seedAccount({ ...e2eAccounts.templateDeveloper, name: "E2E Template Developer", platformRole: "TEMPLATE_DEVELOPER" });
   await seedAccount({ ...e2eAccounts.contentReviewer, name: "E2E Content Reviewer", platformRole: "CONTENT_REVIEWER" });
   const refundReseller = await seedAccount({ ...e2eAccounts.refundReseller, name: "E2E Refund Reseller", platformRole: "CUSTOMER" });
+  const resellerReportOwner = await seedAccount({ ...e2eAccounts.resellerReportOwner, name: "E2E Reseller Report Owner", platformRole: "CUSTOMER" });
   const developerTemplateBucketKey = createHmac("sha256", authSecret).update(`developer:templates:${templateDeveloper.userId}`).digest("hex");
   await prisma.rateLimitBucket.deleteMany({ where: { key: developerTemplateBucketKey } });
 
@@ -307,6 +314,11 @@ try {
     where: { organizationId_userId: { organizationId: resellerOrganization.id, userId: customer.userId } },
     update: { role: "OWNER" },
     create: { organizationId: resellerOrganization.id, userId: customer.userId, role: "OWNER" },
+  });
+  await prisma.membership.upsert({
+    where: { organizationId_userId: { organizationId: resellerOrganization.id, userId: resellerReportOwner.userId } },
+    update: { role: "OWNER" },
+    create: { organizationId: resellerOrganization.id, userId: resellerReportOwner.userId, role: "OWNER" },
   });
   await prisma.membership.upsert({
     where: { organizationId_userId: { organizationId: resellerOrganization.id, userId: mobileCustomer.userId } },

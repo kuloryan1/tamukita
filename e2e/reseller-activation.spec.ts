@@ -12,7 +12,12 @@ async function signIn(page: Page, email: string, password: string) {
   await page.getByLabel("Alamat email").fill(email);
   await page.getByLabel("Kata sandi").fill(password);
   await page.getByRole("button", { name: "Masuk" }).click();
-  await page.waitForURL(/\/dashboard(?:\/|$)/);
+  try {
+    await page.waitForURL(/\/dashboard(?:\/|$)/, { timeout: 30_000 });
+  } catch {
+    const loginError = await page.locator(".auth-form [role='alert']").textContent().catch(() => null);
+    throw new Error(loginError?.trim() || "Login tidak mengarah ke dashboard dalam 30 detik.");
+  }
 }
 
 test("reseller access is approved by the customer before the reseller activates their draft", async ({ page, browser }, testInfo) => {
@@ -110,8 +115,8 @@ test("reseller access is approved by the customer before the reseller activates 
 
 test("reseller sales reports are visible to managers and auditable when corrected", async ({ page, browser }, testInfo) => {
   test.setTimeout(180_000);
-  const ownerEmail = process.env.E2E_CUSTOMER_EMAIL;
-  const ownerPassword = process.env.E2E_CUSTOMER_PASSWORD;
+  const ownerEmail = process.env.E2E_RESELLER_REPORT_OWNER_EMAIL;
+  const ownerPassword = process.env.E2E_RESELLER_REPORT_OWNER_PASSWORD;
   const staffEmail = process.env.E2E_MOBILE_CUSTOMER_EMAIL;
   const staffPassword = process.env.E2E_MOBILE_CUSTOMER_PASSWORD;
   const otherResellerEmail = process.env.E2E_OTHER_CUSTOMER_EMAIL;

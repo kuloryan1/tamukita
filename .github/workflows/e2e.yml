@@ -32,6 +32,8 @@ jobs:
       E2E_MOBILE_CUSTOMER_PASSWORD: ci-only-mobile-customer-password-123
       E2E_WEBKIT_CUSTOMER_EMAIL: e2e-webkit-customer@tamukita.test
       E2E_WEBKIT_CUSTOMER_PASSWORD: ci-only-webkit-customer-password-123
+      E2E_RESELLER_REPORT_OWNER_EMAIL: e2e-reseller-report-owner@tamukita.test
+      E2E_RESELLER_REPORT_OWNER_PASSWORD: ci-only-reseller-report-owner-password-123
       E2E_TEMPLATE_DEVELOPER_EMAIL: e2e-template-developer@tamukita.test
       E2E_TEMPLATE_DEVELOPER_PASSWORD: ci-only-template-developer-password-123
       E2E_CONTENT_REVIEWER_EMAIL: e2e-content-reviewer@tamukita.test
