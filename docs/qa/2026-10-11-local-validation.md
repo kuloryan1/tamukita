@@ -198,3 +198,15 @@ Pengujian undangan publik sekarang memakai 20 pemuatan dingin pada viewport Chro
 | `npm test` | Lulus; 10 file dan 29 tes. |
 | Chromium CDP throttling probe | Lulus; network condition, status navigator, dan CPU slowdown diterapkan pada Chromium lokal 156.0.8078.4. |
 | Sampel LCP staging | Belum dijalankan; origin HTTPS dan path undangan staging belum dikonfigurasi. |
+
+## Pemakaian template per kategori di analitik — 11 Oktober 2026
+
+Halaman `/admin/analytics` kini merangkum publikasi undangan per kategori template selama 30 hari. Kategori diambil dari template yang ditautkan ke versi undangan terbit; agregat tidak memuat identitas pelanggan atau slug undangan.
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| `npm run lint` | Lulus; 179 file. |
+| `npm run typecheck` | Lulus. |
+| `npm test` | Lulus; 10 file dan 29 tes. |
+| `npm run build` | Lulus; 39 route, termasuk `/admin/analytics`. |
+| `npm run test:e2e -- e2e/admin-managed.spec.ts` | Lulus; 3 dari 3 profil browser. Super Admin dan Finance melihat bagian kategori template. |

@@ -1,16 +1,19 @@
 type Metric = { label: string; value: string; detail: string };
 type Channel = { label: string; count: number; amount: string; note: string };
 type Template = { name: string; slug: string; version: string; publishedCount: number };
+type TemplateCategory = { name: string; publishedCount: number };
 
 export function AdminAnalytics({
   metrics,
   channels,
   templates,
+  templateCategories,
   periodLabel,
 }: {
   metrics: Metric[];
   channels: Channel[];
   templates: Template[];
+  templateCategories: TemplateCategory[];
   periodLabel: string;
 }) {
   return <>
@@ -28,6 +31,12 @@ export function AdminAnalytics({
       <div className="card-heading"><div><h2>Template paling banyak dipublikasikan</h2><p>Publikasi undangan per versi template dalam periode ini.</p></div></div>
       {templates.length === 0 ? <div className="dashboard-empty-state"><h3>Belum ada publikasi baru</h3><p>Template akan muncul setelah undangan dipublikasikan.</p></div> : <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Template</th><th>Slug</th><th>Versi</th><th>Publikasi</th></tr></thead><tbody>
         {templates.map((template) => <tr key={`${template.slug}-${template.version}`}><td><b>{template.name}</b></td><td>{template.slug}</td><td>{template.version}</td><td>{template.publishedCount.toLocaleString("id-ID")}</td></tr>)}
+      </tbody></table></div>}
+    </section>
+    <section className="dashboard-content-card admin-analytics-card">
+      <div className="card-heading"><div><h2>Template digunakan per kategori</h2><p>Jumlah undangan yang diterbitkan per kategori dalam periode ini.</p></div></div>
+      {templateCategories.length === 0 ? <div className="dashboard-empty-state"><h3>Belum ada publikasi baru</h3><p>Kategori template akan muncul setelah undangan diterbitkan.</p></div> : <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Kategori</th><th>Publikasi</th></tr></thead><tbody>
+        {templateCategories.map((category) => <tr key={category.name}><td><b>{category.name}</b></td><td>{category.publishedCount.toLocaleString("id-ID")}</td></tr>)}
       </tbody></table></div>}
     </section>
   </>;

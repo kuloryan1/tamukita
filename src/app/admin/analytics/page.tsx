@@ -54,10 +54,10 @@ export default async function AdminAnalyticsPage() {
   ]);
 
   const topGroups = [...templateGroups].sort((a, b) => b._count._all - a._count._all).slice(0, 5);
-  const templateVersions = topGroups.length
+  const templateVersions = templateGroups.length
     ? await prisma.templateVersion.findMany({
-      where: { id: { in: topGroups.map((group) => group.templateVersionId) } },
-      select: { id: true, version: true, template: { select: { name: true, slug: true } } },
+      where: { id: { in: templateGroups.map((group) => group.templateVersionId) } },
+      select: { id: true, version: true, template: { select: { name: true, slug: true, category: true } } },
     })
     : [];
   const templateById = new Map(templateVersions.map((version) => [version.id, version]));
@@ -65,6 +65,14 @@ export default async function AdminAnalyticsPage() {
     const version = templateById.get(group.templateVersionId);
     return version ? [{ name: version.template.name, slug: version.template.slug, version: version.version, publishedCount: group._count._all }] : [];
   });
+  const categoryCounts = new Map<string, number>();
+  for (const group of templateGroups) {
+    const category = templateById.get(group.templateVersionId)?.template.category;
+    if (category) categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + group._count._all);
+  }
+  const templateCategories = [...categoryCounts]
+    .map(([name, publishedCount]) => ({ name, publishedCount }))
+    .sort((a, b) => b.publishedCount - a.publishedCount || a.name.localeCompare(b.name, "id"));
 
   const grossPayments = paidSummary._sum.totalAmount ?? 0;
   const successfulRefunds = refundSummary._sum.amount ?? 0;
@@ -94,6 +102,7 @@ export default async function AdminAnalyticsPage() {
         { label: "Penjualan langsung reseller", count: resellerSales._count._all, amount: rupiah.format(resellerSales._sum.amountIdr ?? 0), note: "Catatan reseller; bukan penerimaan TamuKita" },
       ]}
       templates={topTemplates}
+      templateCategories={templateCategories}
       periodLabel={`${periodStart.toLocaleDateString("id-ID", { dateStyle: "medium", timeZone: "Asia/Jakarta" })} – ${now.toLocaleDateString("id-ID", { dateStyle: "medium", timeZone: "Asia/Jakarta" })}`}
     />
   </div>;
