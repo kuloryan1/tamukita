@@ -35,6 +35,8 @@ jobs:
         run: docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.local.yml config --quiet
       - name: Test Dokploy PostgreSQL container discovery
         run: bash tests/ops/find-postgres-container.test.sh
+      - name: Test backup S3 endpoint policy
+        run: bash tests/ops/backup-s3-endpoint.test.sh
       - name: Require a database password
         shell: bash
         env:
@@ -53,3 +55,55 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  backup-restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start isolated PostgreSQL and MinIO
+        shell: bash
+        run: |
+          docker run --detach --name tamukita-backup-postgres \
+            --publish 127.0.0.1:25434:5432 \
+            --env POSTGRES_USER=e2e --env POSTGRES_PASSWORD=e2e-backup-only \
+            --env POSTGRES_DB=postgres postgres:17-alpine
+          docker run --detach --name tamukita-backup-minio \
+            --publish 127.0.0.1:29000:9000 \
+            --env MINIO_ROOT_USER=backup-test \
+            --env MINIO_ROOT_PASSWORD=backup-test-only-secret \
+            ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z \
+            server /data --console-address :9001
+          for attempt in {1..45}; do
+            if docker exec tamukita-backup-postgres pg_isready -U e2e -d postgres >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          docker exec tamukita-backup-postgres pg_isready -U e2e -d postgres
+          for attempt in {1..45}; do
+            if curl --fail --silent http://127.0.0.1:29000/minio/health/ready >/dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:29000/minio/health/ready >/dev/null
+      - name: Run encrypted backup and restore drill
+        shell: bash
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: "25434"
+          PGUSER: e2e
+          PGPASSWORD: e2e-backup-only
+          BACKUP_S3_ENDPOINT: http://127.0.0.1:29000
+          BACKUP_S3_ALLOW_HTTP: "true"
+          BACKUP_TEST_ACCESS_KEY_ID: backup-test
+          BACKUP_TEST_SECRET_ACCESS_KEY: backup-test-only-secret
+        run: |
+          docker run --rm --network host \
+            --volume "$GITHUB_WORKSPACE:/workspace:ro" \
+            --workdir /workspace \
+            --env PGHOST --env PGPORT --env PGUSER --env PGPASSWORD \
+            --env BACKUP_S3_ENDPOINT --env BACKUP_S3_ALLOW_HTTP \
+            --env BACKUP_TEST_ACCESS_KEY_ID --env BACKUP_TEST_SECRET_ACCESS_KEY \
+            alpine:3.22 sh -ec 'apk add --no-cache age aws-cli bash coreutils postgresql-client && bash tests/ops/backup-restore-local.integration.sh'
+      - name: Remove isolated backup test services
+        if: always()
+        shell: bash
+        run: docker rm --force tamukita-backup-postgres tamukita-backup-minio || true

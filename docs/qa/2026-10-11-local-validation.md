@@ -94,9 +94,26 @@ Halaman undangan kini menjadwalkan kenaikan agregat `invitation_views` setelah r
 
 Ini memastikan pembaruan metrik tidak lagi ditunggu oleh halaman, tetapi belum mengukur LCP. Pengukuran LCP tetap menunggu undangan staging di domain HTTPS.
 
+## Drill backup PostgreSQL terenkripsi lokal — 11 Oktober 2026
+
+Skrip backup/restore kini menerima `BACKUP_S3_ENDPOINT` untuk S3-compatible endpoint. HTTPS tetap wajib untuk target jarak jauh; HTTP dibatasi ke host lokal yang diizinkan dan memerlukan `BACKUP_S3_ALLOW_HTTP=true`. Jika endpoint override kosong, skrip tetap memakai endpoint Cloudflare R2 dari `R2_ACCOUNT_ID`.
+
+Integration drill memakai PostgreSQL 17 dan MinIO sementara pada network Docker terisolasi. Tes membuat database fixture, menghasilkan kunci `age` sementara, menjalankan skrip backup, memastikan objek yang diunggah terenkripsi, lalu menguji checksum dan pemulihan ke database baru. Tes juga mengganti checksum sidecar dengan nilai salah dan memastikan restore berhenti sebelum membuat database.
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| Kebijakan endpoint S3 | Lulus; endpoint R2 default, HTTPS override, HTTP MinIO lokal, dan penolakan HTTP remote/URL berbahaya diperiksa. |
+| `bash -n` pada skrip backup, restore, endpoint, dan tes | Lulus. |
+| Backup terenkripsi + unggah MinIO lokal | Lulus; objek `.dump.age` dan `.sha256` berhasil dibuat. |
+| Restore dari objek MinIO ke database baru | Lulus; nilai fixture cocok dengan sumber. |
+| Restore dengan checksum yang dirusak | Ditolak sebelum database restore dibuat. |
+| Cleanup drill | Lulus; database, bucket, container, dan network sementara dihapus. |
+
+Job `backup-restore` ditambahkan ke CI agar drill lokal ini berjalan pada push dan pull request. Ini belum membuktikan kredensial, endpoint, lifecycle, atau pemulihan dari bucket Cloudflare R2 yang dipakai deployment.
+
 ## Gate yang belum dibuktikan
 
-- Backup terenkripsi melalui `age`, upload ke Cloudflare R2, lalu pemulihan dari objek R2 ke database baru.
+- Backup terenkripsi, upload, dan restore dari Cloudflare R2 nyata; yang sudah diverifikasi hanya MinIO lokal.
 - Pemulihan volume dan konfigurasi yang benar-benar dipakai pada host deployment, serta pengiriman alert backup.
 - Xendit Test Mode pada staging dengan kredensial yang disimpan di secret store.
 - Smoke test health dari luar host, notifikasi on-call, uji LCP pada undangan staging, dan load test staging hingga 1.000 virtual user.

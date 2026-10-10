@@ -4,7 +4,6 @@ set -Eeuo pipefail
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$project_root"
 
-: "${R2_ACCOUNT_ID:?Set R2_ACCOUNT_ID}"
 : "${R2_BACKUP_ACCESS_KEY_ID:?Set R2_BACKUP_ACCESS_KEY_ID}"
 : "${R2_BACKUP_SECRET_ACCESS_KEY:?Set R2_BACKUP_SECRET_ACCESS_KEY}"
 : "${BACKUP_BUCKET:?Set BACKUP_BUCKET}"
@@ -20,7 +19,7 @@ fi
 temporary_directory="$(mktemp -d)"
 trap 'rm -rf "$temporary_directory"' EXIT
 postgres_container_id="$(bash "$project_root/scripts/find-postgres-container.sh")"
-endpoint="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+endpoint="$(bash "$project_root/scripts/resolve-backup-s3-endpoint.sh")"
 
 AWS_ACCESS_KEY_ID="$R2_BACKUP_ACCESS_KEY_ID" \
 AWS_SECRET_ACCESS_KEY="$R2_BACKUP_SECRET_ACCESS_KEY" \

@@ -33,7 +33,6 @@ notify_backup_failure() {
 }
 trap 'exit_code=$?; notify_backup_failure "$exit_code"; exit "$exit_code"' ERR
 
-: "${R2_ACCOUNT_ID:?Set R2_ACCOUNT_ID}"
 : "${R2_BACKUP_ACCESS_KEY_ID:?Set R2_BACKUP_ACCESS_KEY_ID}"
 : "${R2_BACKUP_SECRET_ACCESS_KEY:?Set R2_BACKUP_SECRET_ACCESS_KEY}"
 : "${BACKUP_BUCKET:?Set BACKUP_BUCKET}"
@@ -49,7 +48,7 @@ docker exec "$postgres_container_id" sh -ec 'pg_dump --username="$POSTGRES_USER"
 age --recipient "$BACKUP_AGE_RECIPIENT" --output "$temporary_directory/database.dump.age" "$temporary_directory/database.dump"
 (cd "$temporary_directory" && sha256sum database.dump.age > database.dump.age.sha256)
 
-endpoint="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+endpoint="$(bash "$project_root/scripts/resolve-backup-s3-endpoint.sh")"
 AWS_ACCESS_KEY_ID="$R2_BACKUP_ACCESS_KEY_ID" \
 AWS_SECRET_ACCESS_KEY="$R2_BACKUP_SECRET_ACCESS_KEY" \
 AWS_DEFAULT_REGION=auto \
