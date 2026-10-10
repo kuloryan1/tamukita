@@ -59,6 +59,17 @@ test("editor supports undo, redo, responsive preview, and saved personalization"
   }
   await expect(firstName).toHaveValue(updatedName);
 
+  await page.getByRole("button", { name: "Khitan" }).click();
+  await expect(page.getByLabel("Judul acara")).toBeVisible();
+  await expect(page.getByLabel("Nama keluarga / orang tua")).toBeVisible();
+  await expect(page.getByLabel("Nama pertama")).toHaveCount(0);
+  await page.getByRole("button", { name: "Pernikahan" }).click();
+  await expect(page.getByLabel("Keluarga yang turut mengundang")).toBeVisible();
+
+  const familyDetails = `Keluarga Hadi ${randomUUID().slice(0, 8)}`;
+  await page.getByLabel("Keluarga yang turut mengundang").fill(familyDetails);
+  await expect(page.locator(".preview-phone")).toContainText(familyDetails);
+
   await advanceToStep(page, 3);
   await page.getByRole("button", { name: "Rose" }).click();
   await page.locator(".personalization-control").nth(1).getByRole("button", { name: "Aa Modern" }).click();
@@ -74,7 +85,7 @@ test("editor supports undo, redo, responsive preview, and saved personalization"
     if (!response.ok()) return null;
     const result = await response.json() as { draft?: Record<string, unknown> };
     return result.draft;
-  }).toMatchObject({ hostOne: updatedName, themeColor: "rose", themeFont: "modern", sectionOrder: "details-first" });
+  }).toMatchObject({ hostOne: updatedName, familyDetails, themeColor: "rose", themeFont: "modern", sectionOrder: "details-first" });
 });
 
 test("editor serializes overlapping autosaves without restoring an older draft", async ({ page }, testInfo) => {

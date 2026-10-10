@@ -7,7 +7,7 @@ import { templates } from "@/lib/templates";
 import { getTemplateRenderer, hasTemplateRenderer, registeredTemplateRenderers, templateVersionRequiresAdminReview } from "@/templates/registry";
 
 test("source template versions have compatible, rendered React components and review policy", () => {
-  const draft = createInitialDraft();
+  const draft = { ...createInitialDraft(), familyDetails: "Keluarga Hadi dan Rina" };
   expect(templates.length).toBeGreaterThanOrEqual(3);
   expect(new Set(templates.map((template) => template.slug)).size).toBe(templates.length);
   expect(new Set(templates.map((template) => `${template.slug}@${template.version}`)).size).toBe(templates.length);
@@ -20,6 +20,7 @@ test("source template versions have compatible, rendered React components and re
     expect(markup).toContain(`data-template="${slug}"`);
     expect(markup).toContain("Nara");
     expect(markup).toContain("Dimas");
+    expect(markup).toContain("Keluarga Hadi dan Rina");
   }
 
   for (const template of templates) {

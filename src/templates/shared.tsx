@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { InvitationDraft } from "@/lib/invitations";
+import type { EventKind, InvitationDraft } from "@/lib/invitations";
 
 export function invitationTitle(draft: InvitationDraft) {
   const hosts = [draft.hostOne, draft.hostTwo].filter(Boolean);
@@ -10,6 +10,20 @@ export function invitationTitle(draft: InvitationDraft) {
 
 export function invitationKicker(draft: InvitationDraft) {
   return draft.eventKind === "Pernikahan" ? "THE WEDDING OF" : draft.eventKind.toUpperCase();
+}
+
+export function InvitationFamilyDetails({ draft }: { draft: InvitationDraft }) {
+  const familyDetails = draft.familyDetails.trim();
+  if (!familyDetails) return null;
+  const label = publicFamilyDetailsLabel(draft.eventKind);
+  return <div className="invite-family-details"><span>{label}</span><p>{familyDetails}</p></div>;
+}
+
+function publicFamilyDetailsLabel(kind: EventKind) {
+  if (kind === "Pernikahan" || kind === "Pertunangan") return "KELUARGA YANG TURUT MENGUNDANG";
+  if (kind === "Khitan") return "KELUARGA";
+  if (kind === "Acara Perusahaan") return "PENYELENGGARA";
+  return "KELUARGA / PENYELENGGARA";
 }
 
 export function invitationDate(date: string) {

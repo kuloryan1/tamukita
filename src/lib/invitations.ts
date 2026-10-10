@@ -18,6 +18,21 @@ export const EVENT_KIND_TITLE_SUGGESTIONS: Record<EventKind, string> = {
   "Acara Lainnya": "Undangan Acara",
 };
 
+export function familyDetailsPrompt(kind: EventKind) {
+  switch (kind) {
+    case "Pernikahan":
+    case "Pertunangan":
+      return { label: "Keluarga yang turut mengundang", placeholder: "Contoh: Keluarga Bapak Hadi dan Ibu Rina" };
+    case "Khitan":
+      return { label: "Nama keluarga / orang tua", placeholder: "Contoh: Keluarga Bapak Hadi dan Ibu Rina" };
+    case "Acara Perusahaan":
+      return { label: "Penyelenggara", placeholder: "Nama perusahaan atau organisasi" };
+    case "Ulang Tahun":
+    case "Acara Lainnya":
+      return { label: "Keluarga / penyelenggara", placeholder: "Nama keluarga atau pihak yang mengundang" };
+  }
+}
+
 export type InvitationDraft = {
   id: string;
   slug: string;
@@ -25,6 +40,7 @@ export type InvitationDraft = {
   eventTitle: string;
   hostOne: string;
   hostTwo: string;
+  familyDetails: string;
   eventDate: string;
   eventTime: string;
   venue: string;
@@ -84,6 +100,7 @@ export function createInitialDraft(): InvitationDraft {
     eventTitle: "Undangan Pernikahan",
     hostOne: "Nara",
     hostTwo: "Dimas",
+    familyDetails: "",
     eventDate: "2027-05-22",
     eventTime: "10:00",
     venue: "The Garden House",

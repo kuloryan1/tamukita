@@ -20,7 +20,7 @@ function displayValue(value: unknown) {
 }
 
 const fieldLabels: Record<string, string> = {
-  eventKind: "Jenis acara", eventTitle: "Judul acara", hostOne: "Nama pertama", hostTwo: "Nama kedua",
+  eventKind: "Jenis acara", eventTitle: "Judul acara", hostOne: "Nama pertama", hostTwo: "Nama kedua", familyDetails: "Keluarga / penyelenggara",
   eventDate: "Tanggal", eventTime: "Waktu", venue: "Tempat", address: "Alamat", mapsUrl: "Tautan peta",
   story: "Cerita", slug: "Slug", templateId: "Template", templateVersion: "Versi template",
   coverPhoto: "Foto sampul", coverPosition: "Posisi foto vertikal", coverPositionX: "Posisi foto horizontal", galleryPhotos: "Foto galeri",

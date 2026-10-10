@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
-import { EVENT_KINDS, EVENT_KIND_TITLE_SUGGESTIONS, type EventKind } from "@/lib/invitations";
+import { EVENT_KINDS, EVENT_KIND_TITLE_SUGGESTIONS, familyDetailsPrompt, type EventKind } from "@/lib/invitations";
 
 type TemplateOption = { slug: string; name: string; version: string };
 type DraftForm = {
@@ -11,6 +11,7 @@ type DraftForm = {
   eventTitle: string;
   hostOne: string;
   hostTwo: string;
+  familyDetails: string;
   eventDate: string;
   eventTime: string;
   venue: string;
@@ -42,6 +43,7 @@ export function AdminManagedInvitation({ templates }: { templates: TemplateOptio
     eventTitle: "",
     hostOne: "",
     hostTwo: "",
+    familyDetails: "",
     eventDate: "",
     eventTime: "09:00",
     venue: "",
@@ -65,6 +67,7 @@ export function AdminManagedInvitation({ templates }: { templates: TemplateOptio
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const familyPrompt = familyDetailsPrompt(draft.eventKind);
 
   function update<K extends keyof DraftForm>(key: K, value: DraftForm[K]) {
     setDraft((current) => ({ ...current, [key]: value }));
@@ -110,6 +113,7 @@ export function AdminManagedInvitation({ templates }: { templates: TemplateOptio
       <label className="editor-field"><span className="field-label">Template</span><select className="text-input" value={draft.templateId} onChange={(event) => { const template = templates.find((item) => item.slug === event.target.value); if (template) setDraft((current) => ({ ...current, templateId: template.slug, templateVersion: template.version })); }}>{templates.map((template) => <option key={template.slug} value={template.slug}>{template.name}</option>)}</select></label>
       <label className="editor-field"><span className="field-label">Jenis acara</span><select className="text-input" value={draft.eventKind} onChange={(event) => changeEventKind(event.target.value as EventKind)}>{EVENT_KINDS.map((kind) => <option key={kind} value={kind}>{kind}</option>)}</select></label>
       {draft.eventKind === "Pernikahan" ? <><label className="editor-field"><span className="field-label">Nama pertama</span><input className="text-input" required maxLength={80} value={draft.hostOne} onChange={(event) => update("hostOne", event.target.value)} /></label><label className="editor-field"><span className="field-label">Nama kedua</span><input className="text-input" required maxLength={80} value={draft.hostTwo} onChange={(event) => update("hostTwo", event.target.value)} /></label></> : <label className="editor-field admin-managed-field--wide"><span className="field-label">Judul acara</span><input className="text-input" required maxLength={120} value={draft.eventTitle} onChange={(event) => update("eventTitle", event.target.value)} /></label>}
+      <label className="editor-field admin-managed-field--wide"><span className="field-label">{familyPrompt.label}</span><textarea className="text-input" maxLength={600} rows={2} value={draft.familyDetails} onChange={(event) => update("familyDetails", event.target.value)} placeholder={familyPrompt.placeholder} /><span className="field-hint">Informasi ini akan ditampilkan di undangan publik.</span></label>
       <label className="editor-field"><span className="field-label">Tanggal</span><input className="text-input" type="date" required value={draft.eventDate} onChange={(event) => update("eventDate", event.target.value)} /></label>
       <label className="editor-field"><span className="field-label">Waktu</span><input className="text-input" type="time" required value={draft.eventTime} onChange={(event) => update("eventTime", event.target.value)} /></label>
       <label className="editor-field"><span className="field-label">Tempat acara</span><input className="text-input" required maxLength={160} value={draft.venue} onChange={(event) => update("venue", event.target.value)} /></label>

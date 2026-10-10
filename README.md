@@ -2,6 +2,8 @@
 
 Platform awal TamuKita untuk membuat dan membagikan undangan digital. Aplikasi memakai Next.js App Router, TypeScript, Tailwind CSS, PostgreSQL, Prisma ORM, Auth.js, dan Xendit Payment Sessions.
 
+Smart Editor menyesuaikan identitas utama untuk jenis acara yang dipilih dan menyediakan keterangan keluarga atau penyelenggara yang disimpan di draft serta ditampilkan oleh setiap renderer undangan.
+
 ## Menjalankan lokal
 
 Gunakan Node.js 22.12 atau lebih baru.

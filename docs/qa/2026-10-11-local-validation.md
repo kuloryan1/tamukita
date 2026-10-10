@@ -61,6 +61,18 @@ Tes menggunakan PostgreSQL 17 dan Redis 7 sementara pada port lokal terpisah. Ke
 
 Dump dan restore lokal berhasil. Container sementara dihapus setelah pemeriksaan, dan port lokal yang dipakai sudah bebas.
 
+## Follow-up QA — jenis acara dan keterangan keluarga — 11 Oktober 2026
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| `npm run typecheck` | Lulus. |
+| Lint file yang berubah | Lulus; 13 file diperiksa. |
+| Unit test renderer template dan validasi draft | Lulus; 2 file dan 7 tes. |
+| `npm run build` | Lulus; Next.js membuat build production dan memproses 38 route. |
+| `npm run test:e2e -- e2e/editor-experience.spec.ts` | Lulus; 6 tes di Chromium desktop, Chromium ponsel, dan WebKit profil iPhone. Memeriksa field yang berubah saat memilih Khitan, keterangan keluarga di pratinjau, autosave ke API, dan urutan penyimpanan saat PATCH bertumpuk. |
+
+E2E memakai PostgreSQL 17 dan Redis 7 sementara pada port lokal khusus, lalu menjalankan migrasi serta fixture. Container dan volume sementara dibersihkan setelah tes. Jalur keluarga/penyelenggara tetap kompatibel dengan draft lama karena data undangan disimpan sebagai JSON dan field baru memiliki nilai default kosong. Pemeriksaan ini lokal; tidak mencakup deployment atau layanan staging.
+
 ## Gate yang belum dibuktikan
 
 - Backup terenkripsi melalui `age`, upload ke Cloudflare R2, lalu pemulihan dari objek R2 ke database baru.
