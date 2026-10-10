@@ -116,7 +116,7 @@ export async function getWritableOrganizationId(userId: string) {
     where: {
       userId,
       role: { in: ["OWNER", "ADMIN", "EDITOR"] },
-      organization: { status: "ACTIVE" },
+      organization: { type: "PERSONAL", status: "ACTIVE" },
     },
     orderBy: { createdAt: "asc" },
     select: { organizationId: true },

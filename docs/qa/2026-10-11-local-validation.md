@@ -124,6 +124,18 @@ Lookup undangan terbit kini memakai `React.cache` per render request. `generateM
 
 Pengujian berjalan lokal dengan PostgreSQL 17 dan Redis 7 sementara; kedua container dibersihkan setelahnya. E2E ini memeriksa perilaku, bukan jumlah query atau LCP. Pengukuran performa dan beban staging tetap menunggu origin staging serta undangan publik yang disiapkan operator.
 
+## Batas workspace untuk draft self-service — 11 Oktober 2026
+
+Lookup workspace yang dipakai untuk membuat draft self-service kini hanya memilih membership aktif di organisasi bertipe `PERSONAL`. Akun yang hanya memiliki workspace reseller tidak dapat menaruh draft pelanggan di workspace tersebut; alur reseller tetap membuat draft di workspace pelanggan yang telah memberi akses.
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| Unit test `src/lib/invitation-server.test.ts` | Lulus; 2 tes memastikan filter workspace pelanggan dan hasil kosong untuk akun reseller saja. |
+| `npm test` | Lulus; 9 file dan 27 tes. |
+| `npm run typecheck` | Lulus. |
+| Lint file yang berubah | Lulus; 2 file. |
+| `npm run build` | Lulus; 38 route. |
+
 ## Gate yang belum dibuktikan
 
 - Backup terenkripsi, upload, dan restore dari Cloudflare R2 nyata; yang sudah diverifikasi hanya MinIO lokal.
