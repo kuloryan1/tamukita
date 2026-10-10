@@ -3,10 +3,11 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { EVENT_KINDS, EVENT_KIND_TITLE_SUGGESTIONS, type EventKind } from "@/lib/invitations";
 
 type TemplateOption = { slug: string; name: string; version: string };
 type DraftForm = {
-  eventKind: "Pernikahan" | "Ulang Tahun" | "Pertunangan" | "Acara Lainnya";
+  eventKind: EventKind;
   eventTitle: string;
   hostOne: string;
   hostTwo: string;
@@ -69,6 +70,20 @@ export function AdminManagedInvitation({ templates }: { templates: TemplateOptio
     setDraft((current) => ({ ...current, [key]: value }));
   }
 
+  function changeEventKind(kind: EventKind) {
+    setDraft((current) => {
+      const titleWasSuggested = !current.eventTitle.trim()
+        || Object.values(EVENT_KIND_TITLE_SUGGESTIONS).includes(current.eventTitle);
+      return {
+        ...current,
+        eventKind: kind,
+        eventTitle: kind === "Pernikahan" || !titleWasSuggested
+          ? current.eventTitle
+          : EVENT_KIND_TITLE_SUGGESTIONS[kind],
+      };
+    });
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setError(""); setSuccess("");
     const response = await fetch("/api/admin/invitations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ customerName, customerEmail, draft }) }).catch(() => null);
@@ -93,7 +108,7 @@ export function AdminManagedInvitation({ templates }: { templates: TemplateOptio
       <label className="editor-field"><span className="field-label">Nama pelanggan</span><input className="text-input" required minLength={2} maxLength={80} value={customerName} onChange={(event) => setCustomerName(event.target.value)} placeholder="Nama lengkap" /></label>
       <label className="editor-field"><span className="field-label">Email akun pelanggan</span><input className="text-input" type="email" required maxLength={254} value={customerEmail} onChange={(event) => setCustomerEmail(event.target.value)} placeholder="nama@email.com" /></label>
       <label className="editor-field"><span className="field-label">Template</span><select className="text-input" value={draft.templateId} onChange={(event) => { const template = templates.find((item) => item.slug === event.target.value); if (template) setDraft((current) => ({ ...current, templateId: template.slug, templateVersion: template.version })); }}>{templates.map((template) => <option key={template.slug} value={template.slug}>{template.name}</option>)}</select></label>
-      <label className="editor-field"><span className="field-label">Jenis acara</span><select className="text-input" value={draft.eventKind} onChange={(event) => update("eventKind", event.target.value as DraftForm["eventKind"])}><option>Pernikahan</option><option>Ulang Tahun</option><option>Pertunangan</option><option>Acara Lainnya</option></select></label>
+      <label className="editor-field"><span className="field-label">Jenis acara</span><select className="text-input" value={draft.eventKind} onChange={(event) => changeEventKind(event.target.value as EventKind)}>{EVENT_KINDS.map((kind) => <option key={kind} value={kind}>{kind}</option>)}</select></label>
       {draft.eventKind === "Pernikahan" ? <><label className="editor-field"><span className="field-label">Nama pertama</span><input className="text-input" required maxLength={80} value={draft.hostOne} onChange={(event) => update("hostOne", event.target.value)} /></label><label className="editor-field"><span className="field-label">Nama kedua</span><input className="text-input" required maxLength={80} value={draft.hostTwo} onChange={(event) => update("hostTwo", event.target.value)} /></label></> : <label className="editor-field admin-managed-field--wide"><span className="field-label">Judul acara</span><input className="text-input" required maxLength={120} value={draft.eventTitle} onChange={(event) => update("eventTitle", event.target.value)} /></label>}
       <label className="editor-field"><span className="field-label">Tanggal</span><input className="text-input" type="date" required value={draft.eventDate} onChange={(event) => update("eventDate", event.target.value)} /></label>
       <label className="editor-field"><span className="field-label">Waktu</span><input className="text-input" type="time" required value={draft.eventTime} onChange={(event) => update("eventTime", event.target.value)} /></label>

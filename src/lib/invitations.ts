@@ -1,4 +1,22 @@
-export type EventKind = "Pernikahan" | "Ulang Tahun" | "Pertunangan" | "Acara Lainnya";
+export const EVENT_KINDS = [
+  "Pernikahan",
+  "Ulang Tahun",
+  "Khitan",
+  "Acara Perusahaan",
+  "Pertunangan",
+  "Acara Lainnya",
+] as const;
+
+export type EventKind = (typeof EVENT_KINDS)[number];
+
+export const EVENT_KIND_TITLE_SUGGESTIONS: Record<EventKind, string> = {
+  Pernikahan: "Undangan Pernikahan",
+  "Ulang Tahun": "Perayaan Ulang Tahun",
+  Khitan: "Acara Khitan",
+  "Acara Perusahaan": "Acara Perusahaan",
+  Pertunangan: "Hari Pertunangan",
+  "Acara Lainnya": "Undangan Acara",
+};
 
 export type InvitationDraft = {
   id: string;

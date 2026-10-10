@@ -2,7 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 import { getTemplate } from "@/lib/templates";
-import { safeHttpsUrl, type InvitationDraft } from "@/lib/invitations";
+import { EVENT_KINDS, safeHttpsUrl, type InvitationDraft } from "@/lib/invitations";
 import { getPrismaClient } from "@/lib/prisma";
 import { isR2PublicUrl, r2KeyFromPublicUrl } from "@/lib/r2";
 import { isEditorCompatibleTemplate, TEMPLATE_SDK_VERSION, validateTemplateManifest } from "@/lib/template-sdk";
@@ -11,7 +11,7 @@ import { templateVersionRequiresAdminReview } from "@/templates/registry";
 export const invitationDraftSchema = z.object({
   id: z.string().uuid().optional(),
   slug: z.string().trim().min(3).max(48).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  eventKind: z.enum(["Pernikahan", "Ulang Tahun", "Pertunangan", "Acara Lainnya"]),
+  eventKind: z.enum(EVENT_KINDS),
   eventTitle: z.string().trim().max(120),
   hostOne: z.string().trim().max(80),
   hostTwo: z.string().trim().max(80),

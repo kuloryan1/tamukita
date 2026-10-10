@@ -9,11 +9,18 @@ import "react-easy-crop/react-easy-crop.css";
 import { InvitationPreview } from "@/components/invitation-preview";
 import { formatRupiah, getTemplate, templates as builtInTemplates, type TemplateSchemaField } from "@/lib/templates";
 import type { Template } from "@/lib/template-sdk";
-import { createInitialDraft, isSlugAllowed, slugify, type EventKind, type InvitationDraft } from "@/lib/invitations";
+import { createInitialDraft, EVENT_KINDS, EVENT_KIND_TITLE_SUGGESTIONS, isSlugAllowed, slugify, type EventKind, type InvitationDraft } from "@/lib/invitations";
 import { validateInvitationDraft } from "@/lib/validation";
 
 const steps = ["Acara", "Detail", "Foto", "Tampilan", "Preview"];
-const eventKinds: EventKind[] = ["Pernikahan", "Ulang Tahun", "Pertunangan", "Acara Lainnya"];
+const eventKindIcons: Record<EventKind, string> = {
+  Pernikahan: "♡",
+  "Ulang Tahun": "✦",
+  Khitan: "✧",
+  "Acara Perusahaan": "▦",
+  Pertunangan: "✧",
+  "Acara Lainnya": "✳",
+};
 const themeColorOptions = [
   { value: "default", label: "Template", swatch: "" },
   { value: "rose", label: "Rose", swatch: "#b8758a" },
@@ -705,12 +712,13 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
 
   const changeKind = (kind: EventKind) => {
     updateDraft((current) => {
-      const next = { ...current, eventKind: kind };
-      if (kind !== "Pernikahan") {
-        next.eventTitle = kind === "Ulang Tahun" ? "Perayaan Ulang Tahun" : kind === "Pertunangan" ? "Hari Pertunangan" : "Undangan Acara";
-        next.slug = slugify(next.eventTitle) || current.slug;
-      }
-      return next;
+      const titleWasSuggested = !current.eventTitle.trim()
+        || Object.values(EVENT_KIND_TITLE_SUGGESTIONS).includes(current.eventTitle);
+      const eventTitle = kind === "Pernikahan" || !titleWasSuggested
+        ? current.eventTitle
+        : EVENT_KIND_TITLE_SUGGESTIONS[kind];
+      const slugSource = kind === "Pernikahan" ? `${current.hostOne} ${current.hostTwo}` : eventTitle;
+      return { ...current, eventKind: kind, eventTitle, slug: slugify(slugSource) || current.slug };
     });
     setError("");
   };
@@ -790,7 +798,7 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
           <section className="editor-form-card">
             <div className="editor-card-heading"><div><span className="eyebrow">LANGKAH 0{step + 1} DARI 05</span><h2>{["Ceritakan acaramu", "Waktu dan tempat", "Pilih foto sampul", "Pilih nuansa desain", "Lihat hasilnya"][step]}</h2><p>{["Kita mulai dari hal yang paling penting: momen apa yang ingin kamu rayakan?", "Bantu tamu tahu kapan dan di mana mereka bisa ikut merayakan.", "Tambahkan foto yang membuat undanganmu terasa semakin personal.", "Pilih template yang sesuai dengan suasana harimu.", "Semua detailmu sudah siap. Lihat kembali sebelum membagikan undangan."][step]}</p></div><div className="editor-heading-actions"><div className="editor-history-actions"><button type="button" className="editor-history-button" onClick={undoDraft} disabled={!canUndo} aria-label="Urungkan perubahan" title="Urungkan perubahan (Ctrl+Z)"><Undo2 size={15} /></button><button type="button" className="editor-history-button" onClick={redoDraft} disabled={!canRedo} aria-label="Ulangi perubahan" title="Ulangi perubahan (Ctrl+Shift+Z)"><Redo2 size={15} /></button></div><button className="help-icon-button" type="button" aria-label="Bantuan"><CircleHelp size={17} /></button></div></div>
 
-            {step === 0 && <div className="form-step-content"><div className="editor-field"><span className="field-label">Jenis acara</span><div className="event-kind-grid">{eventKinds.map((kind) => <button key={kind} type="button" className={`event-kind-card${draft.eventKind === kind ? " is-selected" : ""}`} onClick={() => changeKind(kind)}><span className="event-kind-icon">{kind === "Pernikahan" ? "♡" : kind === "Ulang Tahun" ? "✦" : kind === "Pertunangan" ? "✧" : "✳"}</span><span>{kind}</span>{draft.eventKind === kind && <CheckCircle2 size={14} />}</button>)}</div></div>{draft.eventKind === "Pernikahan" ? <div className="field-row">{identityFields.filter((field) => field.key === "hostOne" || field.key === "hostTwo").map(renderSchemaField)}</div> : identityFields.filter((field) => field.key === "eventTitle").map(renderSchemaField)}{identityFields.filter((field) => field.key === "story").map(renderSchemaField)}<div className="private-note"><Info size={15} /><span>Informasi ini ditampilkan di undanganmu. Form dasar ini dibuat dari schema template.</span></div></div>}
+            {step === 0 && <div className="form-step-content"><div className="editor-field"><span className="field-label">Jenis acara</span><div className="event-kind-grid">{EVENT_KINDS.map((kind) => <button key={kind} type="button" className={`event-kind-card${draft.eventKind === kind ? " is-selected" : ""}`} onClick={() => changeKind(kind)}><span className="event-kind-icon">{eventKindIcons[kind]}</span><span>{kind}</span>{draft.eventKind === kind && <CheckCircle2 size={14} />}</button>)}</div></div>{draft.eventKind === "Pernikahan" ? <div className="field-row">{identityFields.filter((field) => field.key === "hostOne" || field.key === "hostTwo").map(renderSchemaField)}</div> : identityFields.filter((field) => field.key === "eventTitle").map(renderSchemaField)}{identityFields.filter((field) => field.key === "story").map(renderSchemaField)}<div className="private-note"><Info size={15} /><span>Informasi ini ditampilkan di undanganmu. Form dasar ini dibuat dari schema template.</span></div></div>}
 
             {step === 1 && <div className="form-step-content"><div className="schema-fields-grid">{scheduleFields.map((field) => <div className={field.type === "textarea" || field.type === "url" ? "schema-grid-item schema-grid-item--full" : "schema-grid-item"} key={field.key}>{renderSchemaField(field)}</div>)}</div><div className="editor-gift-fields"><span className="eyebrow">INFORMASI HADIAH · OPSIONAL</span><p>Detail rekening ini akan terlihat di undangan publik. Isi hanya jika ingin menerima hadiah melalui transfer.</p><div className="schema-fields-grid"><div className="schema-grid-item"><Field label="Nama bank"><input className="text-input" maxLength={80} value={draft.giftBankName} onChange={(event) => update("giftBankName", event.target.value)} placeholder="Contoh: BCA" /></Field></div><div className="schema-grid-item"><Field label="Nama pemilik rekening"><input className="text-input" maxLength={100} value={draft.giftAccountName} onChange={(event) => update("giftAccountName", event.target.value)} placeholder="Nama sesuai rekening" /></Field></div><div className="schema-grid-item schema-grid-item--full"><Field label="Nomor rekening"><input className="text-input" maxLength={60} value={draft.giftAccountNumber} onChange={(event) => update("giftAccountNumber", event.target.value)} placeholder="Masukkan nomor rekening" /></Field></div><div className="schema-grid-item schema-grid-item--full"><Field label="Pesan hadiah (opsional)"><textarea className="text-input text-area" maxLength={300} rows={2} value={draft.giftMessage} onChange={(event) => update("giftMessage", event.target.value)} placeholder="Terima kasih atas doa dan perhatianmu." /></Field></div></div></div></div>}
 
