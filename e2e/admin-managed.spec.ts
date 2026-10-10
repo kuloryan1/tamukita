@@ -25,6 +25,10 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   await expect(page.getByRole("heading", { name: "Nilai per saluran" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Template paling banyak dipublikasikan" })).toBeVisible();
   await page.goto("/admin");
+  await page.getByRole("link", { name: "Audit log" }).click();
+  await expect(page.getByRole("heading", { name: "Audit log" })).toBeVisible();
+  await expect(page.getByLabel("Cari aktivitas, target, atau workspace")).toBeVisible();
+  await page.goto("/admin");
 
   const financePage = await browser.newPage();
   try {
@@ -38,6 +42,9 @@ test("admin creates customer drafts and notifies an existing customer", async ({
     await financePage.goto(new URL("/admin", page.url()).toString());
     await financePage.waitForURL(/\/dashboard/);
     await expect(financePage.getByRole("heading", { name: "Admin TamuKita" })).toHaveCount(0);
+    await financePage.goto(new URL("/admin/audit", page.url()).toString());
+    await financePage.waitForURL(/\/dashboard/);
+    await expect(financePage.getByRole("heading", { name: "Audit log" })).toHaveCount(0);
   } finally {
     await financePage.close();
   }

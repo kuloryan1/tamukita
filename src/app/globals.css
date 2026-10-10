@@ -992,6 +992,11 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .admin-analytics-period { color: #858b82; font-size: 10px; line-height: 1.7; margin: 0 0 12px; }
 .admin-analytics-period strong { color: #526256; font-weight: 600; }
 .admin-analytics-card { margin: 16px 0 0; }
+.admin-audit-filters { align-items: end; background: #fff; border: 1px solid #edece7; display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 16px 0; padding: 14px; }
+.admin-audit-filters .editor-field { margin: 0; min-width: 0; }
+.admin-audit-filter-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; }
+.admin-audit-history-card { margin-top: 0; }
+.admin-audit-history-card .admin-table { min-width: 760px; }
 .admin-media-metrics { display: grid; gap: 10px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 18px 0; }
 .admin-media-page { margin: 0 auto; max-width: 1200px; }
 .admin-media-note { color: #90968d; font-size: 9px; line-height: 1.6; margin: -6px 0 16px; }
@@ -1037,6 +1042,7 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .admin-workspace-search { margin: 0 0 14px; max-width: 560px; width: 100%; }
 .admin-pagination { align-items: center; border-top: 1px solid #eeede8; color: #979b92; display: flex; font-size: 8px; justify-content: space-between; margin-top: 10px; padding-top: 12px; }
 .admin-pagination > div { display: flex; gap: 6px; }
+.admin-pagination > a { align-items: center; color: #718877; display: inline-flex; gap: 5px; text-decoration: none; }
 .admin-back-link { align-items: center; color: #728372; display: inline-flex; font-size: 9px; gap: 6px; margin: 0 0 12px; text-decoration: none; }
 .admin-back-link:hover { color: #46584a; }
 .admin-workspace-metrics { margin-top: 14px; }
@@ -1489,6 +1495,8 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
   .reseller-sales-submit { align-items: flex-start; flex-direction: column; }
   .admin-reseller-row { align-items: flex-start; flex-direction: column; }
   .admin-metric-grid, .admin-media-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-audit-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-audit-filter-actions { grid-column: 1 / -1; }
   .admin-overview-grid { grid-template-columns: 1fr; }
   .admin-settings-grid { grid-template-columns: 1fr; }
   .admin-quick-links { align-items: flex-start; }
@@ -1519,6 +1527,7 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
   .floating-note small { font-size: 7px; }
   .catalog-note { font-size: 9px; }
   .field-row { gap: 8px; }
+  .admin-audit-filters { grid-template-columns: 1fr; }
   .text-input { font-size: 9px; }
   .public-detail-cards { grid-template-columns: 1fr; }
   .public-detail-card { min-height: 135px; }
