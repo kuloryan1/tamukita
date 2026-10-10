@@ -6,5 +6,5 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  return <DashboardShell user={{ name: session.user.name ?? null, email: session.user.email ?? null }}>{children}</DashboardShell>;
+  return <DashboardShell user={{ name: session.user.name ?? null, email: session.user.email ?? null, platformRole: session.user.platformRole }}>{children}</DashboardShell>;
 }

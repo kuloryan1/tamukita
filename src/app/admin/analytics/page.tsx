@@ -23,10 +23,11 @@ export default async function AdminAnalyticsPage() {
   const periodStart = new Date(now.getTime() - periodMs);
   const publicViewsStart = new Date(Date.UTC(periodStart.getUTCFullYear(), periodStart.getUTCMonth(), periodStart.getUTCDate()));
   const settledStatuses = ["PAID", "PARTIALLY_REFUNDED", "REFUNDED", "CANCELED", "EXPIRED"] as const;
-  const [newAccounts, newWorkspaces, newDrafts, publishedDrafts, settledOrderCount, paidOrderCount, paidSummary, refundSummary, resellerSales, publicViews, platformViews, rsvpCount, contentReportCount, templateGroups, customerPayments, resellerTopUps] = await Promise.all([
+  const [newAccounts, newWorkspaces, newDrafts, completedDrafts, publishedDrafts, settledOrderCount, paidOrderCount, paidSummary, refundSummary, resellerSales, publicViews, platformViews, rsvpCount, contentReportCount, editorFeedbackCount, templateGroups, customerPayments, resellerTopUps] = await Promise.all([
     prisma.user.count({ where: { createdAt: { gte: periodStart } } }),
     prisma.organization.count({ where: { type: "PERSONAL", createdAt: { gte: periodStart } } }),
     prisma.invitation.count({ where: { deletedAt: null, createdAt: { gte: periodStart } } }),
+    prisma.invitation.count({ where: { deletedAt: null, createdAt: { gte: periodStart }, formCompletedAt: { not: null } } }),
     prisma.invitation.count({ where: { deletedAt: null, createdAt: { gte: periodStart }, publishedAt: { not: null } } }),
     prisma.order.count({ where: { createdAt: { gte: periodStart }, totalAmount: { gt: 0 }, status: { in: [...settledStatuses] } } }),
     prisma.order.count({ where: { createdAt: { gte: periodStart }, totalAmount: { gt: 0 }, paidAt: { not: null } } }),
@@ -41,6 +42,7 @@ export default async function AdminAnalyticsPage() {
     }),
     prisma.rSVP.count({ where: { respondedAt: { gte: periodStart }, invitation: { deletedAt: null } } }),
     prisma.contentReport.count({ where: { createdAt: { gte: periodStart } } }),
+    prisma.editorFeedback.count({ where: { createdAt: { gte: periodStart } } }),
     prisma.invitation.groupBy({
       by: ["templateVersionId"],
       where: { deletedAt: null, publishedAt: { gte: periodStart } },
@@ -93,6 +95,8 @@ export default async function AdminAnalyticsPage() {
         { label: "Akun baru", value: newAccounts.toLocaleString("id-ID"), detail: "Registrasi dalam periode" },
         { label: "Workspace pelanggan baru", value: newWorkspaces.toLocaleString("id-ID"), detail: "Workspace personal dibuat" },
         { label: "Draft undangan dibuat", value: newDrafts.toLocaleString("id-ID"), detail: "Tidak termasuk yang dihapus" },
+        { label: "Form editor selesai", value: completedDrafts.toLocaleString("id-ID"), detail: "Draft baru yang lolos validasi sebelum checkout atau aktivasi" },
+        { label: "Penyelesaian form", value: rate(completedDrafts, newDrafts), detail: `${completedDrafts.toLocaleString("id-ID")} dari draft yang dibuat dalam kohor` },
         { label: "Konversi draft ke publikasi", value: rate(publishedDrafts, newDrafts), detail: `${publishedDrafts.toLocaleString("id-ID")} dari draft dalam kohor` },
         { label: "Konversi checkout", value: rate(paidOrderCount, settledOrderCount), detail: `${paidOrderCount.toLocaleString("id-ID")} order dibayar dari ${settledOrderCount.toLocaleString("id-ID")} order final` },
         { label: "Pengunjung marketplace harian", value: (platformViewsByKey.get("template_catalog_unique_visitors") ?? BigInt(0)).toLocaleString("id-ID"), detail: "Total hitungan harian 30 hari; browser dengan JavaScript aktif dihitung sekali per hari UTC" },
@@ -101,6 +105,7 @@ export default async function AdminAnalyticsPage() {
         { label: "Tampilan halaman undangan", value: (publicViews._sum.metricValue ?? BigInt(0)).toLocaleString("id-ID"), detail: "Page view, bukan pengunjung unik" },
         { label: "RSVP masuk", value: rsvpCount.toLocaleString("id-ID"), detail: "Respons tamu dalam periode" },
         { label: "Laporan konten", value: contentReportCount.toLocaleString("id-ID"), detail: "Laporan yang dibuat dalam periode" },
+        { label: "Keluhan editor", value: editorFeedbackCount.toLocaleString("id-ID"), detail: "Laporan kendala yang dikirim dalam periode" },
         { label: "Pembayaran masuk", value: rupiah.format(grossPayments), detail: "Order IDR yang dibayar dalam periode" },
         { label: "Refund berhasil", value: rupiah.format(successfulRefunds), detail: "Refund IDR yang selesai dalam periode" },
         { label: "Penjualan reseller tercatat", value: rupiah.format(resellerSales._sum.amountIdr ?? 0), detail: `${resellerSales._count._all.toLocaleString("id-ID")} catatan, dilaporkan reseller` },

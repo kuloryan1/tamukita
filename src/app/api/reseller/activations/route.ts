@@ -67,6 +67,19 @@ export async function POST(request: Request) {
   }
   const validation = validateInvitationDraft(draft);
   if (!validation.valid) return NextResponse.json({ error: validation.message ?? "Detail undangan belum lengkap." }, { status: 400 });
+  await prisma.invitation.updateMany({
+    where: {
+      id: invitation.id,
+      ownerId: invitation.ownerId,
+      organizationId: invitation.organizationId,
+      resellerOrgId: invitation.resellerOrgId,
+      status: "DRAFT",
+      deletedAt: null,
+      formCompletedAt: null,
+      organization: { status: "ACTIVE", customerOfResellers: { some: { resellerOrgId: reseller.organizationId, status: "ACTIVE" } } },
+    },
+    data: { formCompletedAt: new Date() },
+  });
   const manifest = validateTemplateManifest(invitation.templateVersion.manifest);
   if (!manifest.success || manifest.data.slug !== invitation.templateVersion.template.slug || manifest.data.version !== invitation.templateVersion.version || !isEditorCompatibleTemplate(manifest.data)) {
     return NextResponse.json({ error: "Manifest template ini tidak valid untuk aktivasi reseller." }, { status: 409 });

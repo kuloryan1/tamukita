@@ -28,6 +28,9 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   await expect(page.getByText("Tampilan katalog template", { exact: true })).toBeVisible();
   await expect(page.getByText("Tampilan detail template", { exact: true })).toBeVisible();
   await expect(page.getByText("Pengunjung marketplace harian", { exact: true })).toBeVisible();
+  await expect(page.getByText("Form editor selesai", { exact: true })).toBeVisible();
+  await expect(page.getByText("Penyelesaian form", { exact: true })).toBeVisible();
+  await expect(page.getByText("Keluhan editor", { exact: true })).toBeVisible();
   await page.goto("/admin");
   await page.getByRole("link", { name: "Audit log" }).click();
   await expect(page.getByRole("heading", { name: "Audit log" })).toBeVisible();
@@ -41,6 +44,10 @@ test("admin creates customer drafts and notifies an existing customer", async ({
     await financePage.getByLabel("Kata sandi").fill(process.env.E2E_FINANCE_PASSWORD ?? "");
     await financePage.getByRole("button", { name: "Masuk" }).click();
     await financePage.waitForURL(/\/dashboard/);
+    expect((await financePage.request.get(new URL("/api/admin/editor-feedback", page.url()).toString())).status()).toBe(403);
+    await financePage.goto(new URL("/admin/editor-feedback", page.url()).toString());
+    await financePage.waitForURL(/\/dashboard/);
+    await expect(financePage.getByRole("heading", { name: "Keluhan editor" })).toHaveCount(0);
     await financePage.goto(new URL("/admin/analytics", page.url()).toString());
     await expect(financePage.getByRole("heading", { name: "Analitik platform" })).toBeVisible();
     await expect(financePage.getByRole("heading", { name: "Template digunakan per kategori" })).toBeVisible();

@@ -103,6 +103,22 @@ enum ContentReportReason {
   OTHER
 }
 
+enum EditorFeedbackCategory {
+  FORM
+  AUTOSAVE
+  PHOTO
+  TEMPLATE
+  PREVIEW
+  PUBLISH
+  OTHER
+}
+
+enum EditorFeedbackStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+}
+
 enum OrderStatus {
   PENDING
   PAID
@@ -214,6 +230,7 @@ model User {
   platformSettings    PlatformSetting[]    @relation("PlatformSettingUpdater")
   recordedResellerSales ResellerSale[]     @relation("ResellerSaleRecorder")
   voidedResellerSales   ResellerSale[]     @relation("ResellerSaleVoider")
+  editorFeedback        EditorFeedback[]
 
   @@index([platformRole])
   @@map("users")
@@ -299,6 +316,7 @@ model Organization {
   analyticsDaily      AnalyticsDaily[]
   resellerSales       ResellerSale[]       @relation("ResellerSales")
   salesAsCustomer     ResellerSale[]       @relation("ResellerSaleCustomer")
+  editorFeedback     EditorFeedback[]
 
   @@index([type, status])
   @@map("organizations")
@@ -375,6 +393,7 @@ model Invitation {
   draftData           Json
   publishedSnapshot   Json?
   publishedAt         DateTime?
+  formCompletedAt     DateTime?
   startsAt            DateTime?
   expiresAt           DateTime?
   deletedAt           DateTime?
@@ -396,8 +415,10 @@ model Invitation {
   entitlements        Entitlement[]
   supportAccessGrants SupportAccessGrant[]
   resellerSales       ResellerSale[]
+  editorFeedback      EditorFeedback[]
 
   @@index([organizationId, status, updatedAt])
+  @@index([createdAt, formCompletedAt])
   @@index([ownerId, status])
   @@index([resellerOrgId, createdAt])
   @@map("invitations")
@@ -574,6 +595,26 @@ model ContentReport {
   @@index([status, createdAt])
   @@index([guestbookEntryId, status])
   @@map("content_reports")
+}
+
+model EditorFeedback {
+  id             String                  @id @default(uuid()) @db.Uuid
+  userId         String                  @db.Uuid
+  organizationId String                  @db.Uuid
+  invitationId   String?                 @db.Uuid
+  category       EditorFeedbackCategory
+  message        String                  @db.VarChar(1200)
+  status         EditorFeedbackStatus    @default(OPEN)
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  user           User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitation     Invitation?             @relation(fields: [invitationId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
+  @@index([organizationId, createdAt])
+  @@map("editor_feedback")
 }
 
 model Order {

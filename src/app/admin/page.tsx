@@ -28,7 +28,7 @@ export default async function AdminPage() {
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const publicViewsStart = new Date(Date.UTC(thirtyDaysAgo.getUTCFullYear(), thirtyDaysAgo.getUTCMonth(), thirtyDaysAgo.getUTCDate()));
-  const [profiles, userCount, newUserCount, organizationCount, activeInvitationCount, initialPublicationCount, publicViews, paidOrderSummary, successfulRefundSummary, pendingOrderCount, pendingPaymentCount, liveResellerCount, templatesInReviewCount, failedMediaCount, failedNotificationCount, recentOrders, recentAudit, recentInvitations, templateRows] = await Promise.all([
+  const [profiles, userCount, newUserCount, organizationCount, activeInvitationCount, initialPublicationCount, publicViews, paidOrderSummary, successfulRefundSummary, pendingOrderCount, pendingPaymentCount, liveResellerCount, templatesInReviewCount, failedMediaCount, failedNotificationCount, openEditorFeedbackCount, recentOrders, recentAudit, recentInvitations, templateRows] = await Promise.all([
     prisma.resellerProfile.findMany({
       where: { status: "PENDING" },
       orderBy: { createdAt: "asc" },
@@ -54,6 +54,7 @@ export default async function AdminPage() {
     prisma.template.count({ where: { status: { in: ["IN_REVIEW", "UPDATE_IN_REVIEW"] } } }),
     prisma.mediaAsset.count({ where: { status: "FAILED", deletedAt: null } }),
     prisma.notificationJob.count({ where: { failedAt: { not: null } } }),
+    prisma.editorFeedback.count({ where: { status: { in: ["OPEN", "IN_REVIEW"] } } }),
     prisma.order.findMany({
       orderBy: { createdAt: "desc" },
       take: 10,
@@ -103,6 +104,7 @@ export default async function AdminPage() {
     { label: "Template review", value: templatesInReviewCount, detail: "Menunggu pemeriksaan", icon: "template" as const },
     { label: "Media gagal", value: failedMediaCount, detail: "Perlu ditinjau ulang", icon: "media" as const },
     { label: "Email gagal", value: failedNotificationCount, detail: "Job notifikasi yang perlu dicek", icon: "notification" as const },
+    { label: "Keluhan editor terbuka", value: openEditorFeedbackCount, detail: "Menunggu atau sedang ditinjau Support", icon: "notification" as const },
   ];
   const orderRows = recentOrders.map((order) => ({
     id: order.id,
@@ -135,5 +137,5 @@ export default async function AdminPage() {
     organization: invitation.organization.name,
     updatedAt: invitation.updatedAt.toISOString(),
   }));
-  return <div className="admin-page"><div className="dashboard-page-heading"><div><p className="dashboard-date">TIGAKAKI · ADMIN PLATFORM</p><h1><ShieldCheck size={25} /> Admin TamuKita</h1><p>Pantau operasional dan antrean yang memerlukan pemeriksaan.</p></div><div className="admin-quick-links"><Link className="button button--outline button--small" href="/admin/analytics">Analitik</Link><Link className="button button--outline button--small" href="/admin/audit">Audit log</Link><Link className="button button--outline button--small" href="/admin/moderation">Moderasi konten</Link><Link className="button button--outline button--small" href="/admin/media">Media</Link><Link className="button button--outline button--small" href="/admin/orders">Order & refund</Link><Link className="button button--outline button--small" href="/admin/templates">Review template</Link><Link className="button button--outline button--small" href="/admin/settings">Pengaturan</Link></div></div><AdminOverview metrics={metrics} orders={orderRows} audit={auditRows} /><AdminOrders /><AdminWorkspaces /><AdminManagedInvitation templates={templates.map(({ slug, name, version }) => ({ slug, name, version }))} /><AdminInvitations invitations={invitationRows} /><AdminTemplateReview templates={templateRows} canSetPricing /><section className="dashboard-content-card"><div className="card-heading"><div><h2>Pengajuan reseller</h2><p>{applications.length} menunggu pemeriksaan</p></div></div><AdminResellers applications={applications} /></section></div>;
+  return <div className="admin-page"><div className="dashboard-page-heading"><div><p className="dashboard-date">TIGAKAKI · ADMIN PLATFORM</p><h1><ShieldCheck size={25} /> Admin TamuKita</h1><p>Pantau operasional dan antrean yang memerlukan pemeriksaan.</p></div><div className="admin-quick-links"><Link className="button button--outline button--small" href="/admin/analytics">Analitik</Link><Link className="button button--outline button--small" href="/admin/audit">Audit log</Link><Link className="button button--outline button--small" href="/admin/editor-feedback">Keluhan editor</Link><Link className="button button--outline button--small" href="/admin/moderation">Moderasi konten</Link><Link className="button button--outline button--small" href="/admin/media">Media</Link><Link className="button button--outline button--small" href="/admin/orders">Order & refund</Link><Link className="button button--outline button--small" href="/admin/templates">Review template</Link><Link className="button button--outline button--small" href="/admin/settings">Pengaturan</Link></div></div><AdminOverview metrics={metrics} orders={orderRows} audit={auditRows} /><AdminOrders /><AdminWorkspaces /><AdminManagedInvitation templates={templates.map(({ slug, name, version }) => ({ slug, name, version }))} /><AdminInvitations invitations={invitationRows} /><AdminTemplateReview templates={templateRows} canSetPricing /><section className="dashboard-content-card"><div className="card-heading"><div><h2>Pengajuan reseller</h2><p>{applications.length} menunggu pemeriksaan</p></div></div><AdminResellers applications={applications} /></section></div>;
 }

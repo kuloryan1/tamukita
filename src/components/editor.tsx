@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, ImagePlus, Info, Monitor, Music2, Pencil, Redo2, RotateCcw, RotateCw, Save, Smartphone, Sparkles, Undo2, Upload, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, ChevronLeft, ChevronRight, ImagePlus, Info, Monitor, Music2, Pencil, Redo2, RotateCcw, RotateCw, Save, Smartphone, Sparkles, Undo2, Upload, X } from "lucide-react";
 import Cropper, { type Area } from "react-easy-crop";
 import "react-easy-crop/react-easy-crop.css";
 import { InvitationPreview } from "@/components/invitation-preview";
+import { EditorFeedbackDialog } from "@/components/editor-feedback-dialog";
 import { formatRupiah, getTemplate, templates as builtInTemplates, type TemplateSchemaField } from "@/lib/templates";
 import type { Template } from "@/lib/template-sdk";
 import { createInitialDraft, EVENT_KINDS, EVENT_KIND_TITLE_SUGGESTIONS, familyDetailsPrompt, isSlugAllowed, slugify, type EventKind, type InvitationDraft } from "@/lib/invitations";
@@ -797,7 +798,7 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
 
         <div className="editor-workspace">
           <section className="editor-form-card">
-            <div className="editor-card-heading"><div><span className="eyebrow">LANGKAH 0{step + 1} DARI 05</span><h2>{["Ceritakan acaramu", "Waktu dan tempat", "Pilih foto sampul", "Pilih nuansa desain", "Lihat hasilnya"][step]}</h2><p>{["Kita mulai dari hal yang paling penting: momen apa yang ingin kamu rayakan?", "Bantu tamu tahu kapan dan di mana mereka bisa ikut merayakan.", "Tambahkan foto yang membuat undanganmu terasa semakin personal.", "Pilih template yang sesuai dengan suasana harimu.", "Semua detailmu sudah siap. Lihat kembali sebelum membagikan undangan."][step]}</p></div><div className="editor-heading-actions"><div className="editor-history-actions"><button type="button" className="editor-history-button" onClick={undoDraft} disabled={!canUndo} aria-label="Urungkan perubahan" title="Urungkan perubahan (Ctrl+Z)"><Undo2 size={15} /></button><button type="button" className="editor-history-button" onClick={redoDraft} disabled={!canRedo} aria-label="Ulangi perubahan" title="Ulangi perubahan (Ctrl+Shift+Z)"><Redo2 size={15} /></button></div><button className="help-icon-button" type="button" aria-label="Bantuan"><CircleHelp size={17} /></button></div></div>
+            <div className="editor-card-heading"><div><span className="eyebrow">LANGKAH 0{step + 1} DARI 05</span><h2>{["Ceritakan acaramu", "Waktu dan tempat", "Pilih foto sampul", "Pilih nuansa desain", "Lihat hasilnya"][step]}</h2><p>{["Kita mulai dari hal yang paling penting: momen apa yang ingin kamu rayakan?", "Bantu tamu tahu kapan dan di mana mereka bisa ikut merayakan.", "Tambahkan foto yang membuat undanganmu terasa semakin personal.", "Pilih template yang sesuai dengan suasana harimu.", "Semua detailmu sudah siap. Lihat kembali sebelum membagikan undangan."][step]}</p></div><div className="editor-heading-actions"><div className="editor-history-actions"><button type="button" className="editor-history-button" onClick={undoDraft} disabled={!canUndo} aria-label="Urungkan perubahan" title="Urungkan perubahan (Ctrl+Z)"><Undo2 size={15} /></button><button type="button" className="editor-history-button" onClick={redoDraft} disabled={!canRedo} aria-label="Ulangi perubahan" title="Ulangi perubahan (Ctrl+Shift+Z)"><Redo2 size={15} /></button></div><EditorFeedbackDialog invitationId={draft.id} /></div></div>
 
             {step === 0 && <div className="form-step-content">
               <div className="editor-field"><span className="field-label">Jenis acara</span><div className="event-kind-grid">{EVENT_KINDS.map((kind) => <button key={kind} type="button" className={`event-kind-card${draft.eventKind === kind ? " is-selected" : ""}`} onClick={() => changeKind(kind)}><span className="event-kind-icon">{eventKindIcons[kind]}</span><span>{kind}</span>{draft.eventKind === kind && <CheckCircle2 size={14} />}</button>)}</div></div>

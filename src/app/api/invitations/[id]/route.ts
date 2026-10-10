@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { ensureTemplateVersion, eventStartsAt, invitationDraftSchema, invitationTitle, ownsInvitationCoverPhoto, ownsInvitationGalleryPhotos, ownsInvitationMusic } from "@/lib/invitation-server";
 import { getPrismaClient } from "@/lib/prisma";
 import { readJsonBody } from "@/lib/request-json";
+import { validateInvitationDraft } from "@/lib/validation";
 
 export const runtime = "nodejs";
 
@@ -41,6 +42,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "Audio latar tidak dimiliki draft ini." }, { status: 400 });
   }
   const draft = { ...parsed.data, id, slug: existing.status === "PUBLISHED" ? existing.slug : parsed.data.slug, isPublished: existing.status === "PUBLISHED", updatedAt: new Date().toISOString() };
+  const formIsComplete = validateInvitationDraft(draft).valid;
   try {
     const updated = await prisma.$transaction(async (tx) => {
       const record = await tx.invitation.updateMany({
@@ -68,6 +70,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         await tx.event.update({ where: { id: event.id }, data: { title: invitationTitle(draft), startsAt: eventStartsAt(draft), venue: draft.venue, address: draft.address, mapsUrl: draft.mapsUrl || null } });
       } else {
         await tx.event.create({ data: { invitationId: id, title: invitationTitle(draft), startsAt: eventStartsAt(draft), venue: draft.venue, address: draft.address, mapsUrl: draft.mapsUrl || null } });
+      }
+      if (existing.status === "DRAFT" && formIsComplete) {
+        await tx.invitation.updateMany({ where: { id, status: "DRAFT", formCompletedAt: null }, data: { formCompletedAt: new Date() } });
       }
       return true;
     });

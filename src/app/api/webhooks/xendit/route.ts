@@ -321,7 +321,7 @@ export async function POST(request: Request) {
           const expiresAt = new Date(publishedAt.getTime() + periodDays * 86_400_000);
           await tx.invitation.update({
             where: { id: invitation.id },
-            data: { status: "PUBLISHED", slug: nextSlug, title: nextTitle, startsAt: eventStartsAt(updatedDraft), templateVersionId: publishItem.templateVersionId, publishedAt, expiresAt, publishedSnapshot: snapshot },
+            data: { status: "PUBLISHED", slug: nextSlug, title: nextTitle, startsAt: eventStartsAt(updatedDraft), templateVersionId: publishItem.templateVersionId, publishedAt, formCompletedAt: invitation.formCompletedAt ?? publishedAt, expiresAt, publishedSnapshot: snapshot },
           });
           await tx.entitlement.create({ data: { organizationId: invitation.organizationId, invitationId: invitation.id, orderId: paymentSession.orderId, featureKey: "hosting", value: { periodDays, source: "TEMPLATE_CHECKOUT" }, startsAt: publishedAt, expiresAt } });
           const eventData = { title: nextTitle, startsAt: eventStartsAt(updatedDraft), venue: updatedDraft.venue, address: updatedDraft.address, mapsUrl: updatedDraft.mapsUrl || null };

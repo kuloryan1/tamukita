@@ -9,6 +9,7 @@
 - [ ] Tetapkan badan usaha/operator, alamat, identitas/nomor pendaftaran dan izin usaha yang relevan.
 - [ ] Tentukan model transaksi TamuKita: penyedia layanan, penjual lisensi, reseller, marketplace template, atau kombinasi; jelaskan siapa menerima pembayaran dan bertanggung jawab atas setiap item.
 - [ ] Publikasikan kanal dukungan, pengaduan, privasi, keamanan, SLA respons, eskalasi sengketa, dan jam operasional.
+- [ ] Tetapkan pemilik antrean laporan kendala editor, waktu respons yang dijanjikan, akses peran, jalur eskalasi, dan masa retensi laporan sebelum menawarkan kanal ini sebagai dukungan publik.
 - [ ] Verifikasi kewajiban informasi, transaksi, dan perlindungan konsumen terhadap PP 80/2019 dan Permendag 19/2026 yang berlaku sejak 8 Juni 2026 dan mencabut Permendag 31/2023.
 
 ## Privasi dan sistem elektronik
@@ -16,6 +17,7 @@
 - [ ] Tetapkan peran operator dan pelanggan untuk tiap tujuan/data (pengendali/pemroses bila relevan), dasar pemrosesan, pemberitahuan, kontrak/instruksi, serta proses permintaan subjek data.
 - [ ] Tinjau cookie analitik marketplace yang berisi tanggal UTC dan kedaluwarsa harian: tentukan dasar pemrosesan/pemberitahuan dan kebutuhan persetujuan sebelum mengaktifkannya untuk publik.
 - [ ] Isi jadwal retensi terukur dan implementasikan purge untuk akun, draf, RSVP, buku tamu, kontak, file sumber/varian R2, laporan konten, log, audit, transaksi, dan backup.
+- [ ] Tetapkan retensi dan proses penghapusan untuk kategori serta pesan laporan editor, termasuk penghapusan saat akun/workspace dihapus.
 - [ ] Tetapkan proses ekspor/koreksi/penghapusan, verifikasi identitas, pengecualian legal hold, SLA, dan bukti penyelesaian. Saat ini belum teridentifikasi penghapusan akun mandiri atau purge lengkap.
 - [ ] Inventarisasikan subprosesor, lokasi data, akses admin/vendor, transfer lintas negara, kontrak pemrosesan, dan masa simpan provider untuk deployment yang benar-benar dipakai.
 - [ ] Tetapkan prosedur insiden privasi dan keamanan, jalur eskalasi, pencatatan, penilaian dampak, dan notifikasi sesuai hukum.

@@ -27,6 +27,7 @@ Bergantung pada fitur yang digunakan, data dapat mencakup:
 - **Transaksi:** item dan nilai pesanan, mata uang, status pembayaran/refund, referensi sesi/pembayaran dari penyedia, serta catatan audit transaksi. TamuKita tidak meminta pengguna memasukkan nomor kartu ke formulir aplikasi; metode pembayaran dikelola penyedia pembayaran.
 - **Keamanan dan operasi:** catatan audit admin, permintaan akses sementara yang diaudit, data kesehatan layanan, penghitung kunjungan agregat per undangan/hari, dan metadata teknis yang mungkin dicatat oleh infrastruktur hosting.
 - **Analitik marketplace:** jumlah page view katalog/detail dan jumlah browser yang mengunjungi katalog per hari UTC saat JavaScript aktif. Browser menerima cookie first-party HTTP-only berisi tanggal UTC, berlaku hanya sampai pergantian hari, dan dikirim hanya ke endpoint hitung marketplace. Nilai cookie tidak memuat pengenal acak dan kedaluwarsa tiap hari; tabel metrik hanya menyimpan agregat hitungan, tanpa alamat IP, ID akun, atau referrer. Kesesuaian pemberitahuan, dasar pemrosesan, dan kebutuhan persetujuan masih harus ditinjau operator/penasihat hukum sebelum peluncuran.
+- **Keluhan editor:** kategori kendala, pesan yang dikirim pengguna, hubungan ke akun/workspace, undangan terkait bila laporan dikirim dari editor, dan waktu/status peninjauan. Antrean pesan dapat dibaca oleh peran Support dan Super Admin; perubahan status dicatat di audit. Jangan masukkan kata sandi, nomor kartu, atau data tamu ke laporan. Retensi dan informasi kanal/tindak lanjut harus ditentukan operator sebelum kebijakan ini diterbitkan.
 
 Operator harus memverifikasi jenis data yang dicatat oleh proxy, hosting, database, penyedia email, penyimpanan objek, dan alat pemantauan sebelum bagian ini diterbitkan.
 
@@ -40,6 +41,7 @@ Data berasal dari pemilik akun, anggota workspace, pelanggan yang membuat undang
 - memproses lisensi template, aktivasi, hosting, top-up reseller, pembayaran, dan refund;
 - mengirim email transaksi atau operasional yang diminta;
 - memberi dukungan, mencegah penyalahgunaan, menyelidiki insiden, dan memenuhi kewajiban hukum;
+- meninjau kendala editor yang dilaporkan pengguna dan memperbaiki layanan;
 - menghitung penggunaan layanan dan memperbaiki keandalan platform.
 - menghitung page view marketplace dan browser harian secara agregat untuk memahami jangkauan katalog.
 

@@ -26,6 +26,8 @@ const templateDeveloperEmail = process.env.E2E_TEMPLATE_DEVELOPER_EMAIL?.trim().
 const templateDeveloperPassword = process.env.E2E_TEMPLATE_DEVELOPER_PASSWORD;
 const contentReviewerEmail = process.env.E2E_CONTENT_REVIEWER_EMAIL?.trim().toLowerCase();
 const contentReviewerPassword = process.env.E2E_CONTENT_REVIEWER_PASSWORD;
+const supportEmail = process.env.E2E_SUPPORT_EMAIL?.trim().toLowerCase();
+const supportPassword = process.env.E2E_SUPPORT_PASSWORD;
 const refundResellerEmail = process.env.E2E_REFUND_RESELLER_EMAIL?.trim().toLowerCase();
 const refundResellerPassword = process.env.E2E_REFUND_RESELLER_PASSWORD;
 
@@ -62,8 +64,10 @@ if (
   || !refundResellerEmail
   || !refundResellerPassword
   || refundResellerPassword.length < 12
+  || Boolean(supportEmail) !== Boolean(supportPassword)
+  || (supportPassword !== undefined && supportPassword.length < 12)
 ) {
-  throw new Error("Set DATABASE_URL, AUTH_SECRET, and all E2E admin/finance/customer/template-developer/content-reviewer/refund-reseller/WebKit-customer/reseller-report-owner emails and passwords; every password must have at least 12 characters.");
+  throw new Error("Set DATABASE_URL, AUTH_SECRET, and all required E2E emails/passwords; every password must have at least 12 characters. E2E_SUPPORT_EMAIL and E2E_SUPPORT_PASSWORD must be set together when provided.");
 }
 
 const e2eAccounts = {
@@ -76,6 +80,7 @@ const e2eAccounts = {
   resellerReportOwner: { email: resellerReportOwnerEmail, password: resellerReportOwnerPassword },
   templateDeveloper: { email: templateDeveloperEmail, password: templateDeveloperPassword },
   contentReviewer: { email: contentReviewerEmail, password: contentReviewerPassword },
+  ...(supportEmail && supportPassword ? { support: { email: supportEmail, password: supportPassword } } : {}),
   refundReseller: { email: refundResellerEmail, password: refundResellerPassword },
 };
 
@@ -92,7 +97,7 @@ try {
     email: string;
     password: string;
     name: string;
-    platformRole: "CUSTOMER" | "SUPER_ADMIN" | "FINANCE" | "TEMPLATE_DEVELOPER" | "CONTENT_REVIEWER";
+    platformRole: "CUSTOMER" | "SUPER_ADMIN" | "FINANCE" | "SUPPORT" | "TEMPLATE_DEVELOPER" | "CONTENT_REVIEWER";
   }): Promise<{ userId: string; organizationId: string }> {
     const now = new Date();
     const passwordHash = await hashPassword(password);
@@ -102,7 +107,7 @@ try {
       create: { id: randomUUID(), name, email, emailVerified: now, passwordHash, platformRole },
       select: { id: true },
     });
-    const accountType = platformRole === "SUPER_ADMIN" ? "admin" : platformRole === "FINANCE" ? "finance" : platformRole === "TEMPLATE_DEVELOPER" ? "developer" : platformRole === "CONTENT_REVIEWER" ? "content-reviewer" : "customer";
+    const accountType = platformRole === "SUPER_ADMIN" ? "admin" : platformRole === "FINANCE" ? "finance" : platformRole === "SUPPORT" ? "support" : platformRole === "TEMPLATE_DEVELOPER" ? "developer" : platformRole === "CONTENT_REVIEWER" ? "content-reviewer" : "customer";
     const organizationSlug = `e2e-${accountType}-${user.id.slice(0, 8)}`;
     const organization = await prisma.organization.upsert({
       where: { slug: organizationSlug },
@@ -126,6 +131,7 @@ try {
   const webkitCustomer = await seedAccount({ ...e2eAccounts.webkitCustomer, name: "E2E WebKit Customer", platformRole: "CUSTOMER" });
   const templateDeveloper = await seedAccount({ ...e2eAccounts.templateDeveloper, name: "E2E Template Developer", platformRole: "TEMPLATE_DEVELOPER" });
   await seedAccount({ ...e2eAccounts.contentReviewer, name: "E2E Content Reviewer", platformRole: "CONTENT_REVIEWER" });
+  if (supportEmail && supportPassword) await seedAccount({ email: supportEmail, password: supportPassword, name: "E2E Support", platformRole: "SUPPORT" });
   const refundReseller = await seedAccount({ ...e2eAccounts.refundReseller, name: "E2E Refund Reseller", platformRole: "CUSTOMER" });
   const resellerReportOwner = await seedAccount({ ...e2eAccounts.resellerReportOwner, name: "E2E Reseller Report Owner", platformRole: "CUSTOMER" });
   const developerTemplateBucketKey = createHmac("sha256", authSecret).update(`developer:templates:${templateDeveloper.userId}`).digest("hex");

@@ -47,6 +47,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const validation = validateInvitationDraft(checkedDraft);
   if (!validation.valid) return NextResponse.json({ error: validation.message ?? "Detail undangan belum lengkap." }, { status: 400 });
 
+  await prisma.invitation.updateMany({
+    where: {
+      id: invitation.id,
+      ownerId: userId,
+      deletedAt: null,
+      status: { in: ["DRAFT", "PUBLISHED"] },
+      formCompletedAt: null,
+      organization: { status: "ACTIVE", memberships: { some: { userId, role: { in: ["OWNER", "ADMIN", "EDITOR"] } } } },
+    },
+    data: { formCompletedAt: new Date() },
+  });
+
   const template = await ensureTemplateVersion(checkedDraft.templateId);
   if (!template) return NextResponse.json({ error: "Template tidak tersedia." }, { status: 400 });
   const existingLicense = await prisma.templateLicense.findFirst({
