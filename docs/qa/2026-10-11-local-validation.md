@@ -135,6 +135,9 @@ Lookup workspace yang dipakai untuk membuat draft self-service kini hanya memili
 | `npm run typecheck` | Lulus. |
 | Lint file yang berubah | Lulus; 2 file. |
 | `npm run build` | Lulus; 38 route. |
+| `npm run test:e2e -- e2e/customer-journey.spec.ts` | Lulus; 3 dari 3 profil browser. Tes membuat membership reseller bertanggal lebih lama, memastikan draft baru tetap tersimpan pada organisasi `PERSONAL`, dan memeriksa isolasi baca/tulis dari akun lain. |
+
+E2E berjalan dengan PostgreSQL 17 dan Redis 7 sementara. Fixture organisasi reseller tambahan dihapus setelah tes; kedua container sementara juga dibersihkan.
 
 ## Gate yang belum dibuktikan
 
