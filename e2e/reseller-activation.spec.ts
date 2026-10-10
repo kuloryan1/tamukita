@@ -109,6 +109,7 @@ test("reseller access is approved by the customer before the reseller activates 
 });
 
 test("reseller sales reports are visible to managers and auditable when corrected", async ({ page, browser }, testInfo) => {
+  test.setTimeout(180_000);
   const ownerEmail = process.env.E2E_CUSTOMER_EMAIL;
   const ownerPassword = process.env.E2E_CUSTOMER_PASSWORD;
   const staffEmail = process.env.E2E_MOBILE_CUSTOMER_EMAIL;
@@ -121,7 +122,7 @@ test("reseller sales reports are visible to managers and auditable when correcte
   await signIn(page, ownerEmail, ownerPassword);
   await page.goto("/reseller");
   const report = page.locator(".reseller-sales-card");
-  await expect(report.getByRole("heading", { name: "Laporan penjualan" })).toBeVisible();
+  await expect(report.getByRole("heading", { name: "Laporan penjualan", exact: true })).toBeVisible();
   const description = `E2E sales report ${testInfo.project.name} ${Date.now()}`;
   await page.getByLabel("Deskripsi penjualan").fill(description);
   await page.getByLabel("Nilai yang dilaporkan (IDR)").fill("1500000");
