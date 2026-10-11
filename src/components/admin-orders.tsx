@@ -113,8 +113,8 @@ export function AdminOrders() {
       <div className="card-heading"><div><h2>Pencarian order & refund</h2><p>Cari transaksi di semua tanggal dan ajukan refund penuh atau sebagian untuk order undangan maupun top-up kredit.</p></div><button className="button button--outline button--small" type="button" onClick={() => void loadOrders(query, 0, false)} disabled={loading}><RotateCcw size={13} /> Muat ulang</button></div>
       <div className="admin-reconciliation">
         <div><b>Ekspor rekonsiliasi Xendit</b><p>Unduh order, sesi pembayaran, event webhook, dan refund untuk dicocokkan dengan laporan Xendit. Data ini tidak menyertakan payload webhook atau data pribadi pelanggan.</p></div>
-        <label><span>Dari (UTC)</span><input type="date" value={reconciliationFrom} onChange={(event) => setReconciliationFrom(event.target.value)} aria-label="Tanggal awal rekonsiliasi" /></label>
-        <label><span>Sampai (UTC)</span><input type="date" value={reconciliationTo} onChange={(event) => setReconciliationTo(event.target.value)} aria-label="Tanggal akhir rekonsiliasi" /></label>
+        <label><span>Dari (UTC)</span><input type="date" value={reconciliationFrom} onChange={(event) => setReconciliationFrom(event.target.value)} aria-label="Mulai rekonsiliasi (UTC)" /></label>
+        <label><span>Sampai (UTC)</span><input type="date" value={reconciliationTo} onChange={(event) => setReconciliationTo(event.target.value)} aria-label="Akhir rekonsiliasi (UTC)" /></label>
         <button className="button button--outline button--small" type="button" disabled={!canExportReconciliation} onClick={() => {
           const params = new URLSearchParams({ from: reconciliationFrom, to: reconciliationTo });
           window.location.assign(`/api/admin/orders/reconciliation?${params.toString()}`);

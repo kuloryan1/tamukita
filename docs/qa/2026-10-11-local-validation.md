@@ -315,6 +315,6 @@ Finance dan Super Admin dapat mengunduh CSV dari halaman Order & Refund. Setiap 
 | `npm run lint` | Lulus; 210 file. |
 | `npm test` | Lulus; 13 file dan 45 tes. |
 | `npm run build` | Lulus; route `/api/admin/orders/reconciliation` terdaftar pada build production. |
-| E2E rekonsiliasi | Assertion ekspor order/event refund dan penolakan akses reseller ditambahkan pada `e2e/payment-lifecycle.spec.ts`; menunggu workflow GitHub Actions untuk commit fitur ini. |
+| E2E rekonsiliasi | Assertion ekspor order/event refund dan penolakan akses reseller ditambahkan pada `e2e/payment-lifecycle.spec.ts`. Run pertama menangkap benturan label aksesibilitas dengan field tanggal acara pada alur admin-managed; label ekspor sudah diperjelas dan workflow akan diulang pada commit perbaikan. |
 
 Fitur ini menyediakan berkas pencocokan finansial. Pembaruan status provider tetap berasal dari webhook. Pengaturan environment Dokploy, Xendit Test Mode, dan pencocokan transaksi nyata belum diuji karena staging HTTPS belum disiapkan.
