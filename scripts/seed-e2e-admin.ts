@@ -183,6 +183,74 @@ try {
   });
   await prisma.template.update({ where: { id: template.id }, data: { activeVersionId: templateVersion.id, status: "PUBLISHED" } });
 
+  const schemaTemplate = structuredClone(fixtureTemplate);
+  schemaTemplate.slug = "e2e-template-fields";
+  schemaTemplate.name = "E2E Template Fields";
+  schemaTemplate.subtitle = "Fixture untuk schema dinamis";
+  schemaTemplate.description = "Template fixture untuk menguji field tambahan dari manifest.";
+  schemaTemplate.category = "Pernikahan";
+  schemaTemplate.price = 0;
+  schemaTemplate.activationSku = "BASIC_ACTIVATION";
+  schemaTemplate.features = [...fixtureTemplate.features];
+  schemaTemplate.tags = ["E2E", "Schema"];
+  schemaTemplate.schema.sections.find((section) => section.key === "identity")?.fields.push({
+    key: "welcomeNote",
+    type: "textarea",
+    label: "Pesan pembuka",
+    placeholder: "Tulis sapaan untuk tamu",
+    defaultValue: "Kami menantikan kehadiranmu.",
+    maxLength: 80,
+  });
+  schemaTemplate.schema.sections.push({
+    key: "details",
+    label: "Detail tambahan",
+    fields: [{
+      key: "dressCode",
+      type: "text",
+      label: "Tema busana",
+      placeholder: "Contoh: Batik",
+      required: true,
+      maxLength: 10,
+    }],
+  });
+  const schemaManifest = JSON.parse(JSON.stringify(schemaTemplate));
+  const schemaRecord = await prisma.template.upsert({
+    where: { slug: schemaTemplate.slug },
+    update: {
+      name: schemaTemplate.name,
+      description: schemaTemplate.description,
+      category: schemaTemplate.category,
+      licenseType: "FREE",
+      priceIdr: 0,
+      status: "PUBLISHED",
+    },
+    create: {
+      slug: schemaTemplate.slug,
+      name: schemaTemplate.name,
+      description: schemaTemplate.description,
+      category: schemaTemplate.category,
+      licenseType: "FREE",
+      priceIdr: 0,
+      status: "PUBLISHED",
+    },
+    select: { id: true },
+  });
+  const schemaVersion = await prisma.templateVersion.upsert({
+    where: { templateId_version: { templateId: schemaRecord.id, version: schemaTemplate.version } },
+    update: { schemaVersion: schemaTemplate.schemaVersion, sdkVersion: TEMPLATE_SDK_VERSION, manifest: schemaManifest, publishedAt: now },
+    create: {
+      templateId: schemaRecord.id,
+      version: schemaTemplate.version,
+      schemaVersion: schemaTemplate.schemaVersion,
+      sdkVersion: TEMPLATE_SDK_VERSION,
+      manifest: schemaManifest,
+      sourceRef: "e2e/template-schema-fixture",
+      publishedAt: now,
+    },
+    select: { id: true },
+  });
+  await prisma.template.update({ where: { id: schemaRecord.id }, data: { activeVersionId: schemaVersion.id, status: "PUBLISHED" } });
+
   const draft = {
     ...createInitialDraft(),
     id: fixtureInvitationId,

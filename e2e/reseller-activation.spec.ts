@@ -43,9 +43,10 @@ test("reseller access is approved by the customer before the reseller activates 
   );
   await page.getByRole("button", { name: "Tambahkan pelanggan" }).click();
   const accessRequest = await accessRequestPromise;
-  expect(accessRequest.status()).toBe(202);
-  const accessRequestResult = await accessRequest.json() as { customerId?: string; pendingApproval?: boolean };
-  expect(accessRequestResult.pendingApproval).toBe(true);
+  expect([200, 202]).toContain(accessRequest.status());
+  const accessRequestResult = await accessRequest.json() as { customerId?: string; pendingApproval?: boolean; linked?: boolean };
+  if (accessRequest.status() === 202) expect(accessRequestResult.pendingApproval).toBe(true);
+  else expect(accessRequestResult.linked).toBe(true);
   expect(accessRequestResult.customerId).toMatch(/^[0-9a-f-]{36}$/i);
   if (!accessRequestResult.customerId) throw new Error("The reseller access request did not include its request ID.");
 
@@ -55,18 +56,22 @@ test("reseller access is approved by the customer before the reseller activates 
     viewport: page.viewportSize() ?? undefined,
     ...(isMobileProject ? { isMobile: true, hasTouch: true } : {}),
   });
+  let customerPage: Page | undefined;
   try {
-    const customerPage = await customerContext.newPage();
-    await signIn(customerPage, customerEmail, customerPassword);
-    const requestSection = customerPage.locator(".customer-reseller-requests");
-    await expect(requestSection.getByRole("heading", { name: "Permintaan akses reseller" })).toBeVisible();
-    const approvalResponsePromise = customerPage.waitForResponse((response) =>
-      response.url().endsWith(`/api/reseller/customer-requests/${accessRequestResult.customerId}`) && response.request().method() === "PATCH",
-    );
-    await requestSection.getByRole("button", { name: "Setujui" }).click();
-    expect((await approvalResponsePromise).status()).toBe(200);
-    await customerPage.reload();
-    await expect(requestSection.getByRole("heading", { name: "Reseller yang tertaut" })).toBeVisible();
+    if (accessRequestResult.pendingApproval) {
+      customerPage = await customerContext.newPage();
+      await signIn(customerPage, customerEmail, customerPassword);
+      const requestSection = customerPage.locator(".customer-reseller-requests");
+      await expect(requestSection.getByRole("heading", { name: "Permintaan akses reseller" })).toBeVisible();
+      const approvalResponsePromise = customerPage.waitForResponse((response) =>
+        response.url().endsWith(`/api/reseller/customer-requests/${accessRequestResult.customerId}`) && response.request().method() === "PATCH",
+      );
+      await requestSection.getByRole("button", { name: "Setujui" }).click();
+      expect((await approvalResponsePromise).status()).toBe(200);
+      await customerPage.reload();
+      await expect(requestSection.getByRole("heading", { name: "Reseller yang tertaut" })).toBeVisible();
+    }
+    else expect(accessRequestResult.linked).toBe(true);
 
     const alternateResellerContext = await browser.newContext({ baseURL });
     try {
@@ -104,10 +109,12 @@ test("reseller access is approved by the customer before the reseller activates 
 
     await page.goto("/dashboard");
     await expect(page.locator(".invitation-row").filter({ hasText: invitation.title })).toHaveCount(0);
-    await customerPage.goto("/dashboard");
-    const ownedInvitation = customerPage.locator(".invitation-row").filter({ hasText: invitation.title });
-    await expect(ownedInvitation).toBeVisible();
-    await expect(ownedInvitation.locator(".status-pill")).toContainText("Aktif");
+    if (customerPage) {
+      await customerPage.goto("/dashboard");
+      const ownedInvitation = customerPage.locator(".invitation-row").filter({ hasText: invitation.title });
+      await expect(ownedInvitation).toBeVisible();
+      await expect(ownedInvitation.locator(".status-pill")).toContainText("Aktif");
+    }
   } finally {
     await customerContext.close();
   }

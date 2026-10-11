@@ -266,9 +266,11 @@ Schema template kini dapat menambahkan section dan field teks, paragraf, tanggal
 | Pemeriksaan | Hasil |
 | --- | --- |
 | `npm run typecheck` | Lulus setelah perubahan schema, draft, editor, dan kedua jalur aktivasi. |
-| `npm run lint` | Lulus; 202 file diperiksa tanpa peringatan. |
+| `npm run lint` | Lulus; 204 file diperiksa tanpa peringatan. |
 | `npm run build` | Lulus; production build menghasilkan 45 halaman statis/dinamis. |
 | `git diff --check` | Lulus. |
-| Unit dan E2E untuk manifest dengan field tambahan | Belum dijalankan pada perubahan ini. |
+| `npm test` | Lulus; 36 tes dalam 12 file. Mencakup kompatibilitas schema ekstensi, default, kunci aman, validasi wajib/panjang/format, dan render field manifest. |
+| E2E field manifest tambahan | Lulus; 3 dari 3 browser project (Chromium desktop, Chromium mobile, WebKit mobile). Memeriksa default, penyimpanan dan preview, validasi field wajib, serta penolakan publikasi saat data tersimpan diubah secara tidak valid. |
+| Suite E2E penuh | 49 lulus, 2 skip yang memang dibatasi ke desktop, 3 gagal. Ketiganya timeout di `e2e/admin-managed.spec.ts` pada PATCH perubahan peran pengguna atau PATCH cleanup. Semua skenario reseller dan field schema lulus pada run terakhir. |
 
-Kontrak field dan batas saat ini didokumentasikan di [`docs/template-sdk.md`](../template-sdk.md). Pengujian runtime dan preview template manifest dengan field tambahan masih menjadi tindak lanjut QA.
+Kontrak field dan batas saat ini didokumentasikan di [`docs/template-sdk.md`](../template-sdk.md). Cakupan unit dan browser untuk field manifest tambahan sudah ada; suite E2E penuh masih perlu dijalankan ulang setelah timeout pada skenario administrasi diperiksa. Hasil lokal ini tidak menguji VPS, staging HTTPS, beban 1.000 virtual user, atau deployment Dokploy.
