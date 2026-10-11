@@ -329,7 +329,7 @@ Halaman Analitik platform kini menampilkan pelanggan unik yang mulai draft dan m
 | `npm run lint` | Lulus; 210 file. |
 | `npm test` | Lulus; 13 file dan 45 tes. |
 | `npm run build` | Lulus; production build mencakup halaman Analitik dengan 47 halaman statis/dinamis. |
-| E2E `e2e/admin-managed.spec.ts` | Lulus lokal pada Chromium desktop; 1 tes memverifikasi KPI analytics serta batas role admin. |
+| Suite Playwright penuh | Lulus lokal lintas Chromium desktop, Chromium mobile, dan WebKit mobile: 52 lulus, 2 skip, 0 gagal dari 54. Dua skip membatasi callback lifecycle pembayaran satu kali ke Chromium desktop; alur pembayaran itu lulus di desktop. |
 | `git diff --check` | Lulus. |
 
-E2E lokal menggunakan PostgreSQL 17 dan Redis 7 sementara beserta mock layanan; container sementara dihentikan setelah tes. Tes juga menunggu respons pencarian direktori sebelum mengubah role agar data hasil pencarian yang sedang dimuat tidak menimpa pilihan. Deployment Dokploy, environment runtime, domain staging, dan QA beban eksternal tetap menunggu konfigurasi operator.
+E2E lokal memakai 15 migrasi pada PostgreSQL 17 dan Redis 7 sementara, token webhook lokal, serta mock Xendit, R2, dan email. Container sementara dihentikan setelah tes. Tes admin menunggu respons pencarian direktori sebelum mengubah role agar hasil pencarian yang masih dimuat tidak menimpa pilihan. Deployment Dokploy, environment runtime, domain staging, serta QA beban eksternal tetap menunggu konfigurasi operator.
