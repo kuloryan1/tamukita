@@ -109,6 +109,8 @@ Integration drill memakai PostgreSQL 17 dan MinIO sementara pada network Docker 
 | Restore dengan checksum yang dirusak | Ditolak sebelum database restore dibuat. |
 | Cleanup drill | Lulus; database, bucket, container, dan network sementara dihapus. |
 
+Drill diulang setelah perubahan terbaru memakai PostgreSQL 17 dan image MinIO yang sudah tersedia secara lokal. Objek terenkripsi berhasil dipulihkan dan checksum yang dirusak tetap ditolak. PostgreSQL menyimpan data pada `tmpfs`; database dan bucket uji dibersihkan oleh skrip, lalu container serta network terisolasi dihapus setelah pemeriksaan. Tidak ada image baru yang diunduh.
+
 Job `backup-restore` ditambahkan ke CI agar drill lokal ini berjalan pada push dan pull request. Ini belum membuktikan kredensial, endpoint, lifecycle, atau pemulihan dari bucket Cloudflare R2 yang dipakai deployment.
 
 ## Pembacaan undangan publik bersama metadata — 11 Oktober 2026
