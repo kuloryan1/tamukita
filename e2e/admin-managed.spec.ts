@@ -28,8 +28,13 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   await expect(page.getByText("Tampilan katalog template", { exact: true })).toBeVisible();
   await expect(page.getByText("Tampilan detail template", { exact: true })).toBeVisible();
   await expect(page.getByText("Pengunjung marketplace harian", { exact: true })).toBeVisible();
+  await expect(page.getByText("Pelanggan mulai draft (unik)", { exact: true })).toBeVisible();
   await expect(page.getByText("Form editor selesai", { exact: true })).toBeVisible();
+  await expect(page.getByText("Pelanggan menyelesaikan form (unik)", { exact: true })).toBeVisible();
   await expect(page.getByText("Penyelesaian form", { exact: true })).toBeVisible();
+  await expect(page.getByText("Pelanggan menerbitkan sendiri", { exact: true })).toBeVisible();
+  await expect(page.getByText("Undangan aktif", { exact: true })).toBeVisible();
+  await expect(page.getByText("Reseller aktif (30 hari)", { exact: true })).toBeVisible();
   await expect(page.getByText("Keluhan editor", { exact: true })).toBeVisible();
   await page.goto("/admin");
   await page.getByRole("link", { name: "Audit log" }).click();

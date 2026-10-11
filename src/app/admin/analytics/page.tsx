@@ -23,7 +23,7 @@ export default async function AdminAnalyticsPage() {
   const periodStart = new Date(now.getTime() - periodMs);
   const publicViewsStart = new Date(Date.UTC(periodStart.getUTCFullYear(), periodStart.getUTCMonth(), periodStart.getUTCDate()));
   const settledStatuses = ["PAID", "PARTIALLY_REFUNDED", "REFUNDED", "CANCELED", "EXPIRED"] as const;
-  const [newAccounts, newWorkspaces, newDrafts, completedDrafts, publishedDrafts, settledOrderCount, paidOrderCount, paidSummary, refundSummary, resellerSales, publicViews, platformViews, rsvpCount, contentReportCount, editorFeedbackCount, templateGroups, customerPayments, resellerTopUps] = await Promise.all([
+  const [newAccounts, newWorkspaces, newDrafts, completedDrafts, publishedDrafts, settledOrderCount, paidOrderCount, paidSummary, refundSummary, resellerSales, publicViews, platformViews, rsvpCount, contentReportCount, editorFeedbackCount, templateGroups, customerPayments, resellerTopUps, draftCustomerOwners, completedCustomerOwners, activeInvitations, approvedResellerProfiles, activeCreditResellers, activeSalesResellers, selfPublishedCustomerCountRows] = await Promise.all([
     prisma.user.count({ where: { createdAt: { gte: periodStart } } }),
     prisma.organization.count({ where: { type: "PERSONAL", createdAt: { gte: periodStart } } }),
     prisma.invitation.count({ where: { deletedAt: null, createdAt: { gte: periodStart } } }),
@@ -58,6 +58,37 @@ export default async function AdminAnalyticsPage() {
       _sum: { totalAmount: true },
       _count: { _all: true },
     }),
+    prisma.invitation.findMany({
+      where: { deletedAt: null, createdAt: { gte: periodStart } },
+      distinct: ["ownerId"],
+      select: { ownerId: true },
+    }),
+    prisma.invitation.findMany({
+      where: { deletedAt: null, createdAt: { gte: periodStart }, formCompletedAt: { not: null } },
+      distinct: ["ownerId"],
+      select: { ownerId: true },
+    }),
+    prisma.invitation.count({
+      where: { status: "PUBLISHED", deletedAt: null, OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+    }),
+    prisma.resellerProfile.findMany({ where: { status: "APPROVED" }, select: { organizationId: true } }),
+    prisma.creditLedger.groupBy({
+      by: ["resellerOrgId"],
+      where: { createdAt: { gte: periodStart }, type: { in: ["TOP_UP", "ACTIVATION"] } },
+    }),
+    prisma.resellerSale.groupBy({
+      by: ["resellerOrgId"],
+      where: { createdAt: { gte: periodStart }, voidedAt: null },
+    }),
+    prisma.$queryRaw<Array<{ owners: bigint }>>`
+      SELECT COUNT(DISTINCT invitation."ownerId") AS owners
+      FROM "invitation_versions" AS version
+      INNER JOIN "invitations" AS invitation ON invitation."id" = version."invitationId"
+      WHERE version."type" = 'PUBLISHED'
+        AND version."createdById" = invitation."ownerId"
+        AND version."createdAt" >= ${periodStart}
+        AND invitation."deletedAt" IS NULL
+    `,
   ]);
 
   const topGroups = [...templateGroups].sort((a, b) => b._count._all - a._count._all).slice(0, 5);
@@ -81,6 +112,12 @@ export default async function AdminAnalyticsPage() {
     .map(([name, publishedCount]) => ({ name, publishedCount }))
     .sort((a, b) => b.publishedCount - a.publishedCount || a.name.localeCompare(b.name, "id"));
   const platformViewsByKey = new Map(platformViews.map((metric) => [metric.metricKey, metric._sum.metricValue ?? BigInt(0)]));
+  const approvedResellerIds = new Set(approvedResellerProfiles.map((reseller) => reseller.organizationId));
+  const activeResellerIds = new Set([
+    ...activeCreditResellers.map((reseller) => reseller.resellerOrgId),
+    ...activeSalesResellers.map((reseller) => reseller.resellerOrgId),
+  ]);
+  const activeResellerCount = [...activeResellerIds].filter((organizationId) => approvedResellerIds.has(organizationId)).length;
 
   const grossPayments = paidSummary._sum.totalAmount ?? 0;
   const successfulRefunds = refundSummary._sum.amount ?? 0;
@@ -95,9 +132,14 @@ export default async function AdminAnalyticsPage() {
         { label: "Akun baru", value: newAccounts.toLocaleString("id-ID"), detail: "Registrasi dalam periode" },
         { label: "Workspace pelanggan baru", value: newWorkspaces.toLocaleString("id-ID"), detail: "Workspace personal dibuat" },
         { label: "Draft undangan dibuat", value: newDrafts.toLocaleString("id-ID"), detail: "Tidak termasuk yang dihapus" },
+        { label: "Pelanggan mulai draft (unik)", value: draftCustomerOwners.length.toLocaleString("id-ID"), detail: "Pemilik berbeda dengan draft baru dalam periode" },
         { label: "Form editor selesai", value: completedDrafts.toLocaleString("id-ID"), detail: "Draft baru yang lolos validasi sebelum checkout atau aktivasi" },
-        { label: "Penyelesaian form", value: rate(completedDrafts, newDrafts), detail: `${completedDrafts.toLocaleString("id-ID")} dari draft yang dibuat dalam kohor` },
+        { label: "Pelanggan menyelesaikan form (unik)", value: completedCustomerOwners.length.toLocaleString("id-ID"), detail: "Pemilik dengan setidaknya satu draft baru yang lolos validasi" },
+        { label: "Penyelesaian form", value: rate(completedCustomerOwners.length, draftCustomerOwners.length), detail: `${completedCustomerOwners.length.toLocaleString("id-ID")} dari ${draftCustomerOwners.length.toLocaleString("id-ID")} pelanggan unik yang memulai draft` },
         { label: "Konversi draft ke publikasi", value: rate(publishedDrafts, newDrafts), detail: `${publishedDrafts.toLocaleString("id-ID")} dari draft dalam kohor` },
+        { label: "Pelanggan menerbitkan sendiri", value: Number(selfPublishedCustomerCountRows[0]?.owners ?? BigInt(0)).toLocaleString("id-ID"), detail: "Pemilik menjadi aktor penerbitan dalam periode; tidak mengukur bantuan informal" },
+        { label: "Undangan aktif", value: activeInvitations.toLocaleString("id-ID"), detail: "Status terbit dan masa hosting belum kedaluwarsa saat ini" },
+        { label: "Reseller aktif (30 hari)", value: activeResellerCount.toLocaleString("id-ID"), detail: "Reseller disetujui dengan top-up, aktivasi kredit, atau penjualan tercatat" },
         { label: "Konversi checkout", value: rate(paidOrderCount, settledOrderCount), detail: `${paidOrderCount.toLocaleString("id-ID")} order dibayar dari ${settledOrderCount.toLocaleString("id-ID")} order final` },
         { label: "Pengunjung marketplace harian", value: (platformViewsByKey.get("template_catalog_unique_visitors") ?? BigInt(0)).toLocaleString("id-ID"), detail: "Total hitungan harian 30 hari; browser dengan JavaScript aktif dihitung sekali per hari UTC" },
         { label: "Tampilan katalog template", value: (platformViewsByKey.get("template_catalog_views") ?? BigInt(0)).toLocaleString("id-ID"), detail: "Page view halaman marketplace, bukan pengunjung unik" },
