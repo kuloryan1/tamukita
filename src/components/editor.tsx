@@ -141,6 +141,16 @@ type DraftHistoryEntry = {
   updatedAt: number;
 };
 
+type CustomerPlanOption = {
+  id: string;
+  key: string;
+  name: string;
+  description: string | null;
+  priceIdr: number;
+  durationDays: number;
+  updatedAt: string;
+};
+
 function changedDraftKeys(before: InvitationDraft, after: InvitationDraft) {
   return (Object.keys(before) as (keyof InvitationDraft)[]).filter((key) => !Object.is(before[key], after[key]));
 }
@@ -220,6 +230,11 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [uploadingMusic, setUploadingMusic] = useState(false);
   const [musicRightsConfirmed, setMusicRightsConfirmed] = useState(false);
+  const [customerPlans, setCustomerPlans] = useState<CustomerPlanOption[]>([]);
+  const [customerPlansLoaded, setCustomerPlansLoaded] = useState(false);
+  const [customerPlansError, setCustomerPlansError] = useState("");
+  const [fallbackPricing, setFallbackPricing] = useState({ activationPriceIdr: 0, hostingTermDays: 365 });
+  const [selectedPlanId, setSelectedPlanId] = useState("");
   const [photoToCrop, setPhotoToCrop] = useState<{ file: File; previewUrl: string; assetId?: string; baseRevision?: number; initialArea?: Area } | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -333,6 +348,7 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
   const selectedLegacyTemplate = getTemplate(draft.templateId);
   const templateChoices = templates.some((template) => template.slug === draft.templateId) || !selectedLegacyTemplate ? templates : [...templates, selectedLegacyTemplate];
   const activeTemplate = templateChoices.find((template) => template.slug === draft.templateId) ?? templateChoices[0] ?? builtInTemplates[0];
+  const selectedPlan = customerPlans.find((plan) => plan.id === selectedPlanId) ?? null;
   const identityFields = activeTemplate.schema.sections.find((section) => section.key === "identity")?.fields ?? [];
   const scheduleFields = activeTemplate.schema.sections.find((section) => section.key === "schedule")?.fields ?? [];
   const mediaFields = activeTemplate.schema.sections.find((section) => section.key === "media")?.fields ?? [];
@@ -418,6 +434,28 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
     void initialize();
     return () => { cancelled = true; };
   }, [invitationId, setLoadedDraft, templates]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    let cancelled = false;
+    async function loadCustomerPlans() {
+      const response = await fetch("/api/customer/plans", { cache: "no-store" }).catch(() => null);
+      const result = await response?.json().catch(() => null) as { plans?: CustomerPlanOption[]; fallback?: { activationPriceIdr?: number; hostingTermDays?: number }; error?: string } | null;
+      if (cancelled) return;
+      if (!response?.ok || !Array.isArray(result?.plans)) {
+        setCustomerPlansError(result?.error ?? "Paket undangan belum dapat dimuat. Periksa koneksi lalu coba lagi.");
+      } else {
+        setCustomerPlans(result.plans);
+        setFallbackPricing({
+          activationPriceIdr: Number.isSafeInteger(result.fallback?.activationPriceIdr) && (result.fallback?.activationPriceIdr ?? -1) >= 0 ? result.fallback?.activationPriceIdr ?? 0 : 0,
+          hostingTermDays: Number.isSafeInteger(result.fallback?.hostingTermDays) && (result.fallback?.hostingTermDays ?? 0) >= 30 ? result.fallback?.hostingTermDays ?? 365 : 365,
+        });
+      }
+      setCustomerPlansLoaded(true);
+    }
+    void loadCustomerPlans();
+    return () => { cancelled = true; };
+  }, [hydrated]);
 
   useEffect(() => {
     if (!hydrated || !draft.id || pendingRecoveryFor.current === draft.id) return;
@@ -765,6 +803,10 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
   };
 
   const handlePublish = async () => {
+    if (!customerPlansLoaded || customerPlansError) {
+      setError(customerPlansError || "Paket undangan masih dimuat. Coba lagi sebentar.");
+      return;
+    }
     const currentDraft = draftRef.current;
     const slug = slugify(currentDraft.slug);
     const validation = validateInvitationDraft({ ...currentDraft, slug });
@@ -803,7 +845,11 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
       setPublished(false);
       return;
     }
-    const response = await fetch(`/api/invitations/${encodeURIComponent(latestDraft.id)}/publish`, { method: "POST" }).catch(() => null);
+    const response = await fetch(`/api/invitations/${encodeURIComponent(latestDraft.id)}/publish`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(selectedPlan ? { planId: selectedPlan.id, planUpdatedAt: selectedPlan.updatedAt } : {}),
+    }).catch(() => null);
     const result = await response?.json().catch(() => null) as { error?: string; checkoutUrl?: string; published?: boolean; slug?: string } | null;
     if (!response?.ok) {
       setError(result?.error ?? "Pembayaran belum dapat dimulai. Coba lagi nanti.");
@@ -852,7 +898,30 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
 
             {step === 3 && <div className="form-step-content"><div className="theme-choice-grid">{templateChoices.map((template) => <button className={`theme-choice${draft.templateId === template.slug ? " is-selected" : ""}`} key={template.slug} type="button" onClick={() => updateDraft((current) => ({ ...current, templateId: template.slug, templateVersion: template.version, customFields: applyTemplateFieldDefaults(template, current.customFields) }))}><span className={`theme-swatch theme-swatch--${template.style}`}><i /><i /><i /></span><span className="theme-choice-copy"><b>{template.name}</b><small>{template.subtitle}</small><small className="theme-price">{formatRupiah(template.price)}</small></span><span className="theme-choice-check">{draft.templateId === template.slug && <Check size={13} />}</span></button>)}</div><div className="personalization-controls"><fieldset className="personalization-control"><legend>Warna aksen</legend><div className="personalization-choice-list">{themeColorOptions.map((color) => <button key={color.value} type="button" className={(draft.themeColor ?? "default") === color.value ? "is-selected" : ""} onClick={() => update("themeColor", color.value)} aria-pressed={(draft.themeColor ?? "default") === color.value}><span className="personalization-color-swatch" style={{ backgroundColor: color.swatch || (activeTemplate.style === "sage" ? "#7b9278" : activeTemplate.style === "cream" ? "#b08c6c" : "#b8935e") }} /><small>{color.label}</small></button>)}</div></fieldset><fieldset className="personalization-control"><legend>Font</legend><div className="personalization-choice-list">{themeFontOptions.map((font) => <button key={font.value} type="button" className={(draft.themeFont ?? "classic") === font.value ? "is-selected" : ""} onClick={() => update("themeFont", font.value)} aria-pressed={(draft.themeFont ?? "classic") === font.value}><span className={`personalization-font-sample is-${font.value}`}>Aa</span><small>{font.label}</small></button>)}</div></fieldset><fieldset className="personalization-control"><legend>Urutan informasi</legend><div className="personalization-order-list">{sectionOrderOptions.map((order) => <button key={order.value} type="button" className={(draft.sectionOrder ?? "story-first") === order.value ? "is-selected" : ""} onClick={() => update("sectionOrder", order.value)} aria-pressed={(draft.sectionOrder ?? "story-first") === order.value}>{order.label}</button>)}</div></fieldset></div><Field label="Tautan undangan"><div className="slug-input"><span>tamukita.io/</span><input value={draft.slug} disabled={draft.isPublished} onChange={(event) => update("slug", slugify(event.target.value))} aria-label="Nama tautan undangan" aria-invalid={!slugIsAvailable} /><span className={`slug-status${slugIsAvailable ? "" : " is-unavailable"}`}>{draft.isPublished ? "tetap aktif" : slugIsAvailable ? <><Check size={13} /> tersedia</> : <>tidak tersedia</>}</span></div></Field><p className="field-hint slug-hint">{draft.isPublished ? "Tautan yang sudah dibagikan tetap aktif saat kamu memperbarui detail undangan." : "Gunakan 3 karakter atau lebih. Tautan khusus seperti /admin dan /dashboard tidak tersedia."}</p><div className="custom-domain-note"><span className="domain-globe">◎</span><span><b>Ingin pakai domain sendiri?</b><small>Custom domain akan segera hadir.</small></span><span className="coming-soon-pill">SEGERA</span></div></div>}
 
-            {step === 4 && <div className="form-step-content final-step-content"><div className="review-summary"><span className="review-check"><CheckCircle2 size={20} /></span><div><b>Undanganmu siap untuk dibagikan</b><small>{activeTemplate.price === 0 ? "Template gratis akan langsung diterbitkan." : "Detail terbit setelah pembayaran template berhasil dikonfirmasi."}</small></div></div><div className="review-line"><span>Jenis acara</span><b>{draft.eventKind}</b></div><div className="review-line"><span>Nama / judul</span><b>{draft.eventKind === "Pernikahan" ? `${draft.hostOne} & ${draft.hostTwo}` : draft.eventTitle}</b></div><div className="review-line"><span>Tanggal</span><b>{formatShortDate(draft.eventDate)}</b></div><div className="review-line"><span>Template</span><b>{templateChoices.find((template) => template.slug === draft.templateId)?.name}</b></div><div className="demo-payment-notice"><span className="demo-notice-icon"><Info size={15} /></span><span><b>{formatRupiah(activeTemplate.price)}</b><small>{activeTemplate.price === 0 ? "Tanpa biaya lisensi template." : "Pembayaran satu kali untuk lisensi template undangan ini."}</small></span></div>{published && <div className="publish-success"><CheckCircle2 size={16} /> Membuka halaman undangan...</div>}</div>}
+            {step === 4 && <div className="form-step-content final-step-content">
+              <div className="review-summary"><span className="review-check"><CheckCircle2 size={20} /></span><div><b>Undanganmu siap untuk dibagikan</b><small>Periksa lisensi template dan masa hosting sebelum menerbitkan.</small></div></div>
+              <div className="review-line"><span>Jenis acara</span><b>{draft.eventKind}</b></div>
+              <div className="review-line"><span>Nama / judul</span><b>{draft.eventKind === "Pernikahan" ? `${draft.hostOne} & ${draft.hostTwo}` : draft.eventTitle}</b></div>
+              <div className="review-line"><span>Tanggal</span><b>{formatShortDate(draft.eventDate)}</b></div>
+              <div className="review-line"><span>Template</span><b>{templateChoices.find((template) => template.slug === draft.templateId)?.name}</b></div>
+              <section className="editor-package-options" aria-labelledby="editor-package-title">
+                <span className="eyebrow" id="editor-package-title">PAKET AKTIVASI & HOSTING</span>
+                {customerPlansLoaded && customerPlans.length > 0 ? <>
+                  <p>Pilih satu kali paket untuk masa hosting dan fitur undangan.</p>
+                  <div className="editor-package-list">
+                    {customerPlans.map((plan) => <button type="button" key={plan.id} className={`editor-package-choice${selectedPlanId === plan.id ? " is-selected" : ""}`} aria-pressed={selectedPlanId === plan.id} onClick={() => setSelectedPlanId(plan.id)}>
+                      <span className="editor-package-choice-copy"><b>{plan.name}</b>{plan.description && <small>{plan.description}</small>}<small>Hosting {plan.durationDays} hari</small></span>
+                      <strong>{formatRupiah(plan.priceIdr)}</strong>
+                    </button>)}
+                  </div>
+                </> : customerPlansLoaded ? <p>Hosting {fallbackPricing.hostingTermDays} hari · biaya aktivasi {formatRupiah(fallbackPricing.activationPriceIdr)}.</p> : <p>Memuat pilihan paket…</p>}
+                {customerPlansError && <p className="field-hint" role="alert">{customerPlansError}</p>}
+              </section>
+              <div className="demo-payment-notice"><span className="demo-notice-icon"><Info size={15} /></span><span><b>Lisensi template · {formatRupiah(activeTemplate.price)}</b><small>{activeTemplate.price === 0 ? "Template ini tidak memerlukan biaya lisensi." : "Pembayaran satu kali untuk lisensi template undangan ini."}</small></span></div>
+              <div className="review-line review-line--total"><span>Total saat ini</span><b>{formatRupiah(activeTemplate.price + (customerPlans.length > 0 ? selectedPlan?.priceIdr ?? 0 : fallbackPricing.activationPriceIdr))}</b></div>
+              {customerPlans.length > 0 && !selectedPlan && <p className="field-hint">Pilih paket untuk melihat total dan melanjutkan.</p>}
+              {published && <div className="publish-success"><CheckCircle2 size={16} /> Membuka halaman undangan...</div>}
+            </div>}
 
             {error && <div className="editor-error" role="alert"><Info size={15} />{error}</div>}
             <div className="editor-card-footer"><button type="button" className="draft-later" onClick={saveAndReturn}><Save size={15} /> Simpan & lanjutkan nanti</button><div className="step-navigation">{step > 0 && <button type="button" className="button button--outline button--small" onClick={() => { setStep((current) => current - 1); setError(""); }}><ChevronLeft size={15} /> Kembali</button>}{step < 4 ? <button type="button" className="button button--dark button--small" onClick={goNext}>{step === 3 ? "Lihat preview" : "Lanjutkan"} <ChevronRight size={15} /></button> : <button type="button" className="button button--dark button--small" onClick={handlePublish} disabled={published}>{published ? "Menghubungkan..." : "Bayar & terbitkan"} <ArrowRight size={15} /></button>}</div></div>

@@ -1,5 +1,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
+import { Prisma } from "@/generated/prisma/client";
+import { isCustomerPlanSnapshot } from "@/lib/customer-checkout";
 import { eventStartsAt, invitationTitle, parseInvitationDraft } from "@/lib/invitation-server";
 import { getPrismaClient } from "@/lib/prisma";
 import { recalculateRefundedOrder, restoreResellerCreditsAfterFailedRefund } from "@/lib/refunds";
@@ -266,6 +268,9 @@ export async function POST(request: Request) {
         const publishSnapshot = typeof publishItem.entitlementSnapshot === "object" && publishItem.entitlementSnapshot !== null && !Array.isArray(publishItem.entitlementSnapshot)
           ? publishItem.entitlementSnapshot as Record<string, unknown>
           : {};
+        const hasPlanSnapshot = Object.hasOwn(publishSnapshot, "plan");
+        const planSnapshot = publishSnapshot.plan;
+        if (hasPlanSnapshot && !isCustomerPlanSnapshot(planSnapshot)) throw new Error("Snapshot paket pada order tidak valid.");
         const expectedLicenseType = templateItem ? "PAID_PER_INVITATION" : "FREE";
         if (publishSnapshot.licenseType !== expectedLicenseType) throw new Error("Snapshot lisensi template tidak cocok dengan order.");
         if (activationItem) {
@@ -274,6 +279,15 @@ export async function POST(request: Request) {
             : {};
           if (activationSnapshot.licenseType !== expectedLicenseType || activationSnapshot.hostingTermDays !== publishSnapshot.hostingTermDays) {
             throw new Error("Snapshot aktivasi tidak cocok dengan entitlement order.");
+          }
+          if (Object.hasOwn(activationSnapshot, "plan") !== hasPlanSnapshot || (hasPlanSnapshot && JSON.stringify(activationSnapshot.plan) !== JSON.stringify(planSnapshot))) {
+            throw new Error("Snapshot paket pada item aktivasi tidak cocok dengan order.");
+          }
+        }
+        if (hasPlanSnapshot) {
+          const plan = planSnapshot as NonNullable<typeof planSnapshot> & { durationDays: number; priceIdr: number };
+          if (plan.durationDays !== publishSnapshot.hostingTermDays || (activationItem ? activationItem.totalPriceIdr !== plan.priceIdr : plan.priceIdr !== 0)) {
+            throw new Error("Harga atau masa paket tidak cocok dengan order.");
           }
         }
         const invitationId = paymentSession.order.invitationId;
@@ -317,13 +331,30 @@ export async function POST(request: Request) {
           if (!updatedDraft) throw new Error("Paid invitation draft is invalid.");
           const nextTitle = invitationTitle(updatedDraft);
           const periodDays = publishSnapshot.hostingTermDays === undefined ? 365 : Number(publishSnapshot.hostingTermDays);
-          if (!Number.isSafeInteger(periodDays) || periodDays < 30 || periodDays > 3_650) throw new Error("Snapshot masa hosting tidak valid.");
+          if (!Number.isSafeInteger(periodDays) || periodDays < (hasPlanSnapshot ? 1 : 30) || periodDays > 3_650) throw new Error("Snapshot masa hosting tidak valid.");
           const expiresAt = new Date(publishedAt.getTime() + periodDays * 86_400_000);
           await tx.invitation.update({
             where: { id: invitation.id },
             data: { status: "PUBLISHED", slug: nextSlug, title: nextTitle, startsAt: eventStartsAt(updatedDraft), templateVersionId: publishItem.templateVersionId, publishedAt, formCompletedAt: invitation.formCompletedAt ?? publishedAt, expiresAt, publishedSnapshot: snapshot },
           });
-          await tx.entitlement.create({ data: { organizationId: invitation.organizationId, invitationId: invitation.id, orderId: paymentSession.orderId, featureKey: "hosting", value: { periodDays, source: "TEMPLATE_CHECKOUT" }, startsAt: publishedAt, expiresAt } });
+          await tx.entitlement.create({ data: { organizationId: invitation.organizationId, invitationId: invitation.id, ...(hasPlanSnapshot ? { planId: (planSnapshot as { id: string }).id } : {}), orderId: paymentSession.orderId, featureKey: "hosting", value: { periodDays, source: hasPlanSnapshot ? "PLAN_ACTIVATION" : "TEMPLATE_CHECKOUT" }, startsAt: publishedAt, expiresAt } });
+          if (hasPlanSnapshot) {
+            const plan = planSnapshot as { id: string; entitlements: Array<{ featureKey: string; value: unknown }> };
+            if (plan.entitlements.length) {
+              await tx.entitlement.createMany({
+                data: plan.entitlements.map(({ featureKey, value }) => ({
+                  organizationId: invitation.organizationId,
+                  invitationId: invitation.id,
+                  planId: plan.id,
+                  orderId: paymentSession.orderId,
+                  featureKey,
+                  value: value === null ? Prisma.JsonNull : value as Prisma.InputJsonValue,
+                  startsAt: publishedAt,
+                  expiresAt,
+                })),
+              });
+            }
+          }
           const eventData = { title: nextTitle, startsAt: eventStartsAt(updatedDraft), venue: updatedDraft.venue, address: updatedDraft.address, mapsUrl: updatedDraft.mapsUrl || null };
           const events = await tx.event.updateMany({ where: { invitationId: invitation.id }, data: eventData });
           if (events.count === 0) await tx.event.create({ data: { invitationId: invitation.id, ...eventData } });

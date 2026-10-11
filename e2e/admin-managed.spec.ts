@@ -79,6 +79,8 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   expect(activePlanCreation.status()).toBe(400);
   const invalidPlan = await page.request.post(new URL("/api/admin/plans", page.url()).toString(), { data: { key: planKey, name: "Paket invalid", description: null, priceIdr: 10000, durationDays: 90, entitlements: [{ featureKey: "music", value: true }, { featureKey: "music", value: false }] } });
   expect(invalidPlan.status()).toBe(400);
+  const reservedEntitlementPlan = await page.request.post(new URL("/api/admin/plans", page.url()).toString(), { data: { key: planKey, name: "Paket invalid", description: null, priceIdr: 10000, durationDays: 90, entitlements: [{ featureKey: "hosting", value: { periodDays: 90 } }] } });
+  expect(reservedEntitlementPlan.status()).toBe(400);
   const planCreationPromise = page.waitForResponse((response) => response.url().endsWith("/api/admin/plans") && response.request().method() === "POST");
   await page.getByRole("button", { name: "Buat paket" }).click();
   const planCreation = await planCreationPromise;
@@ -96,7 +98,7 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   await page.getByRole("button", { name: "Simpan perubahan" }).click();
   const planUpdate = await planUpdatePromise;
   expect(planUpdate.status()).toBe(200);
-  const updatedPlan = await planUpdate.json() as { plan: { priceIdr: number; isActive: boolean; entitlements: Array<{ featureKey: string; value: unknown }> } };
+  const updatedPlan = await planUpdate.json() as { plan: { priceIdr: number; isActive: boolean; updatedAt: string; entitlements: Array<{ featureKey: string; value: unknown }> } };
   expect(updatedPlan.plan.priceIdr).toBe(12_000);
   expect(updatedPlan.plan.isActive).toBe(true);
   expect(updatedPlan.plan.entitlements.map(({ featureKey }) => featureKey)).toEqual(["gallery.limit", "music", "rsvp.enabled"]);
@@ -106,6 +108,12 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   expect(listedPlansResponse.status()).toBe(200);
   const listedPlans = await listedPlansResponse.json() as { plans: Array<{ id: string; isActive: boolean; entitlements: Array<{ featureKey: string; value: unknown }> }> };
   expect(listedPlans.plans).toContainEqual(expect.objectContaining({ id: createdPlan.plan.id, isActive: true }));
+  const customerPlansResponse = await page.request.get(new URL("/api/customer/plans", page.url()).toString());
+  expect(customerPlansResponse.status()).toBe(200);
+  const customerPlans = await customerPlansResponse.json() as { plans: Array<{ id: string; key: string; priceIdr: number; durationDays: number }> };
+  expect(customerPlans.plans).toContainEqual(expect.objectContaining({ id: createdPlan.plan.id, key: planKey, priceIdr: 12_000, durationDays: 90 }));
+  const deactivatedPlan = await page.request.patch(new URL(`/api/admin/plans/${createdPlan.plan.id}`, page.url()).toString(), { data: { expectedUpdatedAt: updatedPlan.plan.updatedAt, name: "Paket uji E2E", description: "Paket konfigurasi uji", priceIdr: 12_000, durationDays: 90, isActive: false, entitlements: [{ featureKey: "gallery.limit", value: 8 }, { featureKey: "music", value: true }, { featureKey: "rsvp.enabled", value: true }] } });
+  expect(deactivatedPlan.status()).toBe(200);
   await page.goto(new URL("/admin/audit?q=admin.plan_updated", page.url()).toString());
   expect(await page.getByText("admin · plan_updated", { exact: true }).count()).toBeGreaterThan(0);
   await page.goto("/admin");

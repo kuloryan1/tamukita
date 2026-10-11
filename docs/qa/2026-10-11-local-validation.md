@@ -246,18 +246,18 @@ Suite memakai mock Xendit, R2, dan email dengan PostgreSQL 17 dan Redis 7 sement
 
 ## Admin paket dan entitlement — 11 Oktober 2026
 
-Super Admin kini memiliki halaman `/admin/plans` untuk membuat paket nonaktif, mengubah nama/deskripsi/harga/masa berlaku, mengatur entitlement JSON, dan mengaktifkan atau mengarsipkan paket. Kode paket tidak berubah setelah pembuatan; entitlement harus unik dan dibatasi ukurannya; edit memakai timestamp untuk menolak perubahan yang kedaluwarsa. Perubahan dicatat di audit log. Halaman dibatasi untuk Super Admin. Katalog ini belum dihubungkan ke checkout karena aturan paket dan komersial belum ditetapkan; checkout yang berjalan masih memakai pengaturan aktivasi dan hosting terpisah.
+Super Admin dapat membuat paket nonaktif, mengubah nama/deskripsi/harga/masa berlaku, mengatur entitlement JSON, lalu mengaktifkan atau mengarsipkan paket di `/admin/plans`. Kode paket tidak berubah setelah dibuat; entitlement harus unik dan dibatasi ukurannya; edit memakai timestamp untuk menolak perubahan yang kedaluwarsa. Perubahan dicatat di audit log dan halaman dibatasi untuk Super Admin. Paket aktif kini ditawarkan sebagai pilihan sekali bayar pada langkah review editor. Server memeriksa ulang versi harga, mengunci konfigurasi paket saat membuat order, dan menyimpan harga, masa berlaku, serta entitlement sebagai snapshot order. Callback Xendit yang terverifikasi membuat lisensi serta grant hosting/fitur; callback duplikat tidak membuat grant kedua. Paket gratis bersama template gratis dapat langsung menerbitkan undangan. Jika tidak ada paket aktif, pengaturan aktivasi dan hosting lama menjadi fallback. Paket ini bukan langganan otomatis. Grant fitur tersimpan, tetapi gate runtime untuk menegakkan entitlement seperti batas galeri atau akses musik masih perlu diselesaikan.
 
 | Pemeriksaan | Hasil |
 | --- | --- |
 | `npx prisma validate` | Lulus; model `Plan` dan `PlanEntitlement` yang sudah ada dipakai tanpa migrasi baru. |
 | `npm run typecheck` | Lulus. |
-| `npm run lint` | Lulus; 202 file. |
-| `npm test` | Lulus; 10 file dan 29 tes. |
-| `npm run build` | Lulus; termasuk `/admin/plans`, `/api/admin/plans`, dan `/api/admin/plans/[id]`. |
-| `npm run test:e2e -- e2e/admin-managed.spec.ts` | Lulus; 3 dari 3 profil browser. Mencakup paket nonaktif saat dibuat, penolakan aktivasi langsung dan entitlement ganda, perubahan harga/entitlement, konflik edit usang, audit, serta larangan akses Finance. |
+| `npm run lint` | Lulus; 206 file. |
+| `npm test` | Lulus; 12 file dan 40 tes. |
+| `npm run build` | Lulus; production build mencakup `/api/customer/plans` bersama halaman dan API paket admin. |
+| E2E paket pelanggan dan pembayaran | Lulus pada Chromium desktop. Katalog pelanggan menampilkan paket aktif; publish membuat checkout dengan harga aktivasi paket, snapshot paket tersimpan pada order, callback Xendit membuat grant sesuai snapshot, dan callback duplikat tidak menggandakan grant. E2E juga memeriksa validasi manifest dan hitungan penyelesaian form. |
 
-E2E memakai PostgreSQL 17 dan Redis 7 sementara dengan mock layanan; container uji dihentikan setelah tes. Pengujian terarah ini belum menguji pembelian paket, penerapan entitlement ke fitur, ataupun perubahan order/payment. Paket yang aktif belum ditawarkan di checkout.
+E2E memakai PostgreSQL 17 dan Redis 7 sementara dengan mock layanan; container uji dihentikan setelah tes. Pengujian lokal ini belum menguji penerapan grant fitur di seluruh UI/API, Xendit nyata, atau perilaku pada VPS staging.
 
 ## Field tambahan Template SDK — 11 Oktober 2026
 

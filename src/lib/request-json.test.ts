@@ -55,3 +55,13 @@ test("rejects malformed JSON and invalid UTF-8", async () => {
   await expect(readJsonBody(malformed)).resolves.toEqual({ ok: false, status: 400 });
   await expect(readJsonBody(invalidUtf8)).resolves.toEqual({ ok: false, status: 400 });
 });
+
+test("accepts an empty body only when the caller opts in", async () => {
+  const emptyBody = new Request("https://example.test/api", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+  });
+
+  await expect(readJsonBody(emptyBody)).resolves.toEqual({ ok: false, status: 400 });
+  await expect(readJsonBody(emptyBody, 2_200_000, true)).resolves.toEqual({ ok: true, value: {} });
+});

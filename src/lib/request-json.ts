@@ -1,6 +1,6 @@
 import "server-only";
 
-export async function readJsonBody(request: Request, maxBytes = 2_200_000): Promise<
+export async function readJsonBody(request: Request, maxBytes = 2_200_000, allowEmpty = false): Promise<
   | { ok: true; value: unknown }
   | { ok: false; status: 400 | 413 }
 > {
@@ -34,6 +34,8 @@ export async function readJsonBody(request: Request, maxBytes = 2_200_000): Prom
       reader.releaseLock();
     }
   }
+
+  if (allowEmpty && text.trim().length === 0) return { ok: true, value: {} };
 
   try {
     return { ok: true, value: JSON.parse(text) as unknown };

@@ -566,6 +566,7 @@ try {
     activationPriceIdr?: number;
     templateId?: string;
     templateVersionId?: string;
+    planSnapshot?: Prisma.InputJsonValue;
     entitlementSnapshot: Prisma.InputJsonValue;
   }) {
     const itemTotal = input.unitPriceIdr * input.quantity;
@@ -626,7 +627,7 @@ try {
           totalPriceIdr: activationPriceIdr,
           templateId: input.templateId,
           templateVersionId: input.templateVersionId,
-          entitlementSnapshot: { features: fixtureTemplate.features, licenseType: "PAID_PER_INVITATION", hostingTermDays: 365, templateSlug: fixtureTemplate.slug, templateVersion: fixtureTemplate.version },
+          entitlementSnapshot: { features: fixtureTemplate.features, licenseType: "PAID_PER_INVITATION", hostingTermDays: 365, templateSlug: fixtureTemplate.slug, templateVersion: fixtureTemplate.version, ...(input.planSnapshot ? { plan: input.planSnapshot } : {}) },
         },
       });
     }
@@ -772,6 +773,24 @@ try {
     });
   }
 
+  const e2ePlanId = "50000000-0000-4000-8000-000000000001";
+  const e2ePlanSnapshot = {
+    id: e2ePlanId,
+    key: "e2e-checkout-plan",
+    name: "Paket checkout E2E",
+    priceIdr: 25_000,
+    durationDays: 365,
+    entitlements: [{ featureKey: "gallery.limit", value: 6 }, { featureKey: "music", value: true }],
+  } satisfies Prisma.InputJsonValue;
+  const e2ePlan = await prisma.plan.upsert({
+    where: { key: "e2e-checkout-plan" },
+    update: { id: e2ePlanId, name: "Paket checkout E2E", description: "Plan fixture untuk payment webhook", priceIdr: 25_000, durationDays: 365, isActive: false },
+    create: { id: e2ePlanId, key: "e2e-checkout-plan", name: "Paket checkout E2E", description: "Plan fixture untuk payment webhook", priceIdr: 25_000, durationDays: 365, isActive: false },
+    select: { id: true },
+  });
+  await prisma.planEntitlement.deleteMany({ where: { planId: e2ePlan.id } });
+  await prisma.planEntitlement.createMany({ data: e2ePlanSnapshot.entitlements.map(({ featureKey, value }) => ({ planId: e2ePlan.id, featureKey, value })) });
+
   await seedPendingPaymentOrder({
     orderId: "20000000-0000-4000-8000-000000000001",
     sessionId: "30000000-0000-4000-8000-000000000001",
@@ -787,7 +806,8 @@ try {
     activationPriceIdr: 25_000,
     templateId: template.id,
     templateVersionId: templateVersion.id,
-    entitlementSnapshot: { features: fixtureTemplate.features, licenseType: "PAID_PER_INVITATION", hostingTermDays: 365, templateSlug: fixtureTemplate.slug, templateVersion: fixtureTemplate.version },
+    planSnapshot: e2ePlanSnapshot,
+    entitlementSnapshot: { features: fixtureTemplate.features, licenseType: "PAID_PER_INVITATION", hostingTermDays: 365, templateSlug: fixtureTemplate.slug, templateVersion: fixtureTemplate.version, plan: e2ePlanSnapshot },
   });
   await seedPendingPaymentOrder({
     orderId: "20000000-0000-4000-8000-000000000002",

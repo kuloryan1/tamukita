@@ -1,10 +1,21 @@
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { Pool } from "pg";
 
 const templateOrderId = "20000000-0000-4000-8000-000000000001";
 const resellerOrderId = "20000000-0000-4000-8000-000000000002";
 const paymentInvitationId = "10000000-0000-4000-8000-000000000002";
 const paymentInvitationSlug = "e2e-payment-invite";
 const templateAmountIdr = 174_000;
+const planId = "50000000-0000-4000-8000-000000000001";
+const databasePool = process.env.DATABASE_URL ? (() => {
+  const databaseUrl = new URL(process.env.DATABASE_URL);
+  databaseUrl.searchParams.delete("schema");
+  return new Pool({ connectionString: databaseUrl.toString() });
+})() : null;
+
+test.afterAll(async () => {
+  await databasePool?.end();
+});
 
 async function signIn(page: Page, email: string, password: string) {
   await page.goto("/login");
@@ -25,7 +36,7 @@ test("verified payment callbacks publish a licensed invitation and top up resell
   const token = process.env.E2E_XENDIT_WEBHOOK_TOKEN;
   const customerEmail = process.env.E2E_CUSTOMER_EMAIL;
   const customerPassword = process.env.E2E_CUSTOMER_PASSWORD;
-  if (!token || !customerEmail || !customerPassword) {
+  if (!token || !customerEmail || !customerPassword || !databasePool) {
     test.skip(true, "Requires the disposable PostgreSQL payment fixtures and webhook token.");
     return;
   }
@@ -56,6 +67,14 @@ test("verified payment callbacks publish a licensed invitation and top up resell
   const duplicateTemplatePaymentResponse = await postCompletedPayment(request, token, templatePayment);
   expect(duplicateTemplatePaymentResponse.status()).toBe(200);
   expect(await duplicateTemplatePaymentResponse.json()).toMatchObject({ received: true, duplicate: true });
+  const planGrants = await databasePool.query<{ planId: string; featureKey: string; value: unknown }>(
+    'SELECT "planId", "featureKey", "value" FROM entitlements WHERE "invitationId" = $1 AND "orderId" = $2 ORDER BY "featureKey"',
+    [paymentInvitationId, templateOrderId],
+  );
+  expect(planGrants.rows.map(({ featureKey }) => featureKey)).toEqual(["gallery.limit", "hosting", "music"]);
+  expect(planGrants.rows.every(({ planId: grantedPlanId }) => grantedPlanId === planId)).toBe(true);
+  expect(planGrants.rows).toContainEqual(expect.objectContaining({ featureKey: "gallery.limit", value: 6 }));
+  expect(planGrants.rows).toContainEqual(expect.objectContaining({ featureKey: "music", value: true }));
 
   const resellerTopUp = {
     event: "payment_session.completed",

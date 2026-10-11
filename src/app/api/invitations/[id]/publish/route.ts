@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@/generated/prisma/client";
+import { z } from "zod";
 import { auth } from "@/auth";
 import { randomUUID } from "node:crypto";
 import { eventStartsAt, ensureTemplateVersion, invitationTitle, parseInvitationDraft } from "@/lib/invitation-server";
@@ -7,12 +8,18 @@ import { getPrismaClient } from "@/lib/prisma";
 import { validateInvitationDraft, validateTemplateFields } from "@/lib/validation";
 import { isTemplateSelectable } from "@/lib/template-sdk";
 import { getCustomerActivationPrice, getHostingTermDays } from "@/lib/platform-settings";
-import { buildCustomerCheckoutOrder } from "@/lib/customer-checkout";
+import { buildCustomerCheckoutOrder, isCustomerPlanSnapshot, type CustomerPlanSnapshot } from "@/lib/customer-checkout";
 import { getXenditApiUrl } from "@/lib/xendit-api";
+import { readJsonBody } from "@/lib/request-json";
 
 export const runtime = "nodejs";
 
 class PublishConflict extends Error {}
+
+const publishRequestSchema = z.object({
+  planId: z.string().uuid().optional(),
+  planUpdatedAt: z.string().datetime().optional(),
+}).strict().refine((value) => Boolean(value.planId) === Boolean(value.planUpdatedAt));
 
 function isXenditUrl(value: string) {
   try {
@@ -27,6 +34,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) return NextResponse.json({ error: "Silakan masuk terlebih dahulu." }, { status: 401 });
+  const body = await readJsonBody(request, 2_000, true);
+  if (!body.ok) return NextResponse.json({ error: "Pilihan paket tidak valid." }, { status: body.status });
+  const parsedRequest = publishRequestSchema.safeParse(body.value);
+  if (!parsedRequest.success) return NextResponse.json({ error: "Pilihan paket tidak valid. Muat ulang halaman dan pilih paket kembali." }, { status: 400 });
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({ error: "ID undangan tidak valid." }, { status: 400 });
   const prisma = getPrismaClient();
@@ -68,7 +79,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     data: { formCompletedAt: new Date() },
   });
   const publishedAt = new Date();
-  const hostingTermDays = existingLicense ? null : await getHostingTermDays();
   if (existingLicense) {
     try {
       await prisma.$transaction(async (tx) => {
@@ -102,9 +112,46 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ published: true, slug: invitation.slug });
   }
 
+  const activeSession = await prisma.paymentSession.findFirst({
+    where: { order: { invitationId: invitation.id, status: "PENDING" }, status: "PENDING", expiresAt: { gt: new Date() }, checkoutUrl: { not: null } },
+    orderBy: { createdAt: "desc" },
+    select: { checkoutUrl: true },
+  });
+  if (activeSession?.checkoutUrl) return NextResponse.json({ checkoutUrl: activeSession.checkoutUrl });
+
+  const activePlans = await prisma.plan.findMany({
+    where: { isActive: true },
+    orderBy: [{ priceIdr: "asc" }, { name: "asc" }, { key: "asc" }],
+    include: { entitlements: { orderBy: { featureKey: "asc" } } },
+  });
+  let selectedPlan: (typeof activePlans)[number] | null = null;
+  if (activePlans.length) {
+    if (!parsedRequest.data.planId || !parsedRequest.data.planUpdatedAt) {
+      return NextResponse.json({ error: "Pilih paket undangan sebelum melanjutkan ke pembayaran." }, { status: 409 });
+    }
+    selectedPlan = activePlans.find((plan) => plan.id === parsedRequest.data.planId) ?? null;
+    if (!selectedPlan || selectedPlan.updatedAt.toISOString() !== parsedRequest.data.planUpdatedAt) {
+      return NextResponse.json({ error: "Harga atau isi paket berubah. Muat ulang halaman, lalu periksa paket kembali." }, { status: 409 });
+    }
+  } else if (parsedRequest.data.planId) {
+    return NextResponse.json({ error: "Paket yang dipilih tidak lagi tersedia. Muat ulang halaman." }, { status: 409 });
+  }
+
+  const customerPlanSnapshot: CustomerPlanSnapshot | null = selectedPlan ? {
+    id: selectedPlan.id,
+    key: selectedPlan.key,
+    name: selectedPlan.name,
+    priceIdr: selectedPlan.priceIdr,
+    durationDays: selectedPlan.durationDays,
+    entitlements: selectedPlan.entitlements.map(({ featureKey, value }) => ({ featureKey, value })),
+  } : null;
+  if (selectedPlan && !isCustomerPlanSnapshot(customerPlanSnapshot)) return NextResponse.json({ error: "Entitlement pada paket tidak valid. Hubungi admin." }, { status: 409 });
+
+  const hostingTermDays = selectedPlan?.durationDays ?? await getHostingTermDays();
+  const customerActivationPriceIdr = selectedPlan?.priceIdr ?? await getCustomerActivationPrice();
+
   if (hostingTermDays === null) return NextResponse.json({ error: "Masa hosting belum dapat ditentukan." }, { status: 503 });
 
-  const customerActivationPriceIdr = await getCustomerActivationPrice();
   if (template.template.licenseType === "FREE" && template.template.priceIdr !== 0) return NextResponse.json({ error: "Harga lisensi gratis harus Rp0. Hubungi admin untuk memperbaiki katalog." }, { status: 409 });
   if (template.template.licenseType === "PAID_PER_INVITATION" && template.template.priceIdr <= 0) return NextResponse.json({ error: "Harga lisensi template tidak valid." }, { status: 409 });
 
@@ -133,7 +180,20 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         });
         if (claimed.count !== 1) throw new PublishConflict();
         const expiresAt = new Date(publishedAt.getTime() + hostingTermDays * 86_400_000);
-        await tx.entitlement.create({ data: { organizationId: invitation.organizationId, invitationId: invitation.id, featureKey: "hosting", value: { periodDays: hostingTermDays, source: "FREE_TEMPLATE" }, startsAt: publishedAt, expiresAt } });
+        await tx.entitlement.create({ data: { organizationId: invitation.organizationId, invitationId: invitation.id, ...(selectedPlan ? { planId: selectedPlan.id } : {}), featureKey: "hosting", value: { periodDays: hostingTermDays, source: selectedPlan ? "PLAN_ACTIVATION" : "FREE_TEMPLATE" }, startsAt: publishedAt, expiresAt } });
+        if (selectedPlan?.entitlements.length) {
+          await tx.entitlement.createMany({
+            data: selectedPlan.entitlements.map(({ featureKey, value }) => ({
+              organizationId: invitation.organizationId,
+              invitationId: invitation.id,
+              planId: selectedPlan.id,
+              featureKey,
+              value: value === null ? Prisma.JsonNull : value as Prisma.InputJsonValue,
+              startsAt: publishedAt,
+              expiresAt,
+            })),
+          });
+        }
         const latest = await tx.invitationVersion.aggregate({ where: { invitationId: invitation.id }, _max: { version: true } });
         await tx.invitationVersion.create({
           data: { invitationId: invitation.id, version: (latest._max.version ?? 0) + 1, type: "PUBLISHED", snapshot: JSON.parse(JSON.stringify(snapshot)), createdById: userId },
@@ -151,13 +211,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ published: true, slug: invitation.slug, free: true });
   }
 
-  const activeSession = await prisma.paymentSession.findFirst({
-    where: { order: { invitationId: invitation.id, status: "PENDING" }, status: "PENDING", expiresAt: { gt: new Date() }, checkoutUrl: { not: null } },
-    orderBy: { createdAt: "desc" },
-    select: { checkoutUrl: true },
-  });
-  if (activeSession?.checkoutUrl) return NextResponse.json({ checkoutUrl: activeSession.checkoutUrl });
-
   const secret = process.env.XENDIT_SECRET_KEY;
   if (!secret) return NextResponse.json({ error: "Pembayaran belum dikonfigurasi di server." }, { status: 503 });
   const customerOrder = buildCustomerCheckoutOrder({
@@ -172,11 +225,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     },
     activationPriceIdr: customerActivationPriceIdr,
     hostingTermDays,
+    ...(customerPlanSnapshot ? { plan: customerPlanSnapshot } : {}),
   });
   if (!customerOrder || customerOrder.totalAmountIdr <= 0 || customerOrder.items.length === 0) return NextResponse.json({ error: "Harga checkout undangan tidak valid. Hubungi admin." }, { status: 409 });
 
   const orderResult = await prisma.$transaction(async (tx) => {
       await tx.$queryRaw<Array<{ id: string }>>`SELECT id FROM "invitations" WHERE id = ${invitation.id}::uuid FOR UPDATE`;
+      if (selectedPlan) {
+        const lockedPlan = await tx.$queryRaw<Array<{ id: string; updatedAt: Date; isActive: boolean }>>`SELECT id, "updatedAt", "isActive" FROM "plans" WHERE id = ${selectedPlan.id}::uuid FOR SHARE`;
+        if (lockedPlan[0]?.isActive !== true || lockedPlan[0]?.updatedAt.toISOString() !== parsedRequest.data.planUpdatedAt) throw new PublishConflict();
+      }
       const current = await tx.invitation.findFirst({
         where: { id: invitation.id, ownerId: userId, deletedAt: null, status: "DRAFT", organization: { status: "ACTIVE", memberships: { some: { userId, role: { in: ["OWNER", "ADMIN", "EDITOR"] } } } } },
         select: { id: true },
@@ -210,9 +268,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             activationPriceIdr: customerActivationPriceIdr,
             amountIdr: customerOrder.totalAmountIdr,
             hostingTermDays,
+            ...(selectedPlan ? { plan: { id: selectedPlan.id, key: selectedPlan.key, name: selectedPlan.name } } : {}),
           },
           items: {
-            create: customerOrder.items,
+            create: customerOrder.items.map((item) => ({
+              ...item,
+              entitlementSnapshot: JSON.parse(JSON.stringify(item.entitlementSnapshot)) as Prisma.InputJsonValue,
+            })),
           },
           paymentSessions: { create: [{ amountIdr: customerOrder.totalAmountIdr, currency: "IDR", status: "CREATED", requestSnapshot: { flow: "PAYMENT_LINK", sessionType: "PAY" } }] },
         },

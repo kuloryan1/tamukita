@@ -37,7 +37,7 @@ function isBoundedJson(value: unknown, depth = 0): boolean {
 function validEntitlements(entitlements: Array<{ featureKey: string; value: unknown }>) {
   const keys = new Set<string>();
   for (const entitlement of entitlements) {
-    if (keys.has(entitlement.featureKey) || !isBoundedJson(entitlement.value)) return false;
+    if (entitlement.featureKey === "hosting" || keys.has(entitlement.featureKey) || !isBoundedJson(entitlement.value)) return false;
     keys.add(entitlement.featureKey);
   }
   return new TextEncoder().encode(JSON.stringify(entitlements)).byteLength <= 10_000;
