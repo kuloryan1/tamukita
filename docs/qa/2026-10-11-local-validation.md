@@ -304,3 +304,17 @@ Draft dicocokkan dengan paket sebelum pembayaran. Sesudah pembayaran, grant akti
 | E2E pembayaran | Assertion ditambahkan untuk paket tanpa RSVP; hasil CI menunggu push commit ini. |
 
 Uji lokal belum memverifikasi pengaturan environment di Dokploy atau deployment VPS. Akses panel belum tersedia dan domain staging masih akan disiapkan operator.
+
+## Ekspor rekonsiliasi pembayaran Xendit — 11 Oktober 2026
+
+Finance dan Super Admin dapat mengunduh CSV dari halaman Order & Refund. Setiap baris membedakan order tanpa sesi, sesi pembayaran, event webhook, dan refund, sehingga ID lokal dan referensi Xendit dapat dicocokkan tanpa membuka payload webhook. Ekspor memakai rentang UTC maksimal 31 hari, menolak hasil di atas 10.000 baris, melindungi nilai teks dari formula spreadsheet, dan mencatat aktor, rentang, serta jumlah baris pada Audit Log. Role selain Finance dan Super Admin menerima `403`.
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| `npm run typecheck` | Lulus. |
+| `npm run lint` | Lulus; 210 file. |
+| `npm test` | Lulus; 13 file dan 45 tes. |
+| `npm run build` | Lulus; route `/api/admin/orders/reconciliation` terdaftar pada build production. |
+| E2E rekonsiliasi | Assertion ekspor order/event refund dan penolakan akses reseller ditambahkan pada `e2e/payment-lifecycle.spec.ts`; menunggu workflow GitHub Actions untuk commit fitur ini. |
+
+Fitur ini menyediakan berkas pencocokan finansial. Pembaruan status provider tetap berasal dari webhook. Pengaturan environment Dokploy, Xendit Test Mode, dan pencocokan transaksi nyata belum diuji karena staging HTTPS belum disiapkan.

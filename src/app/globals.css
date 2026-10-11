@@ -1148,6 +1148,14 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .support-access-revoke { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; }
 .support-access-revoke > span { color: #a35c55; font-size: 8px; }
 .admin-orders-card { margin-top: 18px; }
+.admin-reconciliation { align-items: end; background: #f7f6f1; display: flex; flex-wrap: wrap; gap: 11px; margin: 15px 0; padding: 14px; }
+.admin-reconciliation > div { flex: 1 1 300px; margin-right: auto; }
+.admin-reconciliation > div > b { color: #46584a; font-size: 10px; }
+.admin-reconciliation p { color: #858b82; font-size: 8px; line-height: 1.6; margin: 5px 0 0; max-width: 610px; }
+.admin-reconciliation label { display: grid; gap: 5px; }
+.admin-reconciliation label > span { color: #747c70; font-size: 8px; }
+.admin-reconciliation input { background: #fff; border: 1px solid #e4e3dc; color: #46584a; font: inherit; font-size: 9px; min-height: 34px; padding: 7px 9px; }
+.admin-reconciliation-hint { color: #a35c55; flex: 1 0 100%; font-size: 8px; }
 .admin-order-search { margin: 0 0 12px; max-width: 480px; width: 100%; }
 .admin-order-result-count { color: #999d95; font-size: 8px; margin-bottom: 4px; }
 .admin-order-list { display: grid; }
@@ -1569,6 +1577,9 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
   .admin-order-row { align-items: flex-start; flex-direction: column; }
   .admin-order-side { align-items: flex-start; flex-direction: row; flex-wrap: wrap; justify-content: flex-start; }
   .admin-order-side > strong { margin-right: 6px; }
+  .admin-reconciliation { align-items: stretch; flex-direction: column; }
+  .admin-reconciliation > div { flex-basis: auto; }
+  .admin-reconciliation .button { justify-content: center; }
 }
 
 @media (max-width: 380px) {

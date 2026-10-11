@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { AlertTriangle, RotateCcw, Search, X } from "lucide-react";
+import { AlertTriangle, Download, RotateCcw, Search, X } from "lucide-react";
 
 type Refund = { id: string; amount: number; currency: string; reason: string; adminNote: string | null; failureCode: string | null; status: string; createdAt: string; requestedBy: string };
 type AdminOrder = {
@@ -48,6 +48,25 @@ export function AdminOrders() {
   const [refundNote, setRefundNote] = useState("");
   const [refundAmount, setRefundAmount] = useState("");
   const [refundPending, setRefundPending] = useState(false);
+  const [reconciliationFrom, setReconciliationFrom] = useState("");
+  const [reconciliationTo, setReconciliationTo] = useState("");
+
+  useEffect(() => {
+    const today = new Date();
+    const from = new Date(today);
+    from.setUTCDate(from.getUTCDate() - 6);
+    setReconciliationFrom(from.toISOString().slice(0, 10));
+    setReconciliationTo(today.toISOString().slice(0, 10));
+  }, []);
+
+  const fromTime = Date.parse(`${reconciliationFrom}T00:00:00.000Z`);
+  const toTime = Date.parse(`${reconciliationTo}T00:00:00.000Z`);
+  const reconciliationDays = (toTime - fromTime) / (24 * 60 * 60 * 1000) + 1;
+  const canExportReconciliation = Boolean(reconciliationFrom && reconciliationTo)
+    && Number.isFinite(fromTime)
+    && Number.isFinite(toTime)
+    && reconciliationDays > 0
+    && reconciliationDays <= 31;
 
   const loadOrders = useCallback(async (search = query, nextPage = 0, append = false) => {
     if (append) setLoadingMore(true); else setLoading(true);
@@ -92,6 +111,16 @@ export function AdminOrders() {
   return <>
     <section className="dashboard-content-card admin-orders-card" id="order-management">
       <div className="card-heading"><div><h2>Pencarian order & refund</h2><p>Cari transaksi di semua tanggal dan ajukan refund penuh atau sebagian untuk order undangan maupun top-up kredit.</p></div><button className="button button--outline button--small" type="button" onClick={() => void loadOrders(query, 0, false)} disabled={loading}><RotateCcw size={13} /> Muat ulang</button></div>
+      <div className="admin-reconciliation">
+        <div><b>Ekspor rekonsiliasi Xendit</b><p>Unduh order, sesi pembayaran, event webhook, dan refund untuk dicocokkan dengan laporan Xendit. Data ini tidak menyertakan payload webhook atau data pribadi pelanggan.</p></div>
+        <label><span>Dari (UTC)</span><input type="date" value={reconciliationFrom} onChange={(event) => setReconciliationFrom(event.target.value)} aria-label="Tanggal awal rekonsiliasi" /></label>
+        <label><span>Sampai (UTC)</span><input type="date" value={reconciliationTo} onChange={(event) => setReconciliationTo(event.target.value)} aria-label="Tanggal akhir rekonsiliasi" /></label>
+        <button className="button button--outline button--small" type="button" disabled={!canExportReconciliation} onClick={() => {
+          const params = new URLSearchParams({ from: reconciliationFrom, to: reconciliationTo });
+          window.location.assign(`/api/admin/orders/reconciliation?${params.toString()}`);
+        }}><Download size={13} /> Unduh CSV</button>
+        {!canExportReconciliation && <small className="admin-reconciliation-hint">Pilih rentang UTC yang valid, maksimal 31 hari.</small>}
+      </div>
       <label className="admin-search admin-order-search"><Search size={14} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Cari ID, pelanggan, undangan, atau reseller" aria-label="Cari order" /></label>
       {error && <div className="editor-error" role="alert">{error}</div>}
       {notice && <div className="auth-success admin-order-notice" role="status">{notice}</div>}

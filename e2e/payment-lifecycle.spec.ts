@@ -115,6 +115,22 @@ test("Xendit expiry and refund callbacks retry safely and update reseller balanc
     const adminPage = await adminContext.newPage();
     await signIn(adminPage, adminEmail, adminPassword);
 
+    await adminPage.goto("/admin/orders");
+    await expect(adminPage.getByText("Ekspor rekonsiliasi Xendit")).toBeVisible();
+    const rangeTo = new Date();
+    const rangeFrom = new Date(rangeTo);
+    rangeFrom.setUTCDate(rangeFrom.getUTCDate() - 30);
+    const dateFrom = rangeFrom.toISOString().slice(0, 10);
+    const dateTo = rangeTo.toISOString().slice(0, 10);
+    const reconciliationResponse = await adminPage.request.get(`/api/admin/orders/reconciliation?from=${dateFrom}&to=${dateTo}`);
+    expect(reconciliationResponse.status()).toBe(200);
+    expect(reconciliationResponse.headers()["content-type"]).toContain("text/csv");
+    expect(reconciliationResponse.headers()["content-disposition"]).toContain("tamukita-reconciliation-");
+    const reconciliationCsv = await reconciliationResponse.text();
+    expect(reconciliationCsv).toContain("payment_event_log_id");
+    expect(reconciliationCsv).toContain(expiredOrderId);
+    expect(reconciliationCsv).toContain("e2e-provider-refund-success");
+
     await expect.poll(async () => (await readAdminOrder(adminPage, expiredOrderId)).status).toBe("EXPIRED");
     expect((await readAdminOrder(adminPage, expiredOrderId)).paymentStatus).toBe("EXPIRED");
 
@@ -139,6 +155,8 @@ test("Xendit expiry and refund callbacks retry safely and update reseller balanc
 
     const resellerPage = await resellerContext.newPage();
     await signIn(resellerPage, resellerEmail, resellerPassword);
+    const forbiddenReconciliation = await resellerPage.request.get(`/api/admin/orders/reconciliation?from=${dateFrom}&to=${dateTo}`);
+    expect(forbiddenReconciliation.status()).toBe(403);
     await resellerPage.goto("/reseller");
     await expect(resellerPage.locator(".reseller-credit-grid .stat-card").filter({ hasText: "Kredit aktivasi Basic" }).locator("strong")).toHaveText("1");
     await expect(resellerPage.locator(".reseller-credit-grid .stat-card").filter({ hasText: "Kredit aktivasi Premium" }).locator("strong")).toHaveText("0");
