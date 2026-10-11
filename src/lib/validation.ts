@@ -1,4 +1,5 @@
 import { isSlugAllowed, safeHttpsUrl, slugify, type InvitationDraft } from "@/lib/invitations";
+import { templateFieldMaximumLength, type Template } from "@/lib/template-sdk";
 
 export type DraftValidation = { valid: boolean; message?: string; step?: number };
 
@@ -41,6 +42,36 @@ export function validateInvitationDraft(draft: InvitationDraft): DraftValidation
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(draft.templateId)) return { valid: false, message: "Pilih template yang valid.", step: 3 };
   if (!isSlugAllowed(slugify(draft.slug))) {
     return { valid: false, message: "Tautan ini tidak tersedia. Gunakan nama lain yang terdiri dari minimal 3 karakter.", step: 3 };
+  }
+  return { valid: true };
+}
+
+function getTemplateFieldValue(draft: InvitationDraft, key: string) {
+  const directValue = (draft as unknown as Record<string, unknown>)[key];
+  if (Object.hasOwn(draft, key) && typeof directValue === "string") return directValue;
+  const customValue = draft.customFields?.[key];
+  return Object.hasOwn(draft.customFields ?? {}, key) && typeof customValue === "string" ? customValue : "";
+}
+
+function templateFieldStep(sectionKey: string) {
+  if (sectionKey === "identity") return 0;
+  if (sectionKey === "media") return 2;
+  return 1;
+}
+
+export function validateTemplateFields(draft: InvitationDraft, template: Template, onlyStep?: number): DraftValidation {
+  for (const section of template.schema.sections) {
+    const step = templateFieldStep(section.key);
+    if (onlyStep !== undefined && step !== onlyStep) continue;
+    for (const field of section.fields) {
+      const value = getTemplateFieldValue(draft, field.key);
+      if (field.required && !value.trim()) return { valid: false, message: `Isi ${field.label.toLocaleLowerCase("id-ID")} terlebih dahulu.`, step };
+      if (!value) continue;
+      if (value.length > templateFieldMaximumLength(field)) return { valid: false, message: `${field.label} terlalu panjang.`, step };
+      if (field.type === "datetime" && !isValidCalendarDate(value)) return { valid: false, message: `${field.label} harus berupa tanggal yang valid.`, step };
+      if (field.type === "time" && !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value)) return { valid: false, message: `${field.label} harus menggunakan format waktu yang valid.`, step };
+      if (field.type === "url" && !safeHttpsUrl(value)) return { valid: false, message: `${field.label} harus menggunakan tautan HTTPS yang valid.`, step };
+    }
   }
   return { valid: true };
 }

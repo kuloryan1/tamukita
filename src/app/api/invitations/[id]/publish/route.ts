@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { randomUUID } from "node:crypto";
 import { eventStartsAt, ensureTemplateVersion, invitationTitle, parseInvitationDraft } from "@/lib/invitation-server";
 import { getPrismaClient } from "@/lib/prisma";
-import { validateInvitationDraft } from "@/lib/validation";
+import { validateInvitationDraft, validateTemplateFields } from "@/lib/validation";
 import { isTemplateSelectable } from "@/lib/template-sdk";
 import { getCustomerActivationPrice, getHostingTermDays } from "@/lib/platform-settings";
 import { buildCustomerCheckoutOrder } from "@/lib/customer-checkout";
@@ -47,6 +47,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const validation = validateInvitationDraft(checkedDraft);
   if (!validation.valid) return NextResponse.json({ error: validation.message ?? "Detail undangan belum lengkap." }, { status: 400 });
 
+  const template = await ensureTemplateVersion(checkedDraft.templateId);
+  if (!template) return NextResponse.json({ error: "Template tidak tersedia." }, { status: 400 });
+  const templateValidation = validateTemplateFields(checkedDraft, template.templateData);
+  if (!templateValidation.valid) return NextResponse.json({ error: templateValidation.message ?? "Detail template belum lengkap." }, { status: 400 });
+  const existingLicense = await prisma.templateLicense.findFirst({
+    where: { invitationId: invitation.id, templateVersionId: template.version.id },
+    select: { id: true },
+  });
+  if (!isTemplateSelectable(template.template.status) && !existingLicense) return NextResponse.json({ error: "Template ini sudah tidak menerima publikasi baru. Hubungi admin jika undanganmu memiliki lisensi." }, { status: 409 });
   await prisma.invitation.updateMany({
     where: {
       id: invitation.id,
@@ -58,14 +67,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     },
     data: { formCompletedAt: new Date() },
   });
-
-  const template = await ensureTemplateVersion(checkedDraft.templateId);
-  if (!template) return NextResponse.json({ error: "Template tidak tersedia." }, { status: 400 });
-  const existingLicense = await prisma.templateLicense.findFirst({
-    where: { invitationId: invitation.id, templateVersionId: template.version.id },
-    select: { id: true },
-  });
-  if (!isTemplateSelectable(template.template.status) && !existingLicense) return NextResponse.json({ error: "Template ini sudah tidak menerima publikasi baru. Hubungi admin jika undanganmu memiliki lisensi." }, { status: 409 });
   const publishedAt = new Date();
   const hostingTermDays = existingLicense ? null : await getHostingTermDays();
   if (existingLicense) {

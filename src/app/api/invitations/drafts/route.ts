@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { normalizeInvitationCustomFields } from "@/lib/invitations";
 import { ensureTemplateVersion, eventStartsAt, getWritableOrganizationId, invitationDraftSchema, invitationTitle } from "@/lib/invitation-server";
 import { getPrismaClient } from "@/lib/prisma";
 import { readJsonBody } from "@/lib/request-json";
@@ -29,7 +30,7 @@ export async function GET(request: Request) {
   });
   if (!invitation) return NextResponse.json({ draft: null });
   const draftData = typeof invitation.draftData === "object" && invitation.draftData !== null && !Array.isArray(invitation.draftData)
-    ? { ...invitation.draftData, familyDetails: typeof invitation.draftData.familyDetails === "string" ? invitation.draftData.familyDetails : "", coverPositionX: typeof invitation.draftData.coverPositionX === "number" ? invitation.draftData.coverPositionX : 50, galleryPhotos: Array.isArray(invitation.draftData.galleryPhotos) ? invitation.draftData.galleryPhotos : [], giftMessage: typeof invitation.draftData.giftMessage === "string" ? invitation.draftData.giftMessage : "", giftBankName: typeof invitation.draftData.giftBankName === "string" ? invitation.draftData.giftBankName : "", giftAccountName: typeof invitation.draftData.giftAccountName === "string" ? invitation.draftData.giftAccountName : "", giftAccountNumber: typeof invitation.draftData.giftAccountNumber === "string" ? invitation.draftData.giftAccountNumber : "", musicUrl: typeof invitation.draftData.musicUrl === "string" ? invitation.draftData.musicUrl : "", musicTitle: typeof invitation.draftData.musicTitle === "string" ? invitation.draftData.musicTitle : "", id: invitation.id, slug: invitation.slug, updatedAt: invitation.updatedAt.toISOString(), isPublished: invitation.status === "PUBLISHED" }
+    ? { ...invitation.draftData, familyDetails: typeof invitation.draftData.familyDetails === "string" ? invitation.draftData.familyDetails : "", coverPositionX: typeof invitation.draftData.coverPositionX === "number" ? invitation.draftData.coverPositionX : 50, galleryPhotos: Array.isArray(invitation.draftData.galleryPhotos) ? invitation.draftData.galleryPhotos : [], giftMessage: typeof invitation.draftData.giftMessage === "string" ? invitation.draftData.giftMessage : "", giftBankName: typeof invitation.draftData.giftBankName === "string" ? invitation.draftData.giftBankName : "", giftAccountName: typeof invitation.draftData.giftAccountName === "string" ? invitation.draftData.giftAccountName : "", giftAccountNumber: typeof invitation.draftData.giftAccountNumber === "string" ? invitation.draftData.giftAccountNumber : "", musicUrl: typeof invitation.draftData.musicUrl === "string" ? invitation.draftData.musicUrl : "", musicTitle: typeof invitation.draftData.musicTitle === "string" ? invitation.draftData.musicTitle : "", customFields: normalizeInvitationCustomFields(invitation.draftData.customFields), id: invitation.id, slug: invitation.slug, updatedAt: invitation.updatedAt.toISOString(), isPublished: invitation.status === "PUBLISHED" }
     : null;
   return NextResponse.json({ draft: draftData });
 }

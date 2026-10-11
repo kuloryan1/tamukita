@@ -10,7 +10,7 @@ import { getResellerCreditState, lockResellerCreditBalance } from "@/lib/reselle
 import { readJsonBody } from "@/lib/request-json";
 import { isEditorCompatibleTemplate, isTemplateSelectable, validateTemplateManifest } from "@/lib/template-sdk";
 import { getHostingTermDays } from "@/lib/platform-settings";
-import { validateInvitationDraft } from "@/lib/validation";
+import { validateInvitationDraft, validateTemplateFields } from "@/lib/validation";
 
 export const runtime = "nodejs";
 
@@ -67,6 +67,12 @@ export async function POST(request: Request) {
   }
   const validation = validateInvitationDraft(draft);
   if (!validation.valid) return NextResponse.json({ error: validation.message ?? "Detail undangan belum lengkap." }, { status: 400 });
+  const manifest = validateTemplateManifest(invitation.templateVersion.manifest);
+  if (!manifest.success || manifest.data.slug !== invitation.templateVersion.template.slug || manifest.data.version !== invitation.templateVersion.version || !isEditorCompatibleTemplate(manifest.data)) {
+    return NextResponse.json({ error: "Manifest template ini tidak valid untuk aktivasi reseller." }, { status: 409 });
+  }
+  const templateValidation = validateTemplateFields(draft, manifest.data);
+  if (!templateValidation.valid) return NextResponse.json({ error: templateValidation.message ?? "Detail template belum lengkap." }, { status: 400 });
   await prisma.invitation.updateMany({
     where: {
       id: invitation.id,
@@ -80,10 +86,6 @@ export async function POST(request: Request) {
     },
     data: { formCompletedAt: new Date() },
   });
-  const manifest = validateTemplateManifest(invitation.templateVersion.manifest);
-  if (!manifest.success || manifest.data.slug !== invitation.templateVersion.template.slug || manifest.data.version !== invitation.templateVersion.version || !isEditorCompatibleTemplate(manifest.data)) {
-    return NextResponse.json({ error: "Manifest template ini tidak valid untuk aktivasi reseller." }, { status: 409 });
-  }
   const template = manifest.data;
   const creditSku = template.activationSku;
   const publishedAt = new Date();

@@ -285,6 +285,10 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .invite-family-details > span { display: block; font-size: 6px; letter-spacing: .15em; margin-bottom: 3px; }
 .invite-family-details p { font-family: var(--invite-body-font, var(--serif)); font-size: 8px; line-height: 1.45; margin: 0; white-space: pre-line; }
 .invite-message { color: #6e756f; font-family: var(--invite-body-font, var(--serif)); font-size: 9px; font-style: italic; line-height: 1.55; margin: 0 0 12px; max-width: 265px; }
+.invite-custom-fields { display: grid; gap: 8px; margin: 10px auto 12px; max-width: 265px; }
+.invite-custom-field { border-top: 1px solid rgba(110, 117, 111, .16); padding-top: 7px; text-align: left; }
+.invite-custom-field b { color: var(--invite-accent-strong, #806e50); display: block; font-size: 7px; letter-spacing: .08em; margin-bottom: 3px; text-transform: uppercase; }
+.invite-custom-field p { color: #556058; font-family: var(--invite-body-font, var(--sans)); font-size: 9px; line-height: 1.45; margin: 0; white-space: pre-line; }
 .invite-detail-row { align-items: flex-start; color: var(--invite-accent, #927a58); display: flex; font-size: 9px; gap: 9px; margin-top: 11px; }
 .invite-detail-row > span { color: #4b5b52; font-family: var(--serif); font-size: 10px; }
 .invite-detail-row small { color: #8a8d85; display: block; font-family: var(--sans); font-size: 8px; margin-top: 4px; }
@@ -574,6 +578,9 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .personalization-font-sample { color: #556058; font-family: var(--serif); font-size: 13px; line-height: 1; }
 .personalization-font-sample.is-modern { font-family: var(--sans); }
 .schema-fields-grid { display: grid; gap: 0 12px; grid-template-columns: 1fr 1fr; }
+.editor-schema-section { border-top: 1px solid #e9e7df; margin-top: 14px; padding-top: 14px; }
+.editor-schema-section > .eyebrow { color: #7e887e; display: block; margin-bottom: 11px; }
+.editor-media-extra-fields { margin-bottom: 18px; }
 .schema-grid-item--full { grid-column: 1 / -1; }
 .field-hint { color: #9a9e97; display: block; font-size: 8px; line-height: 1.55; margin-top: 6px; }
 .event-kind-grid { display: grid; gap: 8px; grid-template-columns: repeat(3,1fr); margin-bottom: 20px; }

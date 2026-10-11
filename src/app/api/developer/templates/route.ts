@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   const value = typeof body.value === "object" && body.value !== null && !Array.isArray(body.value) ? (body.value as Record<string, unknown>).manifest : null;
   const parsed = validateTemplateManifest(value);
   if (!parsed.success) return NextResponse.json({ error: "Manifest tidak lolos validasi Template SDK.", issues: parsed.error.issues.slice(0, 20).map((issue) => ({ path: issue.path.join("."), message: issue.message })) }, { status: 400 });
-  if (!isEditorCompatibleTemplate(parsed.data)) return NextResponse.json({ error: "Schema harus mengikuti section identity, schedule, dan media serta field standar editor TamuKita." }, { status: 400 });
+  if (!isEditorCompatibleTemplate(parsed.data)) return NextResponse.json({ error: "Schema harus menyertakan field acara standar. Field tambahan boleh diletakkan di section lain; slot gambar harus memakai coverPhoto." }, { status: 400 });
 
   try {
     const template = await developer.prisma.$transaction(async (tx) => {
@@ -86,7 +86,7 @@ export async function PATCH(request: Request) {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(templateId)) return NextResponse.json({ error: "Pengajuan template tidak valid." }, { status: 400 });
   const parsed = validateTemplateManifest(requestData.manifest);
   if (!parsed.success) return NextResponse.json({ error: "Manifest tidak lolos validasi Template SDK.", issues: parsed.error.issues.slice(0, 20).map((issue) => ({ path: issue.path.join("."), message: issue.message })) }, { status: 400 });
-  if (!isEditorCompatibleTemplate(parsed.data)) return NextResponse.json({ error: "Schema harus mengikuti section identity, schedule, dan media serta field standar editor TamuKita." }, { status: 400 });
+  if (!isEditorCompatibleTemplate(parsed.data)) return NextResponse.json({ error: "Schema harus menyertakan field acara standar. Field tambahan boleh diletakkan di section lain; slot gambar harus memakai coverPhoto." }, { status: 400 });
 
   try {
     const template = await developer.prisma.$transaction(async (tx) => {

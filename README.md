@@ -137,6 +137,7 @@ npm run typecheck    # pemeriksaan TypeScript
 - Worker email juga memberi tahu staf saat ditambahkan ke workspace reseller dan memberi tahu pemilik/staf reseller saat pelanggan menyetujui, menolak, atau mencabut akses.
 - Workspace personal serta draft undangan yang tersimpan di PostgreSQL dan otomatis dimuat kembali.
 - Smart Editor memakai wizard dengan autosave, undo/redo untuk perubahan draft yang didukung, pratinjau ponsel/desktop, serta pengaturan warna aksen, font, dan urutan cerita dibanding informasi acara.
+- Form Smart Editor membaca schema versi template: developer dapat menambah field teks, paragraf, tanggal, waktu, dan URL HTTPS pada section tambahan. Nilai disimpan di `customFields`, diisi dengan default schema bila ada, divalidasi ulang saat publikasi/aktivasi, dan dapat dibaca renderer dari typed draft. Slot foto tetap memakai upload dan crop privat `coverPhoto`; batas dan contoh schema ada di [`docs/template-sdk.md`](docs/template-sdk.md).
 - Riwayat versi draft dan publikasi, lisensi template berbayar, serta alur Xendit Payment Session.
 - Webhook memeriksa token callback, jumlah, mata uang, referensi order, dan status sebelum memberi lisensi dan menerbitkan undangan.
 - Checkout pelanggan menyimpan lisensi template berbayar dan biaya aktivasi sebagai item order terpisah, lalu membayar jumlah total dalam satu sesi Xendit. Template gratis hanya mencatat item aktivasi jika biayanya diaktifkan. Harga aktivasi dapat diatur di admin dan default Rp0.

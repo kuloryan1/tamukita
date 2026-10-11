@@ -256,3 +256,17 @@ Super Admin kini memiliki halaman `/admin/plans` untuk membuat paket nonaktif, m
 | `npm run test:e2e -- e2e/admin-managed.spec.ts` | Lulus; 3 dari 3 profil browser. Mencakup paket nonaktif saat dibuat, penolakan aktivasi langsung dan entitlement ganda, perubahan harga/entitlement, konflik edit usang, audit, serta larangan akses Finance. |
 
 E2E memakai PostgreSQL 17 dan Redis 7 sementara dengan mock layanan; container uji dihentikan setelah tes. Pengujian terarah ini belum menguji pembelian paket, penerapan entitlement ke fitur, ataupun perubahan order/payment. Paket yang aktif belum ditawarkan di checkout.
+
+## Field tambahan Template SDK — 11 Oktober 2026
+
+Schema template kini dapat menambahkan section dan field teks, paragraf, tanggal, waktu, serta URL HTTPS. Smart Editor membangun input dari manifest, menyimpan nilai tambahan pada `customFields`, menerapkan `defaultValue` untuk field baru, dan menampilkan section tambahan pada langkah detail. Template manifest terkurasi menampilkan field tambahan yang terisi; renderer React menerima nilai tersebut melalui prop draft. Validasi server mengulang batas nilai, field wajib, format tanggal/waktu, dan HTTPS saat publikasi maupun aktivasi reseller. Slot foto tambahan tetap ditolak; foto memakai pipeline `coverPhoto` yang sudah memeriksa kepemilikan dan memproses crop.
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| `npm run typecheck` | Lulus setelah perubahan schema, draft, editor, dan kedua jalur aktivasi. |
+| `npm run lint` | Lulus; 202 file diperiksa tanpa peringatan. |
+| `npm run build` | Lulus; production build menghasilkan 45 halaman statis/dinamis. |
+| `git diff --check` | Lulus. |
+| Unit dan E2E untuk manifest dengan field tambahan | Belum dijalankan pada perubahan ini. |
+
+Kontrak field dan batas saat ini didokumentasikan di [`docs/template-sdk.md`](../template-sdk.md). Pengujian runtime dan preview template manifest dengan field tambahan masih menjadi tindak lanjut QA.

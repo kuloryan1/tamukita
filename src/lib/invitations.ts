@@ -1,3 +1,5 @@
+import { isSafeTemplateFieldKey } from "@/lib/template-sdk";
+
 export const EVENT_KINDS = [
   "Pernikahan",
   "Ulang Tahun",
@@ -62,6 +64,7 @@ export type InvitationDraft = {
   giftAccountNumber: string;
   musicUrl: string;
   musicTitle: string;
+  customFields: Record<string, string>;
   updatedAt: string;
   publishedAt?: string;
   isPublished?: boolean;
@@ -122,8 +125,20 @@ export function createInitialDraft(): InvitationDraft {
     giftAccountNumber: "",
     musicUrl: "",
     musicTitle: "",
+    customFields: {},
     updatedAt: new Date().toISOString(),
   };
+}
+
+export function normalizeInvitationCustomFields(value: unknown): Record<string, string> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return {};
+  const fields: Record<string, string> = Object.create(null);
+  for (const [key, fieldValue] of Object.entries(value).slice(0, 32)) {
+    if (isSafeTemplateFieldKey(key) && typeof fieldValue === "string" && fieldValue.length <= 1_000) {
+      fields[key] = fieldValue;
+    }
+  }
+  return fields;
 }
 
 export function slugify(value: string) {

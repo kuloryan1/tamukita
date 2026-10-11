@@ -5,7 +5,7 @@ import { getTemplate } from "@/lib/templates";
 import { EVENT_KINDS, safeHttpsUrl, type InvitationDraft } from "@/lib/invitations";
 import { getPrismaClient } from "@/lib/prisma";
 import { isR2PublicUrl, r2KeyFromPublicUrl } from "@/lib/r2";
-import { isEditorCompatibleTemplate, TEMPLATE_SDK_VERSION, validateTemplateManifest } from "@/lib/template-sdk";
+import { isEditorCompatibleTemplate, isSafeTemplateFieldKey, TEMPLATE_SDK_VERSION, validateTemplateManifest } from "@/lib/template-sdk";
 import { templateVersionRequiresAdminReview } from "@/templates/registry";
 
 export const invitationDraftSchema = z.object({
@@ -49,6 +49,10 @@ export const invitationDraftSchema = z.object({
   giftAccountNumber: z.string().trim().max(60).default(""),
   musicUrl: z.string().trim().max(2048).default("").refine((value) => !value || isR2PublicUrl(value)),
   musicTitle: z.string().trim().max(80).default(""),
+  customFields: z.record(z.string().refine(isSafeTemplateFieldKey), z.string().max(1_000)).default({}).superRefine((fields, context) => {
+    if (Object.keys(fields).length > 32) context.addIssue({ code: "custom", message: "Terlalu banyak field template." });
+    if (new TextEncoder().encode(JSON.stringify(fields)).byteLength > 20_000) context.addIssue({ code: "custom", message: "Data field template terlalu besar." });
+  }),
   updatedAt: z.string().datetime().optional(),
   publishedAt: z.string().datetime().optional(),
   isPublished: z.boolean().optional(),
