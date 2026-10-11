@@ -36,6 +36,8 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   await expect(page.getByText("Undangan aktif", { exact: true })).toBeVisible();
   await expect(page.getByText("Reseller aktif (30 hari)", { exact: true })).toBeVisible();
   await expect(page.getByText("Keluhan editor", { exact: true })).toBeVisible();
+  const metricValue = async (label: string) => Number((await page.locator(".admin-metric-card").filter({ hasText: label }).locator("strong").innerText()).replaceAll(".", ""));
+  expect(await metricValue("Pelanggan menyelesaikan form (unik)")).toBeLessThanOrEqual(await metricValue("Pelanggan mulai draft (unik)"));
   await page.goto("/admin");
   await page.getByRole("link", { name: "Audit log" }).click();
   await expect(page.getByRole("heading", { name: "Audit log" })).toBeVisible();
@@ -54,7 +56,12 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   const existingCustomer = directory.users.find((user) => user.platformRole === "CUSTOMER");
   expect(existingCustomer?.id).toMatch(/^[0-9a-f-]{36}$/i);
   if (!existingCustomer) throw new Error("The customer account is missing from the platform user directory.");
+  const filteredDirectoryResponse = page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return url.pathname === "/api/admin/users" && url.searchParams.get("q") === existingCustomerEmail && response.request().method() === "GET";
+  });
   await page.getByLabel("Cari pengguna").fill(existingCustomerEmail);
+  expect((await filteredDirectoryResponse).status()).toBe(200);
   const userRow = page.getByTestId(`admin-user-row-${existingCustomer.id}`);
   await expect(userRow).toBeVisible();
   const roleSelect = userRow.getByLabel(`Peran platform ${existingCustomerEmail}`);

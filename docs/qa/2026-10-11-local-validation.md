@@ -318,3 +318,18 @@ Finance dan Super Admin dapat mengunduh CSV dari halaman Order & Refund. Setiap 
 | E2E rekonsiliasi | Lulus di GitHub Actions run 52: ekspor memuat order/event refund dan reseller menerima `403`. Run pertama menangkap benturan label aksesibilitas dengan field tanggal acara pada alur admin-managed; label ekspor diperjelas sebelum run ulang. Suite penuh: 52 lulus, 2 skip yang memang dibatasi ke Chromium desktop, 0 gagal. ([E2E smoke](https://github.com/kuloryan1/tamukita/actions/runs/38109370049)) |
 
 Fitur ini menyediakan berkas pencocokan finansial. Pembaruan status provider tetap berasal dari webhook. Pengaturan environment Dokploy, Xendit Test Mode, dan pencocokan transaksi nyata belum diuji karena staging HTTPS belum disiapkan.
+
+## KPI analytics blueprint — 11 Oktober 2026
+
+Halaman Analitik platform kini menampilkan pelanggan unik yang mulai draft dan menyelesaikan form, rasio penyelesaian per pelanggan unik, undangan aktif, reseller yang melakukan transaksi kredit atau mencatat penjualan dalam 30 hari, serta jumlah pelanggan yang tercatat menerbitkan sendiri. Metrik self-publish mengikuti identitas aktor yang tersimpan pada versi publikasi dan tidak menyimpulkan ada atau tidaknya bantuan informal.
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| `npm run typecheck` | Lulus. |
+| `npm run lint` | Lulus; 210 file. |
+| `npm test` | Lulus; 13 file dan 45 tes. |
+| `npm run build` | Lulus; production build mencakup halaman Analitik dengan 47 halaman statis/dinamis. |
+| E2E `e2e/admin-managed.spec.ts` | Lulus lokal pada Chromium desktop; 1 tes memverifikasi KPI analytics serta batas role admin. |
+| `git diff --check` | Lulus. |
+
+E2E lokal menggunakan PostgreSQL 17 dan Redis 7 sementara beserta mock layanan; container sementara dihentikan setelah tes. Tes juga menunggu respons pencarian direktori sebelum mengubah role agar data hasil pencarian yang sedang dimuat tidak menimpa pilihan. Deployment Dokploy, environment runtime, domain staging, dan QA beban eksternal tetap menunggu konfigurasi operator.
