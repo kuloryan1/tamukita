@@ -1088,8 +1088,17 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .admin-settings-card { margin: 0; min-width: 0; }
 .admin-settings-form { display: grid; gap: 10px; }
 .admin-settings-form .editor-field { margin: 0; }
+.admin-settings-form textarea.text-input { min-height: 72px; padding: 8px 11px; resize: vertical; }
 .admin-settings-form .editor-error, .admin-settings-form .admin-managed-success { margin: 0; }
 .admin-settings-note { color: #92988f; font-size: 8px; line-height: 1.6; margin: 0; }
+.admin-plans-grid { grid-template-columns: minmax(0, 1.25fr) minmax(300px, .75fr); }
+.admin-plan-feature { background: #f4f4ef; border-radius: 3px; color: #718877; display: inline-block; font-size: 8px; margin: 0 3px 3px 0; padding: 3px 5px; }
+.admin-plan-active { align-items: center; display: flex; gap: 8px; }
+.admin-plan-active input { accent-color: #607864; }
+.admin-plan-active .field-label { margin: 0; }
+.admin-plan-form-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; }
+.admin-table .admin-plan-status--active { color: #5e7a5d; }
+.admin-table .admin-plan-status--inactive { color: #a26b57; }
 .admin-integration-list { display: grid; }
 .admin-integration-row { align-items: center; border-top: 1px solid #eeede8; display: flex; font-size: 8px; justify-content: space-between; gap: 12px; padding: 9px 0; }
 .admin-integration-row > span { color: #697166; }

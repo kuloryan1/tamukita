@@ -123,7 +123,11 @@ try {
     return { userId: user.id, organizationId: organization.id };
   }
 
-  await seedAccount({ ...e2eAccounts.admin, name: "E2E Admin", platformRole: "SUPER_ADMIN" });
+  const adminAccount = await seedAccount({ ...e2eAccounts.admin, name: "E2E Admin", platformRole: "SUPER_ADMIN" });
+  const adminBucketKeys = ["admin:plans:read", "admin:plans:write", "admin:users:search", "admin:user-role"].map((key) =>
+    createHmac("sha256", authSecret).update(`${key}:${adminAccount.userId}`).digest("hex"),
+  );
+  await prisma.rateLimitBucket.deleteMany({ where: { key: { in: adminBucketKeys } } });
   await seedAccount({ ...e2eAccounts.finance, name: "E2E Finance", platformRole: "FINANCE" });
   const customer = await seedAccount({ ...e2eAccounts.customer, name: "E2E Customer", platformRole: "CUSTOMER" });
   const otherCustomer = await seedAccount({ ...e2eAccounts.otherCustomer, name: "E2E Other Customer", platformRole: "CUSTOMER" });

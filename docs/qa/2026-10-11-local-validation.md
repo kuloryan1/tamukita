@@ -241,3 +241,18 @@ Suite Playwright lengkap mencakup alur customer, editor, pemrosesan foto, checko
 | `npm run test:e2e` | Lulus pada mode retry CI; 49 tes lulus dan 2 dilewati dari 51 kasus lintas desktop Chromium, mobile Chromium, dan WebKit iPhone. Dua tes lifecycle pembayaran mobile memang dibatasi ke desktop karena fixture callback hanya boleh dipakai sekali. |
 
 Suite memakai mock Xendit, R2, dan email dengan PostgreSQL 17 dan Redis 7 sementara. Container uji dibersihkan sesudahnya. Tes foto WebKit menunggu sampai URL hasil proses benar-benar tersimpan melalui API sebelum melanjutkan. Hasil ini membuktikan perilaku lokal; bukan deployment Dokploy, uji Xendit/R2 nyata, pemulihan backup pada VPS, smoke test eksternal, pengukuran LCP staging, atau kapasitas 1.000 virtual user. Gate tersebut masih menunggu konfigurasi dan konfirmasi operator.
+
+## Admin paket dan entitlement — 11 Oktober 2026
+
+Super Admin kini memiliki halaman `/admin/plans` untuk membuat paket nonaktif, mengubah nama/deskripsi/harga/masa berlaku, mengatur entitlement JSON, dan mengaktifkan atau mengarsipkan paket. Kode paket tidak berubah setelah pembuatan; entitlement harus unik dan dibatasi ukurannya; edit memakai timestamp untuk menolak perubahan yang kedaluwarsa. Perubahan dicatat di audit log. Halaman dibatasi untuk Super Admin. Katalog ini belum dihubungkan ke checkout karena aturan paket dan komersial belum ditetapkan; checkout yang berjalan masih memakai pengaturan aktivasi dan hosting terpisah.
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| `npx prisma validate` | Lulus; model `Plan` dan `PlanEntitlement` yang sudah ada dipakai tanpa migrasi baru. |
+| `npm run typecheck` | Lulus. |
+| `npm run lint` | Lulus; 202 file. |
+| `npm test` | Lulus; 10 file dan 29 tes. |
+| `npm run build` | Lulus; termasuk `/admin/plans`, `/api/admin/plans`, dan `/api/admin/plans/[id]`. |
+| `npm run test:e2e -- e2e/admin-managed.spec.ts` | Lulus; 3 dari 3 profil browser. Mencakup paket nonaktif saat dibuat, penolakan aktivasi langsung dan entitlement ganda, perubahan harga/entitlement, konflik edit usang, audit, serta larangan akses Finance. |
+
+E2E memakai PostgreSQL 17 dan Redis 7 sementara dengan mock layanan; container uji dihentikan setelah tes. Pengujian terarah ini belum menguji pembelian paket, penerapan entitlement ke fitur, ataupun perubahan order/payment. Paket yang aktif belum ditawarkan di checkout.
