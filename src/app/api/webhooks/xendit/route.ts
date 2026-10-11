@@ -5,6 +5,8 @@ import { isCustomerPlanSnapshot } from "@/lib/customer-checkout";
 import { eventStartsAt, invitationTitle, parseInvitationDraft } from "@/lib/invitation-server";
 import { getPrismaClient } from "@/lib/prisma";
 import { recalculateRefundedOrder, restoreResellerCreditsAfterFailedRefund } from "@/lib/refunds";
+import { validateInvitationDraft, validateTemplateFields } from "@/lib/validation";
+import { isEditorCompatibleTemplate, validateTemplateManifest } from "@/lib/template-sdk";
 import { lockResellerCreditBalance } from "@/lib/reseller-credits";
 
 export const runtime = "nodejs";
@@ -319,8 +321,8 @@ export async function POST(request: Request) {
           update: {},
         });
         const invitation = paymentSession.order.invitation;
+        let published = false;
         if (invitation.slug) {
-          const latest = await tx.invitationVersion.aggregate({ where: { invitationId: invitation.id }, _max: { version: true } });
           const draftData = typeof invitation.draftData === "object" && invitation.draftData !== null && !Array.isArray(invitation.draftData)
             ? invitation.draftData as Record<string, unknown>
             : {};
@@ -330,12 +332,29 @@ export async function POST(request: Request) {
           const updatedDraft = parseInvitationDraft(snapshot);
           if (!updatedDraft) throw new Error("Paid invitation draft is invalid.");
           const nextTitle = invitationTitle(updatedDraft);
+          const contentValidation = validateInvitationDraft(updatedDraft);
+          const version = await tx.templateVersion.findUnique({
+            where: { id: publishItem.templateVersionId },
+            select: { version: true, manifest: true, template: { select: { slug: true } } },
+          });
+          const manifest = version ? validateTemplateManifest(version.manifest) : null;
+          const templateFieldsValid = Boolean(
+            manifest?.success
+            && version
+            && manifest.data.slug === version.template.slug
+            && manifest.data.version === version.version
+            && isEditorCompatibleTemplate(manifest.data)
+            && validateTemplateFields(updatedDraft, manifest.data).valid,
+          );
+          published = contentValidation.valid && templateFieldsValid;
           const periodDays = publishSnapshot.hostingTermDays === undefined ? 365 : Number(publishSnapshot.hostingTermDays);
           if (!Number.isSafeInteger(periodDays) || periodDays < (hasPlanSnapshot ? 1 : 30) || periodDays > 3_650) throw new Error("Snapshot masa hosting tidak valid.");
           const expiresAt = new Date(publishedAt.getTime() + periodDays * 86_400_000);
           await tx.invitation.update({
             where: { id: invitation.id },
-            data: { status: "PUBLISHED", slug: nextSlug, title: nextTitle, startsAt: eventStartsAt(updatedDraft), templateVersionId: publishItem.templateVersionId, publishedAt, formCompletedAt: invitation.formCompletedAt ?? publishedAt, expiresAt, publishedSnapshot: snapshot },
+            data: published
+              ? { status: "PUBLISHED", slug: nextSlug, title: nextTitle, startsAt: eventStartsAt(updatedDraft), templateVersionId: publishItem.templateVersionId, publishedAt, formCompletedAt: invitation.formCompletedAt ?? publishedAt, expiresAt, publishedSnapshot: snapshot }
+              : { title: nextTitle, templateVersionId: publishItem.templateVersionId, expiresAt },
           });
           await tx.entitlement.create({ data: { organizationId: invitation.organizationId, invitationId: invitation.id, ...(hasPlanSnapshot ? { planId: (planSnapshot as { id: string }).id } : {}), orderId: paymentSession.orderId, featureKey: "hosting", value: { periodDays, source: hasPlanSnapshot ? "PLAN_ACTIVATION" : "TEMPLATE_CHECKOUT" }, startsAt: publishedAt, expiresAt } });
           if (hasPlanSnapshot) {
@@ -355,21 +374,27 @@ export async function POST(request: Request) {
               });
             }
           }
-          const eventData = { title: nextTitle, startsAt: eventStartsAt(updatedDraft), venue: updatedDraft.venue, address: updatedDraft.address, mapsUrl: updatedDraft.mapsUrl || null };
-          const events = await tx.event.updateMany({ where: { invitationId: invitation.id }, data: eventData });
-          if (events.count === 0) await tx.event.create({ data: { invitationId: invitation.id, ...eventData } });
-          await tx.invitationVersion.create({
-            data: { invitationId: invitation.id, version: (latest._max.version ?? 0) + 1, type: "PUBLISHED", snapshot, createdById: invitation.ownerId },
-          });
-          await tx.auditLog.create({ data: { organizationId: invitation.organizationId, actorId: invitation.ownerId, action: "invitation.published_after_payment", targetType: "Invitation", targetId: invitation.id, metadata: { orderId: paymentSession.orderId } } });
+          if (published) {
+            const latest = await tx.invitationVersion.aggregate({ where: { invitationId: invitation.id }, _max: { version: true } });
+            const eventData = { title: nextTitle, startsAt: eventStartsAt(updatedDraft), venue: updatedDraft.venue, address: updatedDraft.address, mapsUrl: updatedDraft.mapsUrl || null };
+            const events = await tx.event.updateMany({ where: { invitationId: invitation.id }, data: eventData });
+            if (events.count === 0) await tx.event.create({ data: { invitationId: invitation.id, ...eventData } });
+            await tx.invitationVersion.create({
+              data: { invitationId: invitation.id, version: (latest._max.version ?? 0) + 1, type: "PUBLISHED", snapshot, createdById: invitation.ownerId },
+            });
+            await tx.auditLog.create({ data: { organizationId: invitation.organizationId, actorId: invitation.ownerId, action: "invitation.published_after_payment", targetType: "Invitation", targetId: invitation.id, metadata: { orderId: paymentSession.orderId } } });
+          } else {
+            await tx.auditLog.create({ data: { organizationId: invitation.organizationId, actorId: invitation.ownerId, action: "invitation.payment_received_draft_incomplete", targetType: "Invitation", targetId: invitation.id, metadata: { orderId: paymentSession.orderId } } });
+          }
         }
         const buyerEmail = paymentSession.order.buyer.email;
         if (buyerEmail) {
-          const itemLabel = templateItem && activationItem
+          const purchasedItemsLabel = templateItem && activationItem
             ? "Lisensi template dan aktivasi undangan"
             : activationItem
               ? "Aktivasi undangan"
               : "Lisensi template undangan";
+          const itemLabel = published ? purchasedItemsLabel : `${purchasedItemsLabel}; lengkapi detail sebelum terbit`;
           await tx.notificationJob.upsert({
             where: { jobKey: `order-paid:${paymentSession.orderId}` },
             create: {
@@ -382,7 +407,7 @@ export async function POST(request: Request) {
                 amountIdr: paymentSession.order.totalAmount,
                 currency: "IDR",
                 itemLabel,
-                dashboardPath: "/dashboard",
+                dashboardPath: published ? "/dashboard" : `/dashboard/invitations/${invitation.id}/edit`,
               },
             },
             update: {},

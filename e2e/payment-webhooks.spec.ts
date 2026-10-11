@@ -46,6 +46,10 @@ test("verified payment callbacks publish a licensed invitation and top up resell
   if (testInfo.project.name === "desktop-chromium") {
     await expect(page.getByRole("heading", { name: "Memeriksa pembayaran..." })).toBeVisible();
     expect((await request.get(`/${paymentInvitationSlug}`)).status()).toBe(404);
+    await databasePool.query(
+      `UPDATE invitations SET "draftData" = jsonb_set("draftData", '{hostOne}', to_jsonb($1::text), true) WHERE id = $2`,
+      ["", paymentInvitationId],
+    );
   } else {
     await page.waitForURL(new RegExp(`/${paymentInvitationSlug}$`));
   }
@@ -75,6 +79,33 @@ test("verified payment callbacks publish a licensed invitation and top up resell
   expect(planGrants.rows.every(({ planId: grantedPlanId }) => grantedPlanId === planId)).toBe(true);
   expect(planGrants.rows).toContainEqual(expect.objectContaining({ featureKey: "gallery.limit", value: 6 }));
   expect(planGrants.rows).toContainEqual(expect.objectContaining({ featureKey: "music", value: true }));
+
+  if (testInfo.project.name === "desktop-chromium") {
+    const incompleteInvitation = await databasePool.query<{ status: string; publishedAt: Date | null; publishedSnapshot: unknown; expiresAt: Date | null }>(
+      'SELECT status, "publishedAt", "publishedSnapshot", "expiresAt" FROM invitations WHERE id = $1',
+      [paymentInvitationId],
+    );
+    expect(incompleteInvitation.rows[0]).toMatchObject({ status: "DRAFT", publishedAt: null, publishedSnapshot: null });
+    expect(incompleteInvitation.rows[0]?.expiresAt).toBeInstanceOf(Date);
+    expect((await request.get(`/${paymentInvitationSlug}`)).status()).toBe(404);
+
+    await databasePool.query(
+      `UPDATE invitations SET "draftData" = jsonb_set("draftData", '{hostOne}', to_jsonb($1::text), true) WHERE id = $2`,
+      ["E2E Pembayaran", paymentInvitationId],
+    );
+    const publishResponse = await page.request.post(`/api/invitations/${paymentInvitationId}/publish`);
+    expect(publishResponse.status()).toBe(200);
+    expect(await publishResponse.json()).toMatchObject({ published: true, slug: paymentInvitationSlug });
+    await expect.poll(async () => {
+      const emailResponse = await page.request.get(`http://127.0.0.1:3140/messages?to=${encodeURIComponent(customerEmail)}`);
+      if (!emailResponse.ok()) return false;
+      const emailPayload = await emailResponse.json() as { messages: Array<{ text: string }> };
+      return emailPayload.messages.some((message) =>
+        message.text.includes("lengkapi detail sebelum terbit")
+        && message.text.includes(`/dashboard/invitations/${paymentInvitationId}/edit`),
+      );
+    }, { timeout: 20_000, message: "the payment email should direct the customer back to the unfinished editor" }).toBe(true);
+  }
 
   const resellerTopUp = {
     event: "payment_session.completed",

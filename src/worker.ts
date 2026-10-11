@@ -48,7 +48,7 @@ type NotificationPayload = {
   amountIdr: number;
   currency: "IDR";
   itemLabel: string;
-  dashboardPath: "/dashboard" | "/reseller";
+  dashboardPath: "/dashboard" | "/reseller" | `/dashboard/invitations/${string}/edit`;
 };
 
 type ResellerStaffPayload = { to: string; name: string; resellerName: string; dashboardPath: "/reseller" };
@@ -62,6 +62,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function parsePayload(value: unknown): NotificationPayload | null {
+  const isSafeDashboardPath = value !== null
+    && typeof value === "object"
+    && "dashboardPath" in value
+    && (value.dashboardPath === "/dashboard"
+      || value.dashboardPath === "/reseller"
+      || (typeof value.dashboardPath === "string" && /^\/dashboard\/invitations\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/edit$/i.test(value.dashboardPath)));
   if (!isRecord(value)
     || typeof value.to !== "string"
     || !value.to.includes("@")
@@ -70,7 +76,7 @@ function parsePayload(value: unknown): NotificationPayload | null {
     || typeof value.name !== "string"
     || !Number.isSafeInteger(value.amountIdr)
     || value.currency !== "IDR"
-    || (value.dashboardPath !== "/dashboard" && value.dashboardPath !== "/reseller")) return null;
+    || !isSafeDashboardPath) return null;
   return {
     to: value.to,
     name: value.name,
@@ -78,7 +84,7 @@ function parsePayload(value: unknown): NotificationPayload | null {
     amountIdr: value.amountIdr as number,
     currency: "IDR",
     itemLabel: value.itemLabel,
-    dashboardPath: value.dashboardPath,
+    dashboardPath: value.dashboardPath as NotificationPayload["dashboardPath"],
   };
 }
 

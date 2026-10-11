@@ -259,6 +259,20 @@ Super Admin dapat membuat paket nonaktif, mengubah nama/deskripsi/harga/masa ber
 
 E2E memakai PostgreSQL 17 dan Redis 7 sementara dengan mock layanan; container uji dihentikan setelah tes. Pengujian lokal ini belum menguji penerapan grant fitur di seluruh UI/API, Xendit nyata, atau perilaku pada VPS staging.
 
+## Pembayaran saat draft perlu dilengkapi — 11 Oktober 2026
+
+Callback pembayaran tidak menerbitkan undangan jika data wajib atau field template berubah menjadi tidak valid setelah checkout dimulai. Transaksi tetap dianggap dibayar; lisensi template dan grant hosting/paket dicatat, status undangan tetap `DRAFT`, dan email pembayaran menautkan pelanggan langsung ke editor. Setelah pelanggan melengkapi draft, endpoint publish memakai lisensi yang sudah dibeli sehingga checkout tidak diminta ulang.
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| `npm run typecheck` | Lulus. |
+| `npm run lint` | Lulus; 206 file. |
+| `npm test` | Lulus; 12 file dan 40 tes. |
+| `npm run build` | Lulus; production build mencakup worker dan handler webhook yang diperbarui. |
+| `e2e/payment-webhooks.spec.ts` | Lulus pada Chromium desktop dengan mock Xendit, email, PostgreSQL 17, dan Redis 7. Assertion mencakup status tetap draft saat host wajib kosong, grant hosting tetap aktif, undangan publik belum tersedia, email mengarah ke editor, lalu pelanggan bisa menerbitkan tanpa checkout kedua. |
+
+Uji ini membuktikan alur lokal dengan callback tiruan. Pengujian Xendit Test Mode dan deployment VPS masih menunggu akses staging, origin HTTPS, serta konfigurasi kredensial operator.
+
 ## Field tambahan Template SDK — 11 Oktober 2026
 
 Schema template kini dapat menambahkan section dan field teks, paragraf, tanggal, waktu, serta URL HTTPS. Smart Editor membangun input dari manifest, menyimpan nilai tambahan pada `customFields`, menerapkan `defaultValue` untuk field baru, dan menampilkan section tambahan pada langkah detail. Template manifest terkurasi menampilkan field tambahan yang terisi; renderer React menerima nilai tersebut melalui prop draft. Validasi server mengulang batas nilai, field wajib, format tanggal/waktu, dan HTTPS saat publikasi maupun aktivasi reseller. Slot foto tambahan tetap ditolak; foto memakai pipeline `coverPhoto` yang sudah memeriksa kepemilikan dan memproses crop.
