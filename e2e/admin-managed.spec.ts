@@ -36,6 +36,34 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   await expect(page.getByRole("heading", { name: "Audit log" })).toBeVisible();
   await expect(page.getByLabel("Cari aktivitas, target, atau workspace")).toBeVisible();
   await page.goto("/admin");
+  await page.getByRole("link", { name: "Pengguna" }).click();
+  await expect(page.getByRole("heading", { name: "Pengguna platform" })).toBeVisible();
+  const sessionResponse = await page.request.get(new URL("/api/auth/session", page.url()).toString());
+  const adminSession = await sessionResponse.json() as { user?: { id?: string } };
+  expect(adminSession.user?.id).toMatch(/^[0-9a-f-]{36}$/i);
+  const ownRoleChange = await page.request.patch(new URL(`/api/admin/users/${adminSession.user?.id}`, page.url()).toString(), { data: { platformRole: "CUSTOMER" } });
+  expect(ownRoleChange.status()).toBe(409);
+  const customerDirectory = await page.request.get(new URL(`/api/admin/users?q=${encodeURIComponent(existingCustomerEmail)}`, page.url()).toString());
+  expect(customerDirectory.status()).toBe(200);
+  const directory = await customerDirectory.json() as { users: Array<{ id: string; platformRole: string }> };
+  const existingCustomer = directory.users.find((user) => user.platformRole === "CUSTOMER");
+  expect(existingCustomer?.id).toMatch(/^[0-9a-f-]{36}$/i);
+  if (!existingCustomer) throw new Error("The customer account is missing from the platform user directory.");
+  const userRow = page.getByTestId(`admin-user-row-${existingCustomer.id}`);
+  const roleSelect = userRow.getByLabel(`Peran platform ${existingCustomerEmail}`);
+  try {
+    const promoteResponse = page.waitForResponse((response) => response.url().endsWith(`/api/admin/users/${existingCustomer.id}`) && response.request().method() === "PATCH");
+    await roleSelect.selectOption("SUPPORT");
+    await userRow.getByRole("button", { name: "Simpan peran" }).click();
+    expect((await promoteResponse).status()).toBe(200);
+    await expect(roleSelect).toHaveValue("SUPPORT");
+    await expect(page.getByRole("status")).toContainText("dicatat di audit log");
+  } finally {
+    await page.request.patch(new URL(`/api/admin/users/${existingCustomer.id}`, page.url()).toString(), { data: { platformRole: "CUSTOMER" } });
+  }
+  await page.goto(new URL("/admin/audit?q=admin.user_platform_role_changed", page.url()).toString());
+  expect(await page.getByText("admin · user_platform_role_changed", { exact: true }).count()).toBeGreaterThanOrEqual(2);
+  await page.goto("/admin");
 
   const financePage = await browser.newPage();
   try {
@@ -44,6 +72,11 @@ test("admin creates customer drafts and notifies an existing customer", async ({
     await financePage.getByLabel("Kata sandi").fill(process.env.E2E_FINANCE_PASSWORD ?? "");
     await financePage.getByRole("button", { name: "Masuk" }).click();
     await financePage.waitForURL(/\/dashboard/);
+    expect((await financePage.request.get(new URL("/api/admin/users", page.url()).toString())).status()).toBe(403);
+    expect((await financePage.request.patch(new URL("/api/admin/users/00000000-0000-4000-8000-000000000001", page.url()).toString(), { data: { platformRole: "SUPPORT" } })).status()).toBe(403);
+    await financePage.goto(new URL("/admin/users", page.url()).toString());
+    await financePage.waitForURL(/\/dashboard/);
+    await expect(financePage.getByRole("heading", { name: "Pengguna platform" })).toHaveCount(0);
     expect((await financePage.request.get(new URL("/api/admin/editor-feedback", page.url()).toString())).status()).toBe(403);
     await financePage.goto(new URL("/admin/editor-feedback", page.url()).toString());
     await financePage.waitForURL(/\/dashboard/);
