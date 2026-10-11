@@ -9,6 +9,7 @@ import { allowRequest } from "@/lib/rate-limit";
 import { getR2Client, getR2Config } from "@/lib/r2";
 import { stripControlCharacters } from "@/lib/text";
 import { readJsonBody } from "@/lib/request-json";
+import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
 
 export const runtime = "nodejs";
 
@@ -42,9 +43,14 @@ export async function POST(request: Request) {
       status: { in: ["DRAFT", "PUBLISHED"] },
       organization: { status: "ACTIVE", memberships: { some: { userId, role: { in: ["OWNER", "ADMIN", "EDITOR"] } } } },
     },
-    select: { id: true, organizationId: true },
+    select: { id: true, organizationId: true, draftData: true },
   });
   if (!invitation) return NextResponse.json({ error: "Undangan tidak ditemukan." }, { status: 404 });
+  const featureAccess = await getInvitationFeatureAccess(invitation.id);
+  if (featureAccess.galleryLimit <= 0) return NextResponse.json({ error: "Paket ini belum mencakup galeri foto." }, { status: 403 });
+  const draftData = typeof invitation.draftData === "object" && invitation.draftData !== null && !Array.isArray(invitation.draftData) ? invitation.draftData as Record<string, unknown> : {};
+  const galleryPhotos = Array.isArray(draftData.galleryPhotos) ? draftData.galleryPhotos : [];
+  if (galleryPhotos.length >= featureAccess.galleryLimit) return NextResponse.json({ error: `Paket ini mencakup galeri hingga ${featureAccess.galleryLimit} foto.` }, { status: 409 });
 
   const assetId = randomUUID();
   const safeName = stripControlCharacters(parsed.data.originalName.split(/[\\/]/).pop() ?? "").slice(0, 255) || "foto-galeri";

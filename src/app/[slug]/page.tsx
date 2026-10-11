@@ -9,6 +9,7 @@ import { parseInvitationDraft } from "@/lib/invitation-server";
 import { getPrismaClient } from "@/lib/prisma";
 import { getTemplate } from "@/lib/templates";
 import { isEditorCompatibleTemplate, validateTemplateManifest } from "@/lib/template-sdk";
+import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
 
 type PageProps = { params: Promise<{ slug: string }> };
 type InvitationPageProps = PageProps & { searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -51,7 +52,8 @@ const findPublished = cache(async (slug: string) => {
     ? manifest.data
     : getTemplate(invitation.templateVersion.template.slug);
   if (draft && draft.templateId !== invitation.templateVersion.template.slug) return null;
-  return { ...invitation, draft, template };
+  const featureAccess = await getInvitationFeatureAccess(invitation.id);
+  return { ...invitation, draft, template, featureAccess };
 });
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -100,5 +102,5 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
     take: 30,
     select: { id: true, displayName: true, message: true, createdAt: true },
   });
-  return <PublicInvitation slug={slug} initialDraft={record.draft} initialRsvpCount={record._count.rsvps} initialGuestbook={guestbook.map((entry) => ({ ...entry, createdAt: entry.createdAt.toISOString() }))} recipientName={guestLink?.guest.name} guestToken={guestLink ? candidateToken ?? undefined : undefined} template={record.template} />;
+  return <PublicInvitation slug={slug} initialDraft={record.draft} initialRsvpCount={record._count.rsvps} initialGuestbook={guestbook.map((entry) => ({ ...entry, createdAt: entry.createdAt.toISOString() }))} recipientName={guestLink?.guest.name} guestToken={guestLink ? candidateToken ?? undefined : undefined} template={record.template} featureAccess={record.featureAccess} />;
 }

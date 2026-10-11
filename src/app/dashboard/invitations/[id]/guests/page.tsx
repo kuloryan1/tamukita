@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { GuestManager } from "@/components/guest-manager";
 import { getPrismaClient } from "@/lib/prisma";
+import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
 
 export const metadata: Metadata = { title: "Daftar tamu" };
 
@@ -18,6 +19,8 @@ export default async function InvitationGuestsPage({ params }: { params: Promise
     select: { id: true, slug: true },
   });
   if (!invitation) notFound();
+  const featureAccess = await getInvitationFeatureAccess(invitation.id);
+  if (!featureAccess.rsvp) notFound();
   const [links, responses] = await Promise.all([
     prisma.guestLink.findMany({
       where: { invitationId: invitation.id },

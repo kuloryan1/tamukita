@@ -246,7 +246,7 @@ Suite memakai mock Xendit, R2, dan email dengan PostgreSQL 17 dan Redis 7 sement
 
 ## Admin paket dan entitlement — 11 Oktober 2026
 
-Super Admin dapat membuat paket nonaktif, mengubah nama/deskripsi/harga/masa berlaku, mengatur entitlement JSON, lalu mengaktifkan atau mengarsipkan paket di `/admin/plans`. Kode paket tidak berubah setelah dibuat; entitlement harus unik dan dibatasi ukurannya; edit memakai timestamp untuk menolak perubahan yang kedaluwarsa. Perubahan dicatat di audit log dan halaman dibatasi untuk Super Admin. Paket aktif kini ditawarkan sebagai pilihan sekali bayar pada langkah review editor. Server memeriksa ulang versi harga, mengunci konfigurasi paket saat membuat order, dan menyimpan harga, masa berlaku, serta entitlement sebagai snapshot order. Callback Xendit yang terverifikasi membuat lisensi serta grant hosting/fitur; callback duplikat tidak membuat grant kedua. Paket gratis bersama template gratis dapat langsung menerbitkan undangan. Jika tidak ada paket aktif, pengaturan aktivasi dan hosting lama menjadi fallback. Paket ini bukan langganan otomatis. Grant fitur tersimpan, tetapi gate runtime untuk menegakkan entitlement seperti batas galeri atau akses musik masih perlu diselesaikan.
+Super Admin dapat membuat paket nonaktif, mengubah nama/deskripsi/harga/masa berlaku, mengatur entitlement JSON, lalu mengaktifkan atau mengarsipkan paket di `/admin/plans`. Kode paket tidak berubah setelah dibuat; entitlement harus unik dan dibatasi ukurannya; edit memakai timestamp untuk menolak perubahan yang kedaluwarsa. Perubahan dicatat di audit log dan halaman dibatasi untuk Super Admin. Paket aktif kini ditawarkan sebagai pilihan sekali bayar pada langkah review editor. Server memeriksa ulang versi harga, mengunci konfigurasi paket saat membuat order, dan menyimpan harga, masa berlaku, serta entitlement sebagai snapshot order. Callback Xendit yang terverifikasi membuat lisensi serta grant hosting/fitur; callback duplikat tidak membuat grant kedua. Paket gratis bersama template gratis dapat langsung menerbitkan undangan. Jika tidak ada paket aktif, pengaturan aktivasi dan hosting lama menjadi fallback. Paket ini bukan langganan otomatis. Gate runtime untuk galeri, musik, RSVP, dan pengelolaan tamu kini membaca grant paket aktif; undangan lama tanpa grant paket tetap memakai akses sebelumnya.
 
 | Pemeriksaan | Hasil |
 | --- | --- |
@@ -289,3 +289,18 @@ Schema template kini dapat menambahkan section dan field teks, paragraf, tanggal
 | GitHub Actions untuk commit `1faf9d4` | CI `validate` dan `backup-restore` sukses ([run CI](https://github.com/kuloryan1/tamukita/actions/runs/38105083978)); E2E smoke sukses di Linux, termasuk build dan suite Playwright ([run E2E](https://github.com/kuloryan1/tamukita/actions/runs/38105084015)). |
 
 Run penuh juga memverifikasi pengelolaan peran admin setelah filter UI disamakan dengan pencarian fixture, serta alur reseller dengan akun reseller alternatif terpisah. Race antara autosave sukses dan pesan validasi editor diperbaiki: autosave hanya menghapus pesan gagal-simpan yang dibuatnya sendiri. CI menjalankan restore drill terisolasi dengan MinIO; ini belum membuktikan R2 atau VPS production. Kontrak field dan batas SDK tetap didokumentasikan di [`docs/template-sdk.md`](../template-sdk.md). Deployment Dokploy, staging HTTPS, beban 1.000 virtual user, restore di VPS, LCP, dan monitoring eksternal masih belum diuji.
+
+## Penegakan entitlement paket saat runtime — 11 Oktober 2026
+
+Draft dicocokkan dengan paket sebelum pembayaran. Sesudah pembayaran, grant aktif mengatur batas galeri dan akses musik di editor/API, serta tombol dan pengiriman RSVP maupun pengelolaan tamu. Paket dapat menonaktifkan fitur dengan menghilangkan key atau memberi nilai `false`; batas galeri valid dari 0 sampai 6. Renewal hosting memperpanjang masa grant paket yang masih aktif. Undangan lama tanpa grant paket mempertahankan perilaku sebelumnya.
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| `npm run typecheck` | Lulus. |
+| `npm run lint` | Lulus; 209 file. |
+| `npm test` | Lulus; 13 file dan 45 tes. |
+| `npm run build` | Lulus; production build menghasilkan 46 halaman statis/dinamis. |
+| `git diff --check` | Lulus. |
+| E2E pembayaran | Assertion ditambahkan untuk paket tanpa RSVP; hasil CI menunggu push commit ini. |
+
+Uji lokal belum memverifikasi pengaturan environment di Dokploy atau deployment VPS. Akses panel belum tersedia dan domain staging masih akan disiapkan operator.

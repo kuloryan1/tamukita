@@ -6,6 +6,7 @@ import { mapAdminPlan } from "@/lib/admin-plans";
 import { getPrismaClient } from "@/lib/prisma";
 import { allowRequest } from "@/lib/rate-limit";
 import { readJsonBody } from "@/lib/request-json";
+import { isValidKnownFeatureEntitlement } from "@/lib/invitation-features";
 
 export const runtime = "nodejs";
 
@@ -34,7 +35,7 @@ function isBoundedJson(value: unknown, depth = 0): boolean {
 function validEntitlements(entitlements: Array<{ featureKey: string; value: unknown }>) {
   const keys = new Set<string>();
   for (const entitlement of entitlements) {
-    if (entitlement.featureKey === "hosting" || keys.has(entitlement.featureKey) || !isBoundedJson(entitlement.value)) return false;
+    if (entitlement.featureKey === "hosting" || keys.has(entitlement.featureKey) || !isBoundedJson(entitlement.value) || !isValidKnownFeatureEntitlement(entitlement.featureKey, entitlement.value)) return false;
     keys.add(entitlement.featureKey);
   }
   return new TextEncoder().encode(JSON.stringify(entitlements)).byteLength <= 10_000;

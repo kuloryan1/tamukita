@@ -2,6 +2,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { Prisma } from "@/generated/prisma/client";
 import { isCustomerPlanSnapshot } from "@/lib/customer-checkout";
+import { legacyInvitationFeatureAccess, resolveInvitationFeatureAccess, validateDraftFeatureAccess } from "@/lib/invitation-features";
 import { eventStartsAt, invitationTitle, parseInvitationDraft } from "@/lib/invitation-server";
 import { getPrismaClient } from "@/lib/prisma";
 import { recalculateRefundedOrder, restoreResellerCreditsAfterFailedRefund } from "@/lib/refunds";
@@ -223,13 +224,24 @@ export async function POST(request: Request) {
           await tx.$queryRaw<Array<{ id: string }>>`SELECT id FROM "invitations" WHERE id = ${invitation.id}::uuid FOR UPDATE`;
           const currentInvitation = await tx.invitation.findUnique({ where: { id: invitation.id }, select: { id: true, organizationId: true, status: true, expiresAt: true } });
           if (!currentInvitation) throw new Error("Undangan renewal tidak ditemukan.");
+          const currentPlanHosting = await tx.entitlement.findFirst({
+            where: { invitationId: invitation.id, featureKey: "hosting", planId: { not: null }, status: "ACTIVE" },
+            orderBy: [{ startsAt: "desc" }, { createdAt: "desc" }],
+            select: { planId: true },
+          });
           const paidAt = new Date();
           const periodStartsAt = currentInvitation.expiresAt && currentInvitation.expiresAt > paidAt ? currentInvitation.expiresAt : paidAt;
           const expiresAt = new Date(periodStartsAt.getTime() + periodDays * 86_400_000);
           await tx.paymentSession.update({ where: { id: paymentSession.id }, data: { status: "SUCCEEDED", providerPaymentId: data.payment_id ?? undefined, providerPaymentRequestId: data.payment_request_id ?? undefined } });
           await tx.order.update({ where: { id: paymentSession.orderId }, data: { status: "PAID", paidAt } });
           await tx.entitlement.updateMany({ where: { invitationId: invitation.id, featureKey: "hosting", status: "ACTIVE" }, data: { status: "EXPIRED" } });
-          await tx.entitlement.create({ data: { organizationId: invitation.organizationId, invitationId: invitation.id, orderId: paymentSession.orderId, featureKey: "hosting", value: { periodDays, source: "RENEWAL" }, startsAt: periodStartsAt, expiresAt } });
+          await tx.entitlement.create({ data: { organizationId: invitation.organizationId, invitationId: invitation.id, ...(currentPlanHosting?.planId ? { planId: currentPlanHosting.planId } : {}), orderId: paymentSession.orderId, featureKey: "hosting", value: { periodDays, source: "RENEWAL" }, startsAt: periodStartsAt, expiresAt } });
+          if (currentPlanHosting?.planId) {
+            await tx.entitlement.updateMany({
+              where: { invitationId: invitation.id, planId: currentPlanHosting.planId, featureKey: { not: "hosting" }, status: "ACTIVE" },
+              data: { expiresAt },
+            });
+          }
           await tx.invitation.update({ where: { id: invitation.id }, data: { expiresAt, ...(currentInvitation.status === "EXPIRED" ? { status: "PUBLISHED" } : {}) } });
           await tx.auditLog.create({ data: { organizationId: currentInvitation.organizationId, actorId: paymentSession.order.buyerId, action: "invitation.hosting_renewed", targetType: "Invitation", targetId: invitation.id, metadata: { orderId: paymentSession.orderId, previousExpiresAt: currentInvitation.expiresAt?.toISOString() ?? null, expiresAt: expiresAt.toISOString(), periodDays } } });
           const buyerEmail = paymentSession.order.buyer.email;
@@ -346,7 +358,10 @@ export async function POST(request: Request) {
             && isEditorCompatibleTemplate(manifest.data)
             && validateTemplateFields(updatedDraft, manifest.data).valid,
           );
-          published = contentValidation.valid && templateFieldsValid;
+          const featureAccess = hasPlanSnapshot
+            ? resolveInvitationFeatureAccess((planSnapshot as { entitlements: Array<{ featureKey: string; value: unknown }> }).entitlements)
+            : legacyInvitationFeatureAccess;
+          published = contentValidation.valid && templateFieldsValid && !validateDraftFeatureAccess(updatedDraft, featureAccess);
           const periodDays = publishSnapshot.hostingTermDays === undefined ? 365 : Number(publishSnapshot.hostingTermDays);
           if (!Number.isSafeInteger(periodDays) || periodDays < (hasPlanSnapshot ? 1 : 30) || periodDays > 3_650) throw new Error("Snapshot masa hosting tidak valid.");
           const expiresAt = new Date(publishedAt.getTime() + periodDays * 86_400_000);
@@ -394,7 +409,7 @@ export async function POST(request: Request) {
             : activationItem
               ? "Aktivasi undangan"
               : "Lisensi template undangan";
-          const itemLabel = published ? purchasedItemsLabel : `${purchasedItemsLabel}; lengkapi detail sebelum terbit`;
+          const itemLabel = published ? purchasedItemsLabel : `${purchasedItemsLabel}; lengkapi detail sesuai paket sebelum terbit`;
           await tx.notificationJob.upsert({
             where: { jobKey: `order-paid:${paymentSession.orderId}` },
             create: {

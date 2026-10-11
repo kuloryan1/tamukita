@@ -6,6 +6,7 @@ import { ensureTemplateVersion, eventStartsAt, getWritableOrganizationId, invita
 import { getPrismaClient } from "@/lib/prisma";
 import { readJsonBody } from "@/lib/request-json";
 import { isTemplateSelectable } from "@/lib/template-sdk";
+import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
 
 export const runtime = "nodejs";
 
@@ -29,10 +30,11 @@ export async function GET(request: Request) {
     select: { id: true, slug: true, draftData: true, updatedAt: true, status: true },
   });
   if (!invitation) return NextResponse.json({ draft: null });
+  const featureAccess = await getInvitationFeatureAccess(invitation.id);
   const draftData = typeof invitation.draftData === "object" && invitation.draftData !== null && !Array.isArray(invitation.draftData)
     ? { ...invitation.draftData, familyDetails: typeof invitation.draftData.familyDetails === "string" ? invitation.draftData.familyDetails : "", coverPositionX: typeof invitation.draftData.coverPositionX === "number" ? invitation.draftData.coverPositionX : 50, galleryPhotos: Array.isArray(invitation.draftData.galleryPhotos) ? invitation.draftData.galleryPhotos : [], giftMessage: typeof invitation.draftData.giftMessage === "string" ? invitation.draftData.giftMessage : "", giftBankName: typeof invitation.draftData.giftBankName === "string" ? invitation.draftData.giftBankName : "", giftAccountName: typeof invitation.draftData.giftAccountName === "string" ? invitation.draftData.giftAccountName : "", giftAccountNumber: typeof invitation.draftData.giftAccountNumber === "string" ? invitation.draftData.giftAccountNumber : "", musicUrl: typeof invitation.draftData.musicUrl === "string" ? invitation.draftData.musicUrl : "", musicTitle: typeof invitation.draftData.musicTitle === "string" ? invitation.draftData.musicTitle : "", customFields: normalizeInvitationCustomFields(invitation.draftData.customFields), id: invitation.id, slug: invitation.slug, updatedAt: invitation.updatedAt.toISOString(), isPublished: invitation.status === "PUBLISHED" }
     : null;
-  return NextResponse.json({ draft: draftData });
+  return NextResponse.json({ draft: draftData, featureAccess });
 }
 
 export async function POST(request: Request) {

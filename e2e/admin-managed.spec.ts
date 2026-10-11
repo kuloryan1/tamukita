@@ -92,7 +92,7 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   await expect(planRow).toBeVisible();
   await planRow.getByRole("button", { name: "Edit paket Paket uji E2E" }).click();
   await page.getByLabel("Harga (IDR)").fill("12000");
-  await page.getByLabel("Entitlement JSON").fill('{"gallery.limit":8,"music":true,"rsvp.enabled":true}');
+  await page.getByLabel("Entitlement JSON").fill('{"gallery.limit":6,"music":true,"rsvp.enabled":true}');
   await page.getByLabel("Tandai paket aktif").check();
   const planUpdatePromise = page.waitForResponse((response) => response.url().endsWith(`/api/admin/plans/${createdPlan.plan.id}`) && response.request().method() === "PATCH");
   await page.getByRole("button", { name: "Simpan perubahan" }).click();
@@ -112,7 +112,7 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   expect(customerPlansResponse.status()).toBe(200);
   const customerPlans = await customerPlansResponse.json() as { plans: Array<{ id: string; key: string; priceIdr: number; durationDays: number }> };
   expect(customerPlans.plans).toContainEqual(expect.objectContaining({ id: createdPlan.plan.id, key: planKey, priceIdr: 12_000, durationDays: 90 }));
-  const deactivatedPlan = await page.request.patch(new URL(`/api/admin/plans/${createdPlan.plan.id}`, page.url()).toString(), { data: { expectedUpdatedAt: updatedPlan.plan.updatedAt, name: "Paket uji E2E", description: "Paket konfigurasi uji", priceIdr: 12_000, durationDays: 90, isActive: false, entitlements: [{ featureKey: "gallery.limit", value: 8 }, { featureKey: "music", value: true }, { featureKey: "rsvp.enabled", value: true }] } });
+  const deactivatedPlan = await page.request.patch(new URL(`/api/admin/plans/${createdPlan.plan.id}`, page.url()).toString(), { data: { expectedUpdatedAt: updatedPlan.plan.updatedAt, name: "Paket uji E2E", description: "Paket konfigurasi uji", priceIdr: 12_000, durationDays: 90, isActive: false, entitlements: [{ featureKey: "gallery.limit", value: 6 }, { featureKey: "music", value: true }, { featureKey: "rsvp.enabled", value: true }] } });
   expect(deactivatedPlan.status()).toBe(200);
   await page.goto(new URL("/admin/audit?q=admin.plan_updated", page.url()).toString());
   expect(await page.getByText("admin · plan_updated", { exact: true }).count()).toBeGreaterThan(0);

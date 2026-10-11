@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { getPrismaClient } from "@/lib/prisma";
 import { allowRequest } from "@/lib/rate-limit";
 import { readJsonBody } from "@/lib/request-json";
+import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
 
 export const runtime = "nodejs";
 
@@ -22,6 +23,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     select: { id: true },
   });
   if (!invitation) return NextResponse.json({ error: "Undangan tidak ditemukan atau aksesnya sudah tidak tersedia." }, { status: 404 });
+  const featureAccess = await getInvitationFeatureAccess(invitation.id);
+  if (!featureAccess.rsvp) return NextResponse.json({ error: "Paket undangan ini tidak mengaktifkan RSVP dan pengelolaan tamu." }, { status: 403 });
   const links = await prisma.guestLink.findMany({
     where: { invitationId: invitation.id },
     orderBy: { createdAt: "desc" },
@@ -59,6 +62,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     select: { id: true, organizationId: true, slug: true },
   });
   if (!invitation) return NextResponse.json({ error: "Undangan tidak ditemukan atau aksesnya sudah tidak tersedia." }, { status: 404 });
+  const featureAccess = await getInvitationFeatureAccess(invitation.id);
+  if (!featureAccess.rsvp) return NextResponse.json({ error: "Paket undangan ini tidak mengaktifkan RSVP dan pengelolaan tamu." }, { status: 403 });
 
   const created = await prisma.$transaction(async (tx) => {
     const records: Array<{ id: string; name: string; token: string }> = [];

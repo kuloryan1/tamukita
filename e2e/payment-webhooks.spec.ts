@@ -101,7 +101,7 @@ test("verified payment callbacks publish a licensed invitation and top up resell
       if (!emailResponse.ok()) return false;
       const emailPayload = await emailResponse.json() as { messages: Array<{ text: string }> };
       return emailPayload.messages.some((message) =>
-        message.text.includes("lengkapi detail sebelum terbit")
+        message.text.includes("lengkapi detail sesuai paket sebelum terbit")
         && message.text.includes(`/dashboard/invitations/${paymentInvitationId}/edit`),
       );
     }, { timeout: 20_000, message: "the payment email should direct the customer back to the unfinished editor" }).toBe(true);
@@ -128,6 +128,11 @@ test("verified payment callbacks publish a licensed invitation and top up resell
   await page.waitForURL(new RegExp(`/${paymentInvitationSlug}$`));
   const publishedInvitation = await request.get(`/${paymentInvitationSlug}`);
   expect(publishedInvitation.status()).toBe(200);
+  expect(await publishedInvitation.text()).not.toContain("Konfirmasi kehadiran");
+  const disabledRsvp = await request.post(`/api/public/invitations/${paymentInvitationSlug}/rsvp`, {
+    data: { name: "Tamu Uji", attendance: "ATTENDING", attendeeCount: 1 },
+  });
+  expect(disabledRsvp.status()).toBe(403);
 
   await page.goto("/reseller");
   await expect(page.locator(".reseller-credit-grid .stat-card").nth(1).locator("strong")).toHaveText("2");

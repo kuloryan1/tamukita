@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   ensureTemplateVersion: vi.fn(),
   safeParse: vi.fn(),
   readJsonBody: vi.fn(),
+  getInvitationFeatureAccess: vi.fn(),
 }));
 
 vi.mock("@/auth", () => ({ auth: mocks.auth }));
@@ -20,6 +21,7 @@ vi.mock("@/lib/invitation-server", () => ({
   ownsInvitationMusic: vi.fn(),
 }));
 vi.mock("@/lib/request-json", () => ({ readJsonBody: mocks.readJsonBody }));
+vi.mock("@/lib/invitation-entitlements", () => ({ getInvitationFeatureAccess: mocks.getInvitationFeatureAccess }));
 
 import { PATCH } from "./route";
 
@@ -29,6 +31,7 @@ beforeEach(() => {
   mocks.ensureTemplateVersion.mockReset();
   mocks.safeParse.mockReset().mockReturnValue({ success: true, data: { templateId: "new-template-version" } });
   mocks.readJsonBody.mockReset().mockResolvedValue({ ok: true, value: {} });
+  mocks.getInvitationFeatureAccess.mockReset().mockResolvedValue({ planManaged: false, galleryLimit: 6, music: true, rsvp: true });
 });
 
 test("does not sync a template when the user does not own the invitation", async () => {

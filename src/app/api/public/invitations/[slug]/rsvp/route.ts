@@ -4,6 +4,7 @@ import { z } from "zod";
 import { allowRequest, getRequestAddress } from "@/lib/rate-limit";
 import { getPrismaClient } from "@/lib/prisma";
 import { readJsonBody } from "@/lib/request-json";
+import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
 
 export const runtime = "nodejs";
 
@@ -26,6 +27,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
     select: { id: true, title: true, owner: { select: { name: true, email: true } } },
   });
   if (!invitation) return NextResponse.json({ error: "Undangan tidak ditemukan atau belum diterbitkan." }, { status: 404 });
+  const featureAccess = await getInvitationFeatureAccess(invitation.id);
+  if (!featureAccess.rsvp) return NextResponse.json({ error: "Paket undangan ini tidak mengaktifkan RSVP." }, { status: 403 });
 
   let guestId: string | null = null;
   let displayName = parsed.data.name ?? "";

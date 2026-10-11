@@ -4,6 +4,8 @@ import { ensureTemplateVersion, eventStartsAt, invitationDraftSchema, invitation
 import { getPrismaClient } from "@/lib/prisma";
 import { readJsonBody } from "@/lib/request-json";
 import { validateInvitationDraft } from "@/lib/validation";
+import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
+import { validateDraftFeatureAccess } from "@/lib/invitation-features";
 
 export const runtime = "nodejs";
 
@@ -24,6 +26,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     select: { slug: true, status: true, draftData: true },
   });
   if (!existing) return NextResponse.json({ error: "Draft tidak ditemukan atau aksesnya sudah tidak tersedia." }, { status: 404 });
+  const featureAccess = await getInvitationFeatureAccess(id);
+  const featureError = validateDraftFeatureAccess(parsed.data, featureAccess);
+  if (featureError) return NextResponse.json({ error: featureError }, { status: 403 });
   const template = await ensureTemplateVersion(parsed.data.templateId);
   if (!template) return NextResponse.json({ error: "Template tidak tersedia." }, { status: 400 });
   const legacyCover = typeof existing.draftData === "object" && existing.draftData !== null && !Array.isArray(existing.draftData)

@@ -11,6 +11,8 @@ import { getCustomerActivationPrice, getHostingTermDays } from "@/lib/platform-s
 import { buildCustomerCheckoutOrder, isCustomerPlanSnapshot, type CustomerPlanSnapshot } from "@/lib/customer-checkout";
 import { getXenditApiUrl } from "@/lib/xendit-api";
 import { readJsonBody } from "@/lib/request-json";
+import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
+import { resolveInvitationFeatureAccess, validateDraftFeatureAccess } from "@/lib/invitation-features";
 
 export const runtime = "nodejs";
 
@@ -66,6 +68,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     where: { invitationId: invitation.id, templateVersionId: template.version.id },
     select: { id: true },
   });
+  if (existingLicense) {
+    const featureError = validateDraftFeatureAccess(checkedDraft, await getInvitationFeatureAccess(invitation.id));
+    if (featureError) return NextResponse.json({ error: featureError }, { status: 400 });
+  }
   if (!isTemplateSelectable(template.template.status) && !existingLicense) return NextResponse.json({ error: "Template ini sudah tidak menerima publikasi baru. Hubungi admin jika undanganmu memiliki lisensi." }, { status: 409 });
   await prisma.invitation.updateMany({
     where: {
@@ -146,6 +152,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     entitlements: selectedPlan.entitlements.map(({ featureKey, value }) => ({ featureKey, value })),
   } : null;
   if (selectedPlan && !isCustomerPlanSnapshot(customerPlanSnapshot)) return NextResponse.json({ error: "Entitlement pada paket tidak valid. Hubungi admin." }, { status: 409 });
+  if (selectedPlan) {
+    const featureError = validateDraftFeatureAccess(checkedDraft, resolveInvitationFeatureAccess(selectedPlan.entitlements));
+    if (featureError) return NextResponse.json({ error: featureError }, { status: 400 });
+  }
 
   const hostingTermDays = selectedPlan?.durationDays ?? await getHostingTermDays();
   const customerActivationPriceIdr = selectedPlan?.priceIdr ?? await getCustomerActivationPrice();
