@@ -24,8 +24,8 @@ test("reseller access is approved by the customer before the reseller activates 
   test.setTimeout(180_000);
   const resellerEmail = process.env.E2E_OTHER_CUSTOMER_EMAIL;
   const resellerPassword = process.env.E2E_OTHER_CUSTOMER_PASSWORD;
-  const alternateResellerEmail = process.env.E2E_CUSTOMER_EMAIL;
-  const alternateResellerPassword = process.env.E2E_CUSTOMER_PASSWORD;
+  const alternateResellerEmail = process.env.E2E_REFUND_RESELLER_EMAIL;
+  const alternateResellerPassword = process.env.E2E_REFUND_RESELLER_PASSWORD;
   const isMobileProject = testInfo.project.name.startsWith("mobile-");
   const isWebkitProject = testInfo.project.name === "mobile-webkit";
   const { email: customerEmail, password: customerPassword } = getCustomerCredentials(testInfo);

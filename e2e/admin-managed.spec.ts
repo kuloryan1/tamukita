@@ -49,7 +49,9 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   const existingCustomer = directory.users.find((user) => user.platformRole === "CUSTOMER");
   expect(existingCustomer?.id).toMatch(/^[0-9a-f-]{36}$/i);
   if (!existingCustomer) throw new Error("The customer account is missing from the platform user directory.");
+  await page.getByLabel("Cari pengguna").fill(existingCustomerEmail);
   const userRow = page.getByTestId(`admin-user-row-${existingCustomer.id}`);
+  await expect(userRow).toBeVisible();
   const roleSelect = userRow.getByLabel(`Peran platform ${existingCustomerEmail}`);
   try {
     const promoteResponse = page.waitForResponse((response) => response.url().endsWith(`/api/admin/users/${existingCustomer.id}`) && response.request().method() === "PATCH");

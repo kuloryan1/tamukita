@@ -209,6 +209,7 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
   const draftRef = useRef(draft);
   const draftSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const lastSavedDraftRef = useRef<InvitationDraft | null>(null);
+  const saveErrorRef = useRef<string | null>(null);
   const historyRef = useRef<{ past: DraftHistoryEntry[]; future: DraftHistoryEntry[] }>({ past: [], future: [] });
   const [, setHistoryVersion] = useState(0);
   const [step, setStep] = useState(0);
@@ -226,6 +227,12 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const pendingRecoveryFor = useRef<string | null>(null);
+  const clearSaveError = useCallback(() => {
+    const saveError = saveErrorRef.current;
+    if (!saveError) return;
+    saveErrorRef.current = null;
+    setError((currentError) => currentError === saveError ? "" : currentError);
+  }, []);
   const replaceDraft = useCallback((nextDraft: InvitationDraft | ((current: InvitationDraft) => InvitationDraft)) => {
     const next = typeof nextDraft === "function" ? nextDraft(draftRef.current) : nextDraft;
     draftRef.current = next;
@@ -265,7 +272,7 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
         const snapshot = { ...sourceDraft, slug: slugify(sourceDraft.slug) };
         if (lastSavedDraftRef.current === sourceDraft) {
           if (draftRef.current === sourceDraft) {
-            setError("");
+            clearSaveError();
             setSaveState("saved");
           }
           return { ok: true, draft: snapshot };
@@ -280,6 +287,7 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
         if (!response?.ok) {
           const message = result?.error ?? "Draft belum tersimpan. Coba lagi setelah koneksi pulih.";
           if (draftRef.current === sourceDraft) {
+            saveErrorRef.current = message;
             setError(message);
             setSaveState("error");
           }
@@ -288,7 +296,7 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
         }
         if (draftRef.current === sourceDraft) {
           lastSavedDraftRef.current = sourceDraft;
-          setError("");
+          clearSaveError();
           setSaveState("saved");
         } else {
           lastSavedDraftRef.current = sourceDraft;
@@ -301,7 +309,7 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
     const queuedSave = draftSaveQueueRef.current.then(saveQueuedDraft, saveQueuedDraft);
     draftSaveQueueRef.current = queuedSave.then(() => undefined, () => undefined);
     return queuedSave;
-  }, []);
+  }, [clearSaveError]);
   const undoDraft = useCallback(() => {
     const history = historyRef.current;
     const entry = history.past.pop();
