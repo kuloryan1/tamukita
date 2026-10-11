@@ -77,6 +77,12 @@ test("customer crops and processes a cover photo without losing draft details", 
   await usePhotoButton.click();
 
   await expect(page.locator(".photo-uploaded-label")).toContainText("terpilih", { timeout: 45_000 });
+  await expect.poll(async () => {
+    const response = await page.request.get(`/api/invitations/drafts?id=${invitationId}`);
+    if (!response.ok()) return null;
+    const result = await response.json() as { draft?: { coverPhoto?: string } };
+    return result.draft?.coverPhoto ?? null;
+  }, { timeout: 30_000 }).toMatch(/^http:\/\/127\.0\.0\.1:3138\/public\/invitations\//);
   await expect(page.locator(".editor-save-state")).toHaveText("Tersimpan otomatis", { timeout: 15_000 });
   await page.locator(".editor-stepper button").nth(0).click();
   await expect(page.getByLabel("Nama pertama")).toHaveValue(firstName);

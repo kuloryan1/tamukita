@@ -226,3 +226,18 @@ Halaman katalog template dan detail template mencatat page view harian pada tabe
 | E2E `public-guest.spec.ts` dan `admin-managed.spec.ts` | Lulus; 6 tes pada Chromium desktop, Chromium mobile, dan WebKit iPhone. Tes memeriksa kenaikan pengunjung marketplace satu kali, penolakan origin luar, tidak menghitung ulang saat browser yang sama memuat ulang katalog, kenaikan page view undangan/katalog/detail setelah respons, atribut cookie harian, dan tampilan metrik untuk Super Admin serta Finance. |
 
 E2E memakai PostgreSQL 17 dan Redis 7 sementara pada port terpisah; container dihentikan dan dihapus setelah tes. Hitungan unik berlaku per browser per hari; belum ada deduplikasi identitas lintas perangkat atau hari. Ini validasi lokal dan belum mengukur LCP staging atau beban produksi.
+
+## E2E lengkap setelah KPI form dan antrean bantuan — 11 Oktober 2026
+
+Suite Playwright lengkap mencakup alur customer, editor, pemrosesan foto, checkout dan webhook, guest, reseller/admin, review template, keamanan webhook, health worker, KPI penyelesaian form, serta antrean masukan Support.
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| Migrasi dan seed E2E | Lulus; seluruh 15 migrasi dan fixture customer, Finance, Support, reseller, serta template diterapkan pada PostgreSQL 17 sementara. |
+| `npm run typecheck` | Lulus. |
+| `npm run lint` | Lulus; 191 file. |
+| `npm test` | Lulus; 10 file dan 29 tes. |
+| `npm run build` | Lulus untuk source aplikasi pada commit yang diuji; perubahan setelah build hanya sinkronisasi tes media. |
+| `npm run test:e2e` | Lulus pada mode retry CI; 49 tes lulus dan 2 dilewati dari 51 kasus lintas desktop Chromium, mobile Chromium, dan WebKit iPhone. Dua tes lifecycle pembayaran mobile memang dibatasi ke desktop karena fixture callback hanya boleh dipakai sekali. |
+
+Suite memakai mock Xendit, R2, dan email dengan PostgreSQL 17 dan Redis 7 sementara. Container uji dibersihkan sesudahnya. Tes foto WebKit menunggu sampai URL hasil proses benar-benar tersimpan melalui API sebelum melanjutkan. Hasil ini membuktikan perilaku lokal; bukan deployment Dokploy, uji Xendit/R2 nyata, pemulihan backup pada VPS, smoke test eksternal, pengukuran LCP staging, atau kapasitas 1.000 virtual user. Gate tersebut masih menunggu konfigurasi dan konfirmasi operator.
