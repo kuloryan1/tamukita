@@ -321,7 +321,7 @@ Fitur ini menyediakan berkas pencocokan finansial. Pembaruan status provider tet
 
 ## KPI analytics blueprint — 11 Oktober 2026
 
-Halaman Analitik platform kini menampilkan pelanggan unik yang mulai draft dan menyelesaikan form, rasio penyelesaian per pelanggan unik, undangan aktif, reseller yang melakukan transaksi kredit atau mencatat penjualan dalam 30 hari, serta jumlah pelanggan yang tercatat menerbitkan sendiri. Metrik self-publish mengikuti identitas aktor yang tersimpan pada versi publikasi dan tidak menyimpulkan ada atau tidaknya bantuan informal.
+Halaman Analitik platform kini menampilkan pelanggan unik yang mulai draft dan menyelesaikan form, rasio penyelesaian per pelanggan unik, undangan aktif, reseller yang melakukan transaksi kredit atau mencatat penjualan dalam 30 hari, serta pelanggan dengan publikasi mandiri. KPI publikasi mandiri mensyaratkan draft dibuat dan versi publikasi dicatat oleh pemilik, tanpa grant akses bantuan yang diterbitkan sebelum publikasi; bantuan informal tidak terlacak.
 
 | Pemeriksaan | Hasil |
 | --- | --- |
@@ -332,4 +332,4 @@ Halaman Analitik platform kini menampilkan pelanggan unik yang mulai draft dan m
 | Suite Playwright penuh | Lulus lokal lintas Chromium desktop, Chromium mobile, dan WebKit mobile: 52 lulus, 2 skip, 0 gagal dari 54. Dua skip membatasi callback lifecycle pembayaran satu kali ke Chromium desktop; alur pembayaran itu lulus di desktop. |
 | `git diff --check` | Lulus. |
 
-E2E lokal memakai 15 migrasi pada PostgreSQL 17 dan Redis 7 sementara, token webhook lokal, serta mock Xendit, R2, dan email. Container sementara dihentikan setelah tes. Tes admin menunggu respons pencarian direktori sebelum mengubah role agar hasil pencarian yang masih dimuat tidak menimpa pilihan. Deployment Dokploy, environment runtime, domain staging, serta QA beban eksternal tetap menunggu konfigurasi operator.
+E2E lokal memakai 15 migrasi pada PostgreSQL 17 dan Redis 7 sementara, token webhook lokal, serta mock Xendit, R2, dan email. Container sementara dihentikan setelah tes. Fixture KPI mencakup satu pelanggan yang membuat dan menerbitkan draft sendiri, satu undangan dengan grant bantuan sebelum publikasi, dan satu undangan yang dibuat admin; nilai publikasi mandiri yang diharapkan adalah satu pelanggan. Tes admin juga menunggu respons pencarian direktori sebelum mengubah role agar hasil pencarian yang masih dimuat tidak menimpa pilihan. Deployment Dokploy, environment runtime, domain staging, serta QA beban eksternal tetap menunggu konfigurasi operator.

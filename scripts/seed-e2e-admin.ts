@@ -324,6 +324,100 @@ try {
     });
   });
 
+  async function seedAnalyticsInvitation({ id, slug, createdById, supportGrantId }: {
+    id: string;
+    slug: string;
+    createdById: string;
+    supportGrantId?: string;
+  }) {
+    const publishedAt = new Date(Date.now() - 60_000);
+    const supportGrantCreatedAt = new Date(publishedAt.getTime() - 60_000);
+    const expiresAt = new Date(Date.now() + 365 * 86_400_000);
+    const analyticsDraft = {
+      ...createInitialDraft(),
+      id,
+      slug,
+      hostOne: "E2E Analitik",
+      hostTwo: "Mandiri",
+      eventTitle: "Undangan Fixture Analitik",
+      eventDate: "2030-06-23",
+      eventTime: "11:00",
+      venue: "Taman Analitik",
+      address: "Jl. Fixture No. 3, Jakarta",
+      story: "Fixture untuk menguji definisi publikasi mandiri.",
+      templateId: fixtureTemplate.slug,
+      templateVersion: fixtureTemplate.version,
+      updatedAt: publishedAt.toISOString(),
+      publishedAt: publishedAt.toISOString(),
+    };
+    const snapshot = JSON.parse(JSON.stringify(analyticsDraft));
+
+    await prisma.$transaction(async (tx) => {
+      if (supportGrantId) await tx.supportAccessGrant.deleteMany({ where: { id: supportGrantId } });
+      await tx.invitation.upsert({
+        where: { slug },
+        update: {
+          organizationId: otherCustomer.organizationId,
+          ownerId: otherCustomer.userId,
+          createdById,
+          resellerOrgId: null,
+          templateVersionId: templateVersion.id,
+          title: `${analyticsDraft.hostOne} & ${analyticsDraft.hostTwo}`,
+          status: "PUBLISHED",
+          draftData: snapshot,
+          publishedSnapshot: snapshot,
+          publishedAt,
+          expiresAt,
+          deletedAt: null,
+        },
+        create: {
+          id,
+          organizationId: otherCustomer.organizationId,
+          ownerId: otherCustomer.userId,
+          createdById,
+          templateVersionId: templateVersion.id,
+          slug,
+          title: `${analyticsDraft.hostOne} & ${analyticsDraft.hostTwo}`,
+          status: "PUBLISHED",
+          draftData: snapshot,
+          publishedSnapshot: snapshot,
+          publishedAt,
+          expiresAt,
+        },
+      });
+      await tx.invitationVersion.upsert({
+        where: { invitationId_version: { invitationId: id, version: 1 } },
+        update: { type: "PUBLISHED", snapshot, createdById: otherCustomer.userId, createdAt: publishedAt },
+        create: { invitationId: id, version: 1, type: "PUBLISHED", snapshot, createdById: otherCustomer.userId, createdAt: publishedAt },
+      });
+      if (supportGrantId) {
+        await tx.supportAccessGrant.create({
+          data: {
+            id: supportGrantId,
+            adminId: adminAccount.userId,
+            organizationId: otherCustomer.organizationId,
+            invitationId: id,
+            reason: "Fixture untuk akses bantuan tercatat sebelum publikasi.",
+            expiresAt,
+            createdAt: supportGrantCreatedAt,
+          },
+        });
+      }
+    });
+  }
+
+  await seedAnalyticsInvitation({
+    id: "10000000-0000-4000-8000-000000000007",
+    slug: "e2e-supported-publication",
+    createdById: otherCustomer.userId,
+    supportGrantId: "60000000-0000-4000-8000-000000000001",
+  });
+  await seedAnalyticsInvitation({
+    id: "10000000-0000-4000-8000-000000000008",
+    slug: "e2e-admin-created-publication",
+    createdById: adminAccount.userId,
+  });
+
   const paymentInvitationId = "10000000-0000-4000-8000-000000000002";
   const paymentInvitationSlug = "e2e-payment-invite";
   const paymentDraft = {

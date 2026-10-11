@@ -86,8 +86,15 @@ export default async function AdminAnalyticsPage() {
       INNER JOIN "invitations" AS invitation ON invitation."id" = version."invitationId"
       WHERE version."type" = 'PUBLISHED'
         AND version."createdById" = invitation."ownerId"
+        AND invitation."createdById" = invitation."ownerId"
         AND version."createdAt" >= ${periodStart}
         AND invitation."deletedAt" IS NULL
+        AND NOT EXISTS (
+          SELECT 1
+          FROM "support_access_grants" AS support_access
+          WHERE support_access."invitationId" = invitation."id"
+            AND support_access."createdAt" <= version."createdAt"
+        )
     `,
   ]);
 
@@ -137,7 +144,7 @@ export default async function AdminAnalyticsPage() {
         { label: "Pelanggan menyelesaikan form (unik)", value: completedCustomerOwners.length.toLocaleString("id-ID"), detail: "Pemilik dengan setidaknya satu draft baru yang lolos validasi" },
         { label: "Penyelesaian form", value: rate(completedCustomerOwners.length, draftCustomerOwners.length), detail: `${completedCustomerOwners.length.toLocaleString("id-ID")} dari ${draftCustomerOwners.length.toLocaleString("id-ID")} pelanggan unik yang memulai draft` },
         { label: "Konversi draft ke publikasi", value: rate(publishedDrafts, newDrafts), detail: `${publishedDrafts.toLocaleString("id-ID")} dari draft dalam kohor` },
-        { label: "Pelanggan menerbitkan sendiri", value: Number(selfPublishedCustomerCountRows[0]?.owners ?? BigInt(0)).toLocaleString("id-ID"), detail: "Pemilik menjadi aktor penerbitan dalam periode; tidak mengukur bantuan informal" },
+        { label: "Pelanggan publikasi mandiri", value: Number(selfPublishedCustomerCountRows[0]?.owners ?? BigInt(0)).toLocaleString("id-ID"), detail: "Draft dan publikasi dibuat pemilik, tanpa grant bantuan tercatat sebelumnya; bantuan informal tidak terlacak" },
         { label: "Undangan aktif", value: activeInvitations.toLocaleString("id-ID"), detail: "Status terbit dan masa hosting belum kedaluwarsa saat ini" },
         { label: "Reseller aktif (30 hari)", value: activeResellerCount.toLocaleString("id-ID"), detail: "Reseller disetujui dengan top-up, aktivasi kredit, atau penjualan tercatat" },
         { label: "Konversi checkout", value: rate(paidOrderCount, settledOrderCount), detail: `${paidOrderCount.toLocaleString("id-ID")} order dibayar dari ${settledOrderCount.toLocaleString("id-ID")} order final` },
