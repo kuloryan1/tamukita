@@ -82,6 +82,9 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    networks:
+      - default
+      - staging-origin
 
   worker:
     build:
@@ -113,3 +116,8 @@ services:
 volumes:
   tamukita-postgres:
   tamukita-redis:
+
+networks:
+  default:
+  staging-origin:
+    name: ${TAMUKITA_STAGING_ORIGIN_NETWORK:-${COMPOSE_PROJECT_NAME:-tamukita}_staging-origin}

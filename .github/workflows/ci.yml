@@ -34,7 +34,21 @@ jobs:
       - name: Validate staging Tunnel Compose configuration
         env:
           TUNNEL_TOKEN: ci-only-validation-placeholder
+          TAMUKITA_STAGING_ORIGIN_NETWORK: tamukita-ci_staging-origin
         run: docker compose -f docker-compose.staging-tunnel.yml config --quiet
+      - name: Validate staging origin network isolation
+        shell: bash
+        env:
+          TUNNEL_TOKEN: ci-only-validation-placeholder
+          TAMUKITA_STAGING_ORIGIN_NETWORK: tamukita-ci_staging-origin
+        run: |
+          docker compose --env-file .env.example -p tamukita-ci config --format json > "$RUNNER_TEMP/tamukita-app-compose.json"
+          docker compose -f docker-compose.staging-tunnel.yml config --format json > "$RUNNER_TEMP/tamukita-tunnel-compose.json"
+          env -u TAMUKITA_STAGING_ORIGIN_NETWORK docker compose --env-file .env.example -p tamukita config --format json > "$RUNNER_TEMP/tamukita-production-compose.json"
+          node scripts/validate-staging-network-isolation.mjs \
+            "$RUNNER_TEMP/tamukita-app-compose.json" \
+            "$RUNNER_TEMP/tamukita-tunnel-compose.json" \
+            "$RUNNER_TEMP/tamukita-production-compose.json"
       - name: Validate local Compose override
         run: docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.local.yml config --quiet
       - name: Test Dokploy PostgreSQL container discovery

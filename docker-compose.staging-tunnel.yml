@@ -6,9 +6,9 @@ services:
     environment:
       TUNNEL_TOKEN: ${TUNNEL_TOKEN:?Set TUNNEL_TOKEN in the staging tunnel service environment}
     networks:
-      - dokploy-network
+      - staging-origin
 
 networks:
-  dokploy-network:
-    name: dokploy-network
+  staging-origin:
+    name: ${TAMUKITA_STAGING_ORIGIN_NETWORK:?Set TAMUKITA_STAGING_ORIGIN_NETWORK in the staging tunnel service environment}
     external: true
