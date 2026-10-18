@@ -23,31 +23,13 @@ jobs:
       deployment: false
     env:
       STAGING_BASE_URL: ${{ vars.STAGING_BASE_URL }}
+      STAGING_INVITATION_PATH: ${{ vars.STAGING_INVITATION_PATH }}
       PRODUCTION_HOSTNAMES: ${{ vars.PRODUCTION_HOSTNAMES }}
     steps:
       - uses: actions/checkout@v4
-      - name: Validate staging origin
+      - name: Validate staging origin and published invitation
         shell: bash
-        run: |
-          node --input-type=module <<'NODE'
-          const raw = process.env.STAGING_BASE_URL;
-          if (!raw) throw new Error("Set the STAGING_BASE_URL variable in the staging environment.");
-          const target = new URL(raw);
-          if (target.protocol !== "https:" || target.pathname !== "/" || target.search || target.hash || target.username || target.password) {
-            throw new Error("STAGING_BASE_URL must be an HTTPS origin without credentials, path, query, or fragment.");
-          }
-
-          const productionHosts = new Set(["tamukita.io", "www.tamukita.io"]);
-          for (const entry of (process.env.PRODUCTION_HOSTNAMES ?? "").split(",")) {
-            const hostname = entry.trim().toLowerCase().replace(/\.+$/, "");
-            if (hostname) productionHosts.add(hostname);
-          }
-          const hostname = target.hostname.toLowerCase().replace(/\.+$/, "");
-          if (productionHosts.has(hostname)) {
-            throw new Error("Refusing to run a staging smoke check against a configured production host.");
-          }
-          console.log(`Staging health target: ${target.origin}`);
-          NODE
+        run: node scripts/check-staging-invitation.mjs
       - name: Check staging homepage and dependencies
         shell: bash
         run: |
