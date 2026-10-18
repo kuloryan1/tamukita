@@ -23,10 +23,19 @@ Health check yang lulus belum berarti QA blueprint selesai. Sebelum menjalankan 
 1. Connector khusus `tamukita-staging` berjalan dari image `cloudflare/cloudflared:2026.10.1` pada network `dokploy-network`; `TUNNEL_TOKEN` tersimpan hanya di environment rahasia layanan Dokploy. Jangan commit token ke repository atau memasukkannya ke environment tingkat project. Lihat [panduan Tunnel resmi Dokploy](https://docs.dokploy.com/docs/core/guides/cloudflare-tunnels) dan [rilis resmi cloudflared](https://github.com/cloudflare/cloudflared/releases/tag/2026.10.1).
 2. Rute `staging.tamukita.io` pada Tunnel baru mengarah langsung ke container web staging pada `dokploy-network`; CNAME proxied mengarah ke Tunnel baru dan pemeriksaan HTTPS lulus. Route lama pada `tigakaki1` sudah dihapus. Jalur langsung ini dipakai karena nama `dokploy-traefik` tidak bisa di-resolve di host.
 3. Environment aplikasi sudah menyimpan `NEXT_PUBLIC_APP_URL`, `POSTGRES_PASSWORD`, dan `AUTH_SECRET` khusus staging pada service Compose Dokploy. Jangan menyalin atau membagikan nilai rahasia.
-4. Siapkan kredensial Xendit **Test Mode**, bucket R2 non-production, konfigurasi email uji, dan undangan publik QA bila alur terkait akan diuji. Jangan memakai kredensial atau bucket production.
-5. Tinjau pemisahan runtime staging dari production dan pastikan semua provider mengarah ke data non-production.
-6. Stack sudah dideploy manual dari `main`. Dockerfile worker menyertakan `src/lib/email-transport.ts`, service web memakai `HOSTNAME: 0.0.0.0`, semua container health check lulus, dan halaman serta endpoint publik `/api/health` mengembalikan 200.
-7. Jalankan pengujian LCP atau load hanya setelah staging terisolasi dan fixture siap. Workflow `staging-quality` meminta origin HTTPS, path undangan uji yang sudah diterbitkan, serta konfirmasi operator bahwa target siap menerima hingga 1.000 virtual user.
+4. Siapkan nilai khusus staging di **service environment Dokploy** untuk alur yang hendak diuji. Jangan menaruh nilai ini di repo, project environment bersama, atau chat:
+   - Xendit Test Mode: `XENDIT_SECRET_KEY`, `XENDIT_WEBHOOK_TOKEN`, `XENDIT_REFUND_WEBHOOK_TOKEN`.
+   - Email uji: `RESEND_API_KEY`, `EMAIL_FROM` dengan sender yang sudah diverifikasi.
+   - R2 non-production: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_PRIVATE_BUCKET_NAME`, `R2_PUBLIC_BUCKET_NAME`, `R2_PUBLIC_BASE_URL`.
+5. Siapkan konfigurasi backup/restore host pada `/etc/tamukita/backup.env` dari `scripts/backup.env.example`: `BACKUP_COMPOSE_PROJECT_NAME`, `R2_BACKUP_ACCESS_KEY_ID`, `R2_BACKUP_SECRET_ACCESS_KEY`, `BACKUP_BUCKET`, dan `BACKUP_AGE_RECIPIENT`. Simpan private age identity di luar repository dan image deployment; restore memakai `BACKUP_AGE_IDENTITY_FILE`.
+6. Isi GitHub repository/environment variables untuk workflow kualitas:
+   - `STAGING_BASE_URL=https://staging.tamukita.io`
+   - `STAGING_INVITATION_PATH` — path slug undangan QA staging yang sudah dipublikasikan.
+   - `PRODUCTION_HEALTH_URL` — URL `/api/health` production, hanya dipakai untuk memastikan target beban berbeda dari production.
+7. Periksa nama Compose project, volume database, bucket, akun Xendit, sender email, domain, dan URL agar staging tidak tersambung ke data production. Siapkan undangan QA dengan foto dan konten representatif sebelum uji LCP.
+8. Tinjau pemisahan runtime staging dari production dan pastikan semua provider mengarah ke data non-production.
+9. Stack sudah dideploy manual dari `main`. Dockerfile worker menyertakan `src/lib/email-transport.ts`, service web memakai `HOSTNAME: 0.0.0.0`, semua container health check lulus, dan halaman serta endpoint publik `/api/health` mengembalikan 200.
+10. Jalankan pengukuran LCP atau load hanya setelah staging terisolasi, fixture siap, dan operator mengonfirmasi kesiapan hingga 1.000 virtual user. Workflow `staging-quality` menguji LCP p75, lalu load API health dan undangan publik masing-masing sampai 1.000 VU.
 
 Deployment Compose staging sehat. Origin Cloudflare Tunnel diarahkan langsung ke container web pada `dokploy-network` karena `dokploy-traefik` tidak tersedia di host. Halaman utama dan `/api/health` lulus pemeriksaan publik.
 
@@ -47,7 +56,7 @@ Sesudah container production pertama berjalan, temukan nama Compose project yang
 
 - Tunnel `tamukita-staging` sehat dengan satu replica; token tersimpan sebagai secret layanan Dokploy. DNS `staging.tamukita.io` menunjuk ke Tunnel baru; route lama pada `tigakaki1` sudah dihapus. Tunnel mengarah langsung ke container web staging dan pemeriksaan halaman serta `/api/health` publik lulus.
 - Service aplikasi staging sehat: worker, PostgreSQL, Redis, migrasi, dan health check web lulus. Jalankan QA blueprint pada staging setelah fixture undangan uji dan kredensial non-production siap.
-- Operator belum memberikan path undangan publik QA atau konfirmasi tertulis bahwa target terisolasi siap menerima hingga 1.000 virtual user.
+- Path undangan publik QA, variabel GitHub `STAGING_INVITATION_PATH` dan `PRODUCTION_HEALTH_URL`, serta konfirmasi operator bahwa target terisolasi siap menerima hingga 1.000 virtual user masih belum diberikan.
 - Isolasi staging dari production belum dibuktikan melalui deployment dan pemeriksaan konfigurasi runtime.
 - Uji Xendit Test Mode, R2 nyata, restore di VPS, LCP, load 1.000 VU, dan monitoring eksternal belum dijalankan.
 - Keputusan operator untuk identitas/kontak, retensi data, refund, pelindungan anak, vendor/lokasi pemrosesan, serta tinjauan legal masih terbuka.
