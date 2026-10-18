@@ -3,6 +3,11 @@ import { getLastLcp, hasStableLcp, installLcpObserver } from "./lcp-observer";
 import { getProductionHostnames } from "../load/production-hostnames.js";
 
 const invitationPath = process.env.PERF_INVITATION_PATH;
+const requireCoverPhoto = process.env.PERF_EXPECT_COVER_PHOTO === "true";
+if (process.env.PERF_EXPECT_COVER_PHOTO !== undefined && !["true", "false"].includes(process.env.PERF_EXPECT_COVER_PHOTO)) {
+  throw new Error("PERF_EXPECT_COVER_PHOTO must be true or false when set.");
+}
+const coverPhotoPath = "/qa-fixtures/couple-cover.webp";
 const mobileProfile = {
   latencyMs: 150,
   downloadBytesPerSecond: 1_600_000 / 8,
@@ -28,6 +33,9 @@ test("published invitation mobile LCP p75 is at most 2.5 seconds", async ({ brow
   expect(preflightResponse.status, "published invitation must return HTTP 200 directly without redirects").toBe(200);
   const preflightHtml = await preflightResponse.text();
   expect(preflightHtml, "LCP target must be a persistent published invitation, not a built-in demo").toContain('data-invitation-publication="published"');
+  if (requireCoverPhoto) {
+    expect(preflightHtml, "the staging LCP fixture must render its synthetic cover photo").toContain(coverPhotoPath);
+  }
 
   for (let index = 0; index < sampleCount; index += 1) {
     const context = await browser.newContext({
@@ -45,6 +53,12 @@ test("published invitation mobile LCP p75 is at most 2.5 seconds", async ({ brow
       await page.route(new RegExp(`^https?://${escapedHost}(?::\\d+)?(?:/|$)`), (route) => route.abort("blockedbyclient"));
     }
     await page.addInitScript(installLcpObserver);
+    const coverPhotoResponse = requireCoverPhoto
+      ? page.waitForResponse((response) => {
+          const responseUrl = new URL(response.url());
+          return responseUrl.origin === targetOrigin && responseUrl.pathname === coverPhotoPath;
+        })
+      : undefined;
 
     try {
       cdp = await context.newCDPSession(page);
@@ -70,6 +84,11 @@ test("published invitation mobile LCP p75 is at most 2.5 seconds", async ({ brow
       const response = await page.goto(invitationPath, { waitUntil: "load" });
       expect(response?.status(), `sample ${index + 1} should load the published invitation`).toBe(200);
       expect(new URL(page.url()).origin, `sample ${index + 1} should remain on the staging origin`).toBe(targetOrigin);
+      if (coverPhotoResponse) {
+        const imageResponse = await coverPhotoResponse;
+        expect(imageResponse.status(), `sample ${index + 1} should load the synthetic cover photo`).toBe(200);
+        expect(imageResponse.headers()["content-type"], `sample ${index + 1} cover photo should be WebP`).toMatch(/^image\/webp(?:;|$)/i);
+      }
       await page.waitForFunction(
         hasStableLcp,
         1000,

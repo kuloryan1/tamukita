@@ -39,6 +39,7 @@ jobs:
       PERF_BASE_URL: ${{ vars.STAGING_BASE_URL }}
       PERF_TEST_TARGET: staging
       PERF_INVITATION_PATH: ${{ vars.STAGING_INVITATION_PATH }}
+      PERF_EXPECT_COVER_PHOTO: "true"
       PRODUCTION_HOSTNAMES: ${{ vars.PRODUCTION_HOSTNAMES }}
       STAGING_QUALITY_PROFILE: ${{ inputs.profile }}
       STAGING_LOAD_CONFIRMED: ${{ inputs.confirm_staging_load }}

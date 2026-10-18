@@ -7,6 +7,8 @@ const fixtureSlug = "qa-blueprint-fixture";
 const fixtureEmail = "qa-fixture@tamukita.invalid";
 const fixtureName = "TamuKita Staging QA Fixture";
 const fixtureOrganizationSlug = "tamukita-staging-qa-fixture";
+const fixtureCoverPhoto = `${stagingOrigin}/qa-fixtures/couple-cover.webp`;
+const refreshFixture = process.argv.includes("--refresh-staging-fixture");
 
 if (process.env.NEXT_PUBLIC_APP_URL !== stagingOrigin) {
   throw new Error(`Refusing to seed QA data unless NEXT_PUBLIC_APP_URL is exactly ${stagingOrigin}.`);
@@ -43,7 +45,7 @@ async function seedFixture() {
     themeColor: "default",
     themeFont: "classic",
     sectionOrder: "story-first",
-    coverPhoto: "",
+    coverPhoto: fixtureCoverPhoto,
     coverPosition: 50,
     coverPositionX: 50,
     galleryPhotos: [],
@@ -65,7 +67,12 @@ async function seedFixture() {
       where: { slug: fixtureSlug },
       select: {
         id: true,
+        organizationId: true,
+        status: true,
+        deletedAt: true,
         draftData: true,
+        publishedSnapshot: true,
+        ownerId: true,
         owner: { select: { email: true } },
         organization: { select: { slug: true } },
       },
@@ -80,7 +87,61 @@ async function seedFixture() {
         || (existingDraft as Record<string, unknown>).qaFixture !== true) {
         throw new Error(`Slug ${fixtureSlug} already belongs to a non-fixture invitation; no data was changed.`);
       }
-      return { created: false, invitationId: existingInvitation.id };
+      if (existingInvitation.status !== "PUBLISHED" || existingInvitation.deletedAt !== null) {
+        throw new Error(`QA fixture ${fixtureSlug} is not an active published invitation; no data was changed.`);
+      }
+      if (!refreshFixture) return { created: false, refreshed: false, invitationId: existingInvitation.id };
+
+      const existingSnapshot = existingInvitation.publishedSnapshot;
+      if (typeof existingSnapshot !== "object"
+        || existingSnapshot === null
+        || Array.isArray(existingSnapshot)
+        || (existingSnapshot as Record<string, unknown>).qaFixture !== true) {
+        throw new Error(`Published snapshot for ${fixtureSlug} is not marked as a QA fixture; no data was changed.`);
+      }
+
+      const draftRecord = existingDraft as Record<string, unknown>;
+      const snapshotRecord = existingSnapshot as Record<string, unknown>;
+      const draftIsCurrent = draftRecord.coverPhoto === fixtureCoverPhoto;
+      const snapshotIsCurrent = snapshotRecord.coverPhoto === fixtureCoverPhoto;
+      if (draftIsCurrent && snapshotIsCurrent) {
+        return { created: false, refreshed: false, invitationId: existingInvitation.id };
+      }
+
+      const refreshedDraft = { ...draftRecord, coverPhoto: fixtureCoverPhoto };
+      const refreshedSnapshot = { ...snapshotRecord, coverPhoto: fixtureCoverPhoto };
+
+      const latestVersion = await tx.invitationVersion.aggregate({
+        where: { invitationId: existingInvitation.id },
+        _max: { version: true },
+      });
+      await tx.invitation.update({
+        where: { id: existingInvitation.id },
+        data: {
+          draftData: refreshedDraft as Prisma.InputJsonValue,
+          publishedSnapshot: refreshedSnapshot as Prisma.InputJsonValue,
+        },
+      });
+      await tx.invitationVersion.create({
+        data: {
+          invitationId: existingInvitation.id,
+          version: (latestVersion._max.version ?? 0) + 1,
+          type: "PUBLISHED",
+          snapshot: refreshedSnapshot as Prisma.InputJsonValue,
+          createdById: existingInvitation.ownerId,
+        },
+      });
+      await tx.auditLog.create({
+        data: {
+          organizationId: existingInvitation.organizationId,
+          actorId: existingInvitation.ownerId,
+          action: "staging.qa_fixture.refreshed",
+          targetType: "Invitation",
+          targetId: existingInvitation.id,
+          metadata: { slug: fixtureSlug, purpose: "staging-quality-gate", synthetic: true, fields: ["coverPhoto"] },
+        },
+      });
+      return { created: false, refreshed: true, invitationId: existingInvitation.id };
     }
 
     const template = await tx.template.findUnique({
@@ -158,10 +219,11 @@ async function seedFixture() {
         metadata: { slug: fixtureSlug, purpose: "staging-quality-gate", synthetic: true },
       },
     });
-    return { created: true, invitationId: invitation.id };
+    return { created: true, refreshed: false, invitationId: invitation.id };
   });
 
-  process.stdout.write(`${outcome.created ? "Created" : "Already present"} staging QA fixture: ${stagingOrigin}/${fixtureSlug}\n`);
+  const status = outcome.created ? "Created" : outcome.refreshed ? "Refreshed synthetic cover photo for" : "Already present";
+  process.stdout.write(`${status} staging QA fixture: ${stagingOrigin}/${fixtureSlug}\n`);
 }
 
 async function main() {
