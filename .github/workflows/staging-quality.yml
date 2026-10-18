@@ -44,15 +44,15 @@ jobs:
       STAGING_QUALITY_PROFILE: ${{ inputs.profile }}
       STAGING_LOAD_CONFIRMED: ${{ inputs.confirm_staging_load }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: npm
       - run: npm ci
       - name: Validate staging target
         run: node scripts/validate-staging-quality-target.mjs
-      - uses: grafana/setup-k6-action@v1
+      - uses: grafana/setup-k6-action@db07bd9765aac508ef18982e52ab937fe633a065 # v1.2.1
         if: ${{ inputs.profile == 'full-load' }}
       - run: npx playwright install --with-deps chromium
       - name: Measure mobile invitation LCP

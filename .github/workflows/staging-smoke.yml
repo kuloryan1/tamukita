@@ -26,7 +26,7 @@ jobs:
       STAGING_INVITATION_PATH: ${{ vars.STAGING_INVITATION_PATH }}
       PRODUCTION_HOSTNAMES: ${{ vars.PRODUCTION_HOSTNAMES }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Validate staging origin and published invitation
         shell: bash
         run: node scripts/check-staging-invitation.mjs
