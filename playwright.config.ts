@@ -75,6 +75,7 @@ const localWebServers = configuredBaseURL
           ...e2eEmailEnvironment,
           HOSTNAME: "127.0.0.1",
           PORT: localAppPort,
+          NODE_OPTIONS: [process.env.NODE_OPTIONS, "--trace-deprecation"].filter(Boolean).join(" "),
         },
       },
     ];
