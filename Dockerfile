@@ -38,6 +38,7 @@ RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 COPY --from=production-dependencies /app/node_modules ./node_modules
 COPY --from=builder /app/src/generated/prisma ./src/generated/prisma
 COPY --from=builder /app/src/worker.ts ./src/worker.ts
+COPY --from=builder /app/src/lib/email-transport.ts ./src/lib/email-transport.ts
 COPY --from=builder /app/src/lib/media-processing.ts ./src/lib/media-processing.ts
 COPY --from=builder /app/src/lib/worker-health.ts ./src/lib/worker-health.ts
 COPY --from=builder /app/package.json ./package.json
