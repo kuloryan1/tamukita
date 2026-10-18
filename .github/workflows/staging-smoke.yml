@@ -1,0 +1,90 @@
+name: Staging smoke check
+
+on:
+  schedule:
+    - cron: "41 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-smoke
+  cancel-in-progress: true
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    environment:
+      name: staging
+      deployment: false
+    env:
+      STAGING_BASE_URL: ${{ vars.STAGING_BASE_URL }}
+      PRODUCTION_HOSTNAMES: ${{ vars.PRODUCTION_HOSTNAMES }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate staging origin
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          const raw = process.env.STAGING_BASE_URL;
+          if (!raw) throw new Error("Set the STAGING_BASE_URL variable in the staging environment.");
+          const target = new URL(raw);
+          if (target.protocol !== "https:" || target.pathname !== "/" || target.search || target.hash || target.username || target.password) {
+            throw new Error("STAGING_BASE_URL must be an HTTPS origin without credentials, path, query, or fragment.");
+          }
+
+          const productionHosts = new Set(["tamukita.io", "www.tamukita.io"]);
+          for (const entry of (process.env.PRODUCTION_HOSTNAMES ?? "").split(",")) {
+            const hostname = entry.trim().toLowerCase().replace(/\.+$/, "");
+            if (hostname) productionHosts.add(hostname);
+          }
+          const hostname = target.hostname.toLowerCase().replace(/\.+$/, "");
+          if (productionHosts.has(hostname)) {
+            throw new Error("Refusing to run a staging smoke check against a configured production host.");
+          }
+          console.log(`Staging health target: ${target.origin}`);
+          NODE
+      - name: Check staging homepage and dependencies
+        shell: bash
+        run: |
+          curl --fail-with-body --show-error --silent \
+            --max-time 20 --retry 2 --retry-all-errors --retry-delay 5 \
+            --output /dev/null "$STAGING_BASE_URL/"
+          curl --fail-with-body --show-error --silent \
+            --max-time 20 --retry 2 --retry-all-errors --retry-delay 5 \
+            "$STAGING_BASE_URL/api/health" > "$RUNNER_TEMP/staging-health.json"
+          node --input-type=module <<'NODE'
+          import { readFile } from "node:fs/promises";
+
+          const health = JSON.parse(await readFile(`${process.env.RUNNER_TEMP}/staging-health.json`, "utf8"));
+          if (health.status !== "ok") throw new Error("Staging health status is not ok.");
+          for (const dependency of ["database", "redis", "worker"]) {
+            if (health.dependencies?.[dependency] !== "ok") {
+              throw new Error(`Staging dependency ${dependency} is not healthy.`);
+            }
+          }
+          console.log("Staging homepage and all required dependencies are healthy.");
+          NODE
+      - name: Notify configured webhook on failure
+        if: failure()
+        shell: bash
+        env:
+          STAGING_ALERT_WEBHOOK_URL: ${{ secrets.STAGING_ALERT_WEBHOOK_URL }}
+        run: |
+          if [[ -z "$STAGING_ALERT_WEBHOOK_URL" ]]; then
+            echo "No staging alert webhook configured; failure remains visible in GitHub Actions."
+            exit 0
+          fi
+          case "$STAGING_ALERT_WEBHOOK_URL" in
+            https://*) ;;
+            *) echo "STAGING_ALERT_WEBHOOK_URL must use HTTPS" >&2; exit 2 ;;
+          esac
+          curl --fail-with-body --show-error --silent --output /dev/null \
+            --max-time 10 \
+            -H "Content-Type: application/json" \
+            --data-raw '{"text":"TamuKita staging health check failed. Inspect the GitHub Actions run for details."}' \
+            "$STAGING_ALERT_WEBHOOK_URL"
