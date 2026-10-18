@@ -50,7 +50,7 @@ async function signIn(page: Page, email: string, password: string) {
   await page.waitForURL(/\/dashboard(?:\/|$)/);
 }
 
-test("public guest flows and marketplace page view metrics work, and content reviewers can moderate reports", async ({ page, browser }) => {
+test("public guest flows and marketplace page view metrics work, and content reviewers can moderate reports", async ({ page, browser, baseURL }) => {
   test.setTimeout(90_000);
   const customerEmail = process.env.E2E_CUSTOMER_EMAIL;
   const customerPassword = process.env.E2E_CUSTOMER_PASSWORD;
@@ -73,6 +73,11 @@ test("public guest flows and marketplace page view metrics work, and content rev
   const previousViewCount = await readInvitationViewCount(metricDate);
   const response = await page.goto(`/${invitationSlug}?g=${encodeURIComponent(guestToken)}`);
   expect(response?.status()).toBe(200);
+  if (!baseURL) throw new Error("The E2E base URL is required to verify the invitation share link.");
+  const shareLink = await page.getByRole("link", { name: "Bagikan undangan ini" }).getAttribute("href");
+  expect(shareLink).toBeTruthy();
+  const shareText = new URL(shareLink as string).searchParams.get("text");
+  expect(shareText).toContain(new URL(`/${invitationSlug}`, baseURL).toString());
   await expect.poll(() => readInvitationViewCount(metricDate), { timeout: 5_000 }).toBe(previousViewCount + 1);
 
   const previousMarketplaceVisitors = await readPlatformViewCount("template_catalog_unique_visitors", metricDate);

@@ -4,6 +4,7 @@ import { after } from "next/server";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { PublicInvitation } from "@/components/public-invitation";
+import { InvitationPreview } from "@/components/invitation-preview";
 import { createInitialDraft, reservedSlugs } from "@/lib/invitations";
 import { parseInvitationDraft } from "@/lib/invitation-server";
 import { getPrismaClient } from "@/lib/prisma";
@@ -71,7 +72,8 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
   const record = await findPublished(slug);
   if (!record?.draft || !record.template) {
     if (slug === "nara-dimas") {
-      return <PublicInvitation slug={slug} initialDraft={{ ...createInitialDraft(), slug, publishedAt: "2026-01-01T00:00:00.000Z" }} initialRsvpCount={0} isExample />;
+      const exampleDraft = { ...createInitialDraft(), slug, publishedAt: "2026-01-01T00:00:00.000Z" };
+      return <PublicInvitation slug={slug} initialDraft={exampleDraft} initialRsvpCount={0} isExample preview={<InvitationPreview draft={exampleDraft} full mode="example" />} />;
     }
     notFound();
   }
@@ -102,5 +104,5 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
     take: 30,
     select: { id: true, displayName: true, message: true, createdAt: true },
   });
-  return <PublicInvitation slug={slug} initialDraft={record.draft} initialRsvpCount={record._count.rsvps} initialGuestbook={guestbook.map((entry) => ({ ...entry, createdAt: entry.createdAt.toISOString() }))} recipientName={guestLink?.guest.name} guestToken={guestLink ? candidateToken ?? undefined : undefined} template={record.template} featureAccess={record.featureAccess} />;
+  return <PublicInvitation slug={slug} initialDraft={record.draft} initialRsvpCount={record._count.rsvps} initialGuestbook={guestbook.map((entry) => ({ ...entry, createdAt: entry.createdAt.toISOString() }))} recipientName={guestLink?.guest.name} guestToken={guestLink ? candidateToken ?? undefined : undefined} featureAccess={record.featureAccess} preview={<InvitationPreview draft={record.draft} full recipientName={guestLink?.guest.name} template={record.template} mode="public" />} />;
 }
