@@ -9,7 +9,7 @@ Audit terhadap *Master Plan End-to-End — TamuKita*, versi 2.0. Status per 18 O
 | 01 | PRD dan aturan bisnis | Sebagian | Alur customer, admin, reseller, pembayaran, dan lisensi tercermin di aplikasi. Identitas operator, retensi, refund final, pelindungan anak, vendor/lokasi pemrosesan, serta tinjauan hukum sengaja tetap terbuka; lihat [checklist legal](legal/LAUNCH-CHECKLIST.md). |
 | 02 | UX customer, admin, reseller, developer | Sebagian | Halaman dan alur utama tersedia dan sebagian diuji Playwright pada desktop serta browser mobile. Persetujuan prototype/desain tersendiri belum tercatat. |
 | 03 | Database multi-tenant dan RBAC | Selesai di kode | Schema Prisma memisahkan workspace, pemilik/pembuat undangan, anggota, pembayaran, reseller, dan ledger kredit. Pengujian E2E mencakup batas akses akun dan reseller. |
-| 04 | Repository, CI/CD, Docker, staging | Sebagian | Docker Compose dan GitHub Actions tersedia; workflow validasi memeriksa lint, typecheck, unit, build, konfigurasi Tunnel, dan restore drill, sedangkan workflow E2E terpisah menjalankan Playwright. Dokploy belum menjalankan service staging. Domain staging tersetel, tetapi tunnel masih 502; lihat [runbook Dokploy](deploy/dokploy.md). |
+| 04 | Repository, CI/CD, Docker, staging | Sebagian | Docker Compose dan GitHub Actions tersedia; workflow validasi memeriksa lint, typecheck, unit, build, konfigurasi Tunnel, dan restore drill, sedangkan workflow E2E terpisah menjalankan Playwright. Connector Tunnel staging sudah berjalan dan DNS publik sudah dialihkan, tetapi origin `dokploy-traefik` gagal di-resolve sehingga health check masih 502; aplikasi staging belum dideploy. Lihat [runbook Dokploy](deploy/dokploy.md). |
 | 05 | Template SDK dan tiga template | Selesai di kode | `royal-gold`, `elegant-cream`, dan `modern-sage` tersedia. Schema dinamis, renderer, versioning, dan review kandidat diuji melalui validasi serta E2E. Lihat [kontrak Template SDK](template-sdk.md). |
 | 06 | Smart Form dan live preview | Selesai di kode | Editor menyimpan draft, memulihkan perubahan, menyediakan preview, dan memvalidasi field template di server; tercakup pada E2E editor. |
 | 07 | Photo Editor dan media pipeline | Selesai di kode; layanan nyata belum diverifikasi | Upload/crop, pemrosesan worker, hasil WebP, dan pemulihan edit diuji dengan R2 mock. Kredensial serta bucket R2 non-production belum diuji dari VPS. |
@@ -18,7 +18,7 @@ Audit terhadap *Master Plan End-to-End — TamuKita*, versi 2.0. Status per 18 O
 | 10 | Lisensi template dan billing | Selesai di kode; keputusan refund terbuka | Lisensi, paket, entitlement, renewal hosting, rekonsiliasi, dan alur refund tersedia. Kebijakan bisnis final harus ditetapkan operator sebelum publikasi. |
 | 11 | Kredit reseller dan admin-managed | Selesai di kode; pembayaran nyata belum diverifikasi | Pembuatan undangan admin, persetujuan akses pelanggan, staf reseller, ledger kredit, aktivasi, dan laporan memiliki cakupan E2E dengan provider mock. |
 | 12 | QA otomatis, keamanan, dan load test | Sebagian | GitHub CI dan E2E smoke terbaru lulus; CI juga menjalankan restore drill terisolasi. Uji LCP/load 1.000 VU di staging, pengujian provider nyata, restore VPS, monitoring eksternal, dan pembuktian isolasi runtime belum dilakukan. |
-| 13 | Pilot dan go-live production | Belum dimulai | Staging belum dideploy dan belum lulus health check publik. Keputusan legal/operator masih terbuka; belum ada pilot atau deployment production. |
+| 13 | Pilot dan go-live production | Belum dimulai | Aplikasi staging belum dideploy dan belum lulus health check publik. Keputusan legal/operator masih terbuka; belum ada pilot atau deployment production. |
 
 ## Definition of Done
 
@@ -36,9 +36,9 @@ Audit terhadap *Master Plan End-to-End — TamuKita*, versi 2.0. Status per 18 O
 
 ## Urutan penyelesaian yang tersisa
 
-1. Siapkan Tunnel khusus staging yang terhubung ke network `dokploy-network`; simpan token hanya di secret layanan `tamukita-staging-tunnel` sebagai `TUNNEL_TOKEN`. Jangan memasukkan token ke chat atau repository. Alihkan `staging.tamukita.io` ke tunnel tersebut setelah connector sehat.
+1. Perbaiki resolusi origin Tunnel: `dokploy-traefik` belum ditemukan dari connector pada `dokploy-network`, sehingga request publik masih 502. Tunnel khusus sudah sehat, token disimpan sebagai secret layanan `tamukita-staging-tunnel`, dan DNS sudah dialihkan; route lama `tigakaki1` masih menunggu konfirmasi penghapusan.
 2. Pastikan environment staging memakai database, `POSTGRES_PASSWORD`, `AUTH_SECRET`, dan `NEXT_PUBLIC_APP_URL` khusus staging. Tambahkan kredensial Xendit Test Mode, bucket R2 non-production, serta email uji bila jalurnya akan diuji.
-3. Jalankan deploy manual di Dokploy, pastikan container sehat, lalu periksa `https://staging.tamukita.io/api/health` dan alur smoke test.
+3. Setelah origin berfungsi, deploy aplikasi secara manual di Dokploy, pastikan container sehat, lalu periksa `https://staging.tamukita.io/api/health` dan alur smoke test.
 4. Isi GitHub environment `staging` dengan `STAGING_BASE_URL`, `STAGING_INVITATION_PATH`, dan `PRODUCTION_HEALTH_URL`. Jalankan workflow `staging-quality` hanya setelah isolasi target diverifikasi dan operator mengonfirmasi kesiapan beban sampai 1.000 virtual user.
 5. Lakukan restore drill dan pemeriksaan monitoring di VPS, selesaikan keputusan operator/legal yang terbuka, lalu jalankan pilot sebelum production.
 

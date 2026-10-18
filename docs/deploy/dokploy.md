@@ -6,10 +6,11 @@
 - Environment `production` memakai layanan Compose `tamukita`.
 - Environment `staging` memakai layanan Compose `tamukita-staging` dan `tamukita-staging-tunnel`.
 - Layanan aplikasi staging mengambil repository `kuloryan1/tamukita`, branch `main`, dan `./docker-compose.yml`. Connector mengambil repository yang sama dan branch `main`, dengan Compose path `./docker-compose.staging-tunnel.yml`.
-- Auto-deploy mati pada kedua layanan staging. Tab Deployments Dokploy menunjukkan `No deployments found` untuk keduanya.
+- Auto-deploy mati pada kedua layanan staging. Aplikasi `tamukita-staging` belum pernah dideploy; connector `tamukita-staging-tunnel` sudah dideploy dan berjalan.
 - Domain Dokploy `staging.tamukita.io` sudah diarahkan ke service `web`, port `3000`, path `/`; panel menampilkan HTTP dan `Cert: none`. Perubahan domain perlu diterapkan melalui deploy Compose.
-- Tab Environment menampilkan nilai tersamarkan. Keberadaan `NEXT_PUBLIC_APP_URL`, `POSTGRES_PASSWORD`, dan `AUTH_SECRET` belum dapat dikonfirmasi dari panel ini; periksa nama variabel dan kecocokan nilainya di Dokploy sebelum deploy tanpa menyalin atau membagikan nilai secret.
-- Published application Cloudflare Tunnel `tigakaki1` sudah diarahkan ke `http://dokploy-traefik:80`. Cloudflare mengonfirmasi record DNS CNAME dibuat ke tunnel; query DNS lokal mengembalikan alamat edge Cloudflare. Connector `cloudflared` saat ini memakai network mode `host`, sehingga nama `dokploy-traefik` tidak dapat di-resolve dari connector. Request HTTPS ke hostname mengembalikan 502. Mencoba origin `127.0.0.1:80` juga ditolak karena Traefik tidak memiliki host port mapping; route sudah dikembalikan ke target internal `dokploy-traefik:80`.
+- Environment connector memiliki `TUNNEL_TOKEN` yang tersimpan sebagai secret layanan Dokploy; token tidak dicatat di repository. Cloudflare melaporkan Tunnel `tamukita-staging` sehat dengan satu replica. Rute `staging.tamukita.io` → `http://dokploy-traefik:80` dan DNS publik sudah dipindahkan ke Tunnel baru. Rute lama pada `tigakaki1` masih tersimpan sambil menunggu konfirmasi penghapusan.
+- Request HTTPS ke `https://staging.tamukita.io/api/health` masih mengembalikan 502. Log connector menunjukkan `dokploy-traefik` gagal di-resolve (`lookup dokploy-traefik on 127.0.0.11:53: no such host`), meskipun connector dikonfigurasi pada network `dokploy-network`. Koneksi ke origin melalui Tunnel belum berfungsi.
+- Environment aplikasi menampilkan nilai tersamarkan. Keberadaan/kecocokan `NEXT_PUBLIC_APP_URL`, `POSTGRES_PASSWORD`, dan `AUTH_SECRET` belum dapat dikonfirmasi; verifikasi nama variabel dan nilainya di Dokploy sebelum deploy tanpa menyalin atau membagikan secret.
 - Layanan Compose mengekspos web secara internal pada port `3000`. PostgreSQL dan Redis tidak memublikasikan port ke host.
 
 Rate limit memakai alamat dari elemen terakhir `X-Forwarded-For`, yang ditambahkan Traefik dari alamat peer yang terhubung langsung. Aplikasi mengabaikan `X-Real-IP` dan mengembalikan `unknown` jika nilai terakhir bukan alamat IP yang valid. Pertahankan lalu lintas aplikasi melalui Traefik Dokploy dan jangan aktifkan `forwardedHeaders.notAppendXForwardedFor`; bila ada proxy lain di depan Traefik, konfigurasikan proxy itu sebagai sumber forwarded header tepercaya pada Traefik.
@@ -18,20 +19,19 @@ Pemisahan environment Dokploy belum berarti staging siap menerima trafik. Sebelu
 
 ## Persiapan staging
 
-1. Domain `staging.tamukita.io` dan rute publik saat ini sudah disimpan pada Tunnel `tigakaki1`. Rute itu masih menghasilkan 502 karena konektornya memakai `network_mode: host` dan tidak dapat menemukan `dokploy-traefik`. Jangan menambahkan host port mapping pada Traefik.
-2. Compose service `tamukita-staging-tunnel` sudah dibuat di Dokploy staging, mengambil repository `kuloryan1/tamukita` branch `main` dengan path `./docker-compose.staging-tunnel.yml`; auto-deploy mati dan belum ada deployment. File tersebut memakai image `cloudflare/cloudflared:2026.10.1`, tanpa host port, dan menghubungkan connector ke network `dokploy-network`. Langkah yang tersisa: buat Tunnel khusus staging, simpan tokennya sebagai environment rahasia `TUNNEL_TOKEN` hanya pada layanan connector ini, lalu deploy dan pastikan Cloudflare menampilkan konektor sehat. Jangan commit token ke repository atau memasukkannya ke environment tingkat project. Lihat [panduan Tunnel resmi Dokploy](https://docs.dokploy.com/docs/core/guides/cloudflare-tunnels) dan [rilis resmi cloudflared](https://github.com/cloudflare/cloudflared/releases/tag/2026.10.1).
-3. Pindahkan rute publik `staging.tamukita.io` ke Tunnel staging tersebut, tetap dengan origin `http://dokploy-traefik:80`. Ubah rute yang ada agar DNS hostname diarahkan ke tunnel staging; jangan membuat dua record DNS yang bersaing untuk hostname yang sama. Pastikan HTTPS di edge Cloudflare aktif. Sesudah itu, redeploy Compose staging untuk menerapkan domain ke Traefik.
-4. Simpan nilai environment aplikasi di pengaturan layanan Compose staging Dokploy. Jangan simpan secret di variabel tingkat project karena variabel project tersedia untuk semua layanan di project tersebut.
-5. Isi variabel wajib dengan nilai khusus staging:
+1. Connector khusus `tamukita-staging` sudah berjalan dari image `cloudflare/cloudflared:2026.10.1` pada network `dokploy-network`; `TUNNEL_TOKEN` tersimpan hanya di environment rahasia layanan Dokploy. Jangan commit token ke repository atau memasukkannya ke environment tingkat project. Lihat [panduan Tunnel resmi Dokploy](https://docs.dokploy.com/docs/core/guides/cloudflare-tunnels) dan [rilis resmi cloudflared](https://github.com/cloudflare/cloudflared/releases/tag/2026.10.1).
+2. Rute `staging.tamukita.io` sudah ditambahkan pada Tunnel baru dengan origin `http://dokploy-traefik:80`; DNS publik mengarah ke Tunnel baru dan HTTPS melalui Cloudflare masih menghasilkan 502. Log menunjukkan nama `dokploy-traefik` tidak bisa di-resolve dari connector. Selesaikan konektivitas network/origin sebelum menyatakan hostname sehat. Rute lama pada `tigakaki1` masih tersimpan sambil menunggu konfirmasi penghapusan.
+3. Simpan dan verifikasi nilai environment aplikasi di pengaturan layanan Compose staging Dokploy. Jangan simpan secret di variabel tingkat project karena variabel project tersedia untuk semua layanan di project tersebut.
+4. Isi variabel wajib dengan nilai khusus staging:
    - `NEXT_PUBLIC_APP_URL` — origin HTTPS staging.
    - `POSTGRES_PASSWORD` — password database staging yang acak dan tidak dipakai production.
    - `AUTH_SECRET` — secret autentikasi acak khusus staging.
-6. Siapkan kredensial Xendit **Test Mode**, bucket R2 non-production, dan konfigurasi email uji bila alur tersebut akan diuji. Jangan memakai kredensial atau bucket production.
-7. Periksa lagi nama Compose project, domain, URL publik, dan semua kredensial agar staging tidak tersambung ke data production.
-8. Jalankan deploy secara manual. Setelah migrasi dan container sehat, periksa `https://<origin-staging>/api/health` dan selesaikan smoke test alur yang akan diuji.
-9. Jalankan pengujian LCP atau load hanya setelah staging benar-benar terisolasi. Workflow `staging-quality` juga meminta origin HTTPS, path undangan uji yang sudah diterbitkan, serta konfirmasi operator bahwa target siap menerima hingga 1.000 virtual user.
+5. Siapkan kredensial Xendit **Test Mode**, bucket R2 non-production, dan konfigurasi email uji bila alur tersebut akan diuji. Jangan memakai kredensial atau bucket production.
+6. Periksa lagi nama Compose project, domain, URL publik, dan semua kredensial agar staging tidak tersambung ke data production.
+7. Setelah origin dapat dijangkau, jalankan deploy aplikasi secara manual. Setelah migrasi dan container sehat, periksa `https://staging.tamukita.io/api/health` dan selesaikan smoke test alur yang akan diuji.
+8. Jalankan pengujian LCP atau load hanya setelah staging benar-benar terisolasi. Workflow `staging-quality` juga meminta origin HTTPS, path undangan uji yang sudah diterbitkan, serta konfirmasi operator bahwa target siap menerima hingga 1.000 virtual user.
 
-Jangan menganggap pembuatan environment atau service sebagai deployment yang berhasil. Keduanya saat ini hanya konfigurasi sumber di Dokploy; tidak ada container staging yang dibuat atau dinyalakan.
+Jangan menganggap pembuatan environment atau service sebagai deployment aplikasi yang berhasil. Connector Tunnel sudah berjalan, tetapi service aplikasi belum dideploy dan hostname publik belum lolos health check.
 
 ## Persiapan production
 
@@ -48,7 +48,8 @@ Sesudah container production pertama berjalan, temukan nama Compose project yang
 
 ## Gate yang belum selesai
 
-- Origin staging `https://staging.tamukita.io` sudah ditetapkan dan DNS mengarah ke Cloudflare, tetapi request sekarang mengembalikan 502. Connector `tigakaki1` berjalan dengan network mode `host`, sedangkan `dokploy-traefik` tidak memiliki host port mapping. Tunnel staging terpisah dan tokennya belum dibuat/disimpan di Dokploy; setelah disiapkan, verifikasi HTTPS dan `/api/health`.
+- Tunnel `tamukita-staging` sehat, token tersimpan sebagai secret layanan Dokploy, dan DNS publik `staging.tamukita.io` mengarah ke Tunnel baru. Request masih 502 karena connector tidak dapat me-resolve `dokploy-traefik` pada DNS Docker (`127.0.0.11`); selesaikan akses origin dan verifikasi HTTPS serta `/api/health`. Route lama pada `tigakaki1` masih tersimpan sambil menunggu konfirmasi penghapusan.
+- Service aplikasi `tamukita-staging` belum dideploy. Nama dan nilai environment wajib aplikasi belum diverifikasi.
 - Operator belum memberikan path undangan publik QA atau konfirmasi tertulis bahwa target terisolasi siap menerima hingga 1.000 virtual user.
 - Isolasi staging dari production belum dibuktikan melalui deployment dan pemeriksaan konfigurasi runtime.
 - Uji Xendit Test Mode, R2 nyata, restore di VPS, LCP, load 1.000 VU, dan monitoring eksternal belum dijalankan.
