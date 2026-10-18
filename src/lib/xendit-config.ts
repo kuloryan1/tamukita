@@ -27,7 +27,7 @@ export function getXenditSecretKey(environment: XenditConfigEnvironment = proces
   if (loopbackHosts.has(hostname)) return secretKey;
 
   const isProductionRuntime = environment.NODE_ENV === "production" || productionHosts.has(hostname);
-  if (isProductionRuntime && isDevelopmentKey) return undefined;
+  if (isProductionRuntime && (!productionHosts.has(hostname) || isDevelopmentKey)) return undefined;
 
   return secretKey;
 }

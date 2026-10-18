@@ -28,6 +28,14 @@ describe("getXenditSecretKey", () => {
     }
   });
 
+  test("rejects any Xendit key for unapproved production hosts", () => {
+    expect(getXenditSecretKey({
+      NODE_ENV: "production",
+      NEXT_PUBLIC_APP_URL: "https://preview.example.com",
+      XENDIT_SECRET_KEY: "xnd_live_test-key",
+    })).toBeUndefined();
+  });
+
   test("allows a non-development key for production origins", () => {
     expect(getXenditSecretKey({
       NODE_ENV: "production",
