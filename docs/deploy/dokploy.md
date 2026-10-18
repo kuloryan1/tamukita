@@ -10,6 +10,7 @@
 - Domain `staging.tamukita.io` diarahkan oleh Tunnel Cloudflare langsung ke container web staging pada `dokploy-network` (`http://tamukita-staging-xwcuty-web-1:3000`). Route melewati proxy global Dokploy karena container `dokploy-traefik` tidak tersedia/resolvable pada host ini. Panel Dokploy juga masih menyimpan domain service `web:3000` dengan HTTP dan `Cert: none`; trafik publik staging memakai Tunnel.
 - Environment connector memiliki `TUNNEL_TOKEN` yang tersimpan sebagai secret layanan Dokploy; token tidak dicatat di repository. Cloudflare melaporkan Tunnel `tamukita-staging` sehat dengan satu replica. Route lama pada `tigakaki1` sudah dihapus; CNAME proxied `staging.tamukita.io` menunjuk ke Tunnel baru.
 - Pemeriksaan publik terakhir: `https://staging.tamukita.io/` menjawab HTTP 200 dengan judul TamuKita, dan `/api/health` menjawab HTTP 200 dengan database, Redis, dan worker berstatus `ok`.
+- Apex `https://tamukita.io/` belum diarahkan ke aplikasi production. Pemeriksaan GET `https://tamukita.io/api/health` saat ini menjawab HTTP 200 dengan judul `Parked Domain name on Hostinger DNS system`; ini halaman parkir Hostinger, bukan health check TamuKita. Jangan gunakan URL itu sebagai `PRODUCTION_HEALTH_URL` sampai domain production benar-benar menunjuk ke aplikasi.
 - Environment service aplikasi sudah memiliki `NEXT_PUBLIC_APP_URL=https://staging.tamukita.io`, `POSTGRES_PASSWORD`, dan `AUTH_SECRET` khusus staging. Nilai rahasia hanya tersimpan pada service Dokploy; jangan menyalin atau membagikannya.
 - Status terakhir setelah redeploy commit `1873251`: PostgreSQL dan Redis sehat; migrasi keluar dengan kode 0; worker berjalan dan mencatat `[background-worker] ready`; web berstatus `healthy`. Docker Compose menetapkan `HOSTNAME: 0.0.0.0`, sehingga probe healthcheck ke `127.0.0.1` bekerja. File `src/lib/email-transport.ts` sudah disertakan pada worker image.
 - Layanan Compose mengekspos web secara internal pada port `3000`. PostgreSQL dan Redis tidak memublikasikan port ke host.
@@ -55,6 +56,7 @@ Sesudah container production pertama berjalan, temukan nama Compose project yang
 ## Gate yang belum selesai
 
 - Tunnel `tamukita-staging` sehat dengan satu replica; token tersimpan sebagai secret layanan Dokploy. DNS `staging.tamukita.io` menunjuk ke Tunnel baru; route lama pada `tigakaki1` sudah dihapus. Tunnel mengarah langsung ke container web staging dan pemeriksaan halaman serta `/api/health` publik lulus.
+- Domain apex `tamukita.io` masih menampilkan halaman parked Hostinger. HTTPS production dan URL health aplikasi production belum tersedia; HTTP 200 pada halaman parkir tidak memenuhi gate production.
 - Service aplikasi staging sehat: worker, PostgreSQL, Redis, migrasi, dan health check web lulus. Jalankan QA blueprint pada staging setelah fixture undangan uji dan kredensial non-production siap.
 - Path undangan publik QA, variabel GitHub `STAGING_INVITATION_PATH` dan `PRODUCTION_HEALTH_URL`, serta konfirmasi operator bahwa target terisolasi siap menerima hingga 1.000 virtual user masih belum diberikan.
 - Isolasi staging dari production belum dibuktikan melalui deployment dan pemeriksaan konfigurasi runtime.
