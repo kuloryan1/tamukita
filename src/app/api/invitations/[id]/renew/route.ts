@@ -5,6 +5,7 @@ import { getPrismaClient } from "@/lib/prisma";
 import { allowRequest } from "@/lib/rate-limit";
 import { getHostingRenewalPrice, getHostingTermDays } from "@/lib/platform-settings";
 import { getXenditApiUrl } from "@/lib/xendit-api";
+import { getXenditSecretKey } from "@/lib/xendit-config";
 
 export const runtime = "nodejs";
 
@@ -47,7 +48,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const renewalWindowStartsAt = new Date(Date.now() + 30 * 86_400_000);
   if (invitation.expiresAt > renewalWindowStartsAt) return NextResponse.json({ error: "Perpanjangan dapat dilakukan dalam 30 hari sebelum masa hosting berakhir." }, { status: 409 });
 
-  const secret = process.env.XENDIT_SECRET_KEY;
+  const secret = getXenditSecretKey();
   if (!secret) return NextResponse.json({ error: "Pembayaran belum dikonfigurasi di server." }, { status: 503 });
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
   const successUrl = new URL("/dashboard/checkout/return", baseUrl);

@@ -7,6 +7,7 @@ import { allowRequest } from "@/lib/rate-limit";
 import { readJsonBody } from "@/lib/request-json";
 import { getResellerCreditPrice } from "@/lib/platform-settings";
 import { getXenditApiUrl } from "@/lib/xendit-api";
+import { getXenditSecretKey } from "@/lib/xendit-config";
 
 export const runtime = "nodejs";
 
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
 
   const unitPrice = await getResellerCreditPrice(parsed.data.sku);
   if (!unitPrice) return NextResponse.json({ error: "Harga kredit reseller belum dikonfigurasi." }, { status: 503 });
-  const secret = process.env.XENDIT_SECRET_KEY;
+  const secret = getXenditSecretKey();
   if (!secret) return NextResponse.json({ error: "Pembayaran belum dikonfigurasi di server." }, { status: 503 });
 
   const prisma = getPrismaClient();

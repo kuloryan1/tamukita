@@ -10,6 +10,7 @@ import { isTemplateSelectable } from "@/lib/template-sdk";
 import { getCustomerActivationPrice, getHostingTermDays } from "@/lib/platform-settings";
 import { buildCustomerCheckoutOrder, isCustomerPlanSnapshot, type CustomerPlanSnapshot } from "@/lib/customer-checkout";
 import { getXenditApiUrl } from "@/lib/xendit-api";
+import { getXenditSecretKey } from "@/lib/xendit-config";
 import { readJsonBody } from "@/lib/request-json";
 import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
 import { resolveInvitationFeatureAccess, validateDraftFeatureAccess } from "@/lib/invitation-features";
@@ -221,7 +222,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ published: true, slug: invitation.slug, free: true });
   }
 
-  const secret = process.env.XENDIT_SECRET_KEY;
+  const secret = getXenditSecretKey();
   if (!secret) return NextResponse.json({ error: "Pembayaran belum dikonfigurasi di server." }, { status: 503 });
   const customerOrder = buildCustomerCheckoutOrder({
     template: {

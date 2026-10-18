@@ -9,6 +9,7 @@ import { recalculateRefundedOrder, restoreResellerCreditsAfterFailedRefund } fro
 import { isUntrackedAdjustmentActivation } from "@/lib/credit-lots";
 import { getResellerCreditState, lockResellerCreditBalance } from "@/lib/reseller-credits";
 import { getXenditApiUrl } from "@/lib/xendit-api";
+import { getXenditSecretKey } from "@/lib/xendit-config";
 
 export const runtime = "nodejs";
 
@@ -52,7 +53,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const prisma = getPrismaClient();
   const admin = await prisma.user.findUnique({ where: { id: userId }, select: { platformRole: true } });
   if (admin?.platformRole !== "SUPER_ADMIN" && admin?.platformRole !== "FINANCE") return NextResponse.json({ error: "Akses ditolak." }, { status: 403 });
-  const secret = process.env.XENDIT_SECRET_KEY;
+  const secret = getXenditSecretKey();
   if (!secret) return NextResponse.json({ error: "Kunci API Xendit belum dikonfigurasi." }, { status: 503 });
 
   const reservation = await prisma.$transaction(async (tx) => {
