@@ -74,6 +74,11 @@ test("public guest flows and marketplace page view metrics work, and content rev
   const response = await page.goto(`/${invitationSlug}?g=${encodeURIComponent(guestToken)}`);
   expect(response?.status()).toBe(200);
   if (!baseURL) throw new Error("The E2E base URL is required to verify the invitation share link.");
+  expect(response?.headers()["referrer-policy"]).toBe("no-referrer");
+  expect(await page.locator('meta[property="og:url"]').getAttribute("content")).toBe(new URL(`/${invitationSlug}`, baseURL).toString());
+  const pageMetadata = await page.locator("head").innerHTML();
+  expect(pageMetadata).not.toContain(guestToken);
+  expect(pageMetadata).not.toContain(guestName);
   const shareLink = await page.getByRole("link", { name: "Bagikan undangan ini" }).getAttribute("href");
   expect(shareLink).toBeTruthy();
   const shareText = new URL(shareLink as string).searchParams.get("text");

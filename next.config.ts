@@ -7,7 +7,9 @@ const nextConfig: NextConfig = {
     const securityHeaders = [
       { key: "X-Content-Type-Options", value: "nosniff" },
       { key: "X-Frame-Options", value: "DENY" },
-      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+      // Personalized invitation URLs carry a bearer token in the query string.
+      // Prevent subsequent same-origin requests from sending it as a Referer.
+      { key: "Referrer-Policy", value: "no-referrer" },
       { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
       { key: "X-XSS-Protection", value: "0" },
     ];

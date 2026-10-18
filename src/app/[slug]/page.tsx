@@ -15,6 +15,9 @@ import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
 type PageProps = { params: Promise<{ slug: string }> };
 type InvitationPageProps = PageProps & { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
+// Guest links personalize the server-rendered page from a bearer token in the query.
+export const dynamic = "force-dynamic";
+
 function invitationMetadata(slug: string, title: string, description: string): Metadata {
   const configuredUrl = process.env.NEXT_PUBLIC_APP_URL || "https://tamukita.io";
   const baseUrl = new URL(configuredUrl).origin;
