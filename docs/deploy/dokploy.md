@@ -11,7 +11,7 @@
 - Environment connector memiliki `TUNNEL_TOKEN` yang tersimpan sebagai secret layanan Dokploy; token tidak dicatat di repository. Cloudflare melaporkan Tunnel `tamukita-staging` sehat dengan satu replica. Rute `staging.tamukita.io` → `http://dokploy-traefik:80` aktif pada Tunnel baru. Route lama pada `tigakaki1` sudah dihapus; Cloudflare ikut menghapus CNAME lama, lalu CNAME proxied dibuat ulang agar menunjuk ke Tunnel baru.
 - Request HTTPS ke `https://staging.tamukita.io/api/health` masih mengembalikan 502. Log connector menunjukkan `dokploy-traefik` gagal di-resolve (`lookup dokploy-traefik on 127.0.0.11:53: no such host`), meskipun connector dikonfigurasi pada network `dokploy-network`. Koneksi ke origin melalui Tunnel belum berfungsi.
 - Environment service aplikasi sudah memiliki `NEXT_PUBLIC_APP_URL=https://staging.tamukita.io`, `POSTGRES_PASSWORD`, dan `AUTH_SECRET` khusus staging. Nilai rahasia hanya tersimpan pada service Dokploy; jangan menyalin atau membagikannya.
-- Status container terakhir: PostgreSQL dan Redis sehat; migrasi keluar dengan kode 0; web berjalan tetapi `unhealthy`; worker berulang kali restart. Log worker menunjukkan `Cannot find module './lib/email-transport'` dari `/app/src/worker.ts`. Dockerfile worker stage belum menyalin `src/lib/email-transport.ts`; tambahkan file itu ke image lalu redeploy.
+- Status terakhir setelah redeploy commit `def9268`: PostgreSQL dan Redis sehat; migrasi keluar dengan kode 0; worker berjalan dan mencatat `[background-worker] ready`. File `src/lib/email-transport.ts` sudah disertakan pada worker image. Pemeriksaan dari terminal container web ke `/api/health` melalui hostname container mengembalikan 200 dengan database, Redis, dan worker `ok`; health check Docker yang memakai `127.0.0.1` masih gagal karena Next.js terikat ke hostname container. `docker-compose.yml` sekarang menetapkan `HOSTNAME: 0.0.0.0` untuk listener web; redeploy perubahan tersebut masih diperlukan.
 - Layanan Compose mengekspos web secara internal pada port `3000`. PostgreSQL dan Redis tidak memublikasikan port ke host.
 
 Rate limit memakai alamat dari elemen terakhir `X-Forwarded-For`, yang ditambahkan Traefik dari alamat peer yang terhubung langsung. Aplikasi mengabaikan `X-Real-IP` dan mengembalikan `unknown` jika nilai terakhir bukan alamat IP yang valid. Pertahankan lalu lintas aplikasi melalui Traefik Dokploy dan jangan aktifkan `forwardedHeaders.notAppendXForwardedFor`; bila ada proxy lain di depan Traefik, konfigurasikan proxy itu sebagai sumber forwarded header tepercaya pada Traefik.
@@ -29,10 +29,10 @@ Pemisahan environment Dokploy belum berarti staging siap menerima trafik. Sebelu
    - `AUTH_SECRET` — secret autentikasi acak khusus staging.
 5. Siapkan kredensial Xendit **Test Mode**, bucket R2 non-production, dan konfigurasi email uji bila alur tersebut akan diuji. Jangan memakai kredensial atau bucket production.
 6. Periksa lagi nama Compose project, domain, URL publik, dan semua kredensial agar staging tidak tersambung ke data production.
-7. Perbaiki Dockerfile agar worker image menyertakan `src/lib/email-transport.ts`, lalu jalankan deploy aplikasi secara manual. Pastikan worker stabil dan container web sehat; setelah origin dapat dijangkau, periksa `https://staging.tamukita.io/api/health` dan selesaikan smoke test alur yang akan diuji.
+7. Dockerfile worker sudah diperbaiki agar menyertakan `src/lib/email-transport.ts`. Deploy Compose yang menetapkan `HOSTNAME: 0.0.0.0` untuk service web; pastikan worker stabil dan health check web sehat. Setelah origin dapat dijangkau, periksa `https://staging.tamukita.io/api/health` dan selesaikan smoke test alur yang akan diuji.
 8. Jalankan pengujian LCP atau load hanya setelah staging benar-benar terisolasi. Workflow `staging-quality` juga meminta origin HTTPS, path undangan uji yang sudah diterbitkan, serta konfirmasi operator bahwa target siap menerima hingga 1.000 virtual user.
 
-Deployment Compose sudah berjalan, tetapi belum sehat: worker restart karena satu modul tidak disalin ke image, hostname publik masih 502 karena connector tidak dapat me-resolve origin `dokploy-traefik`, dan health check publik belum lulus.
+Deployment Compose sudah berjalan dan worker sehat. Health check lokal web masih gagal karena listener Next.js terikat ke hostname container sedangkan probe Docker memakai `127.0.0.1`; perubahan `HOSTNAME: 0.0.0.0` sudah dibuat tetapi belum dideploy. Hostname publik masih 502 karena connector tidak dapat me-resolve origin `dokploy-traefik`, dan health check publik belum lulus.
 
 ## Persiapan production
 
@@ -50,7 +50,7 @@ Sesudah container production pertama berjalan, temukan nama Compose project yang
 ## Gate yang belum selesai
 
 - Tunnel `tamukita-staging` sehat, token tersimpan sebagai secret layanan Dokploy, route baru aktif, dan DNS publik `staging.tamukita.io` mengarah ke Tunnel baru. Route lama `staging.tamukita.io` pada `tigakaki1` sudah dihapus. Request masih 502 karena connector tidak dapat me-resolve `dokploy-traefik` pada DNS Docker (`127.0.0.11`); selesaikan akses origin dan verifikasi HTTPS serta `/api/health`.
-- Service aplikasi `tamukita-staging` sudah dideploy, tetapi worker restart karena modul `src/lib/email-transport.ts` hilang dari image. PostgreSQL dan Redis sehat; migrasi berhasil; web masih `unhealthy` sampai worker hidup dan heartbeat tersedia.
+- Service aplikasi `tamukita-staging` sudah dideploy. Worker, PostgreSQL, dan Redis sehat; migrasi berhasil; endpoint internal menghasilkan 200 beserta semua dependency `ok`. Health check Docker web masih `unhealthy` sampai perubahan bind `HOSTNAME: 0.0.0.0` dideploy. Tunnel origin masih 502.
 - Operator belum memberikan path undangan publik QA atau konfirmasi tertulis bahwa target terisolasi siap menerima hingga 1.000 virtual user.
 - Isolasi staging dari production belum dibuktikan melalui deployment dan pemeriksaan konfigurasi runtime.
 - Uji Xendit Test Mode, R2 nyata, restore di VPS, LCP, load 1.000 VU, dan monitoring eksternal belum dijalankan.

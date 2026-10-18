@@ -48,6 +48,7 @@ services:
       args:
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
     environment:
+      HOSTNAME: 0.0.0.0
       DATABASE_URL: postgresql://${POSTGRES_USER:-tamukita}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD before starting the application stack}@postgres:5432/${POSTGRES_DB:-tamukita}?schema=public
       REDIS_URL: redis://redis:6379
       AUTH_SECRET: ${AUTH_SECRET:?Set AUTH_SECRET in the deployment environment}
