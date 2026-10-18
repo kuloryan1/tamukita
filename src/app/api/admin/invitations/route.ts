@@ -16,7 +16,7 @@ export const runtime = "nodejs";
 const managedInvitationSchema = z.object({
   customerName: z.string().trim().min(2).max(80),
   customerEmail: z.email().trim().toLowerCase().max(254),
-  draft: invitationDraftSchema.omit({ id: true, updatedAt: true, publishedAt: true, isPublished: true }),
+  draft: invitationDraftSchema.omit({ id: true, updatedAt: true, publishedAt: true, isPublished: true, qaFixture: true }),
 });
 
 function workspaceSlug(name: string, id: string) {

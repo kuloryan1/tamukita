@@ -8,6 +8,10 @@ import { isR2PublicUrl, r2KeyFromPublicUrl } from "@/lib/r2";
 import { isEditorCompatibleTemplate, isSafeTemplateFieldKey, TEMPLATE_SDK_VERSION, validateTemplateManifest } from "@/lib/template-sdk";
 import { templateVersionRequiresAdminReview } from "@/templates/registry";
 
+const stagingQaOrigin = "https://staging.tamukita.io";
+const stagingQaFixtureSlug = "qa-blueprint-fixture";
+const stagingQaFixtureCoverPhoto = `${stagingQaOrigin}/qa-fixtures/couple-cover.webp`;
+
 export const invitationDraftSchema = z.object({
   id: z.string().uuid().optional(),
   slug: z.string().trim().min(3).max(48).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
@@ -33,6 +37,7 @@ export const invitationDraftSchema = z.object({
   coverPhoto: z.string().max(1_800_000).refine((value) => {
     if (!value) return true;
     if (isR2PublicUrl(value)) return true;
+    if (value === stagingQaFixtureCoverPhoto) return process.env.NEXT_PUBLIC_APP_URL === stagingQaOrigin;
     const match = /^data:image\/(jpeg|png|webp);base64,([a-z\d+/]+={0,2})$/i.exec(value);
     if (!match) return false;
     const bytes = Buffer.from(match[2], "base64");
@@ -56,11 +61,17 @@ export const invitationDraftSchema = z.object({
   updatedAt: z.string().datetime().optional(),
   publishedAt: z.string().datetime().optional(),
   isPublished: z.boolean().optional(),
+  qaFixture: z.boolean().optional(),
 });
 
 export function parseInvitationDraft(value: unknown): InvitationDraft | null {
   const result = invitationDraftSchema.safeParse(value);
   if (!result.success || !result.data.id) return null;
+  const isStagingQaFixture = process.env.NEXT_PUBLIC_APP_URL === stagingQaOrigin
+    && result.data.slug === stagingQaFixtureSlug
+    && result.data.qaFixture === true
+    && result.data.coverPhoto === stagingQaFixtureCoverPhoto;
+  if ((result.data.qaFixture === true || result.data.coverPhoto === stagingQaFixtureCoverPhoto) && !isStagingQaFixture) return null;
   return result.data as InvitationDraft;
 }
 

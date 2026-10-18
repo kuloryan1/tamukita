@@ -43,7 +43,7 @@ export async function POST(request: Request) {
   if (!userId) return NextResponse.json({ error: "Silakan masuk terlebih dahulu." }, { status: 401 });
   const body = await readJsonBody(request);
   if (!body.ok) return NextResponse.json({ error: "Isi draft tidak valid atau terlalu besar." }, { status: body.status });
-  const parsed = invitationDraftSchema.omit({ id: true, updatedAt: true, publishedAt: true, isPublished: true }).safeParse(body.value);
+  const parsed = invitationDraftSchema.omit({ id: true, updatedAt: true, publishedAt: true, isPublished: true, qaFixture: true }).safeParse(body.value);
   if (!parsed.success) return NextResponse.json({ error: "Detail draft undangan tidak valid." }, { status: 400 });
   if (parsed.data.coverPhoto || parsed.data.galleryPhotos.length || parsed.data.musicUrl) return NextResponse.json({ error: "Foto dan musik ditambahkan setelah draft dibuat." }, { status: 400 });
   const organizationId = await getWritableOrganizationId(userId);
