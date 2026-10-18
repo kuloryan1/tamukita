@@ -5,6 +5,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { Queue, Worker, type Job } from "bullmq";
 import IORedis from "ioredis";
 import { PrismaClient } from "./generated/prisma/client";
+import { isReservedNonDeliverableEmailAddress } from "./lib/email-address";
 import { getTransactionalEmailEndpoint } from "./lib/email-transport";
 import { WORKER_HEARTBEAT_KEY, WORKER_HEARTBEAT_TTL_SECONDS } from "./lib/worker-health";
 import {
@@ -172,6 +173,11 @@ async function sendPaymentEmail(payload: NotificationPayload) {
 }
 
 async function sendEmail(to: string, subject: string, text: string, html: string) {
+  if (isReservedNonDeliverableEmailAddress(to)) {
+    process.stdout.write("[background-worker] skipped delivery to reserved .invalid address\n");
+    return;
+  }
+
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
   if (!apiKey || !from) throw new Error("Layanan email belum dikonfigurasi.");

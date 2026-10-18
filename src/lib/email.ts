@@ -1,9 +1,12 @@
 import "server-only";
+import { isReservedNonDeliverableEmailAddress } from "@/lib/email-address";
 import { getTransactionalEmailEndpoint } from "@/lib/email-transport";
 
 type TransactionalEmail = { to: string; subject: string; html: string; text: string };
 
 export async function sendTransactionalEmail(message: TransactionalEmail) {
+  if (isReservedNonDeliverableEmailAddress(message.to)) return false;
+
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
   if (!apiKey || !from) return false;

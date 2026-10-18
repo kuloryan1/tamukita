@@ -22,7 +22,7 @@ npm run db:migrate
 npm run dev
 ```
 
-Buka `http://localhost:3000`. Jalankan `npm run worker` di terminal kedua untuk memproses email dan unggahan media melalui Redis. Worker media juga memerlukan konfigurasi R2 yang tercantum di bawah; email memerlukan `RESEND_API_KEY` dan `EMAIL_FROM`. Aplikasi menyimpan akun, workspace, draft, versi undangan, pesanan, lisensi template, pembayaran, RSVP, audit log, dan metrik kunjungan di PostgreSQL.
+Buka `http://localhost:3000`. Jalankan `npm run worker` di terminal kedua untuk memproses email dan unggahan media melalui Redis. Worker media juga memerlukan konfigurasi R2 yang tercantum di bawah; email memerlukan `RESEND_API_KEY` dan `EMAIL_FROM` yang dikonfigurasi eksplisit. Docker Compose tidak lagi mengisi sender production secara default. Alamat pada domain reserved `.invalid` selalu dilewati oleh jalur pengiriman, sehingga RSVP fixture QA tidak mencoba menghubungi Resend. Aplikasi menyimpan akun, workspace, draft, versi undangan, pesanan, lisensi template, pembayaran, RSVP, audit log, dan metrik kunjungan di PostgreSQL.
 
 `docker-compose.local.yml` hanya memublikasikan PostgreSQL dan Redis ke loopback untuk server development lokal. Compose utama tetap menjadi stack deployment yang dipakai Dokploy.
 
