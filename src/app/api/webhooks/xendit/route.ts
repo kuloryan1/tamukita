@@ -132,18 +132,18 @@ export async function POST(request: Request) {
   const prisma = getPrismaClient();
   const eventId = createHash("sha256").update(rawBody).digest("hex");
   try {
-    await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       const initialPaymentSession = await tx.paymentSession.findUnique({
         where: { providerSessionId: data.payment_session_id },
         include: { order: { include: { items: true, invitation: true, buyer: { select: { name: true, email: true } } } } },
       });
-      if (!initialPaymentSession) throw new Error("Sesi pembayaran Xendit belum tersimpan; webhook dapat dicoba ulang.");
+      if (!initialPaymentSession) return "retryable" as const;
       await tx.$queryRaw<Array<{ id: string }>>`SELECT "id" FROM "orders" WHERE "id" = ${initialPaymentSession.orderId}::uuid FOR UPDATE`;
       const paymentSession = await tx.paymentSession.findUnique({
         where: { id: initialPaymentSession.id },
         include: { order: { include: { items: true, invitation: true, buyer: { select: { name: true, email: true } } } } },
       });
-      if (!paymentSession) throw new Error("Sesi pembayaran Xendit tidak lagi tersedia; webhook dapat dicoba ulang.");
+      if (!paymentSession) return "retryable" as const;
       const isCompleted = eventType === "payment_session.completed";
       const statusMatches = isCompleted ? data.status === "COMPLETED" : data.status === "EXPIRED";
       const amountMatches = data.amount === paymentSession.amountIdr && data.currency === paymentSession.currency;
@@ -433,6 +433,9 @@ export async function POST(request: Request) {
         await tx.order.update({ where: { id: paymentSession.orderId }, data: { status: "EXPIRED" } });
       }
     });
+    if (result === "retryable") {
+      return NextResponse.json({ error: "Sesi pembayaran belum siap diproses; webhook dapat dicoba ulang.", retryable: true }, { status: 503 });
+    }
   } catch (error) {
     if (typeof error === "object" && error !== null && "code" in error && error.code === "P2002") {
       const duplicateEvent = await prisma.paymentEvent.findUnique({

@@ -61,7 +61,8 @@ test("Xendit expiry and refund callbacks retry safely and update reseller balanc
     ...expiredPayload,
     data: { ...expiredPayload.data, payment_session_id: "e2e-session-not-yet-persisted" },
   });
-  expect(earlyRetry.status()).toBe(500);
+  expect(earlyRetry.status()).toBe(503);
+  expect(await earlyRetry.json()).toMatchObject({ retryable: true });
 
   const expiredResponse = await postWebhook(request, sessionToken, expiredPayload);
   expect(expiredResponse.status()).toBe(200);
