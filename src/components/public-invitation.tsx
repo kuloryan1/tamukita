@@ -30,7 +30,7 @@ export function PublicInvitation({ slug, initialDraft, initialRsvpCount, initial
   const shareText = `${draft.eventKind === "Pernikahan" ? `Undangan pernikahan ${hostNames.join(" & ")}` : draft.eventTitle} — ${invitationUrl}`;
 
   return (
-    <main className="public-invitation-page">
+    <main className="public-invitation-page" data-invitation-publication={isExample ? "demo" : "published"}>
       <div className="public-topbar">
         <Link href="/" className="public-brand"><Heart size={14} fill="currentColor" /> tamukita</Link>
         <span>UNDANGAN DIGITAL</span>

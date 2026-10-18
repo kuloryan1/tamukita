@@ -25,11 +25,9 @@ test("published invitation mobile LCP p75 is at most 2.5 seconds", async ({ brow
     redirect: "manual",
     signal: AbortSignal.timeout(15_000),
   });
-  try {
-    expect(preflightResponse.status, "published invitation must return HTTP 200 directly without redirects").toBe(200);
-  } finally {
-    await preflightResponse.body?.cancel();
-  }
+  expect(preflightResponse.status, "published invitation must return HTTP 200 directly without redirects").toBe(200);
+  const preflightHtml = await preflightResponse.text();
+  expect(preflightHtml, "LCP target must be a persistent published invitation, not a built-in demo").toContain('data-invitation-publication="published"');
 
   for (let index = 0; index < sampleCount; index += 1) {
     const context = await browser.newContext({

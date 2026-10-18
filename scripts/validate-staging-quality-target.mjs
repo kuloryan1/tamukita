@@ -28,4 +28,22 @@ if (!/^\/[A-Za-z0-9][A-Za-z0-9_-]*$/.test(invitationPath)) {
   throw new Error("STAGING_INVITATION_PATH must be a same-origin published invitation path such as /slug-undangan-uji.");
 }
 
-console.log(`Staging quality target: ${target.origin}${invitationPath}`);
+const invitationUrl = new URL(invitationPath, target.origin);
+const invitationResponse = await fetch(invitationUrl, {
+  redirect: "manual",
+  signal: AbortSignal.timeout(15_000),
+});
+if (invitationResponse.status !== 200) {
+  await invitationResponse.body?.cancel();
+  throw new Error(`The staging invitation must return HTTP 200 without redirects; received ${invitationResponse.status}.`);
+}
+
+const invitationHtml = await invitationResponse.text();
+if (!invitationHtml.includes('data-invitation-publication="published"')) {
+  const isDemo = invitationHtml.includes('data-invitation-publication="demo"');
+  throw new Error(isDemo
+    ? "STAGING_INVITATION_PATH resolves to a built-in demo. Publish a persistent QA invitation before starting staging quality checks."
+    : "STAGING_INVITATION_PATH does not identify a server-rendered published invitation. Publish a persistent QA invitation before starting staging quality checks.");
+}
+
+console.log(`Staging quality target: ${invitationUrl.origin}${invitationUrl.pathname} (published invitation verified)`);

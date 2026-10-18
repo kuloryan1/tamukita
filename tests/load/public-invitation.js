@@ -32,6 +32,16 @@ if (!/^\/[A-Za-z0-9][A-Za-z0-9_-]*(?:\/[A-Za-z0-9][A-Za-z0-9_-]*)*$/.test(invita
 
 const targetUrl = `${baseUrl.origin}${invitationPath}`;
 
+export function setup() {
+  const response = http.get(targetUrl, { redirects: 0, tags: { flow: "published-invitation-preflight" } });
+  if (response.status !== 200) {
+    throw new Error(`Published invitation preflight must return HTTP 200 without redirects; received ${response.status}.`);
+  }
+  if (!response.body.includes('data-invitation-publication="published"')) {
+    throw new Error("INVITATION_PATH must resolve to a persistent published invitation, not a built-in demo.");
+  }
+}
+
 export const options = {
   scenarios: {
     public_invitation: {
