@@ -900,6 +900,9 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .guest-link-row > span { color: #848a82; font-size: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .guest-list-card .guest-list-row { align-items: center; border-top: 1px solid #eeede8; display: flex; justify-content: space-between; padding: 13px 18px; }
 .guest-list-row > div { display: flex; flex-direction: column; gap: 4px; }
+.guest-list-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 7px; justify-content: flex-end; }
+.guest-link-state { color: #547259; font-size: 8px; }
+.guest-link-state--revoked { color: #a35c55; }
 .guest-list-row b { color: #46584a; font-size: 11px; }
 .guest-list-row small { color: #979b92; font-size: 8px; }
 .reseller-application-card { background: #fff; border: 1px solid #edece7; margin: 9vh auto; max-width: 570px; padding: 32px; text-align: center; }
@@ -1539,6 +1542,7 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
   .guest-link-row { grid-template-columns: 1fr auto; }
   .guest-link-row > span { grid-column: 1 / -1; grid-row: 2; }
   .guest-list-card .guest-list-row { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .guest-list-actions { justify-content: flex-start; }
   .reseller-topup-card { gap: 15px; grid-template-columns: 1fr; padding: 17px; }
   .reseller-credit-grid .stat-card:last-child { grid-column: auto; min-height: 135px; }
   .reseller-customer-form { align-items: stretch; grid-template-columns: 1fr; }

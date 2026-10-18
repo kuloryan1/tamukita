@@ -65,6 +65,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
   const guestName = `Tamu ${randomUUID().slice(0, 8)}`;
   const guestResponse = await page.request.post(`/api/invitations/${invitationId}/guests`, { data: { names: [guestName] } });
   expect(guestResponse.status()).toBe(201);
+  expect(guestResponse.headers()["cache-control"]).toBe("no-store");
   const guestBody = await guestResponse.json() as { guests: Array<{ token: string }> };
   const guestToken = guestBody.guests[0]?.token;
   if (!guestToken) throw new Error("The guest fixture did not receive a private RSVP token.");
@@ -157,6 +158,42 @@ test("public guest flows and marketplace page view metrics work, and content rev
   await expect(page.locator(".rsvp-count")).toContainText(expectedRsvpCountText);
   await page.getByRole("button", { name: "Selesai" }).click();
   await expect(page.getByRole("dialog")).toBeHidden();
+
+  await page.goto(`/dashboard/invitations/${invitationId}/guests`);
+  const guestRow = page.locator(".guest-list-card").first().locator(".guest-list-row").filter({ hasText: guestName });
+  await expect(guestRow).toContainText("Berhalangan");
+  page.once("dialog", (dialog) => dialog.accept());
+  const revokeResponsePromise = page.waitForResponse((candidate) =>
+    candidate.url().includes(`/api/invitations/${invitationId}/guests/`) && candidate.request().method() === "PATCH",
+  );
+  await page.getByRole("button", { name: `Cabut tautan untuk ${guestName}` }).click();
+  const revokeResponse = await revokeResponsePromise;
+  expect(revokeResponse.status()).toBe(200);
+  await expect(guestRow).toContainText("Tautan dicabut");
+  await expect(guestRow).toContainText("Berhalangan");
+
+  const revokedLinkResponse = await page.goto(`/${invitationSlug}?g=${encodeURIComponent(guestToken)}`);
+  expect(revokedLinkResponse?.status()).toBe(200);
+  await expect(page.locator(".public-hero-side h1")).toContainText("Anda");
+  const revokedTokenRsvp = await page.request.post(`/api/public/invitations/${invitationSlug}/rsvp`, {
+    data: { guestToken, attendance: "ATTENDING", attendeeCount: 1 },
+  });
+  expect(revokedTokenRsvp.status()).toBe(403);
+
+  await page.goto(`/dashboard/invitations/${invitationId}/guests`);
+  const rotateResponsePromise = page.waitForResponse((candidate) =>
+    candidate.url().includes(`/api/invitations/${invitationId}/guests/`) && candidate.request().method() === "PATCH",
+  );
+  await page.getByRole("button", { name: `Buat tautan baru untuk ${guestName}` }).click();
+  const rotateResponse = await rotateResponsePromise;
+  expect(rotateResponse.status()).toBe(200);
+  expect(rotateResponse.headers()["cache-control"]).toBe("no-store");
+  const rotatedBody = await rotateResponse.json() as { token: string };
+  expect(rotatedBody.token).toBeTruthy();
+  expect(rotatedBody.token).not.toBe(guestToken);
+  await expect(page.locator(".guest-list-card").first().locator(".guest-list-row").filter({ hasText: guestName })).toContainText("Tautan aktif");
+  await page.goto(`/${invitationSlug}?g=${encodeURIComponent(rotatedBody.token)}`);
+  await expect(page.locator(".public-hero-side h1")).toContainText(guestName);
 
   const guestbookMessage = `Semoga selalu bahagia ${randomUUID().slice(0, 8)}`;
   await page.getByLabel("Namamu").fill(guestName);

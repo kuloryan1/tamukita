@@ -83,7 +83,7 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
 
   const candidateToken = typeof query.g === "string" && /^[A-Za-z0-9_-]{43}$/.test(query.g) ? query.g : null;
   const guestLink = candidateToken ? await getPrismaClient().guestLink.findFirst({
-    where: { invitationId: record.id, tokenHash: createHash("sha256").update(candidateToken).digest("hex") },
+    where: { invitationId: record.id, tokenHash: createHash("sha256").update(candidateToken).digest("hex"), revokedAt: null },
     select: { guest: { select: { name: true } } },
   }) : null;
 

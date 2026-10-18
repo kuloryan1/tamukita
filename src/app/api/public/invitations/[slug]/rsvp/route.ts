@@ -34,7 +34,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   let displayName = parsed.data.name ?? "";
   if (parsed.data.guestToken) {
     const guestLink = await prisma.guestLink.findFirst({
-      where: { invitationId: invitation.id, tokenHash: createHash("sha256").update(parsed.data.guestToken).digest("hex") },
+      where: { invitationId: invitation.id, tokenHash: createHash("sha256").update(parsed.data.guestToken).digest("hex"), revokedAt: null },
       select: { guestId: true, guest: { select: { name: true } } },
     });
     if (!guestLink) return NextResponse.json({ error: "Tautan tamu ini tidak valid." }, { status: 403 });

@@ -535,6 +535,7 @@ model GuestLink {
   invitationId String     @db.Uuid
   guestId      String     @db.Uuid
   tokenHash    String     @unique
+  revokedAt    DateTime?
   sentAt       DateTime?
   createdAt    DateTime   @default(now())
   invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)

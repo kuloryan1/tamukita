@@ -39,7 +39,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       },
     },
   });
-  return NextResponse.json({ guests: links.map(({ guest }) => ({ id: guest.id, name: guest.name, rsvp: guest.rsvps[0] ? { ...guest.rsvps[0], respondedAt: guest.rsvps[0].respondedAt.toISOString() } : null })) });
+  return NextResponse.json({ guests: links.map(({ guest, revokedAt }) => ({ id: guest.id, name: guest.name, linkRevokedAt: revokedAt?.toISOString() ?? null, rsvp: guest.rsvps[0] ? { ...guest.rsvps[0], respondedAt: guest.rsvps[0].respondedAt.toISOString() } : null })) });
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -82,5 +82,5 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     await tx.auditLog.create({ data: { organizationId: invitation.organizationId, actorId: userId, action: "guests.imported", targetType: "Invitation", targetId: invitation.id, metadata: { count: records.length } } });
     return records;
   });
-  return NextResponse.json({ guests: created, slug: invitation.slug }, { status: 201 });
+  return NextResponse.json({ guests: created, slug: invitation.slug }, { status: 201, headers: { "Cache-Control": "no-store" } });
 }

@@ -35,9 +35,10 @@ export default async function InvitationGuestsPage({ params }: { params: Promise
       select: { id: true, displayName: true, attendance: true, attendeeCount: true, respondedAt: true },
     }),
   ]);
-  const guests = links.map(({ guest }) => ({
+  const guests = links.map(({ guest, revokedAt }) => ({
     id: guest.id,
     name: guest.name,
+    linkRevokedAt: revokedAt?.toISOString() ?? null,
     rsvp: guest.rsvps[0] ? { ...guest.rsvps[0], respondedAt: guest.rsvps[0].respondedAt.toISOString() } : null,
   }));
   const recentResponses = responses.map((response) => ({ ...response, respondedAt: response.respondedAt.toISOString() }));
