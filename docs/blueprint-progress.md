@@ -36,7 +36,7 @@ Audit terhadap *Master Plan End-to-End — TamuKita*, versi 2.0. Status per 18 O
 
 ## Urutan penyelesaian yang tersisa
 
-1. Perbaiki resolusi origin Tunnel: `dokploy-traefik` belum ditemukan dari connector pada `dokploy-network`, sehingga request publik masih 502. Tunnel khusus sudah sehat, token disimpan sebagai secret layanan `tamukita-staging-tunnel`, dan DNS sudah dialihkan; route lama `tigakaki1` masih menunggu konfirmasi penghapusan.
+1. Perbaiki resolusi origin Tunnel: `dokploy-traefik` belum ditemukan dari connector pada `dokploy-network`, sehingga request publik masih 502. Tunnel khusus sudah sehat, token disimpan sebagai secret layanan `tamukita-staging-tunnel`, DNS mengarah ke Tunnel baru, dan route lama pada `tigakaki1` sudah dihapus.
 2. Pastikan environment staging memakai database, `POSTGRES_PASSWORD`, `AUTH_SECRET`, dan `NEXT_PUBLIC_APP_URL` khusus staging. Tambahkan kredensial Xendit Test Mode, bucket R2 non-production, serta email uji bila jalurnya akan diuji.
 3. Setelah origin berfungsi, deploy aplikasi secara manual di Dokploy, pastikan container sehat, lalu periksa `https://staging.tamukita.io/api/health` dan alur smoke test.
 4. Isi GitHub environment `staging` dengan `STAGING_BASE_URL`, `STAGING_INVITATION_PATH`, dan `PRODUCTION_HEALTH_URL`. Jalankan workflow `staging-quality` hanya setelah isolasi target diverifikasi dan operator mengonfirmasi kesiapan beban sampai 1.000 virtual user.
