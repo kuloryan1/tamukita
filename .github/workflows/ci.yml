@@ -31,6 +31,10 @@ jobs:
         run: npm audit --audit-level=moderate
       - name: Validate Docker Compose configuration
         run: docker compose --env-file .env.example config --quiet
+      - name: Validate staging Tunnel Compose configuration
+        env:
+          TUNNEL_TOKEN: ci-only-validation-placeholder
+        run: docker compose -f docker-compose.staging-tunnel.yml config --quiet
       - name: Validate local Compose override
         run: docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.local.yml config --quiet
       - name: Test Dokploy PostgreSQL container discovery
