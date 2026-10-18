@@ -96,18 +96,18 @@ export async function POST(request: Request) {
       signal: AbortSignal.timeout(20_000),
     });
   } catch {
-    await prisma.$transaction([
-      prisma.paymentSession.update({ where: { id: paymentSession.id }, data: { status: "FAILED" } }),
-      prisma.order.update({ where: { id: order.id }, data: { status: "CANCELED", canceledAt: new Date() } }),
-    ]);
+    await prisma.$transaction(async (tx) => {
+      await tx.paymentSession.update({ where: { id: paymentSession.id }, data: { status: "FAILED" } });
+      await tx.order.update({ where: { id: order.id }, data: { status: "CANCELED", canceledAt: new Date() } });
+    });
     return NextResponse.json({ error: "Xendit tidak dapat dihubungi. Coba buat sesi pembayaran baru." }, { status: 502 });
   }
   const result = await response.json().catch(() => null) as { payment_session_id?: string; payment_link_url?: string | null; expires_at?: string; payment_id?: string | null; payment_request_id?: string | null } | null;
   if (!response.ok || !result?.payment_session_id || !result.payment_link_url || !isXenditUrl(result.payment_link_url)) {
-    await prisma.$transaction([
-      prisma.paymentSession.update({ where: { id: paymentSession.id }, data: { status: "FAILED", responseSnapshot: { httpStatus: response.status } } }),
-      prisma.order.update({ where: { id: order.id }, data: { status: "CANCELED", canceledAt: new Date() } }),
-    ]);
+    await prisma.$transaction(async (tx) => {
+      await tx.paymentSession.update({ where: { id: paymentSession.id }, data: { status: "FAILED", responseSnapshot: { httpStatus: response.status } } });
+      await tx.order.update({ where: { id: order.id }, data: { status: "CANCELED", canceledAt: new Date() } });
+    });
     return NextResponse.json({ error: "Xendit belum dapat membuat tautan pembayaran. Coba lagi nanti." }, { status: 502 });
   }
   await prisma.paymentSession.update({
