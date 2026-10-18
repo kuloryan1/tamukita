@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import IORedis from "ioredis";
 import { getPrismaClient } from "@/lib/prisma";
-import { WORKER_HEARTBEAT_KEY } from "@/lib/worker-health";
+import { isWorkerHeartbeatActive, WORKER_HEARTBEAT_KEY } from "@/lib/worker-health";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,7 +32,7 @@ async function checkRedis() {
     await redis.connect();
     const available = (await redis.ping()) === "PONG";
     if (!available) return { available: false, worker: false };
-    const worker = (await redis.get(WORKER_HEARTBEAT_KEY)) !== null;
+    const worker = isWorkerHeartbeatActive(await redis.get(WORKER_HEARTBEAT_KEY));
     return { available, worker };
   } catch {
     return { available: false, worker: false };

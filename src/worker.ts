@@ -7,7 +7,11 @@ import IORedis from "ioredis";
 import { PrismaClient } from "./generated/prisma/client";
 import { isReservedNonDeliverableEmailAddress } from "./lib/email-address";
 import { getTransactionalEmailEndpoint } from "./lib/email-transport";
-import { WORKER_HEARTBEAT_KEY, WORKER_HEARTBEAT_TTL_SECONDS } from "./lib/worker-health";
+import {
+  WORKER_HEARTBEAT_KEY,
+  WORKER_HEARTBEAT_TTL_SECONDS,
+  WORKER_HEARTBEAT_VALUE,
+} from "./lib/worker-health";
 import {
   failMediaEdit,
   failMediaProcessing,
@@ -341,7 +345,7 @@ let lastHeartbeatErrorAt = 0;
 async function refreshWorkerHeartbeat() {
   if (!worker.isRunning() || connection.status !== "ready") return false;
   try {
-    await connection.set(WORKER_HEARTBEAT_KEY, "1", "EX", WORKER_HEARTBEAT_TTL_SECONDS);
+    await connection.set(WORKER_HEARTBEAT_KEY, WORKER_HEARTBEAT_VALUE, "EX", WORKER_HEARTBEAT_TTL_SECONDS);
     lastHeartbeatErrorAt = 0;
     return true;
   } catch (error) {

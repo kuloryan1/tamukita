@@ -42,6 +42,7 @@ COPY --from=builder /app/src/lib/email-transport.ts ./src/lib/email-transport.ts
 COPY --from=builder /app/src/lib/email-address.ts ./src/lib/email-address.ts
 COPY --from=builder /app/src/lib/media-processing.ts ./src/lib/media-processing.ts
 COPY --from=builder /app/src/lib/worker-health.ts ./src/lib/worker-health.ts
+COPY --from=builder /app/scripts/healthcheck-worker.ts ./scripts/healthcheck-worker.ts
 COPY --from=builder /app/scripts/seed-staging-public-fixture.ts ./scripts/seed-staging-public-fixture.ts
 COPY --from=builder /app/package.json ./package.json
 USER nextjs
