@@ -1,6 +1,6 @@
 # Deployment Dokploy
 
-## Status saat ini — 18 Oktober 2026
+## Status saat ini — 19 Oktober 2026
 
 - Project Dokploy: `tamukita`.
 - Environment `production` memakai layanan Compose `tamukita`.
@@ -13,7 +13,7 @@
 - Apex `https://tamukita.io/` belum diarahkan ke aplikasi production. Pemeriksaan GET `https://tamukita.io/api/health` saat ini menjawab HTTP 200 dengan judul `Parked Domain name on Hostinger DNS system`; ini halaman parkir Hostinger, bukan health check TamuKita. Jangan gunakan URL itu sebagai `PRODUCTION_HEALTH_URL` sampai domain production benar-benar menunjuk ke aplikasi.
 - Record Cloudflare yang terlihat: A `tamukita.io` → `2.57.91.91` (Proxied), CNAME `www` → `tamukita.io` (Proxied), dan CNAME `staging` → Tunnel `tamukita-staging` (Proxied). Dokploy environment `production` memiliki Compose service `tamukita` dari `main`, tetapi panel menampilkan “No containers found”; belum ada origin aplikasi production untuk domain apex.
 - Environment service aplikasi sudah memiliki `NEXT_PUBLIC_APP_URL=https://staging.tamukita.io`, `POSTGRES_PASSWORD`, dan `AUTH_SECRET` khusus staging. Nilai rahasia hanya tersimpan pada service Dokploy; jangan menyalin atau membagikannya.
-- Status terakhir setelah redeploy commit `1873251`: PostgreSQL dan Redis sehat; migrasi keluar dengan kode 0; worker berjalan dan mencatat `[background-worker] ready`; web berstatus `healthy`. Docker Compose menetapkan `HOSTNAME: 0.0.0.0`, sehingga probe healthcheck ke `127.0.0.1` bekerja. File `src/lib/email-transport.ts` sudah disertakan pada worker image.
+- Deployment manual terbaru dari branch `main` memakai commit `7b7ad15` dan berstatus `Done` di Dokploy. Health check publik setelah deploy (`https://staging.tamukita.io/api/health`) menjawab `{"status":"ok","dependencies":{"database":"ok","redis":"ok","worker":"ok"}}`; halaman utama menjawab HTTP 200. PostgreSQL dan Redis sehat, migrasi keluar dengan kode 0, worker berjalan dan mencatat `[background-worker] ready`, serta web berstatus `healthy`. Docker Compose menetapkan `HOSTNAME: 0.0.0.0`, sehingga probe healthcheck ke `127.0.0.1` bekerja. File `src/lib/email-transport.ts` sudah disertakan pada worker image.
 - Layanan Compose mengekspos web secara internal pada port `3000`. PostgreSQL dan Redis tidak memublikasikan port ke host.
 
 Rate limit memakai alamat dari elemen terakhir `X-Forwarded-For`; Cloudflare menyetel header ini ke `CF-Connecting-IP` saat tidak ada proxy sebelumnya, dan menambahkan alamat proxy terakhir bila ada proxy berantai. Aplikasi mengabaikan `X-Real-IP` dan mengembalikan `unknown` jika nilai terakhir bukan alamat IP yang valid. Pertahankan DNS Cloudflare sebagai **Proxied** untuk domain staging; jika menambah proxy lain, verifikasi bahwa ia menambahkan hop terpercaya sebelum mengubah pemrosesan alamat. [Dokumentasi header Cloudflare](https://developers.cloudflare.com/fundamentals/reference/http-headers/).
@@ -36,7 +36,7 @@ Health check yang lulus belum berarti QA blueprint selesai. Sebelum menjalankan 
    - `PRODUCTION_HOSTNAMES` — opsional, hostname production tambahan dipisahkan koma untuk perlindungan target QA. Default `tamukita.io` dan `www.tamukita.io` selalu diblokir. `PRODUCTION_HEALTH_URL` hanya diperlukan untuk smoke check setelah health endpoint production benar-benar live.
 7. Periksa nama Compose project, volume database, bucket, akun Xendit, sender email, domain, dan URL agar staging tidak tersambung ke data production. Siapkan undangan QA dengan foto dan konten representatif sebelum uji LCP.
 8. Tinjau pemisahan runtime staging dari production dan pastikan semua provider mengarah ke data non-production.
-9. Stack sudah dideploy manual dari `main`. Dockerfile worker menyertakan `src/lib/email-transport.ts`, service web memakai `HOSTNAME: 0.0.0.0`, semua container health check lulus, dan halaman serta endpoint publik `/api/health` mengembalikan 200.
+9. Stack terakhir dideploy manual dari `main` pada commit `7b7ad15`. Dockerfile worker menyertakan `src/lib/email-transport.ts`, service web memakai `HOSTNAME: 0.0.0.0`, semua container health check lulus, dan halaman serta endpoint publik `/api/health` mengembalikan 200.
 10. Jalankan pengukuran LCP atau load hanya setelah staging terisolasi, fixture siap, dan operator mengonfirmasi kesiapan hingga 1.000 virtual user. Workflow `staging-quality` menguji LCP p75, lalu load API health dan undangan publik masing-masing sampai 1.000 VU.
 
 Deployment Compose staging sehat. Origin Cloudflare Tunnel diarahkan langsung ke container web pada `dokploy-network` karena `dokploy-traefik` tidak tersedia di host. Halaman utama dan `/api/health` lulus pemeriksaan publik.
