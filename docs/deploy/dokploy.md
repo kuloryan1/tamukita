@@ -1,12 +1,14 @@
 # Deployment Dokploy
 
-## Status saat ini — 11 Oktober 2026
+## Status saat ini — 18 Oktober 2026
 
 - Project Dokploy: `tamukita`.
 - Environment `production` memakai layanan Compose `tamukita`.
 - Environment `staging` memakai layanan Compose `tamukita-staging`.
 - Kedua layanan mengambil repository `kuloryan1/tamukita`, branch `main`, dan `./docker-compose.yml`.
-- Auto-deploy mati pada layanan yang disiapkan. Setup ini belum menjalankan deployment, menambahkan domain, atau memasukkan kredensial aplikasi staging.
+- Auto-deploy mati pada layanan yang disiapkan. Belum ada deployment staging atau kredensial aplikasi staging.
+- Domain Dokploy `staging.tamukita.io` sudah diarahkan ke service `web`, port `3000`, path `/`, dengan HTTP antara Cloudflare Tunnel dan Traefik. Domain perlu diterapkan melalui redeploy Compose.
+- Published application Cloudflare Tunnel `tigakaki1` sudah diarahkan ke `http://dokploy-traefik:80`. Cloudflare mengonfirmasi record DNS CNAME dibuat ke tunnel; query DNS lokal mengembalikan alamat edge Cloudflare. TLS dan health aplikasi belum diverifikasi.
 - Layanan Compose mengekspos web secara internal pada port `3000`. PostgreSQL dan Redis tidak memublikasikan port ke host.
 
 Rate limit memakai alamat dari elemen terakhir `X-Forwarded-For`, yang ditambahkan Traefik dari alamat peer yang terhubung langsung. Aplikasi mengabaikan `X-Real-IP` dan mengembalikan `unknown` jika nilai terakhir bukan alamat IP yang valid. Pertahankan lalu lintas aplikasi melalui Traefik Dokploy dan jangan aktifkan `forwardedHeaders.notAppendXForwardedFor`; bila ada proxy lain di depan Traefik, konfigurasikan proxy itu sebagai sumber forwarded header tepercaya pada Traefik.
@@ -15,7 +17,7 @@ Pemisahan environment Dokploy belum berarti staging siap menerima trafik. Sebelu
 
 ## Persiapan staging
 
-1. Pasang domain HTTPS staging milik operator melalui tab **Domains** pada layanan `tamukita-staging`; arahkan ke service `web` pada port `3000`.
+1. Domain `staging.tamukita.io` dan rute Tunnel sudah disimpan sesuai bagian status di atas. Redeploy Compose staging untuk menerapkan domain ke Traefik. Pastikan HTTPS di edge Cloudflare aktif sebelum pengujian aplikasi.
 2. Simpan nilai environment di pengaturan layanan staging Dokploy. Jangan simpan secret di variabel tingkat project karena variabel project tersedia untuk semua layanan di project tersebut.
 3. Isi variabel wajib dengan nilai khusus staging:
    - `NEXT_PUBLIC_APP_URL` — origin HTTPS staging.
@@ -43,7 +45,8 @@ Sesudah container production pertama berjalan, temukan nama Compose project yang
 
 ## Gate yang belum selesai
 
-- Operator belum memberikan origin HTTPS staging maupun path undangan publik untuk QA.
+- Origin staging `https://staging.tamukita.io` sudah ditetapkan; record DNS mengarah ke Cloudflare. TLS, routing hingga aplikasi, dan `/api/health` belum diverifikasi karena staging belum dideploy.
+- Operator belum memberikan path undangan publik QA atau konfirmasi tertulis bahwa target terisolasi siap menerima hingga 1.000 virtual user.
 - Isolasi staging dari production belum dibuktikan melalui deployment dan pemeriksaan konfigurasi runtime.
 - Uji Xendit Test Mode, R2 nyata, restore di VPS, LCP, load 1.000 VU, dan monitoring eksternal belum dijalankan.
 - Keputusan operator untuk identitas/kontak, retensi data, refund, pelindungan anak, vendor/lokasi pemrosesan, serta tinjauan legal masih terbuka.
