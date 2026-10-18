@@ -164,8 +164,15 @@ async function seedFixture() {
   process.stdout.write(`${outcome.created ? "Created" : "Already present"} staging QA fixture: ${stagingOrigin}/${fixtureSlug}\n`);
 }
 
-try {
-  await seedFixture();
-} finally {
-  await prisma.$disconnect();
+async function main() {
+  try {
+    await seedFixture();
+  } finally {
+    await prisma.$disconnect();
+  }
 }
+
+void main().catch((error: unknown) => {
+  process.stderr.write(`${error instanceof Error ? error.stack ?? error.message : String(error)}\n`);
+  process.exitCode = 1;
+});
