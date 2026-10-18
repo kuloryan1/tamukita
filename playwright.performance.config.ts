@@ -1,4 +1,5 @@
 import { defineConfig } from "@playwright/test";
+import { getProductionHostnames, normalizeHostname } from "./tests/load/production-hostnames.js";
 
 const configuredBaseUrl = process.env.PERF_BASE_URL;
 if (!configuredBaseUrl) {
@@ -18,18 +19,8 @@ if (!isLocalHttp && !isRemoteHttps) {
 if (isRemoteHttps && process.env.PERF_TEST_TARGET !== "staging") {
   throw new Error("Set PERF_TEST_TARGET=staging to confirm that remote performance tests target staging, not production.");
 }
-if (isRemoteHttps) {
-  const productionHealthUrl = process.env.PRODUCTION_HEALTH_URL;
-  if (!productionHealthUrl) {
-    throw new Error("Set PRODUCTION_HEALTH_URL so the performance-test target can be checked against production.");
-  }
-  const productionHealth = new URL(productionHealthUrl);
-  if (productionHealth.protocol !== "https:" || productionHealth.pathname !== "/api/health" || productionHealth.search || productionHealth.hash || productionHealth.username || productionHealth.password) {
-    throw new Error("PRODUCTION_HEALTH_URL must be an HTTPS /api/health URL without credentials, query, or fragment.");
-  }
-  if (["tamukita.io", "www.tamukita.io", productionHealth.hostname.toLowerCase()].includes(target.hostname.toLowerCase())) {
-    throw new Error("Refusing to measure the configured production host.");
-  }
+if (isRemoteHttps && getProductionHostnames(process.env.PRODUCTION_HOSTNAMES).has(normalizeHostname(target.hostname))) {
+  throw new Error("Refusing to measure a configured production host.");
 }
 
 export default defineConfig({

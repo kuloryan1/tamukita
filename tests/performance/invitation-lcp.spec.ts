@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { getLastLcp, hasStableLcp, installLcpObserver } from "./lcp-observer";
+import { getProductionHostnames } from "../load/production-hostnames.js";
 
 const invitationPath = process.env.PERF_INVITATION_PATH;
 const mobileProfile = {
@@ -8,6 +9,7 @@ const mobileProfile = {
   uploadBytesPerSecond: 750_000 / 8,
   cpuSlowdownRate: 4,
 } as const;
+const productionHosts = getProductionHostnames(process.env.PRODUCTION_HOSTNAMES);
 
 if (!invitationPath || !/^\/[A-Za-z0-9][A-Za-z0-9_-]*$/.test(invitationPath)) {
   throw new Error("Set PERF_INVITATION_PATH to a published invitation path such as /slug-undangan-uji.");
@@ -40,10 +42,6 @@ test("published invitation mobile LCP p75 is at most 2.5 seconds", async ({ brow
     const page = await context.newPage();
     let cdp: Awaited<ReturnType<typeof context.newCDPSession>> | undefined;
     const targetOrigin = invitationUrl.origin;
-    const productionHosts = new Set(["tamukita.io", "www.tamukita.io"]);
-    if (process.env.PRODUCTION_HEALTH_URL) {
-      productionHosts.add(new URL(process.env.PRODUCTION_HEALTH_URL).hostname.toLowerCase());
-    }
     for (const host of productionHosts) {
       const escapedHost = host.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       await page.route(new RegExp(`^https?://${escapedHost}(?::\\d+)?(?:/|$)`), (route) => route.abort("blockedbyclient"));

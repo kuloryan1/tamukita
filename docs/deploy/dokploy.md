@@ -11,6 +11,7 @@
 - Environment connector memiliki `TUNNEL_TOKEN` yang tersimpan sebagai secret layanan Dokploy; token tidak dicatat di repository. Cloudflare melaporkan Tunnel `tamukita-staging` sehat dengan satu replica. Route lama pada `tigakaki1` sudah dihapus; CNAME proxied `staging.tamukita.io` menunjuk ke Tunnel baru.
 - Pemeriksaan publik terakhir: `https://staging.tamukita.io/` menjawab HTTP 200 dengan judul TamuKita, dan `/api/health` menjawab HTTP 200 dengan database, Redis, dan worker berstatus `ok`.
 - Apex `https://tamukita.io/` belum diarahkan ke aplikasi production. Pemeriksaan GET `https://tamukita.io/api/health` saat ini menjawab HTTP 200 dengan judul `Parked Domain name on Hostinger DNS system`; ini halaman parkir Hostinger, bukan health check TamuKita. Jangan gunakan URL itu sebagai `PRODUCTION_HEALTH_URL` sampai domain production benar-benar menunjuk ke aplikasi.
+- Record Cloudflare yang terlihat: A `tamukita.io` → `2.57.91.91` (Proxied), CNAME `www` → `tamukita.io` (Proxied), dan CNAME `staging` → Tunnel `tamukita-staging` (Proxied). Dokploy environment `production` memiliki Compose service `tamukita` dari `main`, tetapi panel menampilkan “No containers found”; belum ada origin aplikasi production untuk domain apex.
 - Environment service aplikasi sudah memiliki `NEXT_PUBLIC_APP_URL=https://staging.tamukita.io`, `POSTGRES_PASSWORD`, dan `AUTH_SECRET` khusus staging. Nilai rahasia hanya tersimpan pada service Dokploy; jangan menyalin atau membagikannya.
 - Status terakhir setelah redeploy commit `1873251`: PostgreSQL dan Redis sehat; migrasi keluar dengan kode 0; worker berjalan dan mencatat `[background-worker] ready`; web berstatus `healthy`. Docker Compose menetapkan `HOSTNAME: 0.0.0.0`, sehingga probe healthcheck ke `127.0.0.1` bekerja. File `src/lib/email-transport.ts` sudah disertakan pada worker image.
 - Layanan Compose mengekspos web secara internal pada port `3000`. PostgreSQL dan Redis tidak memublikasikan port ke host.
@@ -32,7 +33,7 @@ Health check yang lulus belum berarti QA blueprint selesai. Sebelum menjalankan 
 6. Isi GitHub repository/environment variables untuk workflow kualitas:
    - `STAGING_BASE_URL=https://staging.tamukita.io`
    - `STAGING_INVITATION_PATH` — path slug undangan QA staging yang sudah dipublikasikan.
-   - `PRODUCTION_HEALTH_URL` — URL `/api/health` production, hanya dipakai untuk memastikan target beban berbeda dari production.
+   - `PRODUCTION_HOSTNAMES` — opsional, hostname production tambahan dipisahkan koma untuk perlindungan target QA. Default `tamukita.io` dan `www.tamukita.io` selalu diblokir. `PRODUCTION_HEALTH_URL` hanya diperlukan untuk smoke check setelah health endpoint production benar-benar live.
 7. Periksa nama Compose project, volume database, bucket, akun Xendit, sender email, domain, dan URL agar staging tidak tersambung ke data production. Siapkan undangan QA dengan foto dan konten representatif sebelum uji LCP.
 8. Tinjau pemisahan runtime staging dari production dan pastikan semua provider mengarah ke data non-production.
 9. Stack sudah dideploy manual dari `main`. Dockerfile worker menyertakan `src/lib/email-transport.ts`, service web memakai `HOSTNAME: 0.0.0.0`, semua container health check lulus, dan halaman serta endpoint publik `/api/health` mengembalikan 200.
@@ -58,7 +59,7 @@ Sesudah container production pertama berjalan, temukan nama Compose project yang
 - Tunnel `tamukita-staging` sehat dengan satu replica; token tersimpan sebagai secret layanan Dokploy. DNS `staging.tamukita.io` menunjuk ke Tunnel baru; route lama pada `tigakaki1` sudah dihapus. Tunnel mengarah langsung ke container web staging dan pemeriksaan halaman serta `/api/health` publik lulus.
 - Domain apex `tamukita.io` masih menampilkan halaman parked Hostinger. HTTPS production dan URL health aplikasi production belum tersedia; HTTP 200 pada halaman parkir tidak memenuhi gate production.
 - Service aplikasi staging sehat: worker, PostgreSQL, Redis, migrasi, dan health check web lulus. Jalankan QA blueprint pada staging setelah fixture undangan uji dan kredensial non-production siap.
-- Path undangan publik QA, variabel GitHub `STAGING_INVITATION_PATH` dan `PRODUCTION_HEALTH_URL`, serta konfirmasi operator bahwa target terisolasi siap menerima hingga 1.000 virtual user masih belum diberikan.
+- Path undangan publik QA dan variabel GitHub `STAGING_INVITATION_PATH` masih belum diberikan. GET ke slug CI `/e2e-supported-publication` pada staging menjawab 404, sehingga seed E2E lokal tidak tersedia sebagai fixture publik di VPS. Konfirmasi operator bahwa target staging terisolasi dan siap menerima hingga 1.000 virtual user juga masih diperlukan sebelum workflow load dijalankan.
 - Isolasi staging dari production belum dibuktikan melalui deployment dan pemeriksaan konfigurasi runtime.
 - Uji Xendit Test Mode, R2 nyata, restore di VPS, LCP, load 1.000 VU, dan monitoring eksternal belum dijalankan.
 - Keputusan operator untuk identitas/kontak, retensi data, refund, pelindungan anak, vendor/lokasi pemrosesan, serta tinjauan legal masih terbuka.

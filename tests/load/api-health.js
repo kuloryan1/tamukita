@@ -1,5 +1,6 @@
 import http from "k6/http";
 import { check, sleep } from "k6";
+import { getProductionHostnames, normalizeHostname } from "./production-hostnames.js";
 
 const configuredBaseUrl = __ENV.BASE_URL;
 const apiPath = __ENV.API_PATH || "/api/health";
@@ -22,22 +23,8 @@ if ((!isLocalHttp && !isRemoteHttps) || baseUrl.pathname !== "/" || baseUrl.sear
 if (isRemoteHttps && __ENV.LOAD_TEST_TARGET !== "staging") {
   throw new Error("Set LOAD_TEST_TARGET=staging to confirm that remote load tests target staging, not production.");
 }
-if (isRemoteHttps) {
-  if (!__ENV.PRODUCTION_HEALTH_URL) {
-    throw new Error("Set PRODUCTION_HEALTH_URL so the load-test target can be checked against production.");
-  }
-  let productionHealth;
-  try {
-    productionHealth = new URL(__ENV.PRODUCTION_HEALTH_URL);
-  } catch {
-    throw new Error("PRODUCTION_HEALTH_URL must be a valid HTTPS /api/health URL.");
-  }
-  if (productionHealth.protocol !== "https:" || productionHealth.pathname !== "/api/health" || productionHealth.search || productionHealth.hash || productionHealth.username || productionHealth.password) {
-    throw new Error("PRODUCTION_HEALTH_URL must be an HTTPS /api/health URL without credentials, query, or fragment.");
-  }
-  if (["tamukita.io", "www.tamukita.io", productionHealth.hostname.toLowerCase()].includes(baseUrl.hostname.toLowerCase())) {
-    throw new Error("Refusing to load test a configured production host.");
-  }
+if (isRemoteHttps && getProductionHostnames(__ENV.PRODUCTION_HOSTNAMES).has(normalizeHostname(baseUrl.hostname))) {
+  throw new Error("Refusing to load test a configured production host.");
 }
 if (!/^\/(?:[A-Za-z0-9_-]+\/?)*$/.test(apiPath) || apiPath.includes("//")) {
   throw new Error("API_PATH must be a same-origin absolute API path such as /api/health.");
