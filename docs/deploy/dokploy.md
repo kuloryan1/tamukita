@@ -6,8 +6,9 @@
 - Environment `production` memakai layanan Compose `tamukita`.
 - Environment `staging` memakai layanan Compose `tamukita-staging`.
 - Kedua layanan mengambil repository `kuloryan1/tamukita`, branch `main`, dan `./docker-compose.yml`.
-- Auto-deploy mati pada layanan yang disiapkan. Belum ada deployment staging atau kredensial aplikasi staging.
-- Domain Dokploy `staging.tamukita.io` sudah diarahkan ke service `web`, port `3000`, path `/`, dengan HTTP antara Cloudflare Tunnel dan Traefik. Domain perlu diterapkan melalui redeploy Compose.
+- Auto-deploy mati pada layanan staging. Tab Deployments Dokploy menunjukkan `No deployments found`.
+- Domain Dokploy `staging.tamukita.io` sudah diarahkan ke service `web`, port `3000`, path `/`; panel menampilkan HTTP dan `Cert: none`. Perubahan domain perlu diterapkan melalui deploy Compose.
+- Tab Environment menampilkan nilai tersamarkan. Keberadaan `NEXT_PUBLIC_APP_URL`, `POSTGRES_PASSWORD`, dan `AUTH_SECRET` belum dapat dikonfirmasi dari panel ini; periksa nama variabel dan kecocokan nilainya di Dokploy sebelum deploy tanpa menyalin atau membagikan nilai secret.
 - Published application Cloudflare Tunnel `tigakaki1` sudah diarahkan ke `http://dokploy-traefik:80`. Cloudflare mengonfirmasi record DNS CNAME dibuat ke tunnel; query DNS lokal mengembalikan alamat edge Cloudflare. Connector `cloudflared` saat ini memakai network mode `host`, sehingga nama `dokploy-traefik` tidak dapat di-resolve dari connector. Request HTTPS ke hostname mengembalikan 502. Mencoba origin `127.0.0.1:80` juga ditolak karena Traefik tidak memiliki host port mapping; route sudah dikembalikan ke target internal `dokploy-traefik:80`.
 - Layanan Compose mengekspos web secara internal pada port `3000`. PostgreSQL dan Redis tidak memublikasikan port ke host.
 
