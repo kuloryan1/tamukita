@@ -3,6 +3,14 @@ name: Staging quality
 on:
   workflow_dispatch:
     inputs:
+      profile:
+        description: Pilih pengukuran performa saja atau pengujian penuh dengan beban
+        type: choice
+        required: true
+        default: performance-only
+        options:
+          - performance-only
+          - full-load
       confirm_staging_load:
         description: Konfirmasi staging siap menerima pengujian hingga 1.000 virtual user
         type: boolean
@@ -32,6 +40,7 @@ jobs:
       PERF_TEST_TARGET: staging
       PERF_INVITATION_PATH: ${{ vars.STAGING_INVITATION_PATH }}
       PRODUCTION_HOSTNAMES: ${{ vars.PRODUCTION_HOSTNAMES }}
+      STAGING_QUALITY_PROFILE: ${{ inputs.profile }}
       STAGING_LOAD_CONFIRMED: ${{ inputs.confirm_staging_load }}
     steps:
       - uses: actions/checkout@v4
@@ -43,10 +52,13 @@ jobs:
       - name: Validate staging target
         run: node scripts/validate-staging-quality-target.mjs
       - uses: grafana/setup-k6-action@v1
+        if: ${{ inputs.profile == 'full-load' }}
       - run: npx playwright install --with-deps chromium
       - name: Measure mobile invitation LCP
         run: npm run test:performance:lcp
       - name: Load test health API to 1,000 virtual users
+        if: ${{ inputs.profile == 'full-load' }}
         run: npm run test:load:api
       - name: Load test published invitation to 1,000 virtual users
+        if: ${{ inputs.profile == 'full-load' }}
         run: npm run test:load:public
