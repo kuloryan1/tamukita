@@ -25,6 +25,8 @@ jobs:
       STAGING_BASE_URL: ${{ vars.STAGING_BASE_URL }}
       STAGING_INVITATION_PATH: ${{ vars.STAGING_INVITATION_PATH }}
       PRODUCTION_HOSTNAMES: ${{ vars.PRODUCTION_HOSTNAMES }}
+      R2_ACCOUNT_ID: c89def9b126aec81aee06e7f921cf733
+      R2_PRIVATE_BUCKET_NAME: tamukita-staging-private
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Validate staging origin and published invitation
@@ -51,6 +53,9 @@ jobs:
           }
           console.log("Staging homepage and all required dependencies are healthy.");
           NODE
+      - name: Check staging R2 CORS and apex denial
+        shell: bash
+        run: node scripts/check-staging-r2-cors.mjs
       - name: Notify configured webhook on failure
         if: failure()
         shell: bash
