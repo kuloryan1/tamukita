@@ -92,13 +92,8 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .hero-description { color: #757b77; font-size: 13px; line-height: 1.85; margin-bottom: 27px; max-width: 390px; }
 .hero-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; }
 .hero-social-proof { align-items: center; display: flex; gap: 14px; margin-top: 42px; }
-.avatar-stack { display: flex; padding-left: 2px; }
-.avatar-stack span { align-items: center; background: #d8e3da; border: 2px solid #f7f4ee; border-radius: 50%; color: #466056; display: flex; font-size: 8px; font-weight: 700; height: 29px; justify-content: center; margin-left: -5px; width: 29px; }
-.avatar-stack span:nth-child(2) { background: #ead8ce; color: #825d51; }
-.avatar-stack span:nth-child(3) { background: #e7dfca; color: #7c6945; }
-.avatar-stack span:nth-child(4) { background: #fff; color: #65796e; }
-.star-row { align-items: center; color: #b28b57; display: flex; gap: 2px; }
-.star-row b { color: #4c5652; font-size: 10px; margin-left: 5px; }
+.template-count-badge { align-items: center; background: #d8e3da; border: 2px solid #f7f4ee; border-radius: 50%; color: #466056; display: flex; font-size: 12px; font-weight: 700; height: 36px; justify-content: center; width: 36px; }
+.hero-social-proof strong { color: #4c5652; display: block; font-size: 10px; }
 .hero-social-proof small { color: #8c908a; display: block; font-size: 9px; margin-top: 4px; }
 .hero-visual { align-items: center; display: flex; justify-content: center; min-height: 520px; position: relative; }
 .hero-blush { background: radial-gradient(ellipse at center, rgba(228,205,191,.49), rgba(228,205,191,0) 68%); height: 570px; left: 50%; position: absolute; top: 50%; transform: translate(-48%,-50%); width: 620px; }

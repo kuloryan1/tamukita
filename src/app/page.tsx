@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, Check, Heart, MoveUpRight, Play, Sparkles, Star, WandSparkles } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Check, Heart, MoveUpRight, Play, Sparkles, WandSparkles } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { TemplateCard } from "@/components/template-card";
@@ -30,8 +30,8 @@ export default function HomePage() {
                 <Link href="/templates" className="button button--light"><span className="button-play"><Play size={11} fill="currentColor" /></span> Lihat koleksi</Link>
               </div>
               <div className="hero-social-proof">
-                <div className="avatar-stack"><span>NA</span><span>RA</span><span>DS</span><span>+</span></div>
-                <div><div className="star-row"><Star size={12} fill="currentColor" /><Star size={12} fill="currentColor" /><Star size={12} fill="currentColor" /><Star size={12} fill="currentColor" /><Star size={12} fill="currentColor" /><b>4.9/5</b></div><small>Disukai pasangan di Indonesia</small></div>
+                <span className="template-count-badge" aria-hidden="true">{templates.length}</span>
+                <div><strong>{templates.length} desain siap dipilih</strong><small>Pilih yang paling terasa kamu</small></div>
               </div>
             </div>
             <div className="hero-visual">
@@ -50,7 +50,7 @@ export default function HomePage() {
           <div className="container">
             <div className="section-heading-row"><div><span className="eyebrow">KOLEKSI PILIHAN</span><h2>Mulai dari desain<br />yang <em>paling kamu.</em></h2></div><p>Setiap template punya cerita kecilnya sendiri.<br />Temukan yang terasa pas untuk harimu.</p></div>
             <div className="template-grid">{templates.map((template) => <TemplateCard key={template.slug} template={template} />)}</div>
-            <div className="section-link-row"><span className="soft-note"><Sparkles size={15} /> Template baru terus bertambah</span><Link href="/templates" className="text-link text-link--arrow">Lihat semua template <MoveUpRight size={15} /></Link></div>
+            <div className="section-link-row"><span className="soft-note"><Sparkles size={15} /> {templates.length} gaya untuk ceritamu</span><Link href="/templates" className="text-link text-link--arrow">Lihat semua template <MoveUpRight size={15} /></Link></div>
           </div>
         </section>
 
