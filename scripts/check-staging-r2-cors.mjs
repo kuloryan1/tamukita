@@ -1,5 +1,6 @@
 const accountId = process.env.R2_ACCOUNT_ID;
 const bucketName = process.env.R2_PRIVATE_BUCKET_NAME;
+const publicBaseUrlValue = process.env.R2_PUBLIC_BASE_URL;
 
 if (!/^[a-f0-9]{32}$/i.test(accountId ?? "")) {
   throw new Error("R2_ACCOUNT_ID must be a 32-character Cloudflare account ID.");
@@ -9,7 +10,18 @@ if (!/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/.test(bucketName ?? "")) {
   throw new Error("R2_PRIVATE_BUCKET_NAME must be a valid R2 bucket name.");
 }
 
+let publicBaseUrl;
+try {
+  publicBaseUrl = new URL(publicBaseUrlValue ?? "");
+} catch {
+  throw new Error("R2_PUBLIC_BASE_URL must be a valid HTTPS URL.");
+}
+if (publicBaseUrl.protocol !== "https:" || publicBaseUrl.hostname !== "media-staging.tamukita.io" || publicBaseUrl.pathname !== "/") {
+  throw new Error("R2_PUBLIC_BASE_URL must be https://media-staging.tamukita.io.");
+}
+
 const objectUrl = `https://${accountId}.r2.cloudflarestorage.com/${bucketName}/cors-probe.txt`;
+const mediaProbeUrl = new URL("__tamukita_staging_media_health_probe__.txt", publicBaseUrl);
 const allowedOrigin = "https://staging.tamukita.io";
 const blockedOrigin = "https://tamukita.io";
 
@@ -46,4 +58,13 @@ if (blocked.status !== 403 || blocked.headers.has("access-control-allow-origin")
   throw new Error("R2 CORS must reject tamukita.io and omit Access-Control-Allow-Origin.");
 }
 
-console.log("R2 CORS allows the staging origin and rejects the apex origin.");
+const mediaDomain = await fetch(mediaProbeUrl, {
+  method: "HEAD",
+  redirect: "manual",
+  signal: AbortSignal.timeout(15_000),
+});
+if (mediaDomain.status !== 404) {
+  throw new Error(`R2 public media domain should serve the missing-object probe as HTTP 404; received ${mediaDomain.status}.`);
+}
+
+console.log("R2 CORS allows the staging origin, rejects the apex origin, and the public media domain returns the expected missing-object response.");

@@ -27,6 +27,7 @@ jobs:
       PRODUCTION_HOSTNAMES: ${{ vars.PRODUCTION_HOSTNAMES }}
       R2_ACCOUNT_ID: c89def9b126aec81aee06e7f921cf733
       R2_PRIVATE_BUCKET_NAME: tamukita-staging-private
+      R2_PUBLIC_BASE_URL: https://media-staging.tamukita.io
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Validate staging origin and published invitation
