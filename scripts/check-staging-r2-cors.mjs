@@ -25,6 +25,18 @@ const mediaProbeUrl = new URL("__tamukita_staging_media_health_probe__.txt", pub
 const allowedOrigin = "https://staging.tamukita.io";
 const blockedOrigin = "https://tamukita.io";
 
+const privateRead = await fetch(objectUrl, {
+  method: "GET",
+  redirect: "manual",
+  signal: AbortSignal.timeout(15_000),
+});
+const privateReadError = await privateRead.text();
+const accessDenied = privateRead.status === 403
+  || (privateRead.status === 400 && /<Message>Authorization<\/Message>/.test(privateReadError));
+if (!accessDenied) {
+  throw new Error(`Unauthenticated reads of the private R2 bucket must be denied; received HTTP ${privateRead.status}.`);
+}
+
 async function requestPreflight(origin) {
   return fetch(objectUrl, {
     method: "OPTIONS",
@@ -67,4 +79,4 @@ if (mediaDomain.status !== 404) {
   throw new Error(`R2 public media domain should serve the missing-object probe as HTTP 404; received ${mediaDomain.status}.`);
 }
 
-console.log("R2 CORS allows the staging origin, rejects the apex origin, and the public media domain returns the expected missing-object response.");
+console.log("Private R2 reads are denied; CORS allows staging and rejects the apex; the public media domain returns the expected missing-object response.");
