@@ -1,5 +1,6 @@
 import http from "k6/http";
 import { check, sleep } from "k6";
+import { URL } from "https://jslib.k6.io/url/1.0.0/index.js";
 import { getProductionHostnames, normalizeHostname } from "./production-hostnames.js";
 
 const configuredBaseUrl = __ENV.BASE_URL;
