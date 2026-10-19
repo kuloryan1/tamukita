@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getPrismaClient } from "@/lib/prisma";
+import { getIntegrationConfigurations } from "@/lib/integration-status";
 
 const priceKeys = {
   BASIC_ACTIVATION: { key: "reseller.basic_activation_price_idr", env: "RESELLER_BASIC_ACTIVATION_PRICE_IDR" },
@@ -82,26 +83,10 @@ export async function getPlatformSettingsOverview() {
   };
   const storedTerm = values.get(hostingKeys.termDays.key);
   const envTerm = Number(process.env[hostingKeys.termDays.env]);
-  const envKeys: Record<string, string> = {
-    "Database URL": "DATABASE_URL",
-    "Auth secret": "AUTH_SECRET",
-    "Xendit API": "XENDIT_SECRET_KEY",
-    "Xendit payment webhook": "XENDIT_WEBHOOK_TOKEN",
-    "Xendit refund webhook": "XENDIT_REFUND_WEBHOOK_TOKEN",
-    "Email Resend": "RESEND_API_KEY",
-    "Redis worker": "REDIS_URL",
-    "Alamat aplikasi": "NEXT_PUBLIC_APP_URL",
-    "R2 account": "R2_ACCOUNT_ID",
-    "R2 access key": "R2_ACCESS_KEY_ID",
-    "R2 secret key": "R2_SECRET_ACCESS_KEY",
-    "R2 private bucket": "R2_PRIVATE_BUCKET_NAME",
-    "R2 public bucket": "R2_PUBLIC_BUCKET_NAME",
-    "R2 public URL": "R2_PUBLIC_BASE_URL",
-  };
   return {
     prices: { basicActivationIdr: resolvePrice("BASIC_ACTIVATION"), premiumActivationIdr: resolvePrice("PREMIUM_ACTIVATION"), customerActivationIdr: resolveCustomerActivationPrice(), hostingRenewalIdr: resolveHostingPrice() },
     hostingTermDays: validTermDays(storedTerm) ? storedTerm : validTermDays(envTerm) ? envTerm : 365,
-    integrations: Object.entries(envKeys).map(([label, key]) => ({ label, configured: Boolean(process.env[key]) })),
+    integrations: getIntegrationConfigurations(),
   };
 }
 

@@ -30,6 +30,8 @@ Rate limit memakai alamat dari elemen terakhir `X-Forwarded-For`; Cloudflare men
 
 Health check dan load test baca-saja yang lulus belum berarti QA blueprint selesai. Sebelum transaksi provider atau uji upload, pastikan database, penyimpanan, dan semua kredensial staging terpisah dari production serta fixture uji tersedia.
 
+Perubahan panel admin di repository `main` kini membedakan environment integrasi yang kosong, belum lengkap, tidak sesuai format/aturan staging, dan terisi. Nilai secret tidak dikirim ke browser. Status bersumber dari container web saja; status terisi tidak membuktikan koneksi provider, izin credential, konfigurasi worker, maupun keberhasilan transaksi atau upload. Karena auto-deploy mati, perubahan baru terlihat di staging setelah deploy manual.
+
 ## Persiapan staging
 
 1. Connector khusus `tamukita-staging` berjalan dari image `cloudflare/cloudflared:2026.10.1` dan hanya bergabung ke external network `tamukita-staging-xwcuty_staging-origin`; `TUNNEL_TOKEN` tersimpan hanya di environment rahasia layanan Dokploy. Jangan commit token ke repository atau memasukkannya ke environment tingkat project. Lihat [panduan Tunnel resmi Dokploy](https://docs.dokploy.com/docs/core/guides/cloudflare-tunnels) dan [rilis resmi cloudflared](https://github.com/cloudflare/cloudflared/releases/tag/2026.10.1).

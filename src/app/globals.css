@@ -1122,7 +1122,7 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .admin-integration-row > span { color: #697166; }
 .admin-integration-row > b { font-size: 7px; font-weight: 500; white-space: nowrap; }
 .admin-integration-row > .is-configured { color: #5e7a5d; }
-.admin-integration-row > .is-missing { color: #a26b57; }
+.admin-integration-row > .is-missing, .admin-integration-row > .is-incomplete, .admin-integration-row > .is-invalid { color: #a26b57; }
 .support-access-dialog { background: #fff; border: 1px solid #e6e5df; box-shadow: 0 24px 70px rgba(20, 34, 25, .18); margin: auto; max-width: 480px; padding: 22px; width: calc(100% - 28px); }
 .support-access-dialog-heading { align-items: flex-start; display: flex; gap: 18px; justify-content: space-between; }
 .support-access-dialog-heading h2 { color: #35473b; font-family: var(--serif); font-size: 24px; font-weight: 400; margin: 7px 0 0; }

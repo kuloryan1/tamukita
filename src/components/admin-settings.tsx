@@ -2,9 +2,17 @@
 
 import { useState, type FormEvent } from "react";
 import { Save, ShieldCheck } from "lucide-react";
+import type { IntegrationConfiguration } from "@/lib/integration-status";
 
-type Settings = { prices: { basicActivationIdr: number; premiumActivationIdr: number; customerActivationIdr: number; hostingRenewalIdr: number }; hostingTermDays: number; integrations: { label: string; configured: boolean }[] };
+type Settings = { prices: { basicActivationIdr: number; premiumActivationIdr: number; customerActivationIdr: number; hostingRenewalIdr: number }; hostingTermDays: number; integrations: IntegrationConfiguration[] };
 const money = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
+
+const integrationStatusText: Record<IntegrationConfiguration["status"], string> = {
+  configured: "Terisi",
+  missing: "Belum diatur",
+  incomplete: "Belum lengkap",
+  invalid: "Perlu diperiksa",
+};
 
 export function AdminSettings({ initial }: { initial: Settings }) {
   const [basic, setBasic] = useState(initial.prices.basicActivationIdr ? String(initial.prices.basicActivationIdr) : "");
@@ -53,8 +61,8 @@ export function AdminSettings({ initial }: { initial: Settings }) {
       </form>
     </section>
     <section className="dashboard-content-card admin-settings-card">
-      <div className="card-heading"><div><h2>Status integrasi</h2><p>Hanya status konfigurasi yang terlihat. Nilai rahasia tidak ditampilkan di admin.</p></div><ShieldCheck size={17} /></div>
-      <div className="admin-integration-list">{integrations.map((integration) => <div className="admin-integration-row" key={integration.label}><span>{integration.label}</span><b className={integration.configured ? "is-configured" : "is-missing"}>{integration.configured ? "Terpasang" : "Belum diatur"}</b></div>)}</div>
+      <div className="card-heading"><div><h2>Status integrasi</h2><p>Status memeriksa environment container web, bukan koneksi layanan atau environment worker. Nilai rahasia tidak ditampilkan.</p></div><ShieldCheck size={17} /></div>
+      <div className="admin-integration-list">{integrations.map((integration) => <div className="admin-integration-row" key={integration.label}><span>{integration.label}</span><b className={`is-${integration.status}`}>{integrationStatusText[integration.status]}</b></div>)}</div>
     </section>
   </div>;
 }
