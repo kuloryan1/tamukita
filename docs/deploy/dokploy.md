@@ -34,6 +34,8 @@ Perubahan panel admin di repository `main` kini membedakan environment integrasi
 
 Perubahan lanjutan menambahkan laporan status worker tanpa nilai secret ke Redis, dengan TTL yang sama seperti heartbeat 45 detik. Panel admin membaca status ini hanya pada halaman super-admin. Setelah kedua container memakai versi yang memiliki reporter, panel menunjukkan environment worker secara terpisah. Jika laporan belum ada atau Redis tidak dapat dijangkau, panel menampilkan status belum tersedia dan tidak menggagalkan halaman pengaturan.
 
+Workflow E2E juga mencakup pemeriksaan halaman ini pada Chromium desktop, Chromium mobile, dan WebKit mobile: pengguna anonim tidak dapat membaca endpoint admin, super-admin melihat readiness web/worker, dan respons tidak memuat nilai secret.
+
 ## Persiapan staging
 
 1. Connector khusus `tamukita-staging` berjalan dari image `cloudflare/cloudflared:2026.10.1` dan hanya bergabung ke external network `tamukita-staging-xwcuty_staging-origin`; `TUNNEL_TOKEN` tersimpan hanya di environment rahasia layanan Dokploy. Jangan commit token ke repository atau memasukkannya ke environment tingkat project. Lihat [panduan Tunnel resmi Dokploy](https://docs.dokploy.com/docs/core/guides/cloudflare-tunnels) dan [rilis resmi cloudflared](https://github.com/cloudflare/cloudflared/releases/tag/2026.10.1).
