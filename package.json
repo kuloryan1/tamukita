@@ -17,6 +17,7 @@
     "test:load:api": "k6 run tests/load/api-health.js",
     "test:performance:lcp": "playwright test --config=playwright.performance.config.ts",
     "db:seed:e2e": "tsx scripts/seed-e2e-admin.ts",
+    "db:seed:staging-media-account": "tsx scripts/seed-staging-media-account.ts",
     "r2:lifecycle": "tsx scripts/r2-pending-lifecycle.ts",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",

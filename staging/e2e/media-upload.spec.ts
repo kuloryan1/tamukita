@@ -3,6 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 const stagingOrigin = "https://staging.tamukita.io";
 const mediaOrigin = "https://media-staging.tamukita.io";
+const stagingQaEmail = "media-qa@tamukita.invalid";
 
 async function signIn(page: Page, email: string, password: string) {
   await page.goto("/login");
@@ -22,11 +23,11 @@ test("staging browser uploads to private R2 and worker publishes a WebP to media
   const configuredOrigin = new URL(process.env.STAGING_BASE_URL ?? "").origin;
   expect(configuredOrigin).toBe(stagingOrigin);
 
-  const email = process.env.STAGING_MEDIA_QA_EMAIL?.trim();
+  const email = process.env.STAGING_MEDIA_QA_EMAIL?.trim().toLowerCase();
   const password = process.env.STAGING_MEDIA_QA_PASSWORD;
-  expect(email, "Set STAGING_MEDIA_QA_EMAIL in GitHub Environment staging.").toBeTruthy();
+  expect(email, "The staging media test requires its reserved synthetic .invalid account.").toBe(stagingQaEmail);
   expect(password, "Set STAGING_MEDIA_QA_PASSWORD in GitHub Environment staging.").toBeTruthy();
-  if (!email || !password) throw new Error("A verified staging-only customer account is required.");
+  if (email !== stagingQaEmail || !password) throw new Error("Provision the dedicated staging-only media QA account first.");
 
   const suffix = randomUUID().slice(0, 8);
   const firstName = `QA Media ${suffix}`;

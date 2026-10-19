@@ -36,7 +36,7 @@ Audit terhadap *Master Plan End-to-End — TamuKita*, versi 2.0. Status per 19 O
 
 ## QA media R2 staging
 
-Workflow manual `.github/workflows/staging-media.yml` menyiapkan verifikasi upload browser melalui presigned URL, pemrosesan WebP oleh worker, dan pembacaan hasil dari `media-staging.tamukita.io`. Workflow hanya menerima branch `main`, memakai kredensial akun customer QA dari GitHub Environment `staging` (`STAGING_MEDIA_QA_EMAIL` dan `STAGING_MEDIA_QA_PASSWORD`), dan mensyaratkan input `authorize_public_media_upload=true`. Setiap run membuat satu draft uji yang tidak dipublikasikan dan satu WebP sintetis yang dapat dibaca publik; keduanya dibiarkan sebagai artefak QA. Workflow belum dijalankan, sehingga bukti upload aplikasi dan pipeline nyata tetap terbuka.
+Workflow manual `.github/workflows/staging-media.yml` menyiapkan verifikasi upload browser melalui presigned URL, pemrosesan WebP oleh worker, dan pembacaan hasil dari `media-staging.tamukita.io`. Workflow hanya menerima branch `main`, mengunci login ke akun sintetis `media-qa@tamukita.invalid`, mengambil password dari secret GitHub Environment `staging`, dan mensyaratkan input `authorize_public_media_upload=true`. Seeder `npm run db:seed:staging-media-account -- --confirm-staging-media-account` hanya berjalan saat origin aplikasi persis staging dan membutuhkan password QA sementara. Setiap run tes membuat satu draft tidak dipublikasikan dan satu WebP sintetis yang dapat dibaca publik; keduanya dibiarkan sebagai artefak QA. Workflow belum dijalankan, sehingga bukti upload aplikasi dan pipeline nyata tetap terbuka.
 
 ## Urutan penyelesaian yang tersisa
 

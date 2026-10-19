@@ -28,7 +28,7 @@ jobs:
         env:
           APPROVED: ${{ inputs.authorize_public_media_upload }}
           STAGING_BASE_URL: ${{ vars.STAGING_BASE_URL }}
-          STAGING_MEDIA_QA_EMAIL: ${{ secrets.STAGING_MEDIA_QA_EMAIL }}
+          STAGING_MEDIA_QA_EMAIL: media-qa@tamukita.invalid
           STAGING_MEDIA_QA_PASSWORD: ${{ secrets.STAGING_MEDIA_QA_PASSWORD }}
         run: |
           if [[ "$APPROVED" != "true" ]]; then
@@ -39,8 +39,12 @@ jobs:
             echo "GitHub Environment staging must set STAGING_BASE_URL to https://staging.tamukita.io." >&2
             exit 1
           fi
-          if [[ -z "$STAGING_MEDIA_QA_EMAIL" || -z "$STAGING_MEDIA_QA_PASSWORD" ]]; then
-            echo "Set STAGING_MEDIA_QA_EMAIL and STAGING_MEDIA_QA_PASSWORD as secrets in GitHub Environment staging." >&2
+          if [[ "$STAGING_MEDIA_QA_EMAIL" != "media-qa@tamukita.invalid" ]]; then
+            echo "The staging media test must use its reserved synthetic .invalid account." >&2
+            exit 1
+          fi
+          if (( ${#STAGING_MEDIA_QA_PASSWORD} < 12 || ${#STAGING_MEDIA_QA_PASSWORD} > 128 )); then
+            echo "Set STAGING_MEDIA_QA_PASSWORD to a 12–128 character secret in GitHub Environment staging." >&2
             exit 1
           fi
 
@@ -54,6 +58,6 @@ jobs:
       - name: Upload synthetic media through staging app
         env:
           STAGING_BASE_URL: ${{ vars.STAGING_BASE_URL }}
-          STAGING_MEDIA_QA_EMAIL: ${{ secrets.STAGING_MEDIA_QA_EMAIL }}
+          STAGING_MEDIA_QA_EMAIL: media-qa@tamukita.invalid
           STAGING_MEDIA_QA_PASSWORD: ${{ secrets.STAGING_MEDIA_QA_PASSWORD }}
         run: npm run test:staging-media
