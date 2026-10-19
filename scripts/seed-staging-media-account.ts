@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
-import { hashPassword } from "@/lib/password";
+import { hashPassword } from "../src/lib/password";
 
 const stagingOrigin = "https://staging.tamukita.io";
 const qaEmail = "media-qa@tamukita.invalid";

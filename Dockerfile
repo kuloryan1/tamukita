@@ -45,8 +45,10 @@ COPY --from=builder /app/src/lib/r2-buckets.ts ./src/lib/r2-buckets.ts
 COPY --from=builder /app/src/lib/xendit-config.ts ./src/lib/xendit-config.ts
 COPY --from=builder /app/src/lib/media-processing.ts ./src/lib/media-processing.ts
 COPY --from=builder /app/src/lib/worker-health.ts ./src/lib/worker-health.ts
+COPY --from=builder /app/src/lib/password.ts ./src/lib/password.ts
 COPY --from=builder /app/scripts/healthcheck-worker.ts ./scripts/healthcheck-worker.ts
 COPY --from=builder /app/scripts/seed-staging-public-fixture.ts ./scripts/seed-staging-public-fixture.ts
+COPY --from=builder /app/scripts/seed-staging-media-account.ts ./scripts/seed-staging-media-account.ts
 COPY --from=builder /app/package.json ./package.json
 USER nextjs
 CMD ["npm", "run", "worker"]
