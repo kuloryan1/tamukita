@@ -71,6 +71,21 @@ test("customer crops and processes a cover photo without losing draft details", 
   const pngBuffer = Buffer.from(pngDataUrl.slice(pngDataUrl.indexOf(",") + 1), "base64");
   await page.locator('.photo-upload-prompt input[type="file"]').setInputFiles({ name: "cover.png", mimeType: "image/png", buffer: pngBuffer });
   await expect(page.getByRole("dialog").getByRole("heading", { name: "Sesuaikan fotomu" })).toBeVisible();
+  const zoomControl = page.getByLabel("Perbesar foto");
+  await zoomControl.focus();
+  await zoomControl.press("End");
+  await expect(zoomControl).toHaveValue("3");
+
+  const cropStage = page.locator(".photo-crop-stage .reactEasyCrop_Container");
+  const cropBounds = await cropStage.boundingBox();
+  expect(cropBounds).not.toBeNull();
+  if (!cropBounds) throw new Error("The photo crop stage is not visible.");
+  const cropCenterX = cropBounds.x + cropBounds.width / 2;
+  const cropCenterY = cropBounds.y + cropBounds.height / 2;
+  await page.mouse.move(cropCenterX, cropCenterY);
+  await page.mouse.down();
+  await page.mouse.move(cropCenterX + 32, cropCenterY + 18, { steps: 4 });
+  await page.mouse.up();
   await page.locator(".photo-crop-rotate button").nth(1).click();
   const usePhotoButton = page.getByRole("button", { name: /Gunakan foto/ });
   await expect(usePhotoButton).toBeEnabled();
@@ -100,16 +115,20 @@ test("customer crops and processes a cover photo without losing draft details", 
 
   const savedCropResponse = await page.request.get(`/api/media/cover-edit?invitationId=${invitationId}`);
   expect(savedCropResponse.status()).toBe(200);
-  const savedCrop = await savedCropResponse.json() as { cropData?: { zoom?: number; rotation?: number } | null };
-  expect(savedCrop.cropData).toMatchObject({ zoom: 1, rotation: 90 });
+  const savedCrop = await savedCropResponse.json() as { cropData?: { zoom?: number; rotation?: number; cropOffset?: { x?: number; y?: number } } | null };
+  expect(savedCrop.cropData).toMatchObject({ zoom: 3, rotation: 90 });
+  expect(savedCrop.cropData?.cropOffset?.x).not.toBe(0);
+  expect(savedCrop.cropData?.cropOffset?.y).not.toBe(0);
 
   await page.reload();
   await expect(page.getByLabel("Nama pertama")).toHaveValue(firstName);
   await advanceToStep(page, 2);
   await page.getByRole("button", { name: "Edit foto" }).click();
   await expect(page.getByRole("dialog").getByRole("heading", { name: "Sesuaikan fotomu" })).toBeVisible();
-  await expect(page.getByLabel("Perbesar foto")).toHaveValue("1");
+  await expect(zoomControl).toHaveValue("3");
   await page.locator(".photo-crop-rotate button").nth(1).click();
+  await page.getByRole("button", { name: "Atur ulang" }).click();
+  await expect(zoomControl).toHaveValue("1");
   await page.getByRole("button", { name: /Gunakan foto/ }).click();
   await expect(page.locator(".photo-uploaded-label")).toContainText("terpilih", { timeout: 45_000 });
   await expect(page.locator(".editor-save-state")).toHaveText("Tersimpan otomatis", { timeout: 15_000 });
@@ -129,7 +148,8 @@ test("customer crops and processes a cover photo without losing draft details", 
 
   const editedCropResponse = await page.request.get(`/api/media/cover-edit?invitationId=${invitationId}`);
   expect(editedCropResponse.status()).toBe(200);
-  const editedCrop = await editedCropResponse.json() as { cropData?: { zoom?: number; rotation?: number } | null };
+  const editedCrop = await editedCropResponse.json() as { cropData?: { zoom?: number; rotation?: number; cropOffset?: { x?: number; y?: number } } | null };
   expect(editedCrop.cropData?.zoom).toBeCloseTo(1, 4);
-  expect(editedCrop.cropData?.rotation).toBe(180);
+  expect(editedCrop.cropData?.rotation).toBe(0);
+  expect(editedCrop.cropData?.cropOffset).toMatchObject({ x: 0, y: 0 });
 });
