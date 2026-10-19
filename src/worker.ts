@@ -8,7 +8,10 @@ import { PrismaClient } from "./generated/prisma/client";
 import { isReservedNonDeliverableEmailAddress } from "./lib/email-address";
 import { getTransactionalEmailEndpoint } from "./lib/email-transport";
 import { getR2BucketNames } from "./lib/r2-buckets";
+import { getWorkerIntegrationConfigurations } from "./lib/integration-status";
 import {
+  createWorkerIntegrationSnapshot,
+  WORKER_CONFIGURATION_KEY,
   WORKER_HEARTBEAT_KEY,
   WORKER_HEARTBEAT_TTL_SECONDS,
   WORKER_HEARTBEAT_VALUE,
@@ -345,7 +348,12 @@ let lastHeartbeatErrorAt = 0;
 async function refreshWorkerHeartbeat() {
   if (!worker.isRunning() || connection.status !== "ready") return false;
   try {
-    await connection.set(WORKER_HEARTBEAT_KEY, WORKER_HEARTBEAT_VALUE, "EX", WORKER_HEARTBEAT_TTL_SECONDS);
+    const snapshot = createWorkerIntegrationSnapshot(getWorkerIntegrationConfigurations());
+    const results = await connection.multi()
+      .set(WORKER_HEARTBEAT_KEY, WORKER_HEARTBEAT_VALUE, "EX", WORKER_HEARTBEAT_TTL_SECONDS)
+      .set(WORKER_CONFIGURATION_KEY, JSON.stringify(snapshot), "EX", WORKER_HEARTBEAT_TTL_SECONDS)
+      .exec();
+    if (!results || results.some(([error]) => error)) throw new Error("Redis rejected the worker heartbeat update.");
     lastHeartbeatErrorAt = 0;
     return true;
   } catch (error) {

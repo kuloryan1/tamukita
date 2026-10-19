@@ -30,7 +30,9 @@ Rate limit memakai alamat dari elemen terakhir `X-Forwarded-For`; Cloudflare men
 
 Health check dan load test baca-saja yang lulus belum berarti QA blueprint selesai. Sebelum transaksi provider atau uji upload, pastikan database, penyimpanan, dan semua kredensial staging terpisah dari production serta fixture uji tersedia.
 
-Perubahan panel admin di repository `main` kini membedakan environment integrasi yang kosong, belum lengkap, tidak sesuai format/aturan staging, dan terisi. Nilai secret tidak dikirim ke browser. Status bersumber dari container web saja; status terisi tidak membuktikan koneksi provider, izin credential, konfigurasi worker, maupun keberhasilan transaksi atau upload. Karena auto-deploy mati, perubahan baru terlihat di staging setelah deploy manual.
+Perubahan panel admin di repository `main` kini membedakan environment integrasi web dan worker yang kosong, belum lengkap, tidak sesuai format/aturan staging, atau terisi. Nilai secret tidak dikirim ke browser. Status terisi tidak membuktikan koneksi provider, izin credential, maupun keberhasilan transaksi atau upload. Karena auto-deploy mati, perubahan baru terlihat di staging setelah deploy manual.
+
+Perubahan lanjutan menambahkan laporan status worker tanpa nilai secret ke Redis, dengan TTL yang sama seperti heartbeat 45 detik. Panel admin membaca status ini hanya pada halaman super-admin. Setelah kedua container memakai versi yang memiliki reporter, panel menunjukkan environment worker secara terpisah. Jika laporan belum ada atau Redis tidak dapat dijangkau, panel menampilkan status belum tersedia dan tidak menggagalkan halaman pengaturan.
 
 ## Persiapan staging
 

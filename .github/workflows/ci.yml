@@ -31,6 +31,8 @@ jobs:
         run: npm audit --audit-level=moderate
       - name: Validate Docker Compose configuration
         run: docker compose --env-file .env.example config --quiet
+      - name: Build worker runtime image
+        run: docker build --target worker --tag tamukita-worker-ci .
       - name: Validate staging Tunnel Compose configuration
         env:
           TUNNEL_TOKEN: ci-only-validation-placeholder

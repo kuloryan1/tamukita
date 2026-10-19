@@ -1,5 +1,5 @@
-import { getR2BucketNames } from "@/lib/r2-buckets";
-import { getXenditSecretKey } from "@/lib/xendit-config";
+import { getR2BucketNames } from "./r2-buckets";
+import { getXenditSecretKey } from "./xendit-config";
 
 export type IntegrationConfigurationStatus = "configured" | "missing" | "incomplete" | "invalid";
 export type IntegrationConfiguration = { label: string; status: IntegrationConfigurationStatus };
@@ -114,4 +114,9 @@ export function getIntegrationConfigurations(environment: Environment = process.
       ], () => isR2Configuration(environment)),
     },
   ];
+}
+
+export function getWorkerIntegrationConfigurations(environment: Environment = process.env): IntegrationConfiguration[] {
+  const workerLabels = new Set(["Database URL", "Redis endpoint", "Email Resend", "Media R2"]);
+  return getIntegrationConfigurations(environment).filter(({ label }) => workerLabels.has(label));
 }

@@ -3,8 +3,9 @@
 import { useState, type FormEvent } from "react";
 import { Save, ShieldCheck } from "lucide-react";
 import type { IntegrationConfiguration } from "@/lib/integration-status";
+import type { WorkerIntegrationSnapshot } from "@/lib/worker-health";
 
-type Settings = { prices: { basicActivationIdr: number; premiumActivationIdr: number; customerActivationIdr: number; hostingRenewalIdr: number }; hostingTermDays: number; integrations: IntegrationConfiguration[] };
+type Settings = { prices: { basicActivationIdr: number; premiumActivationIdr: number; customerActivationIdr: number; hostingRenewalIdr: number }; hostingTermDays: number; integrations: IntegrationConfiguration[]; workerConfiguration: WorkerIntegrationSnapshot | null };
 const money = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
 
 const integrationStatusText: Record<IntegrationConfiguration["status"], string> = {
@@ -21,6 +22,7 @@ export function AdminSettings({ initial }: { initial: Settings }) {
   const [hostingRenewal, setHostingRenewal] = useState(String(initial.prices.hostingRenewalIdr));
   const [hostingTerm, setHostingTerm] = useState(String(initial.hostingTermDays));
   const [integrations, setIntegrations] = useState(initial.integrations);
+  const [workerConfiguration, setWorkerConfiguration] = useState(initial.workerConfiguration);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -42,6 +44,7 @@ export function AdminSettings({ initial }: { initial: Settings }) {
     setHostingRenewal(String(payload.prices.hostingRenewalIdr));
     setHostingTerm(String(payload.hostingTermDays));
     setIntegrations(payload.integrations);
+    setWorkerConfiguration(payload.workerConfiguration);
     setNotice("Pengaturan tersimpan. Harga pada order yang sudah dibuat tidak berubah.");
   }
 
@@ -61,8 +64,17 @@ export function AdminSettings({ initial }: { initial: Settings }) {
       </form>
     </section>
     <section className="dashboard-content-card admin-settings-card">
-      <div className="card-heading"><div><h2>Status integrasi</h2><p>Status memeriksa environment container web, bukan koneksi layanan atau environment worker. Nilai rahasia tidak ditampilkan.</p></div><ShieldCheck size={17} /></div>
+      <div className="card-heading"><div><h2>Status integrasi web</h2><p>Status memeriksa environment container web, bukan koneksi layanan. Nilai rahasia tidak ditampilkan.</p></div><ShieldCheck size={17} /></div>
       <div className="admin-integration-list">{integrations.map((integration) => <div className="admin-integration-row" key={integration.label}><span>{integration.label}</span><b className={`is-${integration.status}`}>{integrationStatusText[integration.status]}</b></div>)}</div>
+    </section>
+    <section className="dashboard-content-card admin-settings-card">
+      <div className="card-heading"><div><h2>Status environment worker</h2><p>Worker mengirim status tanpa secret melalui heartbeat Redis. Status terisi tidak membuktikan koneksi provider atau keberhasilan pengiriman dan pemrosesan media.</p></div><ShieldCheck size={17} /></div>
+      {workerConfiguration
+        ? <>
+          <p className="admin-settings-note">Laporan worker diperbarui {new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(new Date(workerConfiguration.checkedAt))}.</p>
+          <div className="admin-integration-list">{workerConfiguration.integrations.map((integration) => <div className="admin-integration-row" key={integration.label}><span>{integration.label}</span><b className={`is-${integration.status}`}>{integrationStatusText[integration.status]}</b></div>)}</div>
+        </>
+        : <p className="admin-settings-note">Worker belum mengirim laporan environment. Periksa apakah worker berjalan dan sudah memakai versi aplikasi terbaru.</p>}
     </section>
   </div>;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { getIntegrationConfigurations } from "@/lib/integration-status";
+import { getIntegrationConfigurations, getWorkerIntegrationConfigurations } from "@/lib/integration-status";
 
 const configuredStaging = {
   NODE_ENV: "production",
@@ -66,5 +66,24 @@ describe("getIntegrationConfigurations", () => {
       R2_PUBLIC_BUCKET_NAME: "public",
       R2_PUBLIC_BASE_URL: "http://media.example.test",
     }, "Media R2")).toBe("invalid");
+  });
+});
+
+describe("getWorkerIntegrationConfigurations", () => {
+  test("reports only worker dependencies and requires both email settings", () => {
+    const integrations = getWorkerIntegrationConfigurations({
+      DATABASE_URL: configuredStaging.DATABASE_URL,
+      REDIS_URL: configuredStaging.REDIS_URL,
+      RESEND_API_KEY: configuredStaging.RESEND_API_KEY,
+      R2_ACCOUNT_ID: configuredStaging.R2_ACCOUNT_ID,
+      R2_ACCESS_KEY_ID: configuredStaging.R2_ACCESS_KEY_ID,
+      R2_SECRET_ACCESS_KEY: configuredStaging.R2_SECRET_ACCESS_KEY,
+      R2_PRIVATE_BUCKET_NAME: configuredStaging.R2_PRIVATE_BUCKET_NAME,
+      R2_PUBLIC_BUCKET_NAME: configuredStaging.R2_PUBLIC_BUCKET_NAME,
+      R2_PUBLIC_BASE_URL: configuredStaging.R2_PUBLIC_BASE_URL,
+    });
+
+    expect(integrations.map(({ label }) => label)).toEqual(["Database URL", "Email Resend", "Redis endpoint", "Media R2"]);
+    expect(integrations.find(({ label }) => label === "Email Resend")?.status).toBe("incomplete");
   });
 });
