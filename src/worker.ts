@@ -7,6 +7,7 @@ import IORedis from "ioredis";
 import { PrismaClient } from "./generated/prisma/client";
 import { isReservedNonDeliverableEmailAddress } from "./lib/email-address";
 import { getTransactionalEmailEndpoint } from "./lib/email-transport";
+import { getR2BucketNames } from "./lib/r2-buckets";
 import {
   WORKER_HEARTBEAT_KEY,
   WORKER_HEARTBEAT_TTL_SECONDS,
@@ -32,11 +33,10 @@ if (!databaseUrl) throw new Error("DATABASE_URL diperlukan untuk worker notifika
 const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl }) });
 const queue = new Queue(queueName, { connection });
-const mediaConfig: MediaProcessingConfig | null = process.env.R2_PRIVATE_BUCKET_NAME && process.env.R2_PUBLIC_BUCKET_NAME && process.env.R2_PUBLIC_BASE_URL
-  ? { privateBucket: process.env.R2_PRIVATE_BUCKET_NAME, publicBucket: process.env.R2_PUBLIC_BUCKET_NAME, publicBaseUrl: process.env.R2_PUBLIC_BASE_URL, allowLocalHttpPublicBaseUrl: process.env.E2E_R2_MOCK === "true" }
-  : process.env.R2_BUCKET_NAME && process.env.R2_PUBLIC_BUCKET_NAME && process.env.R2_PUBLIC_BASE_URL
-    ? { privateBucket: process.env.R2_BUCKET_NAME, publicBucket: process.env.R2_PUBLIC_BUCKET_NAME, publicBaseUrl: process.env.R2_PUBLIC_BASE_URL, allowLocalHttpPublicBaseUrl: process.env.E2E_R2_MOCK === "true" }
-    : null;
+const mediaBuckets = getR2BucketNames(process.env);
+const mediaConfig: MediaProcessingConfig | null = mediaBuckets && process.env.R2_PUBLIC_BASE_URL
+  ? { ...mediaBuckets, publicBaseUrl: process.env.R2_PUBLIC_BASE_URL, allowLocalHttpPublicBaseUrl: process.env.E2E_R2_MOCK === "true" }
+  : null;
 const mediaS3 = mediaConfig && process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY
   ? new S3Client({
       region: "auto",

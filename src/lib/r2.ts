@@ -2,6 +2,7 @@ import "server-only";
 
 import { S3Client } from "@aws-sdk/client-s3";
 import { containsControlCharacters } from "@/lib/text";
+import { getR2BucketNames } from "@/lib/r2-buckets";
 
 const globalForR2 = globalThis as typeof globalThis & { tamukitaR2?: S3Client };
 
@@ -13,10 +14,10 @@ export function getR2Config() {
   const accountId = process.env.R2_ACCOUNT_ID;
   const accessKeyId = process.env.R2_ACCESS_KEY_ID;
   const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
-  const privateBucket = process.env.R2_PRIVATE_BUCKET_NAME || process.env.R2_BUCKET_NAME;
-  const publicBucket = process.env.R2_PUBLIC_BUCKET_NAME;
+  const bucketNames = getR2BucketNames(process.env);
   const publicBaseUrl = process.env.R2_PUBLIC_BASE_URL;
-  if (!accountId || !accessKeyId || !secretAccessKey || !privateBucket || !publicBucket || !publicBaseUrl) return null;
+  if (!accountId || !accessKeyId || !secretAccessKey || !bucketNames || !publicBaseUrl) return null;
+  const { privateBucket, publicBucket } = bucketNames;
   const localMockEnabled = process.env.E2E_R2_MOCK === "true";
   const s3Endpoint = process.env.R2_S3_ENDPOINT || `https://${accountId}.r2.cloudflarestorage.com`;
   try {
