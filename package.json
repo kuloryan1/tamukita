@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:templates": "vitest run src/templates/registry.test.tsx",
     "test:e2e": "playwright test",
+    "test:staging-media": "playwright test --config=playwright.staging-media.config.ts",
     "test:load:public": "k6 run tests/load/public-invitation.js",
     "test:load:api": "k6 run tests/load/api-health.js",
     "test:performance:lcp": "playwright test --config=playwright.performance.config.ts",

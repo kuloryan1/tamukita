@@ -34,6 +34,10 @@ Audit terhadap *Master Plan End-to-End — TamuKita*, versi 2.0. Status per 19 O
 | Deployment, backup, restore, monitoring, dan pemulihan telah diuji | Compose health check, smoke check, skrip backup/restore, timer, Tunnel health alert Cloudflare, dan CI restore drill tersedia. | Lakukan restore drill di VPS serta verifikasi alert kegagalan aplikasi dan health host diterima operator. |
 | Custom Domain tetap Coming Soon | Dashboard menampilkan item nonaktif tanpa integrasi DNS pelanggan. | Sudah sesuai blueprint MVP. |
 
+## QA media R2 staging
+
+Workflow manual `.github/workflows/staging-media.yml` menyiapkan verifikasi upload browser melalui presigned URL, pemrosesan WebP oleh worker, dan pembacaan hasil dari `media-staging.tamukita.io`. Workflow hanya menerima branch `main`, memakai kredensial akun customer QA dari GitHub Environment `staging` (`STAGING_MEDIA_QA_EMAIL` dan `STAGING_MEDIA_QA_PASSWORD`), dan mensyaratkan input `authorize_public_media_upload=true`. Setiap run membuat satu draft uji yang tidak dipublikasikan dan satu WebP sintetis yang dapat dibaca publik; keduanya dibiarkan sebagai artefak QA. Workflow belum dijalankan, sehingga bukti upload aplikasi dan pipeline nyata tetap terbuka.
+
 ## Urutan penyelesaian yang tersisa
 
 1. Selesaikan QA alur customer, admin, developer, billing, reseller, dan guest/security di staging; siapkan undangan uji serta kredensial Xendit Test Mode dan email non-production. Bucket R2 staging sudah tersedia; signed read/write sudah terbukti, sedangkan alur aplikasi belum.

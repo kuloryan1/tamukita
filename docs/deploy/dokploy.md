@@ -80,6 +80,14 @@ Sesudah container production pertama berjalan, temukan nama Compose project yang
 - Uji Xendit Test Mode, upload melalui aplikasi/presigned URL, pemrosesan foto oleh pipeline R2, akses objek publik, restore di VPS, transaksi/tulis operasional, dan pemantauan eksternal health aplikasi/host belum diverifikasi. Direct signed R2 read/write pada marker privat sudah berhasil. Beban baca-saja health dan undangan publik hingga 1.000 VU lulus pada [Staging quality #8](https://github.com/kuloryan1/tamukita/actions/runs/39185340993). Smoke check GitHub Actions staging berjalan terjadwal serta mengecek undangan persisten dan dependency health; pengiriman alert kegagalannya tetap memerlukan secret webhook opsional. Dashboard metrik bawaan Dokploy dapat dibuka, tetapi alert host eksternal belum dibuktikan.
 - Keputusan operator untuk identitas/kontak, retensi data, refund, pelindungan anak, vendor/lokasi pemrosesan, serta tinjauan legal masih terbuka.
 
+## QA media staging manual
+
+Workflow GitHub `Staging media integration` (`.github/workflows/staging-media.yml`) menjalankan satu alur upload customer sungguhan pada staging: login akun customer QA, membuat draft baru, mengunggah gambar sintetis melalui browser dan URL presigned R2, menunggu worker memproses WebP, lalu membaca hasil dari `https://media-staging.tamukita.io`. Workflow hanya manual, menerima branch `main`, menolak origin selain `https://staging.tamukita.io`, dan memerlukan input `authorize_public_media_upload=true` sebelum mengunggah.
+
+Sebelum menjalankan workflow, siapkan akun customer QA khusus staging yang sudah terverifikasi, lalu simpan email dan kata sandinya sebagai secrets GitHub Environment `staging`: `STAGING_MEDIA_QA_EMAIL` dan `STAGING_MEDIA_QA_PASSWORD`. Gunakan akun uji tanpa data pelanggan atau pembayaran nyata. Jangan kirim kata sandi lewat chat. `STAGING_BASE_URL` pada environment harus tetap `https://staging.tamukita.io`.
+
+Satu run meninggalkan satu draft QA yang tidak dipublikasikan serta satu WebP sintetis yang dapat dibaca publik dalam bucket `tamukita-staging-public`. Workflow tidak mengirim email, membuat transaksi, atau menghapus data/objek; persetujuan pada input dispatch mengizinkan artefak sintetis publik tersebut. Workflow belum dijalankan, jadi layanan R2 langsung, upload aplikasi, pemrosesan worker, dan baca domain media tetap belum terverifikasi end-to-end.
+
 ## Pembaruan deployment staging — 19 Oktober 2026
 
 - Commit `c4edad68a8fbada0629f2c03ea70e37e1b4c287c` dari `main` dideploy manual ke Compose `tamukita-staging`. Dokploy menampilkan deployment `Done`, dan log build memuat hash commit tersebut. Auto-deploy tetap mati. Tidak ada migrasi database baru dibanding `117bb70`.

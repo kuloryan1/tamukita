@@ -1,0 +1,59 @@
+name: Staging media integration
+
+on:
+  workflow_dispatch:
+    inputs:
+      authorize_public_media_upload:
+        description: "Allow one synthetic image to be processed into the public staging media bucket and left there"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-media-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  media-upload:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: staging
+    steps:
+      - name: Require explicit upload approval and staging QA credentials
+        shell: bash
+        env:
+          APPROVED: ${{ inputs.authorize_public_media_upload }}
+          STAGING_BASE_URL: ${{ vars.STAGING_BASE_URL }}
+          STAGING_MEDIA_QA_EMAIL: ${{ secrets.STAGING_MEDIA_QA_EMAIL }}
+          STAGING_MEDIA_QA_PASSWORD: ${{ secrets.STAGING_MEDIA_QA_PASSWORD }}
+        run: |
+          if [[ "$APPROVED" != "true" ]]; then
+            echo "Set authorize_public_media_upload to true to create a synthetic public WebP and a staging draft." >&2
+            exit 1
+          fi
+          if [[ "$STAGING_BASE_URL" != "https://staging.tamukita.io" ]]; then
+            echo "GitHub Environment staging must set STAGING_BASE_URL to https://staging.tamukita.io." >&2
+            exit 1
+          fi
+          if [[ -z "$STAGING_MEDIA_QA_EMAIL" || -z "$STAGING_MEDIA_QA_PASSWORD" ]]; then
+            echo "Set STAGING_MEDIA_QA_EMAIL and STAGING_MEDIA_QA_PASSWORD as secrets in GitHub Environment staging." >&2
+            exit 1
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Upload synthetic media through staging app
+        env:
+          STAGING_BASE_URL: ${{ vars.STAGING_BASE_URL }}
+          STAGING_MEDIA_QA_EMAIL: ${{ secrets.STAGING_MEDIA_QA_EMAIL }}
+          STAGING_MEDIA_QA_PASSWORD: ${{ secrets.STAGING_MEDIA_QA_PASSWORD }}
+        run: npm run test:staging-media
