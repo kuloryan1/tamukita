@@ -17,8 +17,25 @@ test("customer registers, verifies email, and recovers access while keeping the 
   await page.goto("/templates/royal-gold");
   await page.getByRole("link", { name: "Gunakan template ini" }).click();
   await expect(page).toHaveURL((url) => url.pathname === "/login" && url.searchParams.get("callbackUrl") === callbackUrl);
+  let loginRequests = 0;
+  await page.route("**/api/auth/callback/credentials", async (route) => {
+    loginRequests += 1;
+    await route.continue();
+  });
+  await page.getByRole("button", { name: "Masuk" }).click();
+  await expect(page.getByRole("alert")).toHaveText("Alamat email wajib diisi.");
+  expect(loginRequests).toBe(0);
   await page.getByRole("link", { name: "Daftar" }).click();
   await expect(page).toHaveURL((url) => url.pathname === "/register" && url.searchParams.get("callbackUrl") === callbackUrl);
+  let registrationRequests = 0;
+  await page.route("**/api/auth/register", async (route) => {
+    registrationRequests += 1;
+    await route.continue();
+  });
+  await page.getByRole("button", { name: "Buat akun" }).click();
+  await expect(page.getByRole("alert")).toHaveText("Nama lengkap wajib diisi.");
+  expect(registrationRequests).toBe(0);
+
   await page.getByLabel("Nama lengkap").fill("Pelanggan E2E Baru");
   await page.getByLabel("Alamat email").fill(email);
   await page.getByLabel("Kata sandi").fill(password);
@@ -70,6 +87,14 @@ test("customer registers, verifies email, and recovers access while keeping the 
     await recoveryPage.goto(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
     await recoveryPage.getByRole("link", { name: "Lupa kata sandi?" }).click();
     await expect(recoveryPage).toHaveURL((url) => url.pathname === "/forgot-password" && url.searchParams.get("callbackUrl") === callbackUrl);
+    let forgotPasswordRequests = 0;
+    await recoveryPage.route("**/api/auth/password/forgot", async (route) => {
+      forgotPasswordRequests += 1;
+      await route.continue();
+    });
+    await recoveryPage.getByRole("button", { name: "Kirim tautan pemulihan" }).click();
+    await expect(recoveryPage.getByRole("alert")).toHaveText("Alamat email wajib diisi.");
+    expect(forgotPasswordRequests).toBe(0);
     await recoveryPage.getByLabel("Alamat email").fill(email);
     await recoveryPage.getByRole("button", { name: "Kirim tautan pemulihan" }).click();
     await expect(recoveryPage.getByRole("status")).toContainText("Jika email itu terdaftar, tautan pemulihan akan dikirim");
@@ -84,12 +109,21 @@ test("customer registers, verifies email, and recovers access while keeping the 
     expect(new URL(recoveryUrl).searchParams.get("callbackUrl")).toBe(callbackUrl);
 
     await recoveryPage.goto(recoveryUrl);
+    let resetPasswordRequests = 0;
+    await recoveryPage.route("**/api/auth/password/reset", async (route) => {
+      resetPasswordRequests += 1;
+      await route.continue();
+    });
+    await recoveryPage.getByRole("button", { name: "Simpan kata sandi" }).click();
+    await expect(recoveryPage.getByRole("alert")).toHaveText("Kata sandi baru wajib diisi.");
+    expect(resetPasswordRequests).toBe(0);
     await recoveryPage.getByLabel("Kata sandi baru").fill("TamuKita-Recovery-Password-123");
     await recoveryPage.getByLabel("Ulangi kata sandi").fill("TamuKita-Recovery-Password-123");
     await recoveryPage.getByRole("checkbox", { name: "Saya menyatakan berusia 18 tahun ke atas dan membuat akun ini untuk digunakan sendiri." }).check();
     const resetResponsePromise = recoveryPage.waitForResponse((response) => response.url().endsWith("/api/auth/password/reset") && response.request().method() === "POST");
     await recoveryPage.getByRole("button", { name: "Simpan kata sandi" }).click();
     const resetResponse = await resetResponsePromise;
+    expect(resetPasswordRequests).toBe(1);
     expect(resetResponse.status()).toBe(200);
     await expect(recoveryPage.getByRole("status")).toContainText("Kata sandi berhasil diubah");
     await expect(recoveryPage.getByRole("link", { name: "Masuk ke akun" })).toHaveAttribute("href", `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);

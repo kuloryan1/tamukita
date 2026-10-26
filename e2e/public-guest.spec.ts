@@ -195,13 +195,22 @@ test("public guest flows and marketplace page view metrics work, and content rev
   await expect(page.getByText("TERIMA KASIH SUDAH MEMBERI KABAR", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Kami mengerti kamu berhalangan hadir" })).toBeVisible();
   await expect(page.getByLabel("Jumlah tamu yang hadir")).toHaveCount(0);
+  let childRsvpBrowserRequests = 0;
+  await page.route(`**/api/public/invitations/${invitationSlug}/rsvp`, async (route) => {
+    childRsvpBrowserRequests += 1;
+    await route.continue();
+  });
   await page.getByRole("checkbox", { name: "RSVP ini mencantumkan nama atau informasi anak." }).check();
+  await page.getByRole("button", { name: "Kirim konfirmasi" }).click();
+  await expect(page.getByRole("alert")).toHaveText("Persetujuan orang tua/wali wajib sebelum mengirim data anak.");
+  expect(childRsvpBrowserRequests).toBe(0);
   await page.getByRole("checkbox", { name: /Saya orang tua\/wali yang berwenang/ }).check();
   const repeatedRsvpPromise = page.waitForResponse((candidate) =>
     candidate.url().endsWith(`/api/public/invitations/${invitationSlug}/rsvp`) && candidate.request().method() === "POST",
   );
   await page.getByRole("button", { name: "Kirim konfirmasi" }).click();
   const repeatedRsvpResponse = await repeatedRsvpPromise;
+  expect(childRsvpBrowserRequests).toBe(1);
   expect(repeatedRsvpResponse.status()).toBe(201);
   expect(await repeatedRsvpResponse.json()).toMatchObject({ saved: true, created: false });
   await expect(page.locator(".rsvp-confirmation p")).toHaveText("Jawabanmu sudah dicatat untuk undangan ini. Terima kasih sudah memberi kabar.");
@@ -258,15 +267,27 @@ test("public guest flows and marketplace page view metrics work, and content rev
   });
   expect(childGuestbookWithoutGuardianConsent.status()).toBe(400);
   await expect(page.locator(".guestbook-heading")).toContainText("diterima oleh pemilik undangan");
+  let guestbookBrowserRequests = 0;
+  await page.route(`**/api/public/invitations/${invitationSlug}/guestbook`, async (route) => {
+    guestbookBrowserRequests += 1;
+    await route.continue();
+  });
+  await page.getByRole("button", { name: "Kirim ucapan" }).click();
+  await expect(page.getByRole("alert")).toHaveText("Namamu wajib diisi.");
+  expect(guestbookBrowserRequests).toBe(0);
   await page.getByLabel("Namamu").fill(guestName);
   await page.getByLabel("Ucapan", { exact: true }).fill(guestbookMessage);
   await page.getByRole("checkbox", { name: "Ucapan ini mencantumkan nama atau informasi anak." }).check();
+  await page.getByRole("button", { name: "Kirim ucapan" }).click();
+  await expect(page.getByRole("alert")).toHaveText("Persetujuan orang tua/wali wajib sebelum mengirim data anak.");
+  expect(guestbookBrowserRequests).toBe(0);
   await page.getByRole("checkbox", { name: /Saya orang tua\/wali yang berwenang/ }).check();
   const guestbookResponsePromise = page.waitForResponse((candidate) =>
     candidate.url().endsWith(`/api/public/invitations/${invitationSlug}/guestbook`) && candidate.request().method() === "POST",
   );
   await page.getByRole("button", { name: "Kirim ucapan" }).click();
   expect((await guestbookResponsePromise).status()).toBe(201);
+  expect(guestbookBrowserRequests).toBe(1);
   const guestbookConsent = await analyticsPool.query<{ includesChildData: boolean; guardianConsentAt: Date | null; guardianConsentVersion: string | null }>(
     'SELECT "includesChildData", "guardianConsentAt", "guardianConsentVersion" FROM guestbook WHERE "invitationId" = $1 AND message = $2',
     [invitationId, guestbookMessage],

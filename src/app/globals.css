@@ -752,6 +752,7 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .auth-form { display: flex; flex-direction: column; gap: 12px; }
 .auth-form .editor-field { margin: 0; }
 .auth-form .field-label { font-size: 12px; }
+.auth-form > .editor-error, .rsvp-modal form > .editor-error, .guestbook-form > .editor-error { align-items: flex-start; font-size: 12px; line-height: 1.5; margin: 0; text-align: left; }
 .auth-form .text-input, .rsvp-modal .text-input, .guestbook-form .text-input { font-size: 14px; }
 .auth-form .text-input::placeholder, .rsvp-modal .text-input::placeholder, .guestbook-form .text-input::placeholder { color: #69736a; opacity: 1; }
 .auth-check-row, .public-consent-row { align-items: flex-start; color: #596257; display: flex; font-size: 12px; gap: 8px; line-height: 1.55; }
