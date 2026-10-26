@@ -38,6 +38,19 @@ async function readPlatformViewCount(metricKey: "template_catalog_views" | "temp
   return Number(result.rows[0]?.value ?? "0");
 }
 
+async function readGuestbookModerationAuditActions(targetId: string) {
+  if (!analyticsPool) throw new Error("The disposable E2E database is required.");
+  const result = await analyticsPool.query<{ action: string }>(
+    `SELECT action FROM audit_logs
+     WHERE "targetType" = 'GuestbookEntry'
+       AND "targetId" = $1
+       AND action IN ('admin.content_report.hidden', 'admin.content_report.restored')
+     ORDER BY "createdAt"`,
+    [targetId],
+  );
+  return result.rows.map((row) => row.action);
+}
+
 test.afterAll(async () => {
   await analyticsPool?.end();
 });
@@ -316,6 +329,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
     await expect(hiddenOwnerEntry.getByRole("button", { name: "Setujui" })).toHaveCount(0);
     const hiddenEntryId = await hiddenOwnerEntry.getAttribute("data-entry-id");
     if (!hiddenEntryId) throw new Error("The hidden guestbook entry did not expose its fixture ID.");
+    expect(await readGuestbookModerationAuditActions(hiddenEntryId)).toContain("admin.content_report.hidden");
     const ownerReapproval = await page.request.patch(`/api/invitations/${invitationId}/guestbook/${hiddenEntryId}`, { data: { status: "APPROVED" } });
     expect(ownerReapproval.status()).toBe(409);
 
@@ -327,6 +341,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
     );
     await historyCard.getByRole("button", { name: "Pulihkan ucapan" }).click();
     expect((await restoreResponsePromise).status()).toBe(200);
+    expect(await readGuestbookModerationAuditActions(hiddenEntryId)).toContain("admin.content_report.restored");
     await page.goto(`/${invitationSlug}`);
     await expect(page.locator(".guestbook-entry").filter({ hasText: guestbookMessage })).toBeVisible();
 
