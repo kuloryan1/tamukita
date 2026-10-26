@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { BookOpen, ChevronDown, CircleHelp, Coins, CreditCard, FileText, Globe, LayoutGrid, LogOut, Settings2, Users } from "lucide-react";
+import { BookOpen, ChevronDown, CircleHelp, Coins, CreditCard, FileText, Globe, LayoutGrid, LogOut, Settings2, ShieldCheck, Users } from "lucide-react";
 import { Brand } from "@/components/site-header";
 import { EditorFeedbackDialog } from "@/components/editor-feedback-dialog";
 
@@ -19,7 +19,7 @@ export function DashboardShell({ children, user }: {
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const active = pathname.includes("/invitations") ? "Undangan saya" : "Ringkasan";
+  const active = pathname === "/dashboard/privacy" ? "Data & privasi" : pathname.includes("/invitations") ? "Undangan saya" : "Ringkasan";
   const displayName = user.name?.trim() || user.email || "Pengguna TamuKita";
   const initials = displayName.split(/[\s@._-]+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "TK";
   const workspaceName = user.name ? `Ruang ${user.name.split(" ")[0]}` : "Ruang pribadi";
@@ -47,6 +47,7 @@ export function DashboardShell({ children, user }: {
           <div className="sidebar-link sidebar-link--disabled" title="Integrasi DNS belum tersedia"><Globe size={17} /><span>Custom Domain</span><span className="coming-soon-mini">Coming Soon</span></div>
           <Link href="/dashboard" className="sidebar-link"><CreditCard size={17} /><span>Paket & pembayaran</span><span className="coming-soon-mini">Segera</span></Link>
           <Link href="/dashboard" className="sidebar-link"><Settings2 size={17} /><span>Pengaturan</span></Link>
+          <Link href="/dashboard/privacy" className={`sidebar-link${active === "Data & privasi" ? " is-active" : ""}`}><ShieldCheck size={17} /><span>Data & privasi</span></Link>
         </nav>
         <div className="sidebar-help"><span className="help-icon"><CircleHelp size={16} /></span><span><b>Butuh bantuan?</b><small>Kirim laporan kendala</small></span><EditorFeedbackDialog variant="sidebar" /></div>
         <div className="sidebar-profile"><span className="profile-avatar">{initials}</span><span><b>{displayName}</b><small>{user.email || "Email belum tersedia"}</small></span><button type="button" aria-label="Keluar dari akun" onClick={handleSignOut}><LogOut size={17} /></button></div>

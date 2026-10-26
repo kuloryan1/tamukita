@@ -1,5 +1,13 @@
 # Deployment Dokploy
 
+## Snapshot live terbaru — 27 Oktober 2026
+
+- Panel Dokploy production menunjukkan service `tamukita` belum pernah dideploy (`No deployments found`), belum memiliki domain, dan tombol operasional yang tersedia adalah `Start`. Environment production yang diperiksa hanya menampilkan service aplikasi; connector Tunnel khusus production belum terlihat. Target Tunnel Cloudflare sudah dipilih, tetapi connector dan route `tamukita.io` belum live.
+- Homepage publik `https://tamukita.io/` masih menampilkan halaman parked Hostinger.
+- Deployment staging terbaru tetap `45c72eccdce081b38a1b59b27bf12d84633491a7`, sekitar tujuh hari lalu; riwayat Dokploy menyatakan `Done`. Auto-deploy mati. Pemeriksaan publik saat ini membuka homepage staging dan `/api/health` mengembalikan `status: ok` dengan database, Redis, dan worker `ok`.
+- Footer staging masih menyebut bantuan, kontak, kebijakan privasi, dan syarat penggunaan “segera”. Draf legal internal belum ditautkan ke halaman publik.
+- Kode PR readiness terbaru belum diterapkan ke staging. Uji ekspor data akun yang baru ditambahkan masih perlu dipastikan setelah source tersebut tersedia pada staging.
+
 ## Status Dokploy diperbarui — 26 Oktober 2026
 
 - Project Dokploy: `tamukita`.
