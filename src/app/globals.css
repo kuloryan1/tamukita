@@ -1536,6 +1536,7 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 }
 
 @media (max-width: 760px) {
+  .auth-form .text-input, .rsvp-modal .text-input, .guestbook-form .text-input { font-size: 16px; }
   .guestbook-inner { gap: 18px; grid-template-columns: 1fr; }
   .guestbook-heading { grid-column: auto; }
   .guestbook-heading h2 { font-size: 30px; }
@@ -1603,7 +1604,6 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
   .field-row { gap: 8px; }
   .admin-audit-filters { grid-template-columns: 1fr; }
   .text-input { font-size: 9px; }
-  .auth-form .text-input, .rsvp-modal .text-input, .guestbook-form .text-input { font-size: 16px; }
   .public-detail-cards { grid-template-columns: 1fr; }
   .public-detail-card { min-height: 135px; }
 }
