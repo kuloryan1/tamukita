@@ -375,11 +375,12 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .catalog-heading > p { color: #81857e; font-size: 11px; line-height: 1.8; margin: 0 7% 5px 0; }
 .catalog-toolbar { align-items: center; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; margin-bottom: 24px; padding-bottom: 17px; }
 .filter-pills { border: 0; display: flex; gap: 7px; margin: 0; min-width: 0; padding: 0; }
-.filter-pill { background: transparent; border: 1px solid transparent; border-radius: 20px; color: #7e827c; font-size: 10px; padding: 8px 12px; }
+.filter-pill { align-items: center; background: transparent; border: 1px solid transparent; border-radius: 20px; color: #7e827c; display: inline-flex; font-size: 11px; gap: 4px; min-height: 34px; padding: 0 12px; text-decoration: none; transition: background .18s ease, color .18s ease; }
+.filter-pill:hover { background: #f1f3ee; color: #456452; }
+.filter-pill:focus-visible { outline: 2px solid #7b9278; outline-offset: 2px; }
 .filter-pill.is-selected { background: #e6ece4; color: #456452; }
-.filter-pill span { background: rgba(49,79,61,.1); border-radius: 50%; font-size: 8px; margin-left: 5px; padding: 2px 5px; }
-.sort-button { align-items: center; color: #8b8d87; display: flex; font-size: 10px; gap: 8px; }
-.sort-button span { color: #4c5c52; font-weight: 600; }
+.filter-pill span { background: rgba(49,79,61,.1); border-radius: 50%; font-size: 9px; margin-left: 2px; padding: 2px 5px; }
+.catalog-result-count { color: #8b8d87; font-size: 11px; }
 .template-grid--catalog { row-gap: 42px; }
 .catalog-note { align-items: center; background: #f0eee7; color: #7e817a; display: flex; font-size: 10px; gap: 9px; justify-content: center; margin-top: 55px; padding: 15px; }
 .catalog-note b { color: #53675a; }
@@ -1420,7 +1421,8 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
   .developer-submission-list > div > button { grid-column: 1 / -1; justify-self: start; }
   .catalog-toolbar { align-items: flex-start; flex-direction: column; gap: 13px; }
   .filter-pills { flex-wrap: wrap; }
-  .filter-pill { font-size: 8px; padding: 7px 8px; }
+  .filter-pill { font-size: 10px; padding: 0 9px; }
+  .catalog-result-count { font-size: 10px; }
   .catalog-note { align-items: flex-start; flex-wrap: wrap; justify-content: flex-start; line-height: 1.6; }
   .catalog-note > a { margin-left: 25px; }
   .detail-grid { gap: 27px; grid-template-columns: 1fr; }

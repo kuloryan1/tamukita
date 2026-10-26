@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { ArrowRight, Heart, LockKeyhole } from "lucide-react";
 
-export function LoginForm() {
+export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -26,7 +26,7 @@ export function LoginForm() {
       setError("Email atau kata sandi tidak cocok, akun sedang dikunci, atau akun belum menyetujui batas usia 18+. Jika akun lama belum mencatat persetujuan ini, gunakan Lupa kata sandi untuk menyetujuinya saat memperbarui kata sandi.");
       return;
     }
-    router.replace("/dashboard");
+    router.replace(callbackUrl);
     router.refresh();
   }
 
