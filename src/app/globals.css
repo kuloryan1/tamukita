@@ -752,10 +752,11 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .auth-form { display: flex; flex-direction: column; gap: 12px; }
 .auth-form .editor-field { margin: 0; }
 .auth-check-row, .public-consent-row { align-items: flex-start; color: #737a70; display: flex; font-size: 9px; gap: 8px; line-height: 1.55; }
+.auth-check-row { color: #5e665d; font-size: 10px; }
 .auth-check-row input, .public-consent-row input { accent-color: #627b68; flex: 0 0 auto; height: 14px; margin: 1px 0 0; width: 14px; }
 .public-consent-row { color: #7e867d; font-size: 9px; }
 .public-consent-row--nested { background: #f0f3ed; border-radius: 4px; padding: 10px; }
-.auth-terms { color: #969a93; font-size: 8px; line-height: 1.7; margin: 0 0 2px; }
+.auth-terms { color: #5e665d; font-size: 10px; line-height: 1.6; margin: 0 0 2px; }
 .auth-terms a { color: #627b68; text-decoration: underline; text-underline-offset: 2px; }
 .auth-prototype-note { align-items: center; color: #969c94; display: flex; font-size: 8px; gap: 6px; justify-content: center; margin-top: 2px; }
 .auth-prototype-note span { background: #d2ad71; border-radius: 50%; height: 5px; width: 5px; }
