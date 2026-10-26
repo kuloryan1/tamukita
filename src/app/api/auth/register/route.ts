@@ -8,12 +8,14 @@ import { getPrismaClient } from "@/lib/prisma";
 import { ADULT_ATTESTATION_VERSION } from "@/lib/consent-versions";
 import { allowRequest, getRequestAddress } from "@/lib/rate-limit";
 import { readJsonBody } from "@/lib/request-json";
+import { getSafePostLoginPath } from "@/lib/auth-redirect";
 
 const registrationSchema = z.object({
   name: z.string().trim().min(2).max(80),
   email: z.email().trim().toLowerCase().max(254),
   password: z.string().min(12).max(128),
   adultAttested: z.literal(true),
+  callbackUrl: z.string().max(2048).optional(),
 });
 
 function workspaceSlug(name: string, id: string) {
@@ -32,6 +34,7 @@ export async function POST(request: Request) {
   }
 
   const address = getRequestAddress(request);
+  const callbackUrl = parsed.data.callbackUrl === undefined ? undefined : getSafePostLoginPath(parsed.data.callbackUrl);
   const [ipAllowed, emailAllowed] = await Promise.all([
     allowRequest(`register:ip:${address}`, 5, 60 * 60),
     allowRequest(`register:email:${parsed.data.email}`, 5, 60 * 60),
@@ -75,7 +78,7 @@ export async function POST(request: Request) {
     });
     let emailSent = false;
     try {
-      emailSent = await sendAccountActionEmail({ to: parsed.data.email, name: parsed.data.name, purpose: "VERIFY_EMAIL", token: verificationToken });
+      emailSent = await sendAccountActionEmail({ to: parsed.data.email, name: parsed.data.name, purpose: "VERIFY_EMAIL", token: verificationToken, callbackUrl });
     } catch {
       emailSent = false;
     }

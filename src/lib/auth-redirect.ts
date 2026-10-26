@@ -20,3 +20,10 @@ export function getSafePostLoginPath(value: unknown): string {
     return postLoginFallback;
   }
 }
+
+export function withPostLoginCallback(path: string, value: unknown): string {
+  const callbackUrl = getSafePostLoginPath(value);
+  if (callbackUrl === postLoginFallback) return path;
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}callbackUrl=${encodeURIComponent(callbackUrl)}`;
+}

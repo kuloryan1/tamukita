@@ -29,16 +29,19 @@ export async function sendAccountActionEmail({
   name,
   purpose,
   token,
+  callbackUrl,
 }: {
   to: string;
   name: string | null;
   purpose: "VERIFY_EMAIL" | "PASSWORD_RESET";
   token: string;
+  callbackUrl?: string;
 }) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const path = purpose === "VERIFY_EMAIL" ? "/verify-email" : "/reset-password";
   const link = new URL(path, appUrl);
   link.searchParams.set("token", token);
+  if (callbackUrl) link.searchParams.set("callbackUrl", callbackUrl);
   const greeting = name ? `Halo ${name},` : "Halo,";
   const action = purpose === "VERIFY_EMAIL" ? "konfirmasi alamat email" : "mengatur kata sandi";
   const subject = purpose === "VERIFY_EMAIL" ? "Konfirmasi email TamuKita" : "Atur kata sandi TamuKita";
