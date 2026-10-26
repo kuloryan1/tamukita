@@ -86,6 +86,7 @@ async function verifyRetentionSweep() {
         originalName: "e2e-retention.webp",
         mimeType: "image/webp",
         sizeBytes: 1,
+        deletedAt: new Date(now.getTime() - 150 * DAY_MS),
       },
     });
     await prisma.mediaVariant.create({

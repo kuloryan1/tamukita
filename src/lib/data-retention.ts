@@ -176,10 +176,20 @@ async function purgeExpiredMedia(
   const mediaCutoff = addUtcDays(now, -DATA_AFTER_HOSTING_DAYS);
   const { deleteObject, privateBucket, publicBucket } = options;
   const where: Prisma.MediaAssetWhereInput = {
-    OR: [
-      { deletedAt: { lte: mediaCutoff } },
-      { invitation: { is: { expiresAt: { lte: mediaCutoff }, orders: { none: { status: "PENDING" } } } } },
-      { invitation: { is: { deletedAt: { lte: mediaCutoff }, orders: { none: { status: "PENDING" } } } } },
+    AND: [
+      {
+        OR: [
+          { deletedAt: { lte: mediaCutoff } },
+          { invitation: { is: { expiresAt: { lte: mediaCutoff } } } },
+          { invitation: { is: { deletedAt: { lte: mediaCutoff } } } },
+        ],
+      },
+      {
+        OR: [
+          { invitationId: null },
+          { invitation: { is: { orders: { none: { status: "PENDING" } } } } },
+        ],
+      },
     ],
   };
   if (!deleteObject || !privateBucket || !publicBucket) {
