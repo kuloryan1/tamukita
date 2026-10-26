@@ -4,9 +4,9 @@
 
 - Panel Dokploy production menunjukkan service `tamukita` belum pernah dideploy (`No deployments found`), belum memiliki domain, dan tombol operasional yang tersedia adalah `Start`. Environment production yang diperiksa hanya menampilkan service aplikasi; connector Tunnel khusus production belum terlihat. Target Tunnel Cloudflare sudah dipilih, tetapi connector dan route `tamukita.io` belum live.
 - Homepage publik `https://tamukita.io/` masih menampilkan halaman parked Hostinger.
-- Deployment staging terbaru tetap `45c72eccdce081b38a1b59b27bf12d84633491a7`, sekitar tujuh hari lalu; riwayat Dokploy menyatakan `Done`. Auto-deploy mati. Pemeriksaan publik saat ini membuka homepage staging dan `/api/health` mengembalikan `status: ok` dengan database, Redis, dan worker `ok`.
+- Deployment staging terbaru berasal dari branch `codex/tamukita-production-readiness`, commit `d113a3d`; riwayat Dokploy menyatakan `Done`. Auto-deploy mati. Container web/worker/PostgreSQL/Redis sehat, migration keluar dengan kode 0, dan `/api/health` staging melaporkan database, Redis, serta worker `ok`. [CI](https://github.com/kuloryan1/tamukita/actions/runs/40387580062) dan [E2E](https://github.com/kuloryan1/tamukita/actions/runs/40387580055) lulus (64 passed, 2 skipped). QA mobile memeriksa pilihan RSVP hadir/tidak hadir, dialog, aksesibilitas, konfirmasi, dan submit hadir sintetis. Submit tidak hadir terakhir terkena HTTP 429 setelah pengiriman QA berulang dari IP yang sama; E2E lulus untuk kedua jalur. Fixture menyimpan lima RSVP sintetis dan satu ucapan sintetis menunggu moderasi.
 - Footer staging masih menyebut bantuan, kontak, kebijakan privasi, dan syarat penggunaan “segera”. Draf legal internal belum ditautkan ke halaman publik.
-- Kode PR readiness terbaru belum diterapkan ke staging. Uji ekspor data akun yang baru ditambahkan masih perlu dipastikan setelah source tersebut tersedia pada staging.
+- Tab Backups staging menunjukkan belum ada backup terkonfigurasi; backup VPS/offsite dan restore drill VPS belum dibuktikan. Production Dokploy masih `No deployments found` dan tab Domains kosong. `https://tamukita.io/` menampilkan halaman parkir Hostinger; `/api/health` mengembalikan HTML HTTP 200, bukan JSON health aplikasi. Belum ada deployment production.
 
 ## Status Dokploy diperbarui — 26 Oktober 2026
 
