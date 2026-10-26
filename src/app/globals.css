@@ -752,6 +752,8 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .auth-form { display: flex; flex-direction: column; gap: 12px; }
 .auth-form .editor-field { margin: 0; }
 .auth-form .field-label { font-size: 12px; }
+.auth-form .text-input, .rsvp-modal .text-input, .guestbook-form .text-input { font-size: 14px; }
+.auth-form .text-input::placeholder, .rsvp-modal .text-input::placeholder, .guestbook-form .text-input::placeholder { color: #69736a; opacity: 1; }
 .auth-check-row, .public-consent-row { align-items: flex-start; color: #596257; display: flex; font-size: 12px; gap: 8px; line-height: 1.55; }
 .auth-check-row input, .public-consent-row input { accent-color: #627b68; flex: 0 0 auto; height: 16px; margin: 1px 0 0; width: 16px; }
 .public-consent-row--nested { background: #f0f3ed; border-radius: 4px; padding: 10px; }
@@ -1601,6 +1603,7 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
   .field-row { gap: 8px; }
   .admin-audit-filters { grid-template-columns: 1fr; }
   .text-input { font-size: 9px; }
+  .auth-form .text-input, .rsvp-modal .text-input, .guestbook-form .text-input { font-size: 16px; }
   .public-detail-cards { grid-template-columns: 1fr; }
   .public-detail-card { min-height: 135px; }
 }
