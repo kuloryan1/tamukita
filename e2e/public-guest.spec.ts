@@ -147,6 +147,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
   expect(firstRsvpResponse.status()).toBe(201);
   expect(await firstRsvpResponse.json()).toMatchObject({ saved: true, created: true });
   await expect(page.getByRole("heading", { name: `Terima kasih, ${guestName}!` })).toBeVisible();
+  await expect(page.locator(".rsvp-confirmation p")).toHaveText("Jawabanmu sudah dicatat untuk undangan ini. Terima kasih sudah memberi kabar.");
   await expect(page.locator(".rsvp-count")).toContainText(expectedRsvpCountText);
   await page.getByRole("button", { name: "Selesai" }).click();
   await expect(page.getByRole("dialog")).toBeHidden();
@@ -162,6 +163,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
   const repeatedRsvpResponse = await repeatedRsvpPromise;
   expect(repeatedRsvpResponse.status()).toBe(201);
   expect(await repeatedRsvpResponse.json()).toMatchObject({ saved: true, created: false });
+  await expect(page.locator(".rsvp-confirmation p")).toHaveText("Jawabanmu sudah dicatat untuk undangan ini. Terima kasih sudah memberi kabar.");
   const rsvpConsent = await analyticsPool.query<{ includesChildData: boolean; guardianConsentAt: Date | null; guardianConsentVersion: string | null }>(
     'SELECT "includesChildData", "guardianConsentAt", "guardianConsentVersion" FROM rsvps WHERE "invitationId" = $1 AND "displayName" = $2',
     [invitationId, guestName],
