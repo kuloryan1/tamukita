@@ -36,7 +36,7 @@ Jangan mengunggah konten yang melanggar hukum, hak pihak lain, privasi, atau keb
 
 Harga dan jenis lisensi template ditampilkan sebelum transaksi. Pembelian lisensi dicatat untuk satu undangan sesuai versi template yang dipilih; perubahan atau penerbitan versi template baru tidak otomatis mengganti versi yang telah tertaut pada undangan. Lisensi template memberikan hak menggunakan desain dalam layanan sesuai batasan yang diterbitkan, bukan kepemilikan atas kode, desain, font, musik, atau aset pihak ketiga.
 
-Jika biaya aktivasi berlaku, biaya itu ditampilkan sebagai komponen terpisah. Undangan baru dipublikasikan setelah pembayaran dikonfirmasi oleh webhook penyedia pembayaran atau kredit reseller yang sah dicatat oleh sistem. Halaman publik, RSVP, dan buku tamu dapat berhenti berfungsi ketika masa hosting berakhir. Harga/durasi yang ditampilkan saat transaksi berlaku untuk pesanan tersebut sesuai snapshot transaksi.
+Jika biaya aktivasi berlaku, biaya itu ditampilkan sebagai komponen terpisah. Undangan baru dipublikasikan setelah pembayaran dikonfirmasi oleh webhook penyedia pembayaran atau kredit reseller yang sah dicatat oleh sistem. Halaman publik, RSVP, dan buku tamu dapat berhenti berfungsi ketika masa hosting berakhir. Perpanjangan tersedia mulai 30 hari sebelum tanggal akhir hingga sebelum lewat 30 hari sesudah tanggal itu; setelah batas tersebut, perpanjangan ditutup sesuai jadwal penghapusan media. Harga/durasi yang ditampilkan saat transaksi berlaku untuk pesanan tersebut sesuai snapshot transaksi. Ketentuan ini masih draf internal dan harus diselaraskan dengan checkout serta ditinjau penasihat hukum.
 
 ## 5. Pembayaran dan refund
 

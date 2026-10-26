@@ -1,6 +1,6 @@
 # Pemberitahuan Privasi TamuKita
 
-> **DRAF INTERNAL — keputusan operasional awal ditetapkan 26 Oktober 2026.** Identitas operator, kontak aktif, inventaris vendor produksi, implementasi retensi/penghapusan, dan tinjauan penasihat hukum masih wajib sebelum dipublikasikan. Ini bukan pendapat hukum.
+> **DRAF INTERNAL — keputusan operasional awal ditetapkan 26 Oktober 2026.** Identitas operator, kontak aktif, inventaris vendor produksi, aktivasi dan pembuktian purge seluruh kategori, serta tinjauan penasihat hukum masih wajib sebelum dipublikasikan. Ini bukan pendapat hukum.
 
 **Operator:** [ISI NAMA BADAN USAHA/OPERATOR]
 
@@ -72,21 +72,21 @@ Data hanya dibagikan sejauh diperlukan. Sebelum produksi, operator harus mengonf
 
 ## 6. Masa simpan
 
-Jadwal berikut adalah keputusan internal awal. **Belum menjadi janji pelanggan** karena aplikasi belum terbukti menjalankan purge untuk seluruh kategori. Sebelum publikasi, operator harus menguji penghapusan dari database, object storage, vendor, dan backup, serta menetapkan pengecualian legal hold. Data dihapus ketika tujuan pemrosesan selesai atau ketika ada permintaan yang sah, kecuali hukum atau sengketa mengharuskan penyimpanan tertentu.
+Jadwal berikut adalah keputusan internal awal. Worker kini memiliki sweep harian untuk sebagian kategori, tetapi **belum menjadi janji pelanggan**: `DATA_RETENTION_ENABLED` default-nya `false`, belum diaktifkan atau diuji di staging/production, dan tidak mencakup semua kategori. Sebelum publikasi, operator harus menguji penghapusan dari database, object storage, cache/CDN yang dapat dikendalikan, vendor, dan backup, serta menetapkan pengecualian legal hold. Data dihapus ketika tujuan pemrosesan selesai atau ketika ada permintaan yang sah, kecuali hukum atau sengketa mengharuskan penyimpanan tertentu.
 
 | Kategori | Retensi awal yang dipilih | Mekanisme/pengecualian |
 |---|---|---|
-| Akun, sesi, dan token | Akun aktif selama akun digunakan; setelah penutupan akun, data operasional dihapus dalam 30 hari. Token sesi/tindakan tetap mengikuti masa berlaku teknis yang lebih singkat. | Verifikasi permintaan; simpan catatan minimal transaksi/keamanan hanya selama diperlukan. Fitur penghapusan akun belum tersedia. |
+| Akun, sesi, dan token | Akun aktif selama akun digunakan; target setelah penutupan akun adalah 30 hari. Sesi dan token tindakan dihapus setelah masa berlaku. | Worker mendukung pembersihan sesi dan token kedaluwarsa; penghapusan akun dan data terkait 30 hari setelah penutupan belum tersedia. Simpan catatan minimal transaksi/keamanan hanya selama diperlukan. |
 | Draf tidak aktif | 12 bulan sejak aktivitas terakhir, dengan pemberitahuan 30 hari sebelum penghapusan. | Ekspor sebelum purge. Pengingat dan purge otomatis belum tersedia. |
-| Undangan terbit dan data tamu, RSVP, ucapan, kontak | Selama hosting aktif. Setelah acara, data RSVP/kontak/ucapan dihapus 90 hari sesudah tanggal acara atau 30 hari sesudah hosting berakhir, mana yang lebih akhir. | Beri pemilik kemampuan ekspor sebelum purge; matikan halaman dan penerimaan RSVP saat hosting berakhir. Purge belum dibuktikan. |
-| Media asli dan varian | Selama undangan aktif; dihapus 30 hari setelah hosting berakhir atau undangan dihapus. | Hapus object storage, cache yang dapat dikendalikan, serta orphaned objects. Belum dibuktikan. |
-| Laporan konten, laporan support, dan audit keamanan/admin | 12 bulan sejak kasus ditutup atau tindakan dicatat. | Anonimkan setelah masa itu; perpanjang hanya untuk insiden/sengketa yang masih berjalan. |
+| Undangan terbit dan data tamu, RSVP, ucapan, kontak | Selama hosting aktif. Setelah acara, data RSVP/kontak/ucapan dihapus 90 hari sesudah acara atau 30 hari sesudah hosting/undangan berakhir, mana yang lebih akhir. | Worker mendukung purge RSVP, ucapan, tautan tamu, dan data tamu yang tidak lagi terhubung; menjaga catatan saat ada pesanan renewal tertunda. Ekspor pemilik dan eksekusi purge di staging belum dibuktikan. |
+| Media asli dan varian | Selama undangan aktif; dihapus 30 hari setelah hosting berakhir atau undangan dihapus. | Worker mendukung penghapusan object dari bucket R2 privat/publik; invalidasi cache/CDN dan verifikasi objek orphan belum dibuktikan. Batas renewal ditutup 30 hari setelah masa hosting berakhir agar media yang sudah dipurge tidak dipakai kembali. |
+| Laporan konten, laporan editor, akses support, dan audit keamanan/admin | 12 bulan setelah kasus selesai atau tindakan dicatat. | Worker mendukung penghapusan laporan selesai, feedback selesai, grant kedaluwarsa, dan audit lama; tidak mencakup semua log vendor atau legal hold. Runtime belum diuji. |
 | Order, pembayaran, dan refund | Selama periode wajib menurut aturan akuntansi, pajak, pembayaran, dan sengketa yang berlaku. | Penasihat hukum/akuntan harus mengisi masa numerik dan jenis bukti yang wajib disimpan sebelum publikasi. |
 | Log aplikasi/infrastruktur | 90 hari untuk log operasional; 12 bulan untuk catatan audit keamanan/admin. | Log vendor mengikuti pengaturan dan kontrak vendor yang diverifikasi; hapus atau anonimisasi pengenal bila tidak dibutuhkan. |
-| Backup | Rotasi maksimum 30 hari. | Data yang dihapus dapat tersisa pada backup sampai rotasi 30 hari selesai; backup dipagari aksesnya dan tidak dipakai sebagai arsip kerja. Jadwal VPS/R2 belum diterapkan. |
-| Analitik agregat marketplace | 12 bulan. | Tidak menyimpan identitas browser setelah agregasi; penghitung cookie dinonaktifkan untuk peluncuran publik sampai tinjauan selesai. |
+| Backup | Target rotasi maksimum 30 hari. | Data yang dihapus dapat tersisa pada backup sampai rotasi 30 hari selesai; backup dipagari aksesnya dan tidak dipakai sebagai arsip kerja. Jadwal VPS/R2 belum diterapkan. |
+| Analitik agregat marketplace | 12 bulan. | Worker mendukung penghapusan tabel agregat harian setelah 12 bulan; penghitung cookie dinonaktifkan untuk peluncuran publik sampai tinjauan selesai. Runtime belum diuji. |
 
-Saat masa hosting undangan berakhir, halaman publik dan penerimaan RSVP/buku tamu ditutup oleh aplikasi. Penutupan itu belum menghapus semua database, media, log, atau backup. Masa pada tabel baru dapat diumumkan setelah mekanisme purge dan bukti penghapusan tersedia.
+Saat masa hosting undangan berakhir, halaman publik dan penerimaan RSVP/buku tamu ditutup oleh aplikasi. Penutupan itu belum menghapus semua database, media, log, atau backup. Sebelum mengaktifkan sweep, uji dengan data sintetis di staging, verifikasi objek pada kedua bucket dan log worker, lalu catat hasilnya. Masa pada tabel baru dapat diumumkan setelah seluruh kategori dan pengecualian didukung serta bukti penghapusan tersedia.
 
 ## 7. Permintaan dan hak terkait data
 

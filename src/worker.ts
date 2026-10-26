@@ -1,6 +1,7 @@
 import "dotenv/config";
 
-import { S3Client } from "@aws-sdk/client-s3";
+import { randomUUID } from "node:crypto";
+import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Queue, Worker, type Job } from "bullmq";
 import IORedis from "ioredis";
@@ -9,6 +10,7 @@ import { isReservedNonDeliverableEmailAddress } from "./lib/email-address";
 import { getTransactionalEmailEndpoint } from "./lib/email-transport";
 import { getR2BucketNames } from "./lib/r2-buckets";
 import { getWorkerIntegrationConfigurations } from "./lib/integration-status";
+import { runDataRetentionSweep } from "./lib/data-retention";
 import {
   createWorkerIntegrationSnapshot,
   WORKER_CONFIGURATION_KEY,
@@ -28,6 +30,11 @@ import {
 } from "./lib/media-processing";
 
 const queueName = "tamukita-notifications";
+const DATA_RETENTION_LOCK_KEY = "tamukita:data-retention:sweep";
+const DATA_RETENTION_LOCK_TTL_SECONDS = 21_600;
+const DATA_RETENTION_INTERVAL_MS = 24 * 60 * 60 * 1_000;
+const REFRESH_DATA_RETENTION_LOCK_SCRIPT = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('expire', KEYS[1], ARGV[2]) else return 0 end";
+const RELEASE_DATA_RETENTION_LOCK_SCRIPT = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
 const redisUrl = process.env.REDIS_URL;
 const databaseUrl = process.env.DATABASE_URL;
 if (!redisUrl) throw new Error("REDIS_URL diperlukan untuk worker notifikasi.");
@@ -343,6 +350,7 @@ async function processJob(job: Job<{ notificationJobId: string }>) {
 const worker = new Worker(queueName, processJob, { connection, concurrency: 4 });
 let reconciling = false;
 let schedulingEventReminders = false;
+let runningDataRetention = false;
 let lastHeartbeatErrorAt = 0;
 
 async function refreshWorkerHeartbeat() {
@@ -463,10 +471,45 @@ async function reconcileOutbox() {
   }
 }
 
+async function scheduleDataRetentionSweep() {
+  if (process.env.DATA_RETENTION_ENABLED !== "true" || runningDataRetention || connection.status !== "ready") return;
+  runningDataRetention = true;
+  const lockToken = randomUUID();
+  let acquired = false;
+  let lockRefreshTimer: NodeJS.Timeout | undefined;
+  try {
+    acquired = (await connection.set(DATA_RETENTION_LOCK_KEY, lockToken, "EX", DATA_RETENTION_LOCK_TTL_SECONDS, "NX")) === "OK";
+    if (!acquired) return;
+    lockRefreshTimer = setInterval(() => {
+      void connection.eval(REFRESH_DATA_RETENTION_LOCK_SCRIPT, 1, DATA_RETENTION_LOCK_KEY, lockToken, DATA_RETENTION_LOCK_TTL_SECONDS).catch(() => undefined);
+    }, 60_000);
+    const report = await runDataRetentionSweep(prisma, {
+      now: new Date(),
+      ...(mediaBuckets && mediaS3 ? {
+        privateBucket: mediaBuckets.privateBucket,
+        publicBucket: mediaBuckets.publicBucket,
+        deleteObject: async (bucket: string, key: string) => {
+          await mediaS3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+        },
+      } : {}),
+    });
+    process.stdout.write(`[background-worker] data retention sweep completed: ${JSON.stringify(report)}\n`);
+  } catch {
+    process.stderr.write("[background-worker] data retention sweep failed\n");
+  } finally {
+    if (lockRefreshTimer) clearInterval(lockRefreshTimer);
+    if (acquired) {
+      await connection.eval(RELEASE_DATA_RETENTION_LOCK_SCRIPT, 1, DATA_RETENTION_LOCK_KEY, lockToken).catch(() => undefined);
+    }
+    runningDataRetention = false;
+  }
+}
+
 worker.on("ready", () => {
   void refreshWorkerHeartbeat().then((heartbeatAvailable) => {
     if (heartbeatAvailable) process.stdout.write("[background-worker] ready\n");
   });
+  void scheduleDataRetentionSweep();
 });
 worker.on("failed", (job, error) => {
   if (job && job.attemptsMade >= Number(job.opts.attempts ?? 5)) {
@@ -479,11 +522,13 @@ const reconciliationTimer = setInterval(() => void reconcileOutbox(), 15_000);
 void scheduleEventReminders();
 const eventReminderTimer = setInterval(() => void scheduleEventReminders(), 60_000);
 const workerHeartbeatTimer = setInterval(() => void refreshWorkerHeartbeat(), 15_000);
+const dataRetentionTimer = setInterval(() => void scheduleDataRetentionSweep(), DATA_RETENTION_INTERVAL_MS);
 
 async function shutdown() {
   clearInterval(reconciliationTimer);
   clearInterval(eventReminderTimer);
   clearInterval(workerHeartbeatTimer);
+  clearInterval(dataRetentionTimer);
   await worker.close();
   await queue.close();
   await prisma.$disconnect();

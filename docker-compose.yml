@@ -106,6 +106,7 @@ services:
       R2_PUBLIC_BUCKET_NAME: ${R2_PUBLIC_BUCKET_NAME:-}
       R2_PUBLIC_BASE_URL: ${R2_PUBLIC_BASE_URL:-}
       R2_BUCKET_NAME: ${R2_BUCKET_NAME:-}
+      DATA_RETENTION_ENABLED: ${DATA_RETENTION_ENABLED:-false}
     depends_on:
       migrate:
         condition: service_completed_successfully
