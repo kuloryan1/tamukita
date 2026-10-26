@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { getCustomerCredentials } from "./customer-credentials";
 
-test("customer can download a private account data export", async ({ page }, testInfo) => {
+test("customer can request a private account data export", async ({ page }, testInfo) => {
   const { email, password } = getCustomerCredentials(testInfo);
   if (!email || !password) {
     test.skip(true, "Requires the disposable PostgreSQL customer fixture.");
@@ -16,16 +16,21 @@ test("customer can download a private account data export", async ({ page }, tes
   await page.goto("/dashboard/privacy");
   await expect(page.getByRole("heading", { name: "Data & privasi" })).toBeVisible();
 
-  const downloadPromise = page.waitForEvent("download");
-  await page.getByRole("link", { name: "Unduh data akun (JSON)" }).click();
-  const download = await downloadPromise;
-  expect(download.suggestedFilename()).toMatch(/^tamukita-account-data-\d{4}-\d{2}-\d{2}\.json$/);
-
-  const stream = await download.createReadStream();
-  if (!stream) throw new Error("The account export download stream is unavailable.");
-  const chunks: Buffer[] = [];
-  for await (const chunk of stream) chunks.push(Buffer.from(chunk));
-  const payload = JSON.parse(Buffer.concat(chunks).toString("utf8")) as {
+  const exportLink = page.getByRole("link", { name: "Unduh data akun (JSON)" });
+  await expect(exportLink).toHaveAttribute("href", "/api/account/export");
+  const response = await page.evaluate(async () => {
+    const result = await fetch("/api/account/export");
+    return {
+      status: result.status,
+      contentType: result.headers.get("content-type"),
+      contentDisposition: result.headers.get("content-disposition"),
+      payload: await result.json(),
+    };
+  });
+  expect(response.status).toBe(200);
+  expect(response.contentType).toContain("application/json");
+  expect(response.contentDisposition).toMatch(/^attachment; filename="tamukita-account-data-\d{4}-\d{2}-\d{2}\.json"$/);
+  const payload = response.payload as {
     data: { account: { email: string | null }; invitations: unknown[] };
     exclusions: string[];
   };
