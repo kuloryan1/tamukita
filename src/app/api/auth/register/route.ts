@@ -5,6 +5,7 @@ import { createRawAccountToken, hashAccountToken } from "@/lib/account-tokens";
 import { sendAccountActionEmail } from "@/lib/email";
 import { hashPassword } from "@/lib/password";
 import { getPrismaClient } from "@/lib/prisma";
+import { ADULT_ATTESTATION_VERSION } from "@/lib/consent-versions";
 import { allowRequest, getRequestAddress } from "@/lib/rate-limit";
 import { readJsonBody } from "@/lib/request-json";
 
@@ -12,6 +13,7 @@ const registrationSchema = z.object({
   name: z.string().trim().min(2).max(80),
   email: z.email().trim().toLowerCase().max(254),
   password: z.string().min(12).max(128),
+  adultAttested: z.literal(true),
 });
 
 function workspaceSlug(name: string, id: string) {
@@ -26,7 +28,7 @@ export async function POST(request: Request) {
 
   const parsed = registrationSchema.safeParse(body.value);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Periksa nama, email, dan kata sandi (minimal 12 karakter)." }, { status: 400 });
+    return NextResponse.json({ error: "Periksa nama, email, kata sandi (minimal 12 karakter), dan konfirmasi usia 18 tahun ke atas." }, { status: 400 });
   }
 
   const address = getRequestAddress(request);
@@ -39,12 +41,20 @@ export async function POST(request: Request) {
   const prisma = getPrismaClient();
   const id = randomUUID();
   const passwordHash = await hashPassword(parsed.data.password);
+  const adultAttestedAt = new Date();
   const verificationToken = createRawAccountToken();
   const verificationTokenHash = hashAccountToken(verificationToken);
   try {
     await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
-        data: { id, name: parsed.data.name, email: parsed.data.email, passwordHash },
+        data: {
+          id,
+          name: parsed.data.name,
+          email: parsed.data.email,
+          passwordHash,
+          adultAttestedAt,
+          adultAttestationVersion: ADULT_ATTESTATION_VERSION,
+        },
       });
       await tx.accountToken.create({ data: { userId: user.id, purpose: "VERIFY_EMAIL", tokenHash: verificationTokenHash, expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) } });
       const organization = await tx.organization.create({

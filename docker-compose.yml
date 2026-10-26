@@ -126,4 +126,4 @@ volumes:
 networks:
   default:
   staging-origin:
-    name: ${TAMUKITA_STAGING_ORIGIN_NETWORK:-${COMPOSE_PROJECT_NAME:-tamukita}_staging-origin}
+    name: ${TAMUKITA_ORIGIN_NETWORK:-${TAMUKITA_STAGING_ORIGIN_NETWORK:-${COMPOSE_PROJECT_NAME:-tamukita}_staging-origin}}

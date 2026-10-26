@@ -131,6 +131,10 @@ test("public guest flows and marketplace page view metrics work, and content rev
   const expectedRsvpCountText = `${initialRsvpCount + 1} tamu telah mengirim RSVP`;
 
   await page.setExtraHTTPHeaders({ "x-forwarded-for": `198.51.100.${1 + Math.floor(Math.random() * 253)}` });
+  const childRsvpWithoutGuardianConsent = await page.request.post(`/api/public/invitations/${invitationSlug}/rsvp`, {
+    data: { guestToken, attendance: "ATTENDING", attendeeCount: 1, includesChildData: true },
+  });
+  expect(childRsvpWithoutGuardianConsent.status()).toBe(400);
   await page.getByRole("button", { name: "Konfirmasi kehadiran" }).click();
   await expect(page.getByLabel("Undangan untuk")).toHaveValue(guestName);
   await page.getByLabel("Jumlah tamu yang hadir").selectOption("2");
@@ -148,6 +152,8 @@ test("public guest flows and marketplace page view metrics work, and content rev
 
   await page.getByRole("button", { name: "Konfirmasi kehadiran" }).click();
   await page.getByRole("button", { name: "Mohon maaf berhalangan" }).click();
+  await page.getByRole("checkbox", { name: "RSVP ini mencantumkan nama atau informasi anak." }).check();
+  await page.getByRole("checkbox", { name: /Saya orang tua\/wali yang berwenang/ }).check();
   const repeatedRsvpPromise = page.waitForResponse((candidate) =>
     candidate.url().endsWith(`/api/public/invitations/${invitationSlug}/rsvp`) && candidate.request().method() === "POST",
   );
@@ -155,6 +161,13 @@ test("public guest flows and marketplace page view metrics work, and content rev
   const repeatedRsvpResponse = await repeatedRsvpPromise;
   expect(repeatedRsvpResponse.status()).toBe(201);
   expect(await repeatedRsvpResponse.json()).toMatchObject({ saved: true, created: false });
+  const rsvpConsent = await analyticsPool.query<{ includesChildData: boolean; guardianConsentAt: Date | null; guardianConsentVersion: string | null }>(
+    'SELECT "includesChildData", "guardianConsentAt", "guardianConsentVersion" FROM rsvps WHERE "invitationId" = $1 AND "displayName" = $2',
+    [invitationId, guestName],
+  );
+  expect(rsvpConsent.rows).toHaveLength(1);
+  expect(rsvpConsent.rows[0]).toMatchObject({ includesChildData: true, guardianConsentVersion: "child-rsvp-guardian-2026-10-v1" });
+  expect(rsvpConsent.rows[0]?.guardianConsentAt).toBeInstanceOf(Date);
   await expect(page.locator(".rsvp-count")).toContainText(expectedRsvpCountText);
   await page.getByRole("button", { name: "Selesai" }).click();
   await expect(page.getByRole("dialog")).toBeHidden();
@@ -196,13 +209,26 @@ test("public guest flows and marketplace page view metrics work, and content rev
   await expect(page.locator(".public-hero-side h1")).toContainText(guestName);
 
   const guestbookMessage = `Semoga selalu bahagia ${randomUUID().slice(0, 8)}`;
+  const childGuestbookWithoutGuardianConsent = await page.request.post(`/api/public/invitations/${invitationSlug}/guestbook`, {
+    data: { name: guestName, message: guestbookMessage, includesChildData: true },
+  });
+  expect(childGuestbookWithoutGuardianConsent.status()).toBe(400);
   await page.getByLabel("Namamu").fill(guestName);
   await page.getByLabel("Ucapan", { exact: true }).fill(guestbookMessage);
+  await page.getByRole("checkbox", { name: "Ucapan ini mencantumkan nama atau informasi anak." }).check();
+  await page.getByRole("checkbox", { name: /Saya orang tua\/wali yang berwenang/ }).check();
   const guestbookResponsePromise = page.waitForResponse((candidate) =>
     candidate.url().endsWith(`/api/public/invitations/${invitationSlug}/guestbook`) && candidate.request().method() === "POST",
   );
   await page.getByRole("button", { name: "Kirim ucapan" }).click();
   expect((await guestbookResponsePromise).status()).toBe(201);
+  const guestbookConsent = await analyticsPool.query<{ includesChildData: boolean; guardianConsentAt: Date | null; guardianConsentVersion: string | null }>(
+    'SELECT "includesChildData", "guardianConsentAt", "guardianConsentVersion" FROM guestbook WHERE "invitationId" = $1 AND message = $2',
+    [invitationId, guestbookMessage],
+  );
+  expect(guestbookConsent.rows).toHaveLength(1);
+  expect(guestbookConsent.rows[0]).toMatchObject({ includesChildData: true, guardianConsentVersion: "child-guestbook-guardian-2026-10-v1" });
+  expect(guestbookConsent.rows[0]?.guardianConsentAt).toBeInstanceOf(Date);
   await expect(page.getByRole("status")).toContainText("menunggu persetujuan");
 
   await page.goto(`/dashboard/invitations/${invitationId}/guestbook`);

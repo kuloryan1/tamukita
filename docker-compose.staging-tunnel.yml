@@ -10,5 +10,5 @@ services:
 
 networks:
   staging-origin:
-    name: ${TAMUKITA_STAGING_ORIGIN_NETWORK:-tamukita-staging-xwcuty_staging-origin}
+    name: ${TAMUKITA_ORIGIN_NETWORK:-${TAMUKITA_STAGING_ORIGIN_NETWORK:-tamukita-staging-xwcuty_staging-origin}}
     external: true

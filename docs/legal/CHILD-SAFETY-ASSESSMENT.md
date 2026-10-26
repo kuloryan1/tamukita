@@ -1,27 +1,44 @@
 # Lembar kerja penilaian pelindungan anak — TamuKita
 
-> **DRAF KERJA INTERNAL — belum dinilai, disahkan, atau dilaporkan.** Ini membantu operator mengumpulkan bukti; dokumen ini bukan penetapan profil risiko dan bukan pendapat hukum.
+> **DRAF KERJA INTERNAL — keputusan produk awal ditetapkan 26 Oktober 2026; penilaian formal, pengesahan operator, dan bukti pelaporan belum ada.** Ini bukan penetapan profil risiko atau pendapat hukum.
 
-**Tanggal pemeriksaan kode:** 10 Oktober 2026  
-**Operator/PSE:** [ISI BADAN USAHA DAN NOMOR PSE, JIKA BERLAKU]  
-**Penanggung jawab internal:** [ISI NAMA/JABATAN]  
-**Narahubung pelaporan:** [ISI NAMA/JABATAN/KONTAK]  
-**Penasihat hukum:** [ISI]  
-**Versi produk/commit yang dinilai:** [ISI]
+**Tanggal pemeriksaan kode:** 26 Oktober 2026
 
-## 1. Keputusan cakupan yang belum dibuat
+**Nama layanan:** TamuKita by Tigakaki (nama tampilan, bukan identitas legal operator)
 
-Permenkomdigi 9/2026 mencakup Produk, Layanan, dan Fitur yang dirancang untuk anak maupun yang mungkin digunakan atau diakses anak. Karena halaman undangan dapat dibuka publik dan fitur RSVP/buku tamu dapat dipakai tamu undangan, operator harus menilai setiap fitur berdasarkan penggunaan nyatanya; jangan menganggap layanan di luar cakupan hanya karena pembuat akun ditargetkan dewasa.
+**Operator/PSE:** [ISI BADAN USAHA DAN NOMOR PSE, JIKA BERLAKU]
 
-| Pertanyaan | Keputusan operator | Bukti dan penanggung jawab |
+**Penanggung jawab internal:** [ISI NAMA/JABATAN]
+
+**Narahubung pelaporan:** usulan alias `keamanan@tamukita.io`; belum diaktifkan/diuji atau ditetapkan petugasnya.
+
+**Penasihat hukum:** [ISI]
+
+**Versi produk/commit yang dinilai:** `fdc9b5e` ditambah working tree lokal 26 Oktober 2026; belum dikomit.
+
+## 1. Keputusan awal dan hal yang masih harus dibuktikan
+
+Permenkomdigi 9/2026 mencakup Produk, Layanan, dan Fitur yang dirancang untuk anak maupun yang mungkin digunakan atau diakses anak. Karena halaman undangan dapat dibuka publik dan fitur RSVP/buku tamu dapat dipakai tamu undangan, **keputusan sementara adalah memperlakukan halaman publik, RSVP, buku tamu, dan media sebagai fitur yang mungkin diakses anak**. Batasan usia akun tidak mengeluarkan fitur publik dari penilaian.
+
+| Pertanyaan | Keputusan awal atas arahan pemilik produk | Bukti/gate yang masih terbuka |
 |---|---|---|
-| Entitas mana yang menjadi PSE/operator untuk domain dan layanan ini? | [BELUM DIPUTUSKAN] | [ISI] |
-| Produk/layanan/fitur mana yang mungkin diakses anak dan siapa penggunanya? | [BELUM DIPUTUSKAN] | [ISI] |
-| Apakah ada fitur yang secara khusus dirancang atau ditargetkan kepada anak? | [BELUM DIPUTUSKAN] | [ISI] |
-| Batas minimum usia dan rentang usia yang ditetapkan untuk tiap fitur? | [BELUM DIPUTUSKAN] | [ISI] |
-| Mekanisme verifikasi usia, persetujuan orang tua/wali, dan kontrol orang tua yang diperlukan? | [BELUM DIPUTUSKAN] | [ISI] |
-| Apakah profil risiko tinggi atau rendah untuk tiap fitur, dan atas dasar apa? | [BELUM DIPUTUSKAN] | [ISI] |
-| Apakah penilaian mandiri telah dilaporkan ke Komdigi? Jika belum, status/tindakan apa yang diwajibkan untuk operator ini? | [BELUM DIPUTUSKAN] | [ISI SEGERA; DOKUMENTASIKAN BUKTI] |
+| Entitas mana yang menjadi PSE/operator? | Belum bisa ditentukan dari repo; nama badan usaha dan alamat tidak boleh ditebak. | Nama legal, nomor pendaftaran/izin, dan pejabat penanggung jawab operator. |
+| Fitur mana yang mungkin diakses anak? | Anggap halaman undangan publik, RSVP, buku tamu, dan media mungkin diakses anak sampai dinilai formal. | Penilaian per fitur berdasarkan indikator yang berlaku dan bukti penggunaan nyata. |
+| Apakah ada fitur yang dirancang/ditargetkan kepada anak? | Tidak ada fitur atau promosi yang sengaja ditujukan kepada anak dalam MVP. | Tinjau copy pemasaran, template, dan perubahan produk sebelum tiap rilis. |
+| Batas usia akun/transaksi? | Pembuat akun, pembeli, reseller, dan pengembang harus berusia 18 tahun ke atas; hanya pernyataan usia, tanpa tanggal lahir. | Kode lokal meminta dan menyimpan waktu/versi pernyataan pada pendaftaran serta onboarding/atur ulang kata sandi. Login dan sesi menolak akun tanpa catatan. Belum dipush atau diuji pada CI/staging; operator/counsel perlu mengesahkan kecukupan self-attestation. |
+| Penggunaan publik dan data anak? | Anak dapat melihat undangan. Orang tua/wali mengisi RSVP/ucapan atas nama anak. Persetujuan RSVP menyebut pencatatan kehadiran dan penyampaian kepada pengundang; persetujuan ucapan menyebut kemungkinan tampil publik setelah disetujui. Jangan meminta kontak langsung atau data sensitif anak. | Notice untuk tamu/wali, mekanisme permintaan/takedown, bukti persetujuan, dan tinjauan penasihat hukum. |
+| Profil risiko fitur? | Jangan menyatakan profil risiko rendah/tinggi sebelum penilaian formal per fitur dengan instrumen yang berlaku. Terapkan mitigasi konservatif di bagian 4. | Penilaian skor dan pengesahan operator mengikuti Kepmenkomdigi 142/2026 sebagaimana diubah oleh 219/2026. |
+| Status penilaian/pelaporan? | Belum ada bukti pelaporan pada repository; status belum dapat dianggap selesai. | Verifikasi segera dengan operator/counsel. Peraturan berlaku sejak 6 Maret 2026 dan menetapkan pelaporan awal paling lambat 3 bulan sejak diundangkan; 6 Juni 2026 telah lewat bila kewajiban berlaku. Dapatkan nasihat tentang tindakan yang harus dilakukan sekarang. |
+
+### Teks pernyataan yang disiapkan di working tree
+
+| Versi | Alur | Teks persetujuan |
+|---|---|
+| `adult-18plus-2026-10-v1` | Akun | Saya menyatakan berusia 18 tahun ke atas dan membuat akun ini untuk digunakan sendiri. |
+| `child-rsvp-guardian-2026-10-v1` | RSVP | Saya orang tua/wali yang berwenang dan menyetujui TamuKita memproses data anak ini untuk mencatat kehadiran dan menyampaikannya kepada pengundang. |
+| `child-guestbook-guardian-2026-10-v1` | Buku tamu | Saya orang tua/wali yang berwenang dan menyetujui TamuKita memproses ucapan dan data anak ini serta menyampaikannya kepada pengundang. Saya memahami bahwa setelah disetujui pengundang, ucapan ini dapat tampil pada halaman undangan yang bisa dilihat publik. |
+
+Naskah ini tampil dalam kode lokal dan belum menjadi kebijakan publik. Operator dan penasihat hukum perlu mengesahkan tujuan, konteks pemberitahuan, dan masa penyimpanan bukti consent sebelum rilis.
 
 Permenkomdigi 9/2026 memuat kelompok usia 3–5, 6–9, 10–12, 13–15, serta 16 hingga belum 18 tahun, dan melarang penargetan layanan kepada anak di bawah 3 tahun. Peraturan juga meminta penilaian risiko per fitur atas tujuh aspek di bawah. Operator dan penasihat hukum harus menentukan penerapan ketentuan tersebut pada produk ini sebelum mengisi batas usia atau profil risiko.
 
@@ -31,13 +48,13 @@ Catatan berikut hanya menggambarkan perilaku aplikasi yang terlihat pada kode; i
 
 | Produk/fitur | Perilaku aplikasi saat ini | Pertanyaan pelindungan anak | Bukti kode/konfigurasi yang perlu disimpan |
 |---|---|---|---|
-| Akun pelanggan dan editor | Pengguna mendaftar dan membuat undangan; tidak ada batas usia atau verifikasi usia yang teridentifikasi pada skema/alur akun yang diperiksa. | Siapa boleh memiliki akun? Bagaimana usia diverifikasi dengan pengumpulan data seminimal mungkin? Kapan izin wali diperlukan? | Alur register, skema `User`, naskah usia/izin wali, hasil tinjauan counsel. |
+| Akun pelanggan dan editor | Working tree lokal meminta deklarasi usia 18+ pada pendaftaran dan onboarding/atur ulang, mencatat waktu/versi, dan menolak login/sesi tanpa catatan. Pengumpulan tanggal lahir atau verifikasi umur formal tidak ada. | Apakah self-attestation mencukupi untuk tiap fitur? Bagaimana akun lama mengulang persetujuan dan kapan izin wali diperlukan? | Register/reset flow, `User`, versi teks consent, hasil tinjauan counsel, hasil CI/staging. |
 | Halaman undangan publik | Halaman terbit menggunakan slug publik, dapat memuat teks, jadwal, lokasi, foto, informasi hadiah, dan musik. | Apakah halaman dapat dibuka anak? Konten apa yang dapat dipilih pemilik? Bagaimana risiko paparan konten dan data pribadi ditangani? | Renderer publik, field editor, aturan publikasi, laporan/takedown, contoh konten uji. |
-| RSVP | Tamu dapat mengirim nama, kehadiran, dan jumlah peserta; RSVP dapat dikirim tanpa akun. | Dapatkah anak mengirim data tanpa sepengetahuan wali? Data apa yang diperlukan? Siapa yang melihat dan kapan data dihapus? | Form/API RSVP, pemberitahuan privasi kepada tamu, kontrol akses pemilik, retensi. |
-| Buku tamu dan laporan ucapan | Ucapan baru menunggu persetujuan pemilik; ucapan yang tampil dapat dilaporkan dengan alasan terstruktur dan ditinjau moderator. | Dapatkah anak berinteraksi dengan orang tak dikenal atau melihat/mengirim konten berisiko? Bagaimana laporan dari anak/wali dan banding ditangani? | Alur moderasi, kanal laporan, SLA, audit, eskalasi, bukti penghapusan/pemulihan. |
+| RSVP | Tamu dapat mengirim nama, kehadiran, dan jumlah peserta tanpa akun. Working tree lokal memperingatkan agar tidak memasukkan kontak/data sensitif anak, meminta penanda bila nama/informasi anak dicantumkan, lalu mewajibkan pernyataan wali dan menyimpan waktu/versi consent. | Apakah tamu memahami tujuan dan penerima data? Dapatkah anak melewatkan penanda? Siapa yang melihat dan kapan data dihapus? | Form/API, tinjauan copy notice, bukti consent, kontrol akses pemilik, retensi, E2E pada CI/staging. |
+| Buku tamu dan laporan ucapan | Ucapan baru menunggu persetujuan pemilik; ucapan yang tampil dapat dilaporkan dengan alasan terstruktur. Working tree lokal memperingatkan agar tidak memasukkan kontak/data sensitif anak, meminta penanda data anak, mewajibkan consent wali, dan mencatat waktu/versi. | Dapatkah anak berinteraksi dengan orang tak dikenal atau melihat/mengirim konten berisiko? Bagaimana laporan anak/wali dan banding ditangani? | Alur moderasi, tinjauan notice, kanal laporan, SLA, audit, eskalasi, bukti penghapusan/pemulihan, E2E CI/staging. |
 | Daftar tamu dan tautan pribadi | Pemilik undangan dapat mengelola daftar tamu, kontak, dan tautan RSVP bertoken. | Bagaimana data dan tautan anak dilindungi dari publikasi, penyalinan, penemuan, dan akses tanpa izin? | Model guest/link, izin anggota workspace, mekanisme revoke, retensi dan audit akses. |
 | Media foto dan musik | Pengguna dapat mengunggah/crop media; sumber tertentu disimpan privat dan hasil yang dipilih dapat tampil publik. | Bagaimana menghindari publikasi identitas anak tanpa dasar/izin? Adakah metadata lokasi? Siapa menghapus media dan salinannya? | Alur EXIF, bucket visibility, consent, penghapusan objek/varian/backup. |
-| Checkout dan kredit reseller | Produk menyediakan checkout Xendit untuk lisensi/aktivasi/renewal/top-up reseller. | Apakah anak dapat membeli atau menjadi target penawaran? Perlukah batas transaksi/izin wali dan prosedur refund khusus? | Checkout, copy harga, kontrol usia, refund, alur reseller dan iklan/promosi. |
+| Checkout dan kredit reseller | Checkout Xendit dilindungi sesi akun; working tree lokal menolak login/sesi akun yang belum mencatat deklarasi usia 18+. | Apakah self-attestation cukup untuk pembelian? Apakah verifikasi tambahan, persetujuan wali, dan refund khusus diperlukan? | Jalur autentikasi, checkout, copy harga, kontrol usia, refund, alur reseller, iklan/promosi, tinjauan counsel. |
 | Berbagi ke layanan lain | Pengguna dapat membagikan tautan undangan secara manual/eksternal. | Apa yang terjadi ketika anak diarahkan ke layanan pihak ketiga? Apakah pengguna diberi informasi dan kontrol yang sesuai? | Tombol share, deep link, kebijakan/notice, inventaris layanan eksternal. |
 
 Referensi pemeriksaan utama pada kode saat ini mencakup `src/app/[slug]/page.tsx`, `src/app/api/public/invitations/[slug]/rsvp/route.ts`, `src/app/api/public/invitations/[slug]/guestbook/route.ts`, `src/app/api/public/invitations/[slug]/guestbook/[entryId]/reports/route.ts`, `src/app/dashboard/invitations/[id]/guests/`, dan `prisma/schema.prisma`.
@@ -46,42 +63,46 @@ Referensi pemeriksaan utama pada kode saat ini mencakup `src/app/[slug]/page.tsx
 
 Untuk setiap fitur pada inventaris, catat indikator yang relevan, kemungkinan dampak, kontrol yang sudah berjalan, kekurangan, bukti, pemilik tindakan, dan keputusan penasihat hukum. Jangan mengisi profil risiko sebelum penilaian disahkan operator.
 
-| Aspek menurut aturan | Indikator yang harus diperiksa untuk TamuKita | Temuan/bukti | Risiko awal | Mitigasi, pemilik, tenggat |
-|---|---|---|---|---|
-| Kontak dengan orang tak dikenal | Halaman publik, kiriman ucapan, daftar undangan/tautan, kemampuan menemukan atau berinteraksi dengan pengguna yang tidak dikenal; kebutuhan kontrol orang tua jika fitur memungkinkan kontak anak. | [ISI] | [BELUM DINILAI] | [ISI] |
-| Paparan konten | Konten undangan dan media yang ditulis/diunggah pemilik; ucapan tamu; jenis moderasi sebelum dan sesudah publikasi; penemuan dan takedown konten. | [ISI] | [BELUM DINILAI] | [ISI] |
-| Eksploitasi anak sebagai konsumen | Promosi/penawaran produk, harga, lisensi, pembayaran satu kali, kredit reseller, siapa yang ditargetkan, kontrol pembelian dan refund. | [ISI] | [BELUM DINILAI] | [ISI] |
-| Keamanan data pribadi anak | Nama, RSVP, kontak daftar tamu, foto/media, visibilitas publik, persetujuan wali, pembatasan akses, transfer/vendor, retensi dan penghapusan. | [ISI] | [BELUM DINILAI] | [ISI] |
-| Adiksi/penggunaan berlebihan | Fitur, desain, notifikasi, rekomendasi, streak, feed, atau mekanisme lain yang mendorong frekuensi/durasi penggunaan. | [ISI] | [BELUM DINILAI] | [ISI] |
-| Kesehatan psikologis | Perundungan/pelecehan dalam ucapan, paparan konten, interaksi dengan orang tak dikenal, penawaran komersial, dan dampak fitur lainnya. | [ISI] | [BELUM DINILAI] | [ISI] |
-| Kesehatan fisiologis | Dampak penggunaan layar, audio, media, aksesibilitas, dan fitur lain pada kondisi fisik/fungsi biologis anak. | [ISI] | [BELUM DINILAI] | [ISI] |
+| Aspek menurut aturan | Temuan awal dari produk | Prioritas kontrol internal, bukan profil hukum | Mitigasi yang dipilih |
+|---|---|---|---|
+| Kontak dengan orang tak dikenal | Tidak ada pesan langsung atau jejaring pengguna. RSVP dan ucapan dapat dikirim ke halaman publik; data tamu dan tautan terbatas juga tersedia bagi pemilik workspace. | Sedang | Batasi field publik; jangan menampilkan RSVP/kontak; sediakan laporan dan pembatasan/takedown yang dipantau. |
+| Paparan konten | Pemilik dapat menerbitkan teks, jadwal, lokasi, foto, hadiah, dan musik. Ucapan menunggu persetujuan pemilik sebelum tampil; moderasi konten undangan tidak terbukti. | Tinggi | Larang eksploitasi/pelecehan anak; sediakan kanal laporan aktif; takedown cepat; tinjau konten publik dan aset anak. |
+| Eksploitasi anak sebagai konsumen | Checkout, lisensi, aktivasi, hosting, dan top-up tersedia; working tree lokal menyiapkan gate pernyataan 18+ untuk sesi akun, tanpa verifikasi umur formal. | Sedang | Uji login/checkout setelah migrasi; sahkan kecukupan self-attestation; tak ada iklan/upsell anak; tampilkan harga dan refund jelas. |
+| Keamanan data pribadi anak | Nama RSVP, jumlah hadir, daftar tamu/kontak, foto dan lokasi dapat dikumpulkan atau ditampilkan; pilihan consent wali baru ditambahkan untuk RSVP/ucapan. Kontrol upload foto dan retensi/purge belum tersedia. | Tinggi | Uji consent server, minimalisasi field, jangan tampilkan data RSVP, batasi akses workspace; tinjau consent foto, ekspor, penghapusan, dan retensi. |
+| Adiksi/penggunaan berlebihan | Tidak ada feed sosial, rekomendasi, streak, atau notifikasi berulang yang mendorong durasi; musik hanya dimainkan setelah klik. | Rendah | Pertahankan kontrol musik manual dan tidak menambahkan pola pemaksaan perhatian tanpa penilaian ulang. |
+| Kesehatan psikologis | Ucapan dapat memuat pelecehan; ada moderasi pemilik dan laporan ucapan, tetapi cakupan laporan lain serta SLA belum operasional. | Sedang | Larang perundungan, ancaman, grooming, dan pelecehan; sediakan laporan yang mudah ditemukan, eskalasi, banding, serta audit moderator. |
+| Kesehatan fisiologis | Halaman web biasa; tidak ditemukan autoplay audio, feed tanpa batas, atau fitur yang mengharuskan penggunaan lama. | Rendah | Pertahankan musik hanya atas tindakan pengguna, hormati reduced motion, dan tinjau ulang bila fitur berubah. |
 
-Permenkomdigi 9/2026 menetapkan profil risiko tinggi jika terdapat satu atau lebih aspek dengan tingkat risiko tinggi; profil rendah hanya bila seluruh aspek dinilai rendah. Penetapan akhir dan bukti pelaporannya merupakan keputusan operator setelah review hukum dan penilaian lengkap.
+Prioritas Sedang/Tinggi pada tabel adalah penilaian teknik untuk mengurutkan mitigasi saja. Ini **bukan** pengisian skor regulator atau penetapan profil resmi. Penetapan akhir harus menggunakan instrumen pada Kepmenkomdigi 142/2026 sebagaimana diubah 219/2026, disahkan operator, lalu dilaporkan bila diwajibkan. Profil resmi tidak ditetapkan di draf ini.
 
 ## 4. Kontrol dan rencana tindak lanjut
 
-| Temuan | Tindakan yang disetujui | Penanggung jawab | Tenggat | Status/bukti |
-|---|---|---|---|---|
-| Belum ada batas usia, verifikasi usia, atau kontrol wali yang terdokumentasi pada alur akun. | [PUTUSKAN SETELAH KLASIFIKASI FITUR] | [ISI] | [ISI] | [ISI] |
-| Undangan publik dan RSVP dapat diakses tanpa akun. | [NILAI PAPARAN, NOTICE, DATA MINIMIZATION, DAN RETENSI] | [ISI] | [ISI] | [ISI] |
-| Laporan konten saat ini berfokus pada ucapan buku tamu. | [TENTUKAN CAKUPAN KONTEN LAIN, LAPORAN ANAK/WALI, SLA, BANDING, TAKEDOWN] | [ISI] | [ISI] | [ISI] |
-| Retensi penuh dan purge untuk akun, RSVP, media, log, dan backup belum ditetapkan. | [ISI MASA SIMPAN DAN BUKTI PURGE] | [ISI] | [ISI] | [ISI] |
-| Status penilaian mandiri dan pelaporan kepada Komdigi belum diketahui. | [VERIFIKASI STATUS DENGAN OPERATOR/COUNSEL; TENTUKAN TINDAKAN DAN SIMPAN BUKTI] | [ISI] | [ISI] | [ISI] |
+| Temuan | Tindakan yang disetujui | Status |
+|---|---|---|
+| Akun lama belum memiliki bukti pernyataan usia dan verifikasi umur formal belum tersedia. | Terapkan pernyataan usia 18+ tanpa menyimpan tanggal lahir; pastikan akun tanpa catatan tidak bisa login atau bertransaksi. | Kode lokal meminta pernyataan saat pendaftaran dan reset kata sandi, menolak login/sesi tanpa catatan, serta menyimpan waktu/versi. Akun lama perlu menyetujui melalui pemulihan; kontrol ini bukan verifikasi umur formal dan perlu legal review. |
+| Undangan publik, RSVP, dan buku tamu dapat diakses tanpa akun. | Anggap bisa diakses anak; minta persetujuan wali bila data anak dicantumkan, minimalisasi data, jangan tampilkan respons RSVP, dan sediakan report/takedown. | Working tree lokal menambahkan notice, pilihan data anak, dan consent yang divalidasi API serta disimpan dengan waktu/versi. Belum ada bukti runtime staging, tinjauan notice/operator, atau operasi moderasi. |
+| Moderasi laporan saat ini berfokus pada ucapan buku tamu. | Tetapkan cakupan laporan untuk semua konten publik, SLA, eskalasi child safety, banding, dan bukti tindakan. | Perlu petugas/kontak aktif dan uji alur. |
+| Purge akun, RSVP, media, log, dan backup belum dijalankan menurut jadwal yang dipilih. | Implementasikan jadwal di `PRIVACY.md`, ekspor sebelum purge, dan audit penghapusan menyeluruh. | Belum diterapkan di runtime. |
+| Status penilaian/laporan kepada Komdigi tidak ada di repo. | Konfirmasi filing sebelumnya; jika tidak ada, minta nasihat hukum segera dan simpan bukti langkah korektif. | Gate prioritas; tenggat awal 6 Juni 2026 telah lewat bila berlaku. |
+| Penilaian resmi belum disahkan. | Selesaikan lembar kerja per fitur menggunakan indikator terbaru, sahkan oleh operator, dan tetapkan siklus review. | Menunggu identitas operator dan penasihat hukum. |
 
 ## 5. Persetujuan, pelaporan, dan review ulang
 
 - **Ruang lingkup dan profil risiko yang disetujui:** [ISI PER PRODUK/LAYANAN/FITUR]
 - **Tanggal pengesahan internal dan pejabat yang mengesahkan:** [ISI]
 - **Tanggal dan bukti pelaporan kepada Komdigi bila diwajibkan:** [ISI]
-- **Tanggal peninjauan berikutnya:** [ISI]
+- **Tanggal peninjauan berikutnya:** 26 Januari 2027, atau lebih cepat jika produk, akses anak, vendor, atau peraturan berubah.
 - **Pemicu penilaian ulang:** perubahan fitur/teknologi, perubahan data atau akses publik, temuan insiden/laporan, perubahan risiko, dan perubahan peraturan.
 - **Dokumen bukti yang disimpan:** penilaian mandiri, lampiran teknis, notula review internal/eksternal, bukti laporan, tindak lanjut, versi aplikasi, dan riwayat perubahan.
 
 ## 6. Rujukan resmi
 
+- [UU 27 Tahun 2022 tentang Pelindungan Data Pribadi — JDIH BPK](https://peraturan.bpk.go.id/Details/229798/uu-no-27-tahun-2022-10), khususnya Pasal 25 tentang persetujuan orang tua/wali untuk pemrosesan data pribadi anak.
 - [PP 17 Tahun 2025 — JDIH BPK](https://peraturan.bpk.go.id/Details/316698/pp-no-17-tahun-2025)
 - [Permenkomdigi 9 Tahun 2026 — JDIH BPK](https://peraturan.bpk.go.id/Details/346040/permenkomdigi-no-9-tahun-2026)
 - [Teks Permenkomdigi 9 Tahun 2026 — JDIH Kemkomdigi](https://jdih.komdigi.go.id/produk_hukum/unduh/id/1007/t/peraturan%2Bmenteri%2Bkomunikasi%2Bdan%2Bdigital%2Bnomor%2B9%2Btahun%2B2026)
+- [Kepmenkomdigi 142 Tahun 2026 — indikator dan petunjuk penilaian](https://jdih.komdigi.go.id/index.php/produk_hukum/view/id/1009/t/keputusan-menteri-komunikasi-dan-digital-nomor-142-tahun-2026)
+- [Kepmenkomdigi 219 Tahun 2026 — perubahan atas Kepmen 142/2026](https://jdih.komdigi.go.id/index.php/produk_hukum/view/id/1011/t/keputusan%2Bmenteri%2Bkomunikasi%2Bdan%2Bdigital%2Bnomor%2B219%2Btahun%2B2026)
 
-Lembar kerja ini tidak menyimpulkan bahwa TamuKita berada pada profil risiko tertentu, telah memenuhi kewajiban, atau perlu/tidak perlu melakukan tindakan tertentu. Operator wajib memperoleh penilaian hukum untuk model dan fitur yang benar-benar dijalankan.
+Lembar kerja ini belum membuktikan bahwa TamuKita telah memenuhi kewajiban. Temuan/priority internal di atas mengarahkan pekerjaan mitigasi, tetapi tidak menggantikan penilaian regulator, pengesahan operator, atau opini penasihat hukum untuk model dan fitur yang benar-benar dijalankan.
 

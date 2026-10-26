@@ -37,18 +37,25 @@ jobs:
         env:
           TUNNEL_TOKEN: ci-only-validation-placeholder
         run: docker compose -f docker-compose.staging-tunnel.yml config --quiet
-      - name: Validate staging origin network isolation
+      - name: Validate production Tunnel Compose configuration
+        env:
+          TAMUKITA_ORIGIN_NETWORK: tamukita-production-origin
+          TUNNEL_TOKEN: ci-only-validation-placeholder
+        run: docker compose -f docker-compose.production-tunnel.yml config --quiet
+      - name: Validate staging and production Tunnel network isolation
         shell: bash
         env:
           TUNNEL_TOKEN: ci-only-validation-placeholder
         run: |
           docker compose --env-file .env.example -p tamukita-staging-xwcuty config --format json > "$RUNNER_TEMP/tamukita-app-compose.json"
           docker compose -f docker-compose.staging-tunnel.yml config --format json > "$RUNNER_TEMP/tamukita-tunnel-compose.json"
-          docker compose --env-file .env.example -p tamukita config --format json > "$RUNNER_TEMP/tamukita-production-compose.json"
-          node scripts/validate-staging-network-isolation.mjs \
+          TAMUKITA_ORIGIN_NETWORK=tamukita-production-origin docker compose --env-file .env.example -p tamukita config --format json > "$RUNNER_TEMP/tamukita-production-compose.json"
+          TAMUKITA_ORIGIN_NETWORK=tamukita-production-origin docker compose -f docker-compose.production-tunnel.yml config --format json > "$RUNNER_TEMP/tamukita-production-tunnel-compose.json"
+          node scripts/validate-tunnel-network-isolation.mjs \
             "$RUNNER_TEMP/tamukita-app-compose.json" \
             "$RUNNER_TEMP/tamukita-tunnel-compose.json" \
-            "$RUNNER_TEMP/tamukita-production-compose.json"
+            "$RUNNER_TEMP/tamukita-production-compose.json" \
+            "$RUNNER_TEMP/tamukita-production-tunnel-compose.json"
       - name: Validate local Compose override
         run: docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.local.yml config --quiet
       - name: Test Dokploy PostgreSQL container discovery

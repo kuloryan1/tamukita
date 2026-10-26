@@ -23,7 +23,11 @@ container_list="$(docker ps --quiet \
   --filter "label=com.docker.compose.project=${project_name}" \
   --filter "label=com.docker.compose.service=${service_name}")"
 container_ids=()
-mapfile -t container_ids < <(printf '%s' "$container_list")
+while IFS= read -r container_id; do
+  if [[ -n "$container_id" ]]; then
+    container_ids[${#container_ids[@]}]="$container_id"
+  fi
+done <<< "$container_list"
 
 if (( ${#container_ids[@]} != 1 )) || [[ -z "${container_ids[0]:-}" ]]; then
   echo "Expected exactly one running ${service_name} container for Compose project ${project_name}; found ${#container_ids[@]}." >&2

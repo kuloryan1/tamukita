@@ -198,9 +198,38 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   const onboardingEmailResponse = await page.request.get(`http://127.0.0.1:3140/messages?to=${encodeURIComponent(customerEmail)}`);
   expect(onboardingEmailResponse.status()).toBe(200);
   const onboardingEmailPayload = await onboardingEmailResponse.json() as { messages: Array<{ subject: string; text: string }> };
-  expect(onboardingEmailPayload.messages.some((message) =>
-    message.subject === "Atur kata sandi TamuKita" && message.text.includes(`${new URL(page.url()).origin}/reset-password?token=`),
-  )).toBe(true);
+  const onboardingMessage = onboardingEmailPayload.messages.find((message) => message.subject === "Atur kata sandi TamuKita");
+  expect(onboardingMessage?.text).toContain(`${new URL(page.url()).origin}/reset-password?token=`);
+  const onboardingUrl = onboardingMessage?.text.match(/https?:\/\/[^\s]+\/reset-password\?token=[A-Za-z0-9_-]{43}/)?.[0];
+  expect(onboardingUrl).toBeTruthy();
+  if (!onboardingUrl) throw new Error("The onboarding email did not contain a valid password setup link.");
+  const onboardingContext = await browser.newContext({ baseURL: new URL(page.url()).origin });
+  const onboardingPage = await onboardingContext.newPage();
+  try {
+    await onboardingPage.goto(onboardingUrl);
+    const onboardingPassword = `TamuKita-${suffix}-Password`;
+    await onboardingPage.getByLabel("Kata sandi baru").fill(onboardingPassword);
+    await onboardingPage.getByLabel("Ulangi kata sandi").fill(onboardingPassword);
+    const resetToken = new URL(onboardingUrl).searchParams.get("token");
+    if (!resetToken) throw new Error("The onboarding link did not include its reset token.");
+    const missingAgeAttestation = await onboardingPage.request.post("/api/auth/password/reset", {
+      data: { token: resetToken, password: onboardingPassword, adultAttested: false },
+    });
+    expect(missingAgeAttestation.status()).toBe(400);
+    await onboardingPage.getByRole("checkbox", { name: "Saya menyatakan berusia 18 tahun ke atas dan membuat akun ini untuk digunakan sendiri." }).check();
+    const resetResponsePromise = onboardingPage.waitForResponse((response) =>
+      response.url().endsWith("/api/auth/password/reset") && response.request().method() === "POST",
+    );
+    await onboardingPage.getByRole("button", { name: "Simpan kata sandi" }).click();
+    expect((await resetResponsePromise).status()).toBe(200);
+    await onboardingPage.goto("/login");
+    await onboardingPage.getByLabel("Alamat email").fill(customerEmail);
+    await onboardingPage.getByLabel("Kata sandi").fill(onboardingPassword);
+    await onboardingPage.getByRole("button", { name: "Masuk" }).click();
+    await onboardingPage.waitForURL(/\/dashboard(?:\/|$)/);
+  } finally {
+    await onboardingContext.close();
+  }
   await expect(page.getByRole("status")).toContainText("Akun pelanggan dibuat");
 
   const existingInvitationSlug = `e2e-managed-existing-${suffix}`;

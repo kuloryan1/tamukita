@@ -3,6 +3,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { createInitialDraft } from "@/lib/invitations";
 import { hashPassword } from "@/lib/password";
+import { ADULT_ATTESTATION_VERSION } from "@/lib/consent-versions";
 import { templates } from "@/lib/templates";
 import { TEMPLATE_SDK_VERSION } from "@/lib/template-sdk";
 
@@ -103,8 +104,8 @@ try {
     const passwordHash = await hashPassword(password);
     const user = await prisma.user.upsert({
       where: { email },
-      update: { name, emailVerified: now, passwordHash, platformRole, failedLoginAttempts: 0, lockedUntil: null },
-      create: { id: randomUUID(), name, email, emailVerified: now, passwordHash, platformRole },
+      update: { name, emailVerified: now, passwordHash, adultAttestedAt: now, adultAttestationVersion: ADULT_ATTESTATION_VERSION, platformRole, failedLoginAttempts: 0, lockedUntil: null },
+      create: { id: randomUUID(), name, email, emailVerified: now, passwordHash, adultAttestedAt: now, adultAttestationVersion: ADULT_ATTESTATION_VERSION, platformRole },
       select: { id: true },
     });
     const accountType = platformRole === "SUPER_ADMIN" ? "admin" : platformRole === "FINANCE" ? "finance" : platformRole === "SUPPORT" ? "support" : platformRole === "TEMPLATE_DEVELOPER" ? "developer" : platformRole === "CONTENT_REVIEWER" ? "content-reviewer" : "customer";

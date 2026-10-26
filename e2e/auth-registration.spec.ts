@@ -8,10 +8,16 @@ test("customer registers, verifies email, and signs in without sending mail exte
   const password = `TamuKita-${randomUUID().slice(0, 12)}`;
   await page.setExtraHTTPHeaders({ "x-forwarded-for": `203.0.113.${1 + Math.floor(Math.random() * 253)}` });
 
+  const underageRegistration = await page.request.post("/api/auth/register", {
+    data: { name: "Pelanggan Di Bawah Umur", email, password, adultAttested: false },
+  });
+  expect(underageRegistration.status()).toBe(400);
+
   await page.goto("/register");
   await page.getByLabel("Nama lengkap").fill("Pelanggan E2E Baru");
   await page.getByLabel("Alamat email").fill(email);
   await page.getByLabel("Kata sandi").fill(password);
+  await page.getByRole("checkbox", { name: "Saya menyatakan berusia 18 tahun ke atas dan membuat akun ini untuk digunakan sendiri." }).check();
   const registrationResponsePromise = page.waitForResponse((response) =>
     response.url().endsWith("/api/auth/register") && response.request().method() === "POST",
   );

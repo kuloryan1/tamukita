@@ -1,10 +1,14 @@
 # Syarat Layanan TamuKita
 
-> **DRAF INTERNAL — jangan dipublikasikan sebelum penanda `[ISI]` selesai dan draf ditinjau penasihat hukum.**
+> **DRAF INTERNAL — keputusan operasional awal ditetapkan 26 Oktober 2026.** Identitas operator, kontak aktif, dan tinjauan penasihat hukum masih diperlukan sebelum dipublikasikan.
 
-**Operator:** [ISI NAMA BADAN USAHA/OPERATOR DAN ALAMAT]  
-**Kontak dukungan/pengaduan:** [ISI EMAIL/FORMULIR DAN JAM OPERASIONAL]  
-**Berlaku sejak:** [ISI TANGGAL]
+**Operator:** [ISI NAMA BADAN USAHA/OPERATOR DAN ALAMAT]
+
+**Kontak dukungan/pengaduan (pilihan internal):** `bantuan@tamukita.io` — belum diverifikasi; satu inbox yang dipantau untuk support, refund, dan pengaduan.
+
+**Tanggal versi draf:** 26 Oktober 2026
+
+**Berlaku sejak:** [ISI SETELAH DISETUJUI OPERATOR]
 
 ## 1. Ruang lingkup layanan
 
@@ -14,9 +18,11 @@ Pada implementasi saat ini tidak ada paket berlangganan otomatis. Pembelian lise
 
 ## 2. Akun dan akses
 
-Pengguna wajib memberi informasi akun yang benar, menjaga rahasia kredensial, dan segera melaporkan dugaan penggunaan tanpa izin ke **[ISI KONTAK KEAMANAN]**. Pemilik workspace mengatur anggota dan izin. Pengguna hanya boleh mengakses data yang diizinkan untuk perannya.
+Pemilik akun, pembeli, reseller, dan pengembang harus berusia paling sedikit 18 tahun. Saat pendaftaran atau onboarding/atur ulang kata sandi, TamuKita meminta pernyataan bahwa pengguna sudah berusia 18 tahun atau lebih, tanpa mengumpulkan tanggal lahir. Waktu dan versi pernyataan dicatat. Pengguna wajib memberi informasi akun yang benar, menjaga rahasia kredensial, dan segera melaporkan dugaan penggunaan tanpa izin ke `keamanan@tamukita.io` setelah alias itu aktif dan terpantau. Pemilik workspace mengatur anggota dan izin. Pengguna hanya boleh mengakses data yang diizinkan untuk perannya.
 
-Operator dapat membatasi akses sementara untuk menangani dugaan penyalahgunaan, insiden keamanan, perintah hukum, atau pelanggaran syarat; alasan, proses pemberitahuan, peninjauan, dan mekanisme keberatan harus dijelaskan di sini: **[ISI PROSEDUR]**.
+Anak dapat membuka halaman undangan publik. Anak di bawah 18 tahun tidak boleh membuat akun, membeli layanan, atau mengelola akun reseller. Orang tua/wali mengisi RSVP dan ucapan atas nama anak. Bila RSVP mencantumkan data anak, form meminta pernyataan wali dan menyampaikan bahwa datanya dipakai untuk mencatat kehadiran serta disampaikan kepada pengundang. Bila ucapan mencantumkan data anak, form menjelaskan bahwa setelah disetujui pengundang ucapan dapat tampil pada halaman undangan publik. Aplikasi mencatat waktu dan versi persetujuan yang berbeda untuk RSVP dan buku tamu. Wali memastikan mereka berhak memberikan data/foto anak. TamuKita tidak menargetkan promosi kepada anak. Pemberitahuan ini tidak menggantikan penilaian mandiri atau kewajiban desain pelindungan anak yang berlaku.
+
+Operator dapat membatasi akses segera untuk menangani risiko keamanan/anak yang sedang berlangsung, penipuan, perintah hukum, atau pelanggaran berat. Jika hukum tidak melarang, operator memberi tahu pelanggan dalam 1 hari kerja dengan alasan dan langkah pemulihan. Pelanggan dapat meminta peninjauan dalam 14 hari melalui `bantuan@tamukita.io`; petugas menargetkan jawaban dalam 5 hari kerja. Tindakan darurat dapat tetap berlaku selama risiko diperiksa.
 
 ## 3. Isi undangan dan tanggung jawab pengguna
 
@@ -24,7 +30,7 @@ Pengguna mempertahankan hak atas konten yang mereka unggah sejauh mereka memang 
 
 Pengguna memberi operator izin terbatas, non-eksklusif, dan selama diperlukan untuk meng-host, mengubah ukuran/memproses, menyimpan, membuat backup, dan menampilkan konten hanya untuk menyediakan, mengamankan, serta memperbaiki layanan sesuai pengaturan pengguna. Hak cipta konten pengguna tidak berpindah kepada operator. Ketentuan lebih rinci ada di [Lisensi Template dan Unggahan](./TEMPLATE-AND-MEDIA-LICENSE.md).
 
-Jangan mengunggah konten yang melanggar hukum, hak pihak lain, privasi, atau kebijakan konten **[TAUTAN KEBIJAKAN KONTEN YANG AKAN DITERBITKAN]**. TamuKita menyediakan kanal laporan untuk ucapan publik dan dapat menyembunyikan konten setelah ditinjau.
+Jangan mengunggah konten yang melanggar hukum, hak pihak lain, privasi, atau kebijakan konten. Dilarang mengunggah konten yang mengeksploitasi, menampilkan secara seksual, mengancam, mempermalukan, atau membocorkan data pribadi anak. Jangan memublikasikan foto atau informasi anak tanpa izin orang tua/wali yang sah. Ucapan publik harus dimoderasi sebelum tampil; laporan dugaan bahaya terhadap anak dapat dikirim ke `keamanan@tamukita.io` setelah alias itu aktif dan dipantau. Petugas dan SLA penanganannya harus tersedia sebelum publikasi.
 
 ## 4. Template, lisensi, dan publikasi
 
@@ -40,7 +46,7 @@ Lihat [Kebijakan Refund](./REFUNDS.md). Batasan teknis sistem tidak mengurangi h
 
 ## 6. Fitur reseller
 
-Reseller harus disetujui dan tunduk pada ketentuan tambahan yang berlaku: **[ISI KRITERIA, KOMISI/MARGIN, PAJAK, DUKUNGAN, DAN TANGGUNG JAWAB RESELLER]**. Pelanggan harus menyetujui permintaan akses sebelum reseller dapat melihat draf pelanggan. Kredit aktivasi digunakan sesuai tipe template dan saldo dicatat berdasarkan lot top-up. Kredit bukan saldo tunai atau alat pembayaran umum; aturan pengalihan, masa berlaku, dan refund wajib ditetapkan operator di [Kebijakan Refund](./REFUNDS.md) sebelum peluncuran.
+Reseller harus berusia minimal 18 tahun, mendapat persetujuan operator, dan menandatangani ketentuan reseller tertulis sebelum menjual. Untuk peluncuran awal, akses reseller bersifat undangan; tidak ada komisi/margin atau hak jual ulang otomatis tanpa perjanjian tertulis yang menyebut harga, pajak, dukungan, dan tanggung jawab sebelum transaksi. Pelanggan harus menyetujui permintaan akses sebelum reseller dapat melihat draf pelanggan. Kredit aktivasi digunakan sesuai tipe template dan saldo dicatat berdasarkan lot top-up. Kredit berbayar tidak kedaluwarsa; refund kredit berbayar yang utuh dan belum digunakan mengikuti [Kebijakan Refund](./REFUNDS.md).
 
 ## 7. Privasi dan data tamu
 
@@ -48,9 +54,9 @@ Penggunaan data dijelaskan pada [Pemberitahuan Privasi](./PRIVACY.md). Pelanggan
 
 ## 8. Ketersediaan, penghentian, dan penyelesaian sengketa
 
-Target ketersediaan, pemeliharaan, dukungan, pembatalan akun, pengunduhan data, serta akibat penghentian layanan: **[ISI KEBIJAKAN OPERASIONAL]**. Penghentian hosting menutup akses publik sesuai perilaku produk, tetapi penghapusan data tunduk pada jadwal retensi di Pemberitahuan Privasi.
+TamuKita tidak menjanjikan persentase ketersediaan sebelum pemantauan layanan dan jalur kompensasi dibuktikan. Operator akan mengumumkan pemeliharaan terencana jika memungkinkan. Dukungan menargetkan konfirmasi dalam 2 hari kerja dan jawaban dalam 5 hari kerja; tenggat hukum yang lebih singkat tetap didahulukan. Penghentian hosting menutup akses publik sesuai perilaku produk, tetapi data hanya dihapus mengikuti jadwal retensi setelah mekanisme purge dan ekspor siap.
 
-Keluhan konsumen dapat diajukan melalui **[ISI KANAL, SLA, LANGKAH ESKALASI, DAN INFORMASI PENYELESAIAN SENGKETA]**. Hukum yang berlaku dan forum penyelesaian sengketa: **[ISI SETELAH TINJAUAN HUKUM]**.
+Keluhan konsumen dapat diajukan ke `bantuan@tamukita.io` setelah inbox itu aktif dan diuji. Petugas menargetkan konfirmasi dalam 2 hari kerja dan jawaban dalam 5 hari kerja. Jalur penyelesaian sengketa eksternal, hukum yang berlaku, serta forum sengketa harus disahkan penasihat hukum: **[ISI SETELAH TINJAUAN HUKUM]**.
 
 ## 9. Ketentuan finalisasi
 

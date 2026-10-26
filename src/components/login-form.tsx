@@ -23,7 +23,7 @@ export function LoginForm() {
     }).catch(() => null);
     setPending(false);
     if (!result || result.error) {
-      setError("Email atau kata sandi tidak cocok, atau akun sedang dikunci sementara.");
+      setError("Email atau kata sandi tidak cocok, akun sedang dikunci, atau akun belum menyetujui batas usia 18+. Jika akun lama belum mencatat persetujuan ini, gunakan Lupa kata sandi untuk menyetujuinya saat memperbarui kata sandi.");
       return;
     }
     router.replace("/dashboard");
