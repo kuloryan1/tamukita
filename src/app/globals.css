@@ -839,8 +839,8 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .public-gift-account > b { color: #526256; font-family: var(--serif); font-size: 14px; font-weight: 400; }
 .public-gift-account > strong { color: #344538; font-size: 15px; letter-spacing: .05em; }
 .public-gift-account .button { margin-top: 4px; }
-.rsvp-count { align-items: center; color: #93988e; display: inline-flex; font-size: 8px; gap: 5px; margin-top: 13px; }
-.public-footer { align-items: center; border-top: 1px solid #e9e6de; color: #999b92; display: flex; font-size: 8px; justify-content: space-between; padding: 15px 5vw; }
+.rsvp-count { align-items: center; color: #687269; display: inline-flex; font-size: 10px; gap: 5px; margin-top: 13px; }
+.public-footer { align-items: center; border-top: 1px solid #e9e6de; color: #6e756b; display: flex; font-size: 10px; justify-content: space-between; padding: 15px 5vw; }
 .public-footer > div, .public-footer a { align-items: center; display: inline-flex; gap: 6px; }
 .public-footer > div svg { color: #ad9367; }
 .public-footer a { color: #718877; }
@@ -849,25 +849,26 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .guestbook-heading { grid-column: 1 / -1; text-align: center; }
 .guestbook-heading h2 { color: #35473b; font-size: 36px; margin: 10px 0 5px; }
 .guestbook-heading h2 em { color: #879786; }
-.guestbook-heading p, .guestbook-empty { color: #8f948b; font-size: 10px; }
+.guestbook-heading p, .guestbook-empty { color: #5b645b; font-size: 12px; line-height: 1.55; }
 .guestbook-form { align-self: start; background: #fbfaf7; display: flex; flex-direction: column; gap: 13px; padding: 22px; }
 .guestbook-form .editor-field { margin: 0; }
-.guestbook-form .public-consent-row { font-size: 10px; }
+.guestbook-form .field-label { font-size: 12px; }
+.guestbook-form .public-consent-row { font-size: 12px; }
 .guestbook-form .button { align-self: flex-start; }
-.guestbook-success { color: #547259; font-size: 9px; margin: 0; }
+.guestbook-success { color: #547259; font-size: 11px; margin: 0; }
 .guestbook-list { display: flex; flex-direction: column; gap: 9px; }
 .guestbook-entry { align-items: flex-start; background: #fbfaf7; display: flex; gap: 12px; padding: 16px; }
 .guestbook-entry-body { flex: 1; min-width: 0; }
 .guestbook-heart { align-items: center; background: #f1e8e0; border-radius: 50%; color: #b0776d; display: flex; flex: 0 0 32px; height: 32px; justify-content: center; }
 .guestbook-entry h3 { color: #526256; font-family: var(--serif); font-size: 13px; font-weight: 400; margin: 0 0 5px; }
-.guestbook-entry p { color: #858b82; font-size: 9px; line-height: 1.7; margin: 0 0 7px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.guestbook-entry p { color: #5e665d; font-size: 12px; line-height: 1.6; margin: 0 0 7px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .guestbook-entry time { color: #a09d93; font-size: 7px; }
-.guestbook-report-trigger { align-items: center; background: transparent; border: 0; color: #8a8e85; cursor: pointer; display: flex; font: inherit; font-size: 8px; gap: 4px; margin-top: 9px; padding: 0; }
+.guestbook-report-trigger { align-items: center; background: transparent; border: 0; color: #687269; cursor: pointer; display: flex; font: inherit; font-size: 10px; gap: 4px; margin-top: 9px; padding: 0; }
 .guestbook-report-trigger:hover { color: #8a514a; }
 .guestbook-report-form { background: #f5f3ee; border: 0; display: grid; gap: 8px; margin: 10px 0 0; max-width: 360px; min-width: 0; padding: 12px; }
 .guestbook-report-form .editor-field { margin: 0; }
 .guestbook-report-actions { display: flex; flex-wrap: wrap; gap: 6px; }
-.guestbook-report-confirmation { color: #547259; display: block; font-size: 8px; line-height: 1.5; margin-top: 8px; }
+.guestbook-report-confirmation { color: #547259; display: block; font-size: 10px; line-height: 1.5; margin-top: 8px; }
 .guestbook-empty { align-self: center; background: #fbfaf7; margin: 0; padding: 20px; text-align: center; width: 100%; }
 .dashboard-guestbook-page { margin: 0 auto; max-width: 1040px; }
 .guestbook-admin-heading { align-items: center; margin-top: 20px; }
@@ -1254,20 +1255,21 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .admin-feedback-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
 .rsvp-modal { background: #fbfaf7; box-shadow: 0 24px 80px rgba(13,24,17,.28); max-width: 410px; padding: 31px; position: relative; width: 100%; }
 .modal-close { align-items: center; background: transparent; border: 0; color: #8a9088; cursor: pointer; display: flex; justify-content: center; position: absolute; right: 13px; top: 13px; }
-.rsvp-modal > .eyebrow { color: #a4885c; font-size: 8px; }
+.rsvp-modal > .eyebrow { color: #a4885c; font-size: 9px; }
 .rsvp-modal h2 { color: #35473b; font-size: 31px; margin: 11px 0 5px; }
-.rsvp-modal-intro { color: #898f87; font-size: 9px; margin-bottom: 20px; }
+.rsvp-modal-intro { color: #596257; font-size: 12px; line-height: 1.55; margin-bottom: 20px; }
 .rsvp-modal form { display: flex; flex-direction: column; gap: 13px; }
 .rsvp-modal .editor-field { margin: 0; }
+.rsvp-modal .field-label { font-size: 12px; }
 .rsvp-options { border: 0; display: flex; flex-direction: column; gap: 6px; margin: 0; min-width: 0; padding: 0; }
-.rsvp-options button { background: white; border: 1px solid #e5e8e1; color: #7f887f; cursor: pointer; font-size: 9px; padding: 11px; text-align: left; }
+.rsvp-options button { background: white; border: 1px solid #e5e8e1; color: #596257; cursor: pointer; font-size: 12px; padding: 11px; text-align: left; }
 .rsvp-options button.is-selected { background: #f0f5ee; border-color: #9aaf9a; color: #4e7058; }
-.rsvp-demo-note { align-items: center; color: #a0a39b; display: flex; font-size: 7px; gap: 5px; justify-content: center; }
+.rsvp-demo-note { align-items: center; color: #687269; display: flex; font-size: 10px; gap: 5px; justify-content: center; }
 .rsvp-demo-note svg { color: #9a8a67; }
 .rsvp-confirmation { align-items: center; display: flex; flex-direction: column; padding: 13px 4px 5px; text-align: center; }
 .rsvp-confirmation > span { align-items: center; background: #e4eee2; border-radius: 50%; color: #5f8465; display: flex; height: 53px; justify-content: center; width: 53px; }
 .rsvp-confirmation h2 { font-size: 26px; margin-top: 17px; }
-.rsvp-confirmation p { color: #818981; font-size: 9px; line-height: 1.7; margin-bottom: 18px; }
+.rsvp-confirmation p { color: #596257; font-size: 12px; line-height: 1.6; margin-bottom: 18px; }
 .public-not-found { align-items: center; background: #f8f6ef; color: #627667; display: flex; flex-direction: column; min-height: 100vh; justify-content: center; text-align: center; }
 .public-not-found h1 { color: #35473b; font-size: 37px; margin: 15px 0 8px; }
 .public-not-found p { color: #858c83; font-size: 10px; }
