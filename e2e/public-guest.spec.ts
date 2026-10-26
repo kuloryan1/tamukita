@@ -42,6 +42,27 @@ test.afterAll(async () => {
   await analyticsPool?.end();
 });
 
+test("RSVP dialog supports keyboard dismissal and keeps focus inside", async ({ page }) => {
+  const response = await page.goto(`/${invitationSlug}`);
+  expect(response?.status()).toBe(200);
+  const trigger = page.getByRole("button", { name: "Konfirmasi kehadiran" });
+  await trigger.focus();
+  await page.keyboard.press("Enter");
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(page.getByLabel("Nama lengkap")).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(page.getByRole("button", { name: "Tutup" })).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(page.getByRole("button", { name: "Kirim konfirmasi" })).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Tutup" })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(trigger).toBeFocused();
+});
+
 async function signIn(page: Page, email: string, password: string) {
   await page.goto("/login");
   await page.getByLabel("Alamat email").fill(email);
