@@ -202,7 +202,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
   });
   await page.getByRole("checkbox", { name: "RSVP ini mencantumkan nama atau informasi anak." }).check();
   await page.getByRole("button", { name: "Kirim konfirmasi" }).click();
-  await expect(page.getByRole("alert")).toHaveText("Persetujuan orang tua/wali wajib sebelum mengirim data anak.");
+  await expect(page.locator('.editor-error[role="alert"]')).toHaveText("Persetujuan orang tua/wali wajib sebelum mengirim data anak.");
   expect(childRsvpBrowserRequests).toBe(0);
   await page.getByRole("checkbox", { name: /Saya orang tua\/wali yang berwenang/ }).check();
   const repeatedRsvpPromise = page.waitForResponse((candidate) =>
@@ -273,13 +273,13 @@ test("public guest flows and marketplace page view metrics work, and content rev
     await route.continue();
   });
   await page.getByRole("button", { name: "Kirim ucapan" }).click();
-  await expect(page.getByRole("alert")).toHaveText("Namamu wajib diisi.");
+  await expect(page.locator('.editor-error[role="alert"]')).toHaveText("Namamu wajib diisi.");
   expect(guestbookBrowserRequests).toBe(0);
   await page.getByLabel("Namamu").fill(guestName);
   await page.getByLabel("Ucapan", { exact: true }).fill(guestbookMessage);
   await page.getByRole("checkbox", { name: "Ucapan ini mencantumkan nama atau informasi anak." }).check();
   await page.getByRole("button", { name: "Kirim ucapan" }).click();
-  await expect(page.getByRole("alert")).toHaveText("Persetujuan orang tua/wali wajib sebelum mengirim data anak.");
+  await expect(page.locator('.editor-error[role="alert"]')).toHaveText("Persetujuan orang tua/wali wajib sebelum mengirim data anak.");
   expect(guestbookBrowserRequests).toBe(0);
   await page.getByRole("checkbox", { name: /Saya orang tua\/wali yang berwenang/ }).check();
   const guestbookResponsePromise = page.waitForResponse((candidate) =>

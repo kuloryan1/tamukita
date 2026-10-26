@@ -23,7 +23,7 @@ test("customer registers, verifies email, and recovers access while keeping the 
     await route.continue();
   });
   await page.getByRole("button", { name: "Masuk" }).click();
-  await expect(page.getByRole("alert")).toHaveText("Alamat email wajib diisi.");
+  await expect(page.locator('.editor-error[role="alert"]')).toHaveText("Alamat email wajib diisi.");
   expect(loginRequests).toBe(0);
   await page.getByRole("link", { name: "Daftar" }).click();
   await expect(page).toHaveURL((url) => url.pathname === "/register" && url.searchParams.get("callbackUrl") === callbackUrl);
@@ -33,7 +33,7 @@ test("customer registers, verifies email, and recovers access while keeping the 
     await route.continue();
   });
   await page.getByRole("button", { name: "Buat akun" }).click();
-  await expect(page.getByRole("alert")).toHaveText("Nama lengkap wajib diisi.");
+  await expect(page.locator('.editor-error[role="alert"]')).toHaveText("Nama lengkap wajib diisi.");
   expect(registrationRequests).toBe(0);
 
   await page.getByLabel("Nama lengkap").fill("Pelanggan E2E Baru");
@@ -93,7 +93,7 @@ test("customer registers, verifies email, and recovers access while keeping the 
       await route.continue();
     });
     await recoveryPage.getByRole("button", { name: "Kirim tautan pemulihan" }).click();
-    await expect(recoveryPage.getByRole("alert")).toHaveText("Alamat email wajib diisi.");
+    await expect(recoveryPage.locator('.editor-error[role="alert"]')).toHaveText("Alamat email wajib diisi.");
     expect(forgotPasswordRequests).toBe(0);
     await recoveryPage.getByLabel("Alamat email").fill(email);
     await recoveryPage.getByRole("button", { name: "Kirim tautan pemulihan" }).click();
@@ -115,7 +115,7 @@ test("customer registers, verifies email, and recovers access while keeping the 
       await route.continue();
     });
     await recoveryPage.getByRole("button", { name: "Simpan kata sandi" }).click();
-    await expect(recoveryPage.getByRole("alert")).toHaveText("Kata sandi baru wajib diisi.");
+    await expect(recoveryPage.locator('.editor-error[role="alert"]')).toHaveText("Kata sandi baru wajib diisi.");
     expect(resetPasswordRequests).toBe(0);
     await recoveryPage.getByLabel("Kata sandi baru").fill("TamuKita-Recovery-Password-123");
     await recoveryPage.getByLabel("Ulangi kata sandi").fill("TamuKita-Recovery-Password-123");
