@@ -187,10 +187,11 @@ async function purgeExpiredMedia(
     return;
   }
 
-  let lastId = "";
+  let lastId: string | null = null;
   while (true) {
+    const cursor: Prisma.MediaAssetWhereInput = lastId ? { id: { gt: lastId } } : {};
     const assets = await prisma.mediaAsset.findMany({
-      where: { AND: [where, { id: { gt: lastId } }] },
+      where: { AND: [where, cursor] },
       orderBy: { id: "asc" },
       take: DATA_RETENTION_BATCH_SIZE,
       select: { id: true, invitationId: true, storageKey: true, variants: { select: { storageKey: true } } },
@@ -259,10 +260,11 @@ export async function runDataRetentionSweep(
     ],
   };
 
-  let lastInvitationId = "";
+  let lastInvitationId: string | null = null;
   while (true) {
+    const cursor: Prisma.InvitationWhereInput = lastInvitationId ? { id: { gt: lastInvitationId } } : {};
     const invitations = await prisma.invitation.findMany({
-      where: { AND: [staleInvitationWhere, { id: { gt: lastInvitationId } }] },
+      where: { AND: [staleInvitationWhere, cursor] },
       orderBy: { id: "asc" },
       take: DATA_RETENTION_BATCH_SIZE,
       select: { id: true, startsAt: true, expiresAt: true, deletedAt: true, events: { select: { startsAt: true } } },
