@@ -9,7 +9,16 @@ if (process.env.E2E_ALLOW_DESTRUCTIVE !== "1" || !databaseUrl) {
   throw new Error("Retention integration verification requires E2E_ALLOW_DESTRUCTIVE=1 and DATABASE_URL.");
 }
 const parsedDatabaseUrl = new URL(databaseUrl);
-if (!new Set(["localhost", "127.0.0.1", "::1"]).has(parsedDatabaseUrl.hostname)) {
+const localDatabaseHost = new Set(["localhost", "127.0.0.1", "::1"]).has(parsedDatabaseUrl.hostname);
+const githubDisposableDatabase =
+  process.env.GITHUB_ACTIONS === "true" &&
+  process.env.E2E_ALLOW_GITHUB_SERVICE_DATABASE === "1" &&
+  parsedDatabaseUrl.hostname === "postgres" &&
+  parsedDatabaseUrl.port === "5432" &&
+  parsedDatabaseUrl.pathname === "/tamukita" &&
+  parsedDatabaseUrl.username === "ci" &&
+  parsedDatabaseUrl.password === "ci";
+if (!localDatabaseHost && !githubDisposableDatabase) {
   throw new Error("Retention integration verification only allows a local disposable database.");
 }
 

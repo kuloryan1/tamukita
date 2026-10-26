@@ -82,6 +82,7 @@ jobs:
       - run: npm run test:data-retention
         env:
           E2E_ALLOW_DESTRUCTIVE: "1"
+          E2E_ALLOW_GITHUB_SERVICE_DATABASE: "1"
       - run: npm run build
       - run: npm run test:e2e
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
