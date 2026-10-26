@@ -1493,7 +1493,7 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
   .editor-error { margin-inline: 16px; }
   .auth-page { display: block; }
   .auth-side-story { display: none; }
-  .auth-form-side { align-items: flex-start; min-height: 100vh; padding: 21px 22px 36px; }
+  .auth-form-side { align-items: flex-start; flex-direction: column; min-height: 100vh; padding: 21px 22px 36px; }
   .auth-form-wrap { margin: 0 auto; max-width: 410px; }
   .auth-mobile-brand { display: block; margin-bottom: 27px; }
   .auth-back-row { margin-bottom: 33px; }
