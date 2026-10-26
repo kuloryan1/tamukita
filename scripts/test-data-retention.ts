@@ -39,6 +39,7 @@ async function verifyRetentionSweep() {
   const storageKey = `e2e-retention/${invitationId}/source.webp`;
   const variantKey = `e2e-retention/${invitationId}/variant.webp`;
   const deletionRequests: Array<{ bucket: string; key: string }> = [];
+  let shouldFailPublicVariantDelete = true;
 
   try {
     await prisma.invitation.create({
@@ -97,7 +98,13 @@ async function verifyRetentionSweep() {
       now,
       privateBucket: "private-e2e",
       publicBucket: "public-e2e",
-      deleteObject: async (bucket: string, key: string) => { deletionRequests.push({ bucket, key }); },
+      deleteObject: async (bucket: string, key: string) => {
+        deletionRequests.push({ bucket, key });
+        if (shouldFailPublicVariantDelete && bucket === "public-e2e" && key === variantKey) {
+          shouldFailPublicVariantDelete = false;
+          throw new Error("E2E object storage deletion failure.");
+        }
+      },
     };
     const pendingOrderReport = await runDataRetentionSweep(prisma, retentionOptions);
     assert.equal(pendingOrderReport.rsvpsPurged, 0, "pending orders must protect guest data");
@@ -106,13 +113,28 @@ async function verifyRetentionSweep() {
     assert.equal(deletionRequests.length, 0, "pending orders must not call object storage deletion");
 
     await prisma.order.update({ where: { id: orderId }, data: { status: "CANCELED" } });
+    const failedSweepStart = deletionRequests.length;
     const pendingReportReport = await runDataRetentionSweep(prisma, retentionOptions);
     assert.equal(pendingReportReport.rsvpsPurged, 1);
     assert.equal(pendingReportReport.guestLinksPurged, 1);
     assert.equal(pendingReportReport.guestbookEntriesPurged, 0, "unresolved reports must protect guestbook entries");
     assert.equal(pendingReportReport.guestsPurged, 0, "held guestbook entries must protect linked guests");
-    assert.equal(pendingReportReport.mediaAssetsPurged, 1);
-    assert.deepEqual(deletionRequests.sort((a, b) => `${a.bucket}/${a.key}`.localeCompare(`${b.bucket}/${b.key}`)), [
+    assert.equal(pendingReportReport.mediaAssetsPurged, 0, "an object deletion failure must keep the database record for retry");
+    assert.equal(pendingReportReport.mediaAssetFailures, 1);
+    assert.equal(await prisma.mediaAsset.count({ where: { id: media.id } }), 1, "failed object deletion must not remove the media record");
+    assert.deepEqual(deletionRequests.slice(failedSweepStart).sort((a, b) => `${a.bucket}/${a.key}`.localeCompare(`${b.bucket}/${b.key}`)), [
+      { bucket: "private-e2e", key: storageKey },
+      { bucket: "private-e2e", key: variantKey },
+      { bucket: "public-e2e", key: storageKey },
+      { bucket: "public-e2e", key: variantKey },
+    ].sort((a, b) => `${a.bucket}/${a.key}`.localeCompare(`${b.bucket}/${b.key}`)));
+
+    const retryStart = deletionRequests.length;
+    const retryReport = await runDataRetentionSweep(prisma, retentionOptions);
+    assert.equal(retryReport.mediaAssetsPurged, 1, "a later sweep must retry and remove the asset");
+    assert.equal(retryReport.mediaAssetFailures, 0);
+    assert.equal(await prisma.mediaAsset.count({ where: { id: media.id } }), 0);
+    assert.deepEqual(deletionRequests.slice(retryStart).sort((a, b) => `${a.bucket}/${a.key}`.localeCompare(`${b.bucket}/${b.key}`)), [
       { bucket: "private-e2e", key: storageKey },
       { bucket: "private-e2e", key: variantKey },
       { bucket: "public-e2e", key: storageKey },
