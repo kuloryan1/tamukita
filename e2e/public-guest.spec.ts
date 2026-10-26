@@ -137,6 +137,8 @@ test("public guest flows and marketplace page view metrics work, and content rev
   expect(childRsvpWithoutGuardianConsent.status()).toBe(400);
   await page.getByRole("button", { name: "Konfirmasi kehadiran" }).click();
   await expect(page.locator(".rsvp-modal-intro")).toContainText("diterima oleh pemilik undangan");
+  await expect(page.getByRole("group", { name: "Pilih kehadiran" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Dengan senang hati hadir" })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByLabel("Undangan untuk")).toHaveValue(guestName);
   await page.getByLabel("Jumlah tamu yang hadir").selectOption("2");
   const rsvpResponsePromise = page.waitForResponse((candidate) =>
@@ -154,6 +156,11 @@ test("public guest flows and marketplace page view metrics work, and content rev
 
   await page.getByRole("button", { name: "Konfirmasi kehadiran" }).click();
   await page.getByRole("button", { name: "Mohon maaf berhalangan" }).click();
+  await expect(page.getByRole("button", { name: "Mohon maaf berhalangan" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "Dengan senang hati hadir" })).toHaveAttribute("aria-pressed", "false");
+  await expect(page.getByText("TERIMA KASIH SUDAH MEMBERI KABAR", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Kami mengerti kamu berhalangan hadir" })).toBeVisible();
+  await expect(page.getByLabel("Jumlah tamu yang hadir")).toHaveCount(0);
   await page.getByRole("checkbox", { name: "RSVP ini mencantumkan nama atau informasi anak." }).check();
   await page.getByRole("checkbox", { name: /Saya orang tua\/wali yang berwenang/ }).check();
   const repeatedRsvpPromise = page.waitForResponse((candidate) =>

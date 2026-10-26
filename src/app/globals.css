@@ -1259,7 +1259,7 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .rsvp-modal-intro { color: #898f87; font-size: 9px; margin-bottom: 20px; }
 .rsvp-modal form { display: flex; flex-direction: column; gap: 13px; }
 .rsvp-modal .editor-field { margin: 0; }
-.rsvp-options { display: flex; flex-direction: column; gap: 6px; }
+.rsvp-options { border: 0; display: flex; flex-direction: column; gap: 6px; margin: 0; min-width: 0; padding: 0; }
 .rsvp-options button { background: white; border: 1px solid #e5e8e1; color: #7f887f; cursor: pointer; font-size: 9px; padding: 11px; text-align: left; }
 .rsvp-options button.is-selected { background: #f0f5ee; border-color: #9aaf9a; color: #4e7058; }
 .rsvp-demo-note { align-items: center; color: #a0a39b; display: flex; font-size: 7px; gap: 5px; justify-content: center; }
