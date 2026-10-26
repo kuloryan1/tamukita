@@ -80,6 +80,9 @@ jobs:
       - run: npm ci
       - run: npm run db:deploy
       - run: npm run db:seed:e2e
+      - run: npm run test:data-retention
+        env:
+          E2E_ALLOW_DESTRUCTIVE: "1"
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run build
       - run: npm run test:e2e

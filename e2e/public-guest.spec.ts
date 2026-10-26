@@ -136,6 +136,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
   });
   expect(childRsvpWithoutGuardianConsent.status()).toBe(400);
   await page.getByRole("button", { name: "Konfirmasi kehadiran" }).click();
+  await expect(page.locator(".rsvp-modal-intro")).toContainText("diterima oleh pemilik undangan");
   await expect(page.getByLabel("Undangan untuk")).toHaveValue(guestName);
   await page.getByLabel("Jumlah tamu yang hadir").selectOption("2");
   const rsvpResponsePromise = page.waitForResponse((candidate) =>
@@ -213,6 +214,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
     data: { name: guestName, message: guestbookMessage, includesChildData: true },
   });
   expect(childGuestbookWithoutGuardianConsent.status()).toBe(400);
+  await expect(page.locator(".guestbook-heading")).toContainText("diterima oleh pemilik undangan");
   await page.getByLabel("Namamu").fill(guestName);
   await page.getByLabel("Ucapan", { exact: true }).fill(guestbookMessage);
   await page.getByRole("checkbox", { name: "Ucapan ini mencantumkan nama atau informasi anak." }).check();
