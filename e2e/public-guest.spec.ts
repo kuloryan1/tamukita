@@ -64,11 +64,26 @@ async function readInvitationModerationAuditActions(targetId: string) {
   return result.rows.map((row) => row.action);
 }
 
+async function resetInvitationModerationFixture() {
+  if (!analyticsPool) throw new Error("The disposable E2E database is required.");
+  await analyticsPool.query(`DELETE FROM invitation_reports WHERE "invitationId" = $1`, [invitationId]);
+  await analyticsPool.query(
+    `DELETE FROM audit_logs WHERE "targetType" = 'Invitation' AND "targetId" = $1 AND action LIKE 'admin.invitation_report.%'`,
+    [invitationId],
+  );
+  const result = await analyticsPool.query(
+    `UPDATE invitations SET status = 'PUBLISHED' WHERE id = $1 AND "deletedAt" IS NULL AND "publishedSnapshot" IS NOT NULL`,
+    [invitationId],
+  );
+  if (result.rowCount !== 1) throw new Error("The published E2E invitation fixture could not be reset.");
+}
+
 test.afterAll(async () => {
   await analyticsPool?.end();
 });
 
 test("RSVP dialog supports keyboard dismissal and keeps focus inside", async ({ page }) => {
+  await resetInvitationModerationFixture();
   const response = await page.goto(`/${invitationSlug}`);
   expect(response?.status()).toBe(200);
   const trigger = page.getByRole("button", { name: "Konfirmasi kehadiran" });
@@ -108,6 +123,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
     return;
   }
 
+  await resetInvitationModerationFixture();
   await signIn(page, customerEmail, customerPassword);
   const guestName = `Tamu ${randomUUID().slice(0, 8)}`;
   const guestResponse = await page.request.post(`/api/invitations/${invitationId}/guests`, { data: { names: [guestName] } });
@@ -398,6 +414,10 @@ test("public guest flows and marketplace page view metrics work, and content rev
     await page.reload();
     await expect(page.locator(".guestbook-entry").filter({ hasText: guestbookMessage })).toBeVisible();
 
+    const reporterAddress = `203.0.113.${(Number.parseInt(randomUUID().slice(0, 2), 16) % 254) + 1}`;
+    await page.route(`**/api/public/invitations/${invitationSlug}/reports`, async (route) => {
+      await route.continue({ headers: { ...route.request().headers(), "x-forwarded-for": reporterAddress } });
+    });
     await page.getByRole("button", { name: "Laporkan undangan" }).click();
     const publicReportForm = page.locator(".public-invitation-report-form");
     await expect(publicReportForm).toBeVisible();
@@ -433,7 +453,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
     expect((await page.goto(`/${invitationSlug}`))?.status()).toBe(404);
 
     await invitationModeration.getByRole("button", { name: "Riwayat 30 hari" }).click();
-    const hiddenInvitationCard = invitationModeration.locator(".admin-report-card").filter({ hasText: invitationSlug });
+    const hiddenInvitationCard = invitationModeration.locator(".admin-report-card").filter({ hasText: invitationSlug }).filter({ hasText: "Halaman ditangguhkan" }).first();
     await expect(hiddenInvitationCard).toContainText("Halaman ditangguhkan");
     const restoreInvitationPromise = reviewerPage.waitForResponse((candidate) =>
       candidate.url().includes("/api/admin/invitation-reports/") && candidate.request().method() === "PATCH",
