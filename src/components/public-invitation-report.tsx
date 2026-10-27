@@ -37,10 +37,18 @@ export function PublicInvitationReport({ slug }: { slug: string }) {
         <Flag size={13} /> Laporkan undangan
       </button>
       {open && <form id="public-invitation-report-form" className="public-invitation-report-form" onSubmit={submit}>
-        <p>Pilih alasan yang paling sesuai. Kami menyimpan alasan dan penanda anonim untuk mencegah laporan berulang.</p>
+        <p>Pilih satu alasan laporan sebelum mengirim. Kami menyimpan alasan dan penanda anonim untuk mencegah laporan berulang.</p>
         <label>
           <span>Alasan laporan</span>
-          <select required value={reason} onChange={(event) => setReason(event.target.value as Reason | "")}>
+          <select
+            required
+            value={reason}
+            onChange={(event) => {
+              event.currentTarget.setCustomValidity("");
+              setReason(event.currentTarget.value as Reason | "");
+            }}
+            onInvalid={(event) => event.currentTarget.setCustomValidity("Pilih satu alasan laporan sebelum mengirim.")}
+          >
             <option value="" disabled>Pilih alasan laporan</option>
             <option value="CHILD_SAFETY">Risiko keselamatan anak</option>
             <option value="PERSONAL_INFORMATION">Informasi pribadi tanpa izin</option>

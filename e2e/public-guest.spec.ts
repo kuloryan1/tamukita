@@ -431,6 +431,8 @@ test("public guest flows and marketplace page view metrics work, and content rev
     page.on("request", countUnselectedReportRequest);
     await page.getByRole("button", { name: "Kirim laporan" }).click();
     expect(unselectedReportRequests).toBe(0);
+    expect(await invitationReportReason.evaluate((element) => (element as HTMLSelectElement).validationMessage))
+      .toBe("Pilih satu alasan laporan sebelum mengirim.");
     page.off("request", countUnselectedReportRequest);
     await page.getByLabel("Alasan laporan").selectOption("PERSONAL_INFORMATION");
     await page.getByRole("button", { name: "Batal" }).click();
