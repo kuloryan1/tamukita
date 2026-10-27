@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowDown, ArrowUpRight, CalendarDays, Gift, Heart, MapPin, Send, Sparkles } from "lucide-react";
 import { PublicInvitationCountdown } from "@/components/public-invitation-countdown";
+import { PublicInvitationReport } from "@/components/public-invitation-report";
 import { PublicInvitationGiftCopy, PublicInvitationGuestbook, PublicInvitationMusic, PublicInvitationRsvp } from "@/components/public-invitation-actions";
 import { legacyInvitationFeatureAccess, type InvitationFeatureAccess } from "@/lib/invitation-features";
 import { safeHttpsUrl, type InvitationDraft } from "@/lib/invitations";
@@ -67,7 +68,7 @@ export function PublicInvitation({ slug, initialDraft, initialRsvpCount, initial
       {featureAccess.galleryLimit > 0 && draft.galleryPhotos.slice(0, featureAccess.galleryLimit).length > 0 && <section className="public-gallery-section"><div className="public-gallery-inner"><span className="eyebrow">POTONGAN CERITA</span><h2>Momen yang ingin <em>kami kenang.</em></h2><div className="public-gallery-grid">{draft.galleryPhotos.slice(0, featureAccess.galleryLimit).map((photo, index) => <figure key={photo}><Image src={photo} alt={`Foto galeri ${index + 1} ${draft.eventKind.toLowerCase()}`} width={640} height={480} sizes="(max-width: 720px) 50vw, 33vw" unoptimized /></figure>)}</div></div></section>}
       {draft.giftBankName && draft.giftAccountName && draft.giftAccountNumber && <section className="public-gift-section"><div className="public-gift-card"><span className="detail-card-icon"><Gift size={18} /></span><span className="eyebrow">TANDA KASIH</span><h2>Kehadiranmu adalah <em>hadiah terindah.</em></h2><p>{draft.giftMessage || "Jika berkenan, kamu dapat mengirimkan tanda kasih melalui rekening berikut."}</p><div className="public-gift-account"><span>{draft.giftBankName}</span><b>{draft.giftAccountName}</b><strong>{draft.giftAccountNumber}</strong><PublicInvitationGiftCopy accountNumber={draft.giftAccountNumber} /></div></div></section>}
       {!isExample && <PublicInvitationGuestbook slug={slug} entries={initialGuestbook} />}
-      <footer className="public-footer"><div><Sparkles size={14} /><span>Setiap momen layak diceritakan dengan indah.</span></div><a href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noreferrer"><Send size={13} /> Bagikan undangan ini</a></footer>
+      <footer className="public-footer"><div><Sparkles size={14} /><span>Setiap momen layak diceritakan dengan indah.</span></div><div className="public-footer-actions">{!isExample && <PublicInvitationReport slug={slug} />}<a href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noreferrer"><Send size={13} /> Bagikan undangan ini</a></div></footer>
     </main>
   );
 }

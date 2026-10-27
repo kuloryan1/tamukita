@@ -26,6 +26,7 @@ export type DataRetentionReport = {
   verificationTokensPurged: number;
   notificationJobsPurged: number;
   contentReportsPurged: number;
+  invitationReportsPurged: number;
   editorFeedbackPurged: number;
   supportAccessGrantsPurged: number;
   auditLogsPurged: number;
@@ -98,6 +99,7 @@ function emptyReport(): DataRetentionReport {
     verificationTokensPurged: 0,
     notificationJobsPurged: 0,
     contentReportsPurged: 0,
+    invitationReportsPurged: 0,
     editorFeedbackPurged: 0,
     supportAccessGrantsPurged: 0,
     auditLogsPurged: 0,
@@ -303,6 +305,7 @@ export async function runDataRetentionSweep(
   report.verificationTokensPurged = (await prisma.verificationToken.deleteMany({ where: { expires: { lte: now } } })).count;
   report.notificationJobsPurged = (await prisma.notificationJob.deleteMany({ where: { OR: [{ completedAt: { lte: jobCutoff } }, { failedAt: { lte: jobCutoff } }] } })).count;
   report.contentReportsPurged = (await prisma.contentReport.deleteMany({ where: { status: { not: "PENDING" }, reviewedAt: { lte: auditCutoff } } })).count;
+  report.invitationReportsPurged = (await prisma.invitationReport.deleteMany({ where: { status: { not: "PENDING" }, reviewedAt: { lte: auditCutoff } } })).count;
   report.editorFeedbackPurged = (await prisma.editorFeedback.deleteMany({ where: { status: "RESOLVED", updatedAt: { lte: auditCutoff } } })).count;
   report.supportAccessGrantsPurged = (await prisma.supportAccessGrant.deleteMany({ where: { createdAt: { lte: auditCutoff }, expiresAt: { lte: auditCutoff } } })).count;
   report.auditLogsPurged = (await prisma.auditLog.deleteMany({ where: { createdAt: { lte: auditCutoff } } })).count;

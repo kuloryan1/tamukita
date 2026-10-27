@@ -51,6 +51,19 @@ async function readGuestbookModerationAuditActions(targetId: string) {
   return result.rows.map((row) => row.action);
 }
 
+async function readInvitationModerationAuditActions(targetId: string) {
+  if (!analyticsPool) throw new Error("The disposable E2E database is required.");
+  const result = await analyticsPool.query<{ action: string }>(
+    `SELECT action FROM audit_logs
+     WHERE "targetType" = 'Invitation'
+       AND "targetId" = $1
+       AND action IN ('admin.invitation_report.hidden', 'admin.invitation_report.restored')
+     ORDER BY "createdAt"`,
+    [targetId],
+  );
+  return result.rows.map((row) => row.action);
+}
+
 test.afterAll(async () => {
   await analyticsPool?.end();
 });
@@ -354,7 +367,8 @@ test("public guest flows and marketplace page view metrics work, and content rev
     const ownerReapproval = await page.request.patch(`/api/invitations/${invitationId}/guestbook/${hiddenEntryId}`, { data: { status: "APPROVED" } });
     expect(ownerReapproval.status()).toBe(409);
 
-    await reviewerPage.getByRole("button", { name: "Riwayat 30 hari" }).click();
+    const guestbookModeration = reviewerPage.locator(".admin-content-moderation").first();
+    await guestbookModeration.getByRole("button", { name: "Riwayat 30 hari" }).click();
     const historyCard = reviewerPage.locator(".admin-report-card").filter({ hasText: guestbookMessage });
     await expect(historyCard).toBeVisible();
     const restoreResponsePromise = reviewerPage.waitForResponse((candidate) =>
@@ -374,7 +388,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
     );
     await page.getByRole("button", { name: "Kirim laporan" }).click();
     expect((await secondReportResponsePromise).status()).toBe(201);
-    await reviewerPage.getByRole("button", { name: "Perlu ditinjau" }).click();
+    await guestbookModeration.getByRole("button", { name: "Perlu ditinjau" }).click();
     const repeatedReportCard = reviewerPage.locator(".admin-report-card").filter({ hasText: guestbookMessage });
     const dismissResponsePromise = reviewerPage.waitForResponse((candidate) =>
       candidate.url().includes("/api/admin/content-reports/") && candidate.request().method() === "PATCH",
@@ -383,6 +397,51 @@ test("public guest flows and marketplace page view metrics work, and content rev
     expect((await dismissResponsePromise).status()).toBe(200);
     await page.reload();
     await expect(page.locator(".guestbook-entry").filter({ hasText: guestbookMessage })).toBeVisible();
+
+    await page.getByRole("button", { name: "Laporkan undangan" }).click();
+    const publicReportForm = page.locator(".public-invitation-report-form");
+    await expect(publicReportForm).toBeVisible();
+    await page.getByLabel("Alasan laporan").selectOption("PERSONAL_INFORMATION");
+    await page.getByRole("button", { name: "Batal" }).click();
+    await expect(publicReportForm).toBeHidden();
+    await page.getByRole("button", { name: "Laporkan undangan" }).click();
+    await expect(page.getByLabel("Alasan laporan")).toHaveValue("PERSONAL_INFORMATION");
+    const invitationReportPromise = page.waitForResponse((candidate) =>
+      candidate.url().endsWith(`/api/public/invitations/${invitationSlug}/reports`) && candidate.request().method() === "POST",
+    );
+    await page.getByRole("button", { name: "Kirim laporan" }).click();
+    expect((await invitationReportPromise).status()).toBe(201);
+    await expect(page.locator(".public-invitation-report [role='status']")).toContainText("Laporan diterima untuk ditinjau");
+    expect((await page.request.get("/api/admin/invitation-reports")).status()).toBe(403);
+
+    const invitationReportsResponse = await reviewerPage.request.get("/api/admin/invitation-reports");
+    expect(invitationReportsResponse.status()).toBe(200);
+    const invitationReportsBody = await invitationReportsResponse.json() as { reports: Array<Record<string, unknown>> };
+    expect(invitationReportsBody.reports.some((report) => JSON.stringify(report).includes(invitationSlug))).toBe(true);
+    expect(JSON.stringify(invitationReportsBody)).not.toContain("reporterFingerprint");
+    const invitationModeration = reviewerPage.locator(".admin-content-moderation").nth(1);
+    await invitationModeration.getByRole("button", { name: "Perlu ditinjau" }).click();
+    const invitationReportCard = reviewerPage.locator(".admin-report-card").filter({ hasText: invitationSlug });
+    await expect(invitationReportCard).toBeVisible();
+    const suspendResponsePromise = reviewerPage.waitForResponse((candidate) =>
+      candidate.url().includes("/api/admin/invitation-reports/") && candidate.request().method() === "PATCH",
+    );
+    reviewerPage.once("dialog", (dialog) => dialog.accept());
+    await invitationReportCard.getByRole("button", { name: "Tangguhkan halaman" }).click();
+    expect((await suspendResponsePromise).status()).toBe(200);
+    expect(await readInvitationModerationAuditActions(invitationId)).toContain("admin.invitation_report.hidden");
+    expect((await page.goto(`/${invitationSlug}`))?.status()).toBe(404);
+
+    await invitationModeration.getByRole("button", { name: "Riwayat 30 hari" }).click();
+    const hiddenInvitationCard = invitationModeration.locator(".admin-report-card").filter({ hasText: invitationSlug });
+    await expect(hiddenInvitationCard).toContainText("Halaman ditangguhkan");
+    const restoreInvitationPromise = reviewerPage.waitForResponse((candidate) =>
+      candidate.url().includes("/api/admin/invitation-reports/") && candidate.request().method() === "PATCH",
+    );
+    await hiddenInvitationCard.getByRole("button", { name: "Pulihkan undangan" }).click();
+    expect((await restoreInvitationPromise).status()).toBe(200);
+    expect(await readInvitationModerationAuditActions(invitationId)).toContain("admin.invitation_report.restored");
+    expect((await page.goto(`/${invitationSlug}`))?.status()).toBe(200);
   } finally {
     await reviewerContext.close();
   }

@@ -103,6 +103,15 @@ enum ContentReportReason {
   OTHER
 }
 
+enum InvitationReportReason {
+  CHILD_SAFETY
+  PERSONAL_INFORMATION
+  COPYRIGHT
+  IMPERSONATION
+  SPAM
+  OTHER
+}
+
 enum EditorFeedbackCategory {
   FORM
   AUTOSAVE
@@ -412,6 +421,7 @@ model Invitation {
   guestLinks          GuestLink[]
   rsvps               RSVP[]
   guestbook           GuestbookEntry[]
+  reports             InvitationReport[]
   orders              Order[]
   licenses            TemplateLicense[]
   entitlements        Entitlement[]
@@ -604,6 +614,22 @@ model ContentReport {
   @@index([status, createdAt])
   @@index([guestbookEntryId, status])
   @@map("content_reports")
+}
+
+model InvitationReport {
+  id                  String                @id @default(uuid()) @db.Uuid
+  invitationId        String                @db.Uuid
+  reporterFingerprint String                @db.VarChar(64)
+  reason              InvitationReportReason
+  status              ContentReportStatus   @default(PENDING)
+  createdAt           DateTime              @default(now())
+  reviewedAt          DateTime?
+  invitation          Invitation            @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+
+  @@unique([invitationId, reporterFingerprint])
+  @@index([status, createdAt])
+  @@index([invitationId, status])
+  @@map("invitation_reports")
 }
 
 model EditorFeedback {

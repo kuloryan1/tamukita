@@ -66,6 +66,9 @@ async function verifyRetentionSweep() {
     const contentReport = await prisma.contentReport.create({
       data: { guestbookEntryId: guestbook.id, reporterFingerprint: randomUUID().replaceAll("-", ""), reason: "OTHER", status: "PENDING" },
     });
+    const invitationReport = await prisma.invitationReport.create({
+      data: { invitationId, reporterFingerprint: randomUUID().replaceAll("-", ""), reason: "CHILD_SAFETY", status: "PENDING" },
+    });
     await prisma.order.create({
       data: {
         id: orderId,
@@ -118,6 +121,7 @@ async function verifyRetentionSweep() {
     assert.equal(pendingReportReport.rsvpsPurged, 1);
     assert.equal(pendingReportReport.guestLinksPurged, 1);
     assert.equal(pendingReportReport.guestbookEntriesPurged, 0, "unresolved reports must protect guestbook entries");
+    assert.equal(pendingReportReport.invitationReportsPurged, 0, "unresolved invitation reports must remain available for moderation");
     assert.equal(pendingReportReport.guestsPurged, 0, "held guestbook entries must protect linked guests");
     assert.equal(pendingReportReport.mediaAssetsPurged, 0, "an object deletion failure must keep the database record for retry");
     assert.equal(pendingReportReport.mediaAssetFailures, 1);
@@ -145,10 +149,16 @@ async function verifyRetentionSweep() {
       where: { id: contentReport.id },
       data: { status: "DISMISSED", reviewedAt: new Date(now.getTime() - 400 * DAY_MS) },
     });
+    await prisma.invitationReport.update({
+      where: { id: invitationReport.id },
+      data: { status: "DISMISSED", reviewedAt: new Date(now.getTime() - 400 * DAY_MS) },
+    });
     const resolvedReportSweep = await runDataRetentionSweep(prisma, retentionOptions);
     assert.equal(resolvedReportSweep.guestbookEntriesPurged, 1);
     assert.equal(resolvedReportSweep.guestsPurged, 1);
+    assert.equal(resolvedReportSweep.invitationReportsPurged, 1);
     assert.equal(await prisma.contentReport.count({ where: { id: contentReport.id } }), 0);
+    assert.equal(await prisma.invitationReport.count({ where: { id: invitationReport.id } }), 0);
     assert.equal(await prisma.guest.count({ where: { id: guestId } }), 0);
   } finally {
     await prisma.order.deleteMany({ where: { id: orderId } });
