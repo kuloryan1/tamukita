@@ -20,6 +20,8 @@
 
 JDIH mencatat Permenkomdigi 9/2026 berstatus berlaku dan diundangkan 6 Maret 2026. Salinan PDF yang tertaut pada record resmi masih ber-watermark “RANCANGAN”, sehingga teks pasal pada salinan itu perlu dicocokkan dengan Berita Negara; perbedaan salinan ini tidak mengubah status berlaku yang dicatat JDIH. Jangan menunda penilaian atau konfirmasi pelaporan hanya karena watermark tersebut. Karena halaman undangan dapat dibuka publik dan RSVP/buku tamu dapat dipakai tamu, **keputusan sementara adalah memperlakukan halaman publik, RSVP, buku tamu, dan media sebagai fitur yang mungkin diakses anak**. Operator/counsel harus mengesahkan ruang lingkup dan teks operatif sebelum menetapkan keputusan final. Batasan usia akun tidak mengeluarkan fitur publik dari penilaian.
 
+Instrumen risiko harus dibaca dalam versi terbaru: JDIH mencatat Kepmenkomdigi 219/2026 ditetapkan 7 Mei 2026 dan berstatus berlaku. Keputusan itu mengganti Lampiran II Kepmenkomdigi 142/2026 secara keseluruhan; perubahan yang dinyatakan khususnya memperbarui parameter GFO1 pada aspek gangguan fisiologis anak dan label/petunjuk pada kertas kerja penilaian mandiri menjadi `YA/DITEMUKAN` dan `TIDAK/TIDAK DITEMUKAN`. Karena itu, setiap pengisian formal harus memakai Lampiran II pengganti pada Kepmen 219, bukan menyalin lembar kerja dari naskah awal Kepmen 142. Ini pembaruan instrumen saja dan belum menutup penilaian, pengesahan, atau pelaporan TamuKita.
+
 | Pertanyaan | Keputusan awal atas arahan pemilik produk | Bukti/gate yang masih terbuka |
 |---|---|---|
 | Entitas mana yang menjadi PSE/operator? | Belum bisa ditentukan dari repo; nama badan usaha dan alamat tidak boleh ditebak. | Nama legal, nomor pendaftaran/izin, dan pejabat penanggung jawab operator. |
