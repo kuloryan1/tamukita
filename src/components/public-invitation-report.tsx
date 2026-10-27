@@ -7,7 +7,7 @@ type Reason = "CHILD_SAFETY" | "PERSONAL_INFORMATION" | "COPYRIGHT" | "IMPERSONA
 
 export function PublicInvitationReport({ slug }: { slug: string }) {
   const [open, setOpen] = useState(false);
-  const [reason, setReason] = useState<Reason>("CHILD_SAFETY");
+  const [reason, setReason] = useState<Reason | "">("");
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -40,7 +40,8 @@ export function PublicInvitationReport({ slug }: { slug: string }) {
         <p>Pilih alasan yang paling sesuai. Kami menyimpan alasan dan penanda anonim untuk mencegah laporan berulang.</p>
         <label>
           <span>Alasan laporan</span>
-          <select required value={reason} onChange={(event) => setReason(event.target.value as Reason)}>
+          <select required value={reason} onChange={(event) => setReason(event.target.value as Reason | "")}>
+            <option value="" disabled>Pilih alasan laporan</option>
             <option value="CHILD_SAFETY">Risiko keselamatan anak</option>
             <option value="PERSONAL_INFORMATION">Informasi pribadi tanpa izin</option>
             <option value="COPYRIGHT">Foto atau konten tanpa izin</option>

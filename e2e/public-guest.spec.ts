@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page, type Request } from "@playwright/test";
 import { Pool } from "pg";
 
 const invitationId = "10000000-0000-4000-8000-000000000001";
@@ -421,6 +421,17 @@ test("public guest flows and marketplace page view metrics work, and content rev
     await page.getByRole("button", { name: "Laporkan undangan" }).click();
     const publicReportForm = page.locator(".public-invitation-report-form");
     await expect(publicReportForm).toBeVisible();
+    const invitationReportReason = page.getByLabel("Alasan laporan");
+    await expect(invitationReportReason).toHaveValue("");
+    expect(await invitationReportReason.evaluate((element) => !(element as HTMLSelectElement).checkValidity())).toBe(true);
+    let unselectedReportRequests = 0;
+    const countUnselectedReportRequest = (request: Request) => {
+      if (request.url().endsWith(`/api/public/invitations/${invitationSlug}/reports`) && request.method() === "POST") unselectedReportRequests += 1;
+    };
+    page.on("request", countUnselectedReportRequest);
+    await page.getByRole("button", { name: "Kirim laporan" }).click();
+    expect(unselectedReportRequests).toBe(0);
+    page.off("request", countUnselectedReportRequest);
     await page.getByLabel("Alasan laporan").selectOption("PERSONAL_INFORMATION");
     await page.getByRole("button", { name: "Batal" }).click();
     await expect(publicReportForm).toBeHidden();
