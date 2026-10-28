@@ -5,9 +5,25 @@ import { ensureTemplateVersion } from "@/lib/invitation-server";
 import { templates as builtInTemplates } from "@/lib/templates";
 import { isEditorCompatibleTemplate, validateTemplateManifest, type Template } from "@/lib/template-sdk";
 
+let builtInTemplateSync: Promise<void> | undefined;
+
+async function syncBuiltInTemplateVersions() {
+  if (!builtInTemplateSync) {
+    builtInTemplateSync = (async () => {
+      for (const template of builtInTemplates) {
+        await ensureTemplateVersion(template.slug);
+      }
+    })().catch((error: unknown) => {
+      builtInTemplateSync = undefined;
+      throw error;
+    });
+  }
+  await builtInTemplateSync;
+}
+
 export async function getPublishedTemplateCatalog(): Promise<Template[]> {
   const prisma = getPrismaClient();
-  await Promise.all(builtInTemplates.map((template) => ensureTemplateVersion(template.slug)));
+  await syncBuiltInTemplateVersions();
 
   const records = await prisma.template.findMany({
     where: { status: { in: ["PUBLISHED", "UPDATE_DRAFT", "UPDATE_IN_REVIEW"] }, activeVersionId: { not: null } },

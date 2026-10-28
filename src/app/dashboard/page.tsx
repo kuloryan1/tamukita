@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, ArrowUpRight, CalendarDays, ChevronRight, Clock3, Eye, Flag, HardDrive, MessageCircle, Plus, Users } from "lucide-react";
+import { ArrowRight, ArrowUpRight, CalendarDays, ChevronRight, Clock3, Eye, Flag, HardDrive, MessageCircle, Plus, ShieldCheck, Users } from "lucide-react";
 import { auth } from "@/auth";
 import { TemplateArtwork } from "@/components/template-artwork";
 import { CustomerResellerRequests } from "@/components/reseller-portal";
@@ -61,13 +61,31 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <div className="dashboard-page-heading"><div><p className="dashboard-date">{dateLabel(new Date())} · WORKSPACE</p><h1>Selamat datang, {firstName} <span>✳</span></h1><p>Semua undangan dan konfirmasi tamu tersimpan di ruangmu.</p></div><div className="dashboard-heading-actions">{["SUPER_ADMIN", "CONTENT_REVIEWER"].includes(platformUser?.platformRole ?? "") && <Link href="/admin/moderation" className="button button--outline"><Flag size={15} /> Moderasi konten</Link>}{["SUPER_ADMIN", "SUPPORT"].includes(platformUser?.platformRole ?? "") && <><Link href="/admin/media" className="button button--outline"><HardDrive size={15} /> Media</Link><Link href="/admin/editor-feedback" className="button button--outline"><MessageCircle size={15} /> Antrean bantuan</Link></>}<Link href="/dashboard/invitations/new/edit?new=1" className="button button--dark"><Plus size={17} /> Buat undangan baru</Link></div></div>
-      <div className="dashboard-stat-grid"><div className="stat-card"><div className="stat-card-top"><span className="stat-icon stat-icon--rose"><Eye size={17} /></span><span className="stat-period">Akumulasi</span></div><strong>{viewCount.toLocaleString("id-ID")}</strong><span className="stat-label">Total kunjungan undangan</span><div className="stat-foot"><span>Dihitung dari halaman publikasi.</span></div></div><div className="stat-card"><div className="stat-card-top"><span className="stat-icon stat-icon--sage"><Users size={17} /></span><span className="stat-period">Semua undangan</span></div><strong>{rsvpCount.toLocaleString("id-ID")}</strong><span className="stat-label">Konfirmasi kehadiran</span><div className="stat-foot"><span>Respons tamu yang tercatat.</span></div></div><div className="stat-card stat-card--soft"><div className="stat-card-top"><span className="stat-icon stat-icon--gold"><CalendarDays size={17} /></span><span className="stat-period">Acara terdekat</span></div><strong>{daysToEvent === null ? "—" : daysToEvent.toLocaleString("id-ID")}</strong><span className="stat-label">{daysToEvent === null ? "Belum ada jadwal acara" : "Hari menuju acara"}</span><div className="stat-foot"><span>{nextEvent ? dateLabel(nextEvent) : "Tambahkan tanggal pada draft undangan."}</span></div></div></div>
+      <div className="dashboard-page-heading">
+        <div>
+          <p className="dashboard-date">{dateLabel(new Date())} · WORKSPACE</p>
+          <h1>Selamat datang, {firstName} <span>✳</span></h1>
+          <p>Semua undangan dan konfirmasi tamu tersimpan di ruangmu.</p>
+        </div>
+        <div className="dashboard-heading-actions">
+          {platformUser?.platformRole === "SUPER_ADMIN" ? (
+            <Link href="/admin" className="button button--outline"><ShieldCheck size={15} /> Admin platform</Link>
+          ) : <>
+            {platformUser?.platformRole === "CONTENT_REVIEWER" && <Link href="/admin/moderation" className="button button--outline"><Flag size={15} /> Moderasi konten</Link>}
+            {platformUser?.platformRole === "SUPPORT" && <>
+              <Link href="/admin/media" className="button button--outline"><HardDrive size={15} /> Media</Link>
+              <Link href="/admin/editor-feedback" className="button button--outline"><MessageCircle size={15} /> Antrean bantuan</Link>
+            </>}
+          </>}
+          <Link href="/dashboard/invitations/new/edit?new=1" className="button button--dark"><Plus size={17} /> Buat undangan baru</Link>
+        </div>
+      </div>
+      <div className="dashboard-stat-grid"><div className="stat-card"><div className="stat-card-top"><span className="stat-icon stat-icon--rose"><Eye size={17} /></span><span className="stat-period">Akumulasi</span></div><strong>{viewCount.toLocaleString("id-ID")}</strong><span className="stat-label">Total kunjungan undangan</span><div className="stat-foot"><span>Dihitung dari halaman publikasi.</span></div></div><div className="stat-card"><div className="stat-card-top"><span className="stat-icon stat-icon--sage"><Users size={17} /></span><span className="stat-period">Jumlah RSVP</span></div><strong>{rsvpCount.toLocaleString("id-ID")}</strong><span className="stat-label">Konfirmasi kehadiran</span><div className="stat-foot"><span>Respons tamu yang tercatat.</span></div></div><div className="stat-card stat-card--soft"><div className="stat-card-top"><span className="stat-icon stat-icon--gold"><CalendarDays size={17} /></span><span className="stat-period">Acara terdekat</span></div><strong>{daysToEvent === null ? "—" : daysToEvent.toLocaleString("id-ID")}</strong><span className="stat-label">{daysToEvent === null ? "Belum ada jadwal acara" : "Hari menuju acara"}</span><div className="stat-foot"><span>{nextEvent ? dateLabel(nextEvent) : "Tambahkan tanggal pada draft undangan."}</span></div></div></div>
       <CustomerResellerRequests
         requests={pendingResellerRequests.map((request) => ({ id: request.id, resellerName: request.reseller.resellerProfile?.businessName ?? request.reseller.name }))}
         activeResellers={activeResellers.map((request) => ({ id: request.id, resellerName: request.reseller.resellerProfile?.businessName ?? request.reseller.name }))}
       />
-      <section className="dashboard-content-card"><div className="card-heading"><div><h2>Undangan saya</h2><p>Kelola draft dan halaman undanganmu.</p></div><Link href="/dashboard/invitations/new/edit?new=1" className="text-link">Buat undangan <ChevronRight size={16} /></Link></div>
+      <section id="invitations" className="dashboard-content-card" tabIndex={-1}><div className="card-heading"><div><h2>Undangan saya</h2><p>Kelola draft dan halaman undanganmu.</p></div><Link href="/dashboard/invitations/new/edit?new=1" className="text-link">Buat undangan <ChevronRight size={16} /></Link></div>
         {invitations.length === 0 ? <div className="dashboard-empty-state"><span className="draft-thumb"><span>✳</span></span><h3>Ruang ceritamu masih kosong</h3><p>Buat draft pertama, lengkapi detail acara, lalu simpan. Publikasi baru aktif setelah pembayaran berhasil dikonfirmasi.</p><Link href="/dashboard/invitations/new/edit?new=1" className="button button--dark"><Plus size={16} /> Mulai buat undangan</Link></div> : invitations.map((invitation) => {
           const manifest = validateTemplateManifest(invitation.templateVersion.manifest);
           const template = manifest.success

@@ -9,7 +9,7 @@ export function TemplateCard({ template, compact = false }: { template: Template
       <Link href={`/templates/${template.slug}`} className="template-card-art" aria-label={`Lihat ${template.name}`}>
         <TemplateArtwork template={template} />
         {template.featured && <span className="featured-pill"><Heart size={11} fill="currentColor" /> Favorit</span>}
-        <span className="art-hover"><ArrowUpRight size={18} /></span>
+        <span className="art-hover"><ArrowUpRight size={15} /><span>Lihat pratinjau</span></span>
       </Link>
       <div className="template-card-info">
         <div>

@@ -42,6 +42,7 @@ export type InvitationDraft = {
   eventTitle: string;
   hostOne: string;
   hostTwo: string;
+  sealMonogram?: string;
   familyDetails: string;
   eventDate: string;
   eventTime: string;
@@ -103,6 +104,7 @@ export function createInitialDraft(): InvitationDraft {
     eventTitle: "Undangan Pernikahan",
     hostOne: "Nara",
     hostTwo: "Dimas",
+    sealMonogram: "",
     familyDetails: "",
     eventDate: "2027-05-22",
     eventTime: "10:00",

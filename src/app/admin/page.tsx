@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ShieldCheck } from "lucide-react";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { auth } from "@/auth";
 import { AdminResellers } from "@/components/admin-resellers";
 import { AdminOverview } from "@/components/admin-overview";
@@ -137,5 +137,53 @@ export default async function AdminPage() {
     organization: invitation.organization.name,
     updatedAt: invitation.updatedAt.toISOString(),
   }));
-  return <div className="admin-page"><div className="dashboard-page-heading"><div><p className="dashboard-date">TIGAKAKI · ADMIN PLATFORM</p><h1><ShieldCheck size={25} /> Admin TamuKita</h1><p>Pantau operasional dan antrean yang memerlukan pemeriksaan.</p></div><div className="admin-quick-links"><Link className="button button--outline button--small" href="/admin/analytics">Analitik</Link><Link className="button button--outline button--small" href="/admin/audit">Audit log</Link><Link className="button button--outline button--small" href="/admin/users">Pengguna</Link><Link className="button button--outline button--small" href="/admin/plans">Paket</Link><Link className="button button--outline button--small" href="/admin/editor-feedback">Keluhan editor</Link><Link className="button button--outline button--small" href="/admin/moderation">Moderasi konten</Link><Link className="button button--outline button--small" href="/admin/media">Media</Link><Link className="button button--outline button--small" href="/admin/orders">Order & refund</Link><Link className="button button--outline button--small" href="/admin/templates">Review template</Link><Link className="button button--outline button--small" href="/admin/settings">Pengaturan</Link></div></div><AdminOverview metrics={metrics} orders={orderRows} audit={auditRows} /><AdminOrders /><AdminWorkspaces /><AdminManagedInvitation templates={templates.map(({ slug, name, version }) => ({ slug, name, version }))} /><AdminInvitations invitations={invitationRows} /><AdminTemplateReview templates={templateRows} canSetPricing /><section className="dashboard-content-card"><div className="card-heading"><div><h2>Pengajuan reseller</h2><p>{applications.length} menunggu pemeriksaan</p></div></div><AdminResellers applications={applications} /></section></div>;
+  return (
+    <div className="admin-page admin-home-page">
+      <Link className="admin-back-link" href="/dashboard"><ArrowLeft size={15} /> Kembali ke workspace</Link>
+      <div className="dashboard-page-heading">
+        <div>
+          <p className="dashboard-date">TAMUKITA · ADMIN PLATFORM</p>
+          <h1><ShieldCheck size={25} /> Admin TamuKita</h1>
+          <p>Pantau operasional dan antrean yang memerlukan pemeriksaan.</p>
+        </div>
+        <nav className="admin-quick-links" aria-label="Navigasi admin">
+          <section className="admin-nav-group" aria-labelledby="admin-nav-monitoring">
+            <h2 id="admin-nav-monitoring">Pantau</h2>
+            <div className="admin-nav-group-links">
+              <Link className="button button--outline button--small" href="/admin/analytics">Analitik</Link>
+              <Link className="button button--outline button--small" href="/admin/audit">Audit log</Link>
+            </div>
+          </section>
+          <section className="admin-nav-group" aria-labelledby="admin-nav-operations">
+            <h2 id="admin-nav-operations">Operasional</h2>
+            <div className="admin-nav-group-links">
+              <Link className="button button--outline button--small" href="/admin/editor-feedback">Keluhan editor</Link>
+              <Link className="button button--outline button--small" href="/admin/moderation">Moderasi konten</Link>
+              <Link className="button button--outline button--small" href="/admin/media">Media</Link>
+              <Link className="button button--outline button--small" href="/admin/orders">Order & refund</Link>
+            </div>
+          </section>
+          <section className="admin-nav-group" aria-labelledby="admin-nav-settings">
+            <h2 id="admin-nav-settings">Akun & pengaturan</h2>
+            <div className="admin-nav-group-links">
+              <Link className="button button--outline button--small" href="/admin/users">Pengguna</Link>
+              <Link className="button button--outline button--small" href="/admin/plans">Paket</Link>
+              <Link className="button button--outline button--small" href="/admin/templates">Review template</Link>
+              <Link className="button button--outline button--small" href="/admin/settings">Pengaturan</Link>
+            </div>
+          </section>
+        </nav>
+      </div>
+      <AdminOverview metrics={metrics} orders={orderRows} audit={auditRows} />
+      <AdminOrders />
+      <AdminWorkspaces />
+      <AdminManagedInvitation templates={templates.map(({ slug, name, version }) => ({ slug, name, version }))} />
+      <AdminInvitations invitations={invitationRows} />
+      <AdminTemplateReview templates={templateRows} canSetPricing />
+      <section className="dashboard-content-card">
+        <div className="card-heading"><div><h2>Pengajuan reseller</h2><p>{applications.length} menunggu pemeriksaan</p></div></div>
+        <AdminResellers applications={applications} />
+      </section>
+    </div>
+  );
 }

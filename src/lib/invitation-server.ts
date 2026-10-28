@@ -7,6 +7,7 @@ import { getPrismaClient } from "@/lib/prisma";
 import { isR2PublicUrl, r2KeyFromPublicUrl } from "@/lib/r2";
 import { isEditorCompatibleTemplate, isSafeTemplateFieldKey, TEMPLATE_SDK_VERSION, validateTemplateManifest } from "@/lib/template-sdk";
 import { templateVersionRequiresAdminReview } from "@/templates/registry";
+import { SEAL_MONOGRAM_PATTERN } from "@/lib/seal-monogram";
 
 const stagingQaOrigin = "https://staging.tamukita.io";
 const stagingQaFixtureSlug = "qa-blueprint-fixture";
@@ -19,6 +20,7 @@ export const invitationDraftSchema = z.object({
   eventTitle: z.string().trim().max(120),
   hostOne: z.string().trim().max(80),
   hostTwo: z.string().trim().max(80),
+  sealMonogram: z.string().trim().max(3).regex(SEAL_MONOGRAM_PATTERN).transform((value) => value.toUpperCase()).default(""),
   familyDetails: z.string().trim().max(600).default(""),
   eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
     const date = new Date(`${value}T00:00:00.000Z`);

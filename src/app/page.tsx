@@ -46,7 +46,7 @@ export default function HomePage() {
           <div className="container hero-bottomline"><span><span className="tiny-dot" /> Dibuat untuk momen yang berarti</span><span>BERBAGI BAHAGIA, SATU TAUTAN</span></div>
         </section>
 
-        <section className="template-section section-pad" id="template">
+        <section className="template-section section-pad" id="themes">
           <div className="container">
             <div className="section-heading-row"><div><span className="eyebrow">KOLEKSI PILIHAN</span><h2>Mulai dari desain<br />yang <em>paling kamu.</em></h2></div><p>Setiap template punya cerita kecilnya sendiri.<br />Temukan yang terasa pas untuk harimu.</p></div>
             <div className="template-grid">{templates.map((template) => <TemplateCard key={template.slug} template={template} />)}</div>
