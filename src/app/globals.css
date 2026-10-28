@@ -285,16 +285,11 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .invitation-preview-theme { display: contents; }
 .invitation-preview-theme[data-theme-color="rose"] { --invite-accent: #b8758a; --invite-accent-strong: #805365; --invite-surface: #f5e9ee; }
 .invitation-preview-theme[data-theme-color="ocean"] { --invite-accent: #6d91a8; --invite-accent-strong: #3c6077; --invite-surface: #edf3f6; }
-.invitation-preview-theme[data-theme-font="modern"] { --invite-display-font: var(--sans); --invite-body-font: var(--sans); }
-.invitation-preview-theme[data-theme-font="modern"] .invite-copy h2,
-.invitation-preview-theme[data-theme-font="modern"] .template-cream-heading h2,
-.invitation-preview-theme[data-theme-font="modern"] .template-sage-heading h2,
-.invitation-preview-theme[data-theme-font="modern"] .invite-message,
-.invitation-preview-theme[data-theme-font="modern"] .invite-greeting,
-.invitation-preview-theme[data-theme-font="modern"] .invite-detail-row,
-.invitation-preview-theme[data-theme-font="modern"] .invite-detail-row > span,
-.invitation-preview-theme[data-theme-font="modern"] .template-cream-event,
-.invitation-preview-theme[data-theme-font="modern"] .template-sage-event { font-family: var(--sans); }
+.invitation-preview-theme[data-theme-font="modern"],
+.public-invitation-page[data-theme-font="modern"] { --invite-display-font: var(--sans); --invite-body-font: var(--sans); }
+/* The user's Modern choice must override every renderer's bespoke typefaces. */
+.invitation-preview-theme[data-theme-font="modern"] * { font-family: var(--sans) !important; }
+.public-invitation-page[data-theme-font="modern"] > :not(.public-topbar):not(.public-footer) * { font-family: var(--sans) !important; }
 .invitation-preview-theme[data-section-order="details-first"] .invite-details { display: flex; flex-direction: column; }
 .invitation-preview-theme[data-section-order="details-first"] .invite-message { order: 2; }
 .invitation-preview-theme[data-section-order="details-first"] .invite-detail-row,
