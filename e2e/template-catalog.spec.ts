@@ -12,7 +12,7 @@ test("template category filters are actionable and show their selected state", a
   await categoryLinks.nth(1).click();
   await expect(page).toHaveURL(/\/templates\?category=/);
   await expect(categoryNavigation.getByRole("link").nth(1)).toHaveAttribute("aria-current", "page");
-  await expect(page.locator(".catalog-result-count")).toContainText("template tersedia");
+  await expect(page.locator(".catalog-result-count")).toHaveText(/^\d+ desain untuk dipilih$/);
 
   await categoryNavigation.getByRole("link", { name: /Semua/ }).click();
   await expect(page).toHaveURL(/\/templates$/);
