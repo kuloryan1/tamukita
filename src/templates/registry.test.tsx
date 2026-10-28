@@ -1,6 +1,8 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test } from "vitest";
+import { InvitationPreview } from "@/components/invitation-preview";
+import { PublicInvitation } from "@/components/public-invitation";
 import { createInitialDraft } from "@/lib/invitations";
 import { isEditorCompatibleTemplate } from "@/lib/template-sdk";
 import { templates } from "@/lib/templates";
@@ -28,5 +30,40 @@ test("source template versions have compatible, rendered React components and re
     expect(hasTemplateRenderer(template.slug, template.version), `${template.slug}@${template.version} must have a React renderer`).toBe(true);
     expect(templateVersionRequiresAdminReview(template.slug, template.version), `${template.slug} should require reviewer approval unless it is a core template`).toBe(!coreTemplateSlugs.has(template.slug));
     expect(getTemplateRenderer(template.slug, template.version)).toBeDefined();
+  }
+});
+
+test("modern font mode is passed through the shared preview wrapper for every catalog template", () => {
+  const draft = { ...createInitialDraft(), themeFont: "modern" as const };
+
+  for (const template of templates) {
+    const markup = renderToStaticMarkup(createElement(InvitationPreview, {
+      draft: { ...draft, templateId: template.slug, templateVersion: template.version },
+      full: true,
+      template,
+      mode: "public",
+    }));
+
+    expect(markup, `${template.slug} should use the shared modern-font wrapper`).toContain('data-theme-font="modern"');
+    expect(markup, `${template.slug} should render under the shared preview wrapper`).toContain(`data-template="${template.slug}"`);
+  }
+});
+
+test("modern font mode is passed through the complete public page for every catalog template", () => {
+  const draft = { ...createInitialDraft(), themeFont: "modern" as const };
+
+  for (const template of templates) {
+    const templateDraft = { ...draft, templateId: template.slug, templateVersion: template.version };
+    const markup = renderToStaticMarkup(createElement(PublicInvitation, {
+      slug: "font-mode-check",
+      initialDraft: templateDraft,
+      initialRsvpCount: 0,
+      isExample: true,
+      templateSlug: template.slug,
+      preview: createElement(InvitationPreview, { draft: templateDraft, full: true, template, mode: "public" }),
+    }));
+
+    expect(markup, `${template.slug} should set Modern on its public page`).toContain('data-theme-font="modern"');
+    expect(markup, `${template.slug} should identify the rendered template`).toContain(`data-template="${template.slug}"`);
   }
 });
