@@ -5,7 +5,7 @@ import type { InvitationDraft } from "@/lib/invitations";
 export const TEMPLATE_SDK_VERSION = "1.1.0";
 
 const reservedDraftFieldKeys = new Set([
-  "id", "slug", "eventKind", "templateId", "templateVersion", "themeColor", "themeFont", "sectionOrder",
+  "id", "slug", "eventKind", "templateId", "templateVersion", "themeColor", "themeFont", "sectionOrder", "sealMonogram",
   "familyDetails", "coverPosition", "coverPositionX", "galleryPhotos", "giftMessage", "giftBankName",
   "giftAccountName", "giftAccountNumber", "musicUrl", "musicTitle", "customFields", "updatedAt", "publishedAt", "isPublished",
   "constructor", "prototype", "__proto__", "toString", "toLocaleString", "valueOf", "hasOwnProperty",
@@ -66,7 +66,7 @@ const templateManifestSchema = z.object({
   description: z.string().trim().min(20).max(500),
   category: z.string().trim().min(2).max(60),
   price: z.number().int().min(0).max(100_000_000),
-  style: z.enum(["royal", "cream", "sage"]),
+  style: z.enum(["royal", "cream", "sage", "blush", "heritage", "wisteria", "boarding", "garden"]),
   featured: z.boolean().optional(),
   tags: z.array(z.string().trim().min(1).max(32)).max(12),
   features: z.array(z.enum(["cover", "gallery", "gift-info", "maps", "music", "rsvp", "whatsapp-share"])).min(1),

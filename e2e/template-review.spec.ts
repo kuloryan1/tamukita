@@ -90,6 +90,7 @@ test("developer submits a template, admin publishes it, and old versions stay ac
   });
   try {
     const adminPage = await adminContext.newPage();
+    const publicPage = await adminContext.newPage();
     await signIn(adminPage, adminEmail, adminPassword);
     await adminPage.goto("/admin/templates");
     const templateRow = adminPage.locator(".admin-template-row").filter({ hasText: slug });
@@ -102,8 +103,8 @@ test("developer submits a template, admin publishes it, and old versions stay ac
     expect((await firstPublishResponse).status()).toBe(200);
     await expect(templateRow).toContainText("Terbit");
 
-    await adminPage.goto(`/templates/${slug}`);
-    await expect(adminPage.getByRole("heading", { level: 1, name: firstName })).toBeVisible();
+    await publicPage.goto(`/templates/${slug}`);
+    await expect(publicPage.getByRole("heading", { level: 1, name: firstName })).toBeVisible();
 
     const updateResponse = await page.request.patch("/api/developer/templates", {
       data: { templateId: submission.template.id, manifest: templateManifest(slug, "1.1.0", secondName) },
@@ -113,8 +114,8 @@ test("developer submits a template, admin publishes it, and old versions stay ac
 
     await adminPage.goto("/admin/templates");
     await expect(templateRow).toContainText("Versi baru menunggu review");
-    await adminPage.goto(`/templates/${slug}`);
-    await expect(adminPage.getByRole("heading", { level: 1, name: firstName })).toBeVisible();
+    await publicPage.goto(`/templates/${slug}`);
+    await expect(publicPage.getByRole("heading", { level: 1, name: firstName })).toBeVisible();
 
     await adminPage.goto("/admin/templates");
     await expect(templateRow).toContainText("Versi baru menunggu review");
@@ -124,8 +125,8 @@ test("developer submits a template, admin publishes it, and old versions stay ac
     await templateRow.getByRole("button", { name: "Terapkan versi baru" }).click();
     expect((await updatePublishResponse).status()).toBe(200);
     await expect(templateRow).toContainText("v1.1.0");
-    await adminPage.goto(`/templates/${slug}`);
-    await expect(adminPage.getByRole("heading", { level: 1, name: secondName })).toBeVisible();
+    await publicPage.goto(`/templates/${slug}`);
+    await expect(publicPage.getByRole("heading", { level: 1, name: secondName })).toBeVisible();
 
     const developerTemplatesResponse = await page.request.get("/api/developer/templates");
     expect(developerTemplatesResponse.status()).toBe(200);

@@ -1,0 +1,14 @@
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.1
+    command: ["tunnel", "--no-autoupdate", "run"]
+    restart: unless-stopped
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?Set the dedicated production Tunnel token in Dokploy}
+    networks:
+      - production-origin
+
+networks:
+  production-origin:
+    name: ${TAMUKITA_ORIGIN_NETWORK:?Set TAMUKITA_ORIGIN_NETWORK to the production origin network}
+    external: true

@@ -25,10 +25,15 @@ test("editor supports undo, redo, responsive preview, and saved personalization"
   }
 
   await signIn(page, customerEmail, customerPassword);
-  const customDomainMenuItem = page.locator(".dashboard-menu .sidebar-link--disabled");
+  const disabledMenuItems = page.locator(".dashboard-menu .sidebar-link--disabled");
+  const customDomainMenuItem = disabledMenuItems.filter({ hasText: "Custom Domain" });
   await expect(customDomainMenuItem).toContainText("Custom Domain");
-  await expect(customDomainMenuItem).toContainText("Coming Soon");
+  await expect(customDomainMenuItem).toContainText("Segera");
+  await expect(customDomainMenuItem).toHaveAttribute("aria-disabled", "true");
   await expect(customDomainMenuItem).not.toHaveAttribute("href");
+  const paymentMenuItem = disabledMenuItems.filter({ hasText: "Paket & pembayaran" });
+  await expect(paymentMenuItem).toHaveAttribute("aria-disabled", "true");
+  await expect(paymentMenuItem).not.toHaveAttribute("href");
   const creationResponsePromise = page.waitForResponse((response) =>
     response.url().endsWith("/api/invitations/drafts") && response.request().method() === "POST",
   );

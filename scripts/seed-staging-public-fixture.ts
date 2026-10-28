@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, type Prisma } from "../src/generated/prisma/client";
+import { ADULT_ATTESTATION_VERSION } from "@/lib/consent-versions";
 
 const stagingOrigin = "https://staging.tamukita.io";
 const fixtureSlug = "qa-blueprint-fixture";
@@ -160,9 +161,20 @@ async function seedFixture() {
       if (user.name !== fixtureName || user.passwordHash !== null || user.platformRole !== "CUSTOMER") {
         throw new Error(`Fixture email ${fixtureEmail} is already used by a non-fixture account; no data was changed.`);
       }
+      user = await tx.user.update({
+        where: { id: user.id },
+        data: { adultAttestedAt: now, adultAttestationVersion: ADULT_ATTESTATION_VERSION },
+      });
     } else {
       user = await tx.user.create({
-        data: { name: fixtureName, email: fixtureEmail, emailVerified: now, platformRole: "CUSTOMER" },
+        data: {
+          name: fixtureName,
+          email: fixtureEmail,
+          emailVerified: now,
+          adultAttestedAt: now,
+          adultAttestationVersion: ADULT_ATTESTATION_VERSION,
+          platformRole: "CUSTOMER",
+        },
       });
     }
 

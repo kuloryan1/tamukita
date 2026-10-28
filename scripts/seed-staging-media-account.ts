@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { hashPassword } from "../src/lib/password";
+import { ADULT_ATTESTATION_VERSION } from "../src/lib/consent-versions";
 
 const stagingOrigin = "https://staging.tamukita.io";
 const qaEmail = "media-qa@tamukita.invalid";
@@ -42,11 +43,28 @@ async function seedStagingMediaAccount() {
     const user = existingUser
       ? await tx.user.update({
           where: { id: existingUser.id },
-          data: { emailVerified: now, passwordHash, failedLoginAttempts: 0, lockedUntil: null, authVersion: { increment: 1 } },
+          data: {
+            emailVerified: now,
+            passwordHash,
+            adultAttestedAt: now,
+            adultAttestationVersion: ADULT_ATTESTATION_VERSION,
+            failedLoginAttempts: 0,
+            lockedUntil: null,
+            authVersion: { increment: 1 },
+          },
           select: { id: true },
         })
       : await tx.user.create({
-          data: { id: randomUUID(), name: qaName, email: qaEmail, emailVerified: now, passwordHash, platformRole: "CUSTOMER" },
+          data: {
+            id: randomUUID(),
+            name: qaName,
+            email: qaEmail,
+            emailVerified: now,
+            passwordHash,
+            adultAttestedAt: now,
+            adultAttestationVersion: ADULT_ATTESTATION_VERSION,
+            platformRole: "CUSTOMER",
+          },
           select: { id: true },
         });
 

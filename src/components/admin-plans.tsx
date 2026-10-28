@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Check, ChevronLeft, ChevronRight, Pencil, Plus, Save, X } from "lucide-react";
 
 type PlanEntitlement = { featureKey: string; value: unknown };
@@ -37,8 +37,10 @@ export function AdminPlans({ initial }: { initial: PlanResponse }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const resultRequestId = useRef(0);
 
   useEffect(() => {
+    const requestId = ++resultRequestId.current;
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setLoading(true);
@@ -47,12 +49,12 @@ export function AdminPlans({ initial }: { initial: PlanResponse }) {
         const response = await fetch(`/api/admin/plans?${params}`, { cache: "no-store", signal: controller.signal });
         const payload = await response.json().catch(() => null) as PlanResponse | null;
         if (!response.ok || !payload) throw new Error(payload?.error ?? "Katalog paket belum dapat dimuat.");
-        setResult(payload);
+        if (requestId === resultRequestId.current) setResult(payload);
       } catch (caught) {
         if (caught instanceof DOMException && caught.name === "AbortError") return;
-        setError(caught instanceof Error ? caught.message : "Katalog paket belum dapat dimuat.");
+        if (requestId === resultRequestId.current) setError(caught instanceof Error ? caught.message : "Katalog paket belum dapat dimuat.");
       } finally {
-        if (!controller.signal.aborted) setLoading(false);
+        if (!controller.signal.aborted && requestId === resultRequestId.current) setLoading(false);
       }
     }, 180);
     return () => { window.clearTimeout(timer); controller.abort(); };
@@ -115,6 +117,8 @@ export function AdminPlans({ initial }: { initial: PlanResponse }) {
       setError(payload?.error ?? "Paket belum berhasil disimpan.");
       return;
     }
+    resultRequestId.current += 1;
+    setLoading(false);
     setNotice(editing ? "Paket diperbarui dan dicatat di audit log." : payload.plan.isActive ? "Paket dibuat aktif dan dicatat di audit log." : "Paket dibuat nonaktif dan dicatat di audit log.");
     const savedPlan = payload.plan;
     setEditing(savedPlan);

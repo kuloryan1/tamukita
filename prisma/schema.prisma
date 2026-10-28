@@ -103,6 +103,15 @@ enum ContentReportReason {
   OTHER
 }
 
+enum InvitationReportReason {
+  CHILD_SAFETY
+  PERSONAL_INFORMATION
+  COPYRIGHT
+  IMPERSONATION
+  SPAM
+  OTHER
+}
+
 enum EditorFeedbackCategory {
   FORM
   AUTOSAVE
@@ -202,35 +211,37 @@ enum AccountTokenPurpose {
 }
 
 model User {
-  id                  String               @id @default(uuid()) @db.Uuid
-  name                String?
-  email               String?              @unique
-  emailVerified       DateTime?
-  image               String?
-  passwordHash        String?              @db.Text
-  platformRole        PlatformRole         @default(CUSTOMER)
-  failedLoginAttempts Int                  @default(0)
-  lockedUntil         DateTime?
-  authVersion         Int                  @default(0)
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  accounts            Account[]
-  sessions            Session[]
-  memberships         Membership[]
-  ownedInvitations    Invitation[]         @relation("InvitationOwner")
-  createdInvitations  Invitation[]         @relation("InvitationCreator")
-  authoredTemplates   Template[]           @relation("TemplateAuthor")
-  invitationVersions  InvitationVersion[]
-  uploadedMedia       MediaAsset[]         @relation("MediaUploader")
-  auditLogs           AuditLog[]
-  supportAccessGrants SupportAccessGrant[] @relation("SupportAccessAdmin")
-  orders              Order[]
-  accountTokens       AccountToken[]
-  requestedRefunds    Refund[]             @relation("RefundRequestedBy")
-  platformSettings    PlatformSetting[]    @relation("PlatformSettingUpdater")
-  recordedResellerSales ResellerSale[]     @relation("ResellerSaleRecorder")
-  voidedResellerSales   ResellerSale[]     @relation("ResellerSaleVoider")
-  editorFeedback        EditorFeedback[]
+  id                      String               @id @default(uuid()) @db.Uuid
+  name                    String?
+  email                   String?              @unique
+  emailVerified           DateTime?
+  image                   String?
+  passwordHash            String?              @db.Text
+  adultAttestedAt         DateTime?
+  adultAttestationVersion String?              @db.VarChar(40)
+  platformRole            PlatformRole         @default(CUSTOMER)
+  failedLoginAttempts     Int                  @default(0)
+  lockedUntil             DateTime?
+  authVersion             Int                  @default(0)
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+  accounts                Account[]
+  sessions                Session[]
+  memberships             Membership[]
+  ownedInvitations        Invitation[]         @relation("InvitationOwner")
+  createdInvitations      Invitation[]         @relation("InvitationCreator")
+  authoredTemplates       Template[]           @relation("TemplateAuthor")
+  invitationVersions      InvitationVersion[]
+  uploadedMedia           MediaAsset[]         @relation("MediaUploader")
+  auditLogs               AuditLog[]
+  supportAccessGrants     SupportAccessGrant[] @relation("SupportAccessAdmin")
+  orders                  Order[]
+  accountTokens           AccountToken[]
+  requestedRefunds        Refund[]             @relation("RefundRequestedBy")
+  platformSettings        PlatformSetting[]    @relation("PlatformSettingUpdater")
+  recordedResellerSales   ResellerSale[]       @relation("ResellerSaleRecorder")
+  voidedResellerSales     ResellerSale[]       @relation("ResellerSaleVoider")
+  editorFeedback          EditorFeedback[]
 
   @@index([platformRole])
   @@map("users")
@@ -316,7 +327,7 @@ model Organization {
   analyticsDaily      AnalyticsDaily[]
   resellerSales       ResellerSale[]       @relation("ResellerSales")
   salesAsCustomer     ResellerSale[]       @relation("ResellerSaleCustomer")
-  editorFeedback     EditorFeedback[]
+  editorFeedback      EditorFeedback[]
 
   @@index([type, status])
   @@map("organizations")
@@ -410,6 +421,7 @@ model Invitation {
   guestLinks          GuestLink[]
   rsvps               RSVP[]
   guestbook           GuestbookEntry[]
+  reports             InvitationReport[]
   orders              Order[]
   licenses            TemplateLicense[]
   entitlements        Entitlement[]
@@ -547,18 +559,21 @@ model GuestLink {
 }
 
 model RSVP {
-  id            String          @id @default(uuid()) @db.Uuid
-  invitationId  String          @db.Uuid
-  eventId       String?         @db.Uuid
-  guestId       String?         @db.Uuid
-  displayName   String
-  attendance    GuestAttendance
-  attendeeCount Int             @default(1)
-  message       String?         @db.Text
-  respondedAt   DateTime        @default(now())
-  invitation    Invitation      @relation(fields: [invitationId], references: [id], onDelete: Cascade)
-  event         Event?          @relation(fields: [eventId], references: [id], onDelete: SetNull)
-  guest         Guest?          @relation(fields: [guestId], references: [id], onDelete: SetNull)
+  id                     String          @id @default(uuid()) @db.Uuid
+  invitationId           String          @db.Uuid
+  eventId                String?         @db.Uuid
+  guestId                String?         @db.Uuid
+  displayName            String
+  attendance             GuestAttendance
+  attendeeCount          Int             @default(1)
+  message                String?         @db.Text
+  includesChildData      Boolean         @default(false)
+  guardianConsentAt      DateTime?
+  guardianConsentVersion String?         @db.VarChar(40)
+  respondedAt            DateTime        @default(now())
+  invitation             Invitation      @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  event                  Event?          @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  guest                  Guest?          @relation(fields: [guestId], references: [id], onDelete: SetNull)
 
   @@index([invitationId, respondedAt])
   @@index([guestId])
@@ -566,31 +581,34 @@ model RSVP {
 }
 
 model GuestbookEntry {
-  id           String           @id @default(uuid()) @db.Uuid
-  invitationId String           @db.Uuid
-  guestId      String?          @db.Uuid
-  displayName  String
-  message      String           @db.Text
-  status       ModerationStatus @default(PENDING)
-  createdAt    DateTime         @default(now())
-  reviewedAt   DateTime?
-  invitation   Invitation       @relation(fields: [invitationId], references: [id], onDelete: Cascade)
-  guest        Guest?           @relation(fields: [guestId], references: [id], onDelete: SetNull)
-  reports      ContentReport[]
+  id                     String           @id @default(uuid()) @db.Uuid
+  invitationId           String           @db.Uuid
+  guestId                String?          @db.Uuid
+  displayName            String
+  message                String           @db.Text
+  includesChildData      Boolean          @default(false)
+  guardianConsentAt      DateTime?
+  guardianConsentVersion String?          @db.VarChar(40)
+  status                 ModerationStatus @default(PENDING)
+  createdAt              DateTime         @default(now())
+  reviewedAt             DateTime?
+  invitation             Invitation       @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  guest                  Guest?           @relation(fields: [guestId], references: [id], onDelete: SetNull)
+  reports                ContentReport[]
 
   @@index([invitationId, status, createdAt])
   @@map("guestbook")
 }
 
 model ContentReport {
-  id                    String              @id @default(uuid()) @db.Uuid
-  guestbookEntryId      String              @db.Uuid
-  reporterFingerprint   String              @db.VarChar(64)
-  reason                ContentReportReason
-  status                ContentReportStatus @default(PENDING)
-  createdAt             DateTime            @default(now())
-  reviewedAt            DateTime?
-  guestbookEntry        GuestbookEntry      @relation(fields: [guestbookEntryId], references: [id], onDelete: Cascade)
+  id                  String              @id @default(uuid()) @db.Uuid
+  guestbookEntryId    String              @db.Uuid
+  reporterFingerprint String              @db.VarChar(64)
+  reason              ContentReportReason
+  status              ContentReportStatus @default(PENDING)
+  createdAt           DateTime            @default(now())
+  reviewedAt          DateTime?
+  guestbookEntry      GuestbookEntry      @relation(fields: [guestbookEntryId], references: [id], onDelete: Cascade)
 
   @@unique([guestbookEntryId, reporterFingerprint])
   @@index([status, createdAt])
@@ -598,19 +616,35 @@ model ContentReport {
   @@map("content_reports")
 }
 
+model InvitationReport {
+  id                  String                @id @default(uuid()) @db.Uuid
+  invitationId        String                @db.Uuid
+  reporterFingerprint String                @db.VarChar(64)
+  reason              InvitationReportReason
+  status              ContentReportStatus   @default(PENDING)
+  createdAt           DateTime              @default(now())
+  reviewedAt          DateTime?
+  invitation          Invitation            @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+
+  @@unique([invitationId, reporterFingerprint])
+  @@index([status, createdAt])
+  @@index([invitationId, status])
+  @@map("invitation_reports")
+}
+
 model EditorFeedback {
-  id             String                  @id @default(uuid()) @db.Uuid
-  userId         String                  @db.Uuid
-  organizationId String                  @db.Uuid
-  invitationId   String?                 @db.Uuid
+  id             String                 @id @default(uuid()) @db.Uuid
+  userId         String                 @db.Uuid
+  organizationId String                 @db.Uuid
+  invitationId   String?                @db.Uuid
   category       EditorFeedbackCategory
-  message        String                  @db.VarChar(1200)
-  status         EditorFeedbackStatus    @default(OPEN)
-  createdAt      DateTime                @default(now())
-  updatedAt      DateTime                @updatedAt
-  user           User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization   Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  invitation     Invitation?             @relation(fields: [invitationId], references: [id], onDelete: SetNull)
+  message        String                 @db.VarChar(1200)
+  status         EditorFeedbackStatus   @default(OPEN)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitation     Invitation?            @relation(fields: [invitationId], references: [id], onDelete: SetNull)
 
   @@index([status, createdAt])
   @@index([userId, createdAt])
@@ -837,22 +871,22 @@ model ResellerCustomer {
 }
 
 model ResellerSale {
-  id             String        @id @default(uuid()) @db.Uuid
-  resellerOrgId  String        @db.Uuid
-  customerOrgId  String?       @db.Uuid
-  invitationId   String?       @db.Uuid
-  recordedById   String?       @db.Uuid
-  amountIdr      Int
-  description    String        @db.VarChar(160)
-  createdAt      DateTime      @default(now())
-  voidedAt       DateTime?
-  voidReason     String?       @db.VarChar(240)
-  voidedById     String?       @db.Uuid
-  reseller       Organization  @relation("ResellerSales", fields: [resellerOrgId], references: [id], onDelete: Restrict)
-  customer       Organization? @relation("ResellerSaleCustomer", fields: [customerOrgId], references: [id], onDelete: SetNull)
-  invitation     Invitation?   @relation(fields: [invitationId], references: [id], onDelete: SetNull)
-  recordedBy     User?         @relation("ResellerSaleRecorder", fields: [recordedById], references: [id], onDelete: SetNull)
-  voidedBy       User?         @relation("ResellerSaleVoider", fields: [voidedById], references: [id], onDelete: SetNull)
+  id            String        @id @default(uuid()) @db.Uuid
+  resellerOrgId String        @db.Uuid
+  customerOrgId String?       @db.Uuid
+  invitationId  String?       @db.Uuid
+  recordedById  String?       @db.Uuid
+  amountIdr     Int
+  description   String        @db.VarChar(160)
+  createdAt     DateTime      @default(now())
+  voidedAt      DateTime?
+  voidReason    String?       @db.VarChar(240)
+  voidedById    String?       @db.Uuid
+  reseller      Organization  @relation("ResellerSales", fields: [resellerOrgId], references: [id], onDelete: Restrict)
+  customer      Organization? @relation("ResellerSaleCustomer", fields: [customerOrgId], references: [id], onDelete: SetNull)
+  invitation    Invitation?   @relation(fields: [invitationId], references: [id], onDelete: SetNull)
+  recordedBy    User?         @relation("ResellerSaleRecorder", fields: [recordedById], references: [id], onDelete: SetNull)
+  voidedBy      User?         @relation("ResellerSaleVoider", fields: [voidedById], references: [id], onDelete: SetNull)
 
   @@index([resellerOrgId, createdAt])
   @@index([customerOrgId, createdAt])

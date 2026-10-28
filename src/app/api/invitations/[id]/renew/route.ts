@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { getPrismaClient } from "@/lib/prisma";
 import { allowRequest } from "@/lib/rate-limit";
 import { getHostingRenewalPrice, getHostingTermDays } from "@/lib/platform-settings";
+import { canRenewHosting, HOSTING_RENEWAL_WINDOW_DAYS } from "@/lib/hosting-renewal";
 import { getXenditApiUrl } from "@/lib/xendit-api";
 import { getXenditSecretKey } from "@/lib/xendit-config";
 
@@ -39,15 +40,20 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   ]);
   if (!invitation) return NextResponse.json({ error: "Undangan tidak ditemukan atau tidak dapat diperpanjang oleh akun ini." }, { status: 404 });
   if (!invitation.expiresAt) return NextResponse.json({ error: "Undangan ini belum memiliki masa hosting yang dapat diperpanjang." }, { status: 409 });
+  const renewalCheckAt = new Date();
+  if (!canRenewHosting(invitation.expiresAt, renewalCheckAt)) {
+    const opensAt = new Date(renewalCheckAt.getTime() + HOSTING_RENEWAL_WINDOW_DAYS * 86_400_000);
+    const error = invitation.expiresAt > opensAt
+      ? "Perpanjangan dapat dilakukan dalam 30 hari sebelum masa hosting berakhir."
+      : "Masa perpanjangan hosting sudah berakhir.";
+    return NextResponse.json({ error }, { status: invitation.expiresAt > opensAt ? 409 : 410 });
+  }
   const validLicense = await prisma.templateLicense.findFirst({
     where: { invitationId: invitation.id, OR: [{ orderId: null }, { order: { status: { in: ["PAID", "PARTIALLY_REFUNDED"] } } }] },
     select: { id: true },
   });
   if (!validLicense) return NextResponse.json({ error: "Lisensi template untuk undangan ini tidak aktif sehingga hosting tidak dapat diperpanjang." }, { status: 409 });
   if (!amountIdr) return NextResponse.json({ error: "Harga renewal belum diaktifkan oleh admin." }, { status: 503 });
-  const renewalWindowStartsAt = new Date(Date.now() + 30 * 86_400_000);
-  if (invitation.expiresAt > renewalWindowStartsAt) return NextResponse.json({ error: "Perpanjangan dapat dilakukan dalam 30 hari sebelum masa hosting berakhir." }, { status: 409 });
-
   const secret = getXenditSecretKey();
   if (!secret) return NextResponse.json({ error: "Pembayaran belum dikonfigurasi di server." }, { status: 503 });
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
@@ -69,7 +75,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         where: { id: invitation.id, ownerId: userId, deletedAt: null, status: { in: ["PUBLISHED", "EXPIRED"] }, organization: { status: "ACTIVE", memberships: { some: { userId, role: "OWNER" } } } },
         select: { id: true, expiresAt: true },
       });
-      if (!current?.expiresAt || current.expiresAt > renewalWindowStartsAt) throw new RenewalConflict();
+      if (!current?.expiresAt || !canRenewHosting(current.expiresAt)) throw new RenewalConflict();
       const currentLicense = await tx.templateLicense.findFirst({
         where: { invitationId: invitation.id, OR: [{ orderId: null }, { order: { status: { in: ["PAID", "PARTIALLY_REFUNDED"] } } }] },
         select: { id: true },

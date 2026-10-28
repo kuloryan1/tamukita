@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 const emptyCountdown = { days: 0, hours: 0, minutes: 0, seconds: 0 };
 
-export function PublicInvitationCountdown({ eventDate, eventTime }: { eventDate: string; eventTime: string }) {
+export function PublicInvitationCountdown({ eventDate, eventTime, id, label = "HARI YANG KAMI NANTIKAN" }: { eventDate: string; eventTime: string; id?: string; label?: string }) {
   const [countdown, setCountdown] = useState(emptyCountdown);
 
   useEffect(() => {
@@ -25,9 +25,9 @@ export function PublicInvitationCountdown({ eventDate, eventTime }: { eventDate:
   }, [eventDate, eventTime]);
 
   return (
-    <section className="public-countdown-section">
+      <section className="public-countdown-section" id={id}>
       <div className="public-countdown">
-        <span>HARI YANG KAMI NANTIKAN</span>
+        <span>{label}</span>
         <div>
           <b>{countdown.days}<small>hari</small></b><i>:</i>
           <b>{String(countdown.hours).padStart(2, "0")}<small>jam</small></b><i>:</i>

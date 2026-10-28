@@ -38,6 +38,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             email: true,
             emailVerified: true,
             passwordHash: true,
+            adultAttestedAt: true,
             platformRole: true,
             authVersion: true,
             failedLoginAttempts: true,
@@ -77,7 +78,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { id: user.id },
           data: { failedLoginAttempts: 0, lockedUntil: null },
         });
-        if (!user.emailVerified) return null;
+        if (!user.emailVerified || !user.adultAttestedAt) return null;
         return {
           id: user.id,
           name: user.name,
@@ -96,8 +97,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.authVersion = "authVersion" in user ? Number(user.authVersion) : undefined;
       }
       if (token.id) {
-        const currentUser = await getPrismaClient().user.findUnique({ where: { id: String(token.id) }, select: { authVersion: true, emailVerified: true } });
-        if (!currentUser?.emailVerified || token.authVersion !== currentUser.authVersion) {
+        const currentUser = await getPrismaClient().user.findUnique({ where: { id: String(token.id) }, select: { authVersion: true, emailVerified: true, adultAttestedAt: true } });
+        if (!currentUser?.emailVerified || !currentUser.adultAttestedAt || token.authVersion !== currentUser.authVersion) {
           token.id = "";
           delete token.platformRole;
           delete token.authVersion;

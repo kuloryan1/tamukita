@@ -11,7 +11,7 @@ test("source template versions have compatible, rendered React components and re
   expect(templates.length).toBeGreaterThanOrEqual(3);
   expect(new Set(templates.map((template) => template.slug)).size).toBe(templates.length);
   expect(new Set(templates.map((template) => `${template.slug}@${template.version}`)).size).toBe(templates.length);
-  const coreTemplateSlugs = new Set(["royal-gold", "elegant-cream", "modern-sage"]);
+  const coreTemplateSlugs = new Set(["royal-gold", "elegant-cream", "modern-sage", "blush-serenade", "ivory-heritage", "wisteria-senja", "destinasi-cinta", "taman-abadi"]);
   for (const [key, Renderer] of registeredTemplateRenderers()) {
     const slug = key.slice(0, key.lastIndexOf("@"));
     const template = templates.find((item) => item.slug === slug);

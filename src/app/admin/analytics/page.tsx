@@ -23,7 +23,7 @@ export default async function AdminAnalyticsPage() {
   const periodStart = new Date(now.getTime() - periodMs);
   const publicViewsStart = new Date(Date.UTC(periodStart.getUTCFullYear(), periodStart.getUTCMonth(), periodStart.getUTCDate()));
   const settledStatuses = ["PAID", "PARTIALLY_REFUNDED", "REFUNDED", "CANCELED", "EXPIRED"] as const;
-  const [newAccounts, newWorkspaces, newDrafts, completedDrafts, publishedDrafts, settledOrderCount, paidOrderCount, paidSummary, refundSummary, resellerSales, publicViews, platformViews, rsvpCount, contentReportCount, editorFeedbackCount, templateGroups, customerPayments, resellerTopUps, draftCustomerOwners, completedCustomerOwners, activeInvitations, approvedResellerProfiles, activeCreditResellers, activeSalesResellers, selfPublishedCustomerCountRows] = await Promise.all([
+  const [newAccounts, newWorkspaces, newDrafts, completedDrafts, publishedDrafts, settledOrderCount, paidOrderCount, paidSummary, refundSummary, resellerSales, publicViews, platformViews, rsvpCount, contentReportCount, invitationReportCount, editorFeedbackCount, templateGroups, customerPayments, resellerTopUps, draftCustomerOwners, completedCustomerOwners, activeInvitations, approvedResellerProfiles, activeCreditResellers, activeSalesResellers, selfPublishedCustomerCountRows] = await Promise.all([
     prisma.user.count({ where: { createdAt: { gte: periodStart } } }),
     prisma.organization.count({ where: { type: "PERSONAL", createdAt: { gte: periodStart } } }),
     prisma.invitation.count({ where: { deletedAt: null, createdAt: { gte: periodStart } } }),
@@ -42,6 +42,7 @@ export default async function AdminAnalyticsPage() {
     }),
     prisma.rSVP.count({ where: { respondedAt: { gte: periodStart }, invitation: { deletedAt: null } } }),
     prisma.contentReport.count({ where: { createdAt: { gte: periodStart } } }),
+    prisma.invitationReport.count({ where: { createdAt: { gte: periodStart } } }),
     prisma.editorFeedback.count({ where: { createdAt: { gte: periodStart } } }),
     prisma.invitation.groupBy({
       by: ["templateVersionId"],
@@ -153,7 +154,7 @@ export default async function AdminAnalyticsPage() {
         { label: "Tampilan detail template", value: (platformViewsByKey.get("template_detail_views") ?? BigInt(0)).toLocaleString("id-ID"), detail: "Page view halaman detail, bukan pengunjung unik" },
         { label: "Tampilan halaman undangan", value: (publicViews._sum.metricValue ?? BigInt(0)).toLocaleString("id-ID"), detail: "Page view, bukan pengunjung unik" },
         { label: "RSVP masuk", value: rsvpCount.toLocaleString("id-ID"), detail: "Respons tamu dalam periode" },
-        { label: "Laporan konten", value: contentReportCount.toLocaleString("id-ID"), detail: "Laporan yang dibuat dalam periode" },
+        { label: "Laporan konten", value: (contentReportCount + invitationReportCount).toLocaleString("id-ID"), detail: "Laporan ucapan dan halaman undangan dalam periode" },
         { label: "Keluhan editor", value: editorFeedbackCount.toLocaleString("id-ID"), detail: "Laporan kendala yang dikirim dalam periode" },
         { label: "Pembayaran masuk", value: rupiah.format(grossPayments), detail: "Order IDR yang dibayar dalam periode" },
         { label: "Refund berhasil", value: rupiah.format(successfulRefunds), detail: "Refund IDR yang selesai dalam periode" },

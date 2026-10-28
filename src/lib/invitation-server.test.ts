@@ -6,7 +6,7 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/lib/prisma", () => ({ getPrismaClient: () => prismaMock }));
 
 import { createInitialDraft } from "@/lib/invitations";
-import { getWritableOrganizationId, parseInvitationDraft } from "@/lib/invitation-server";
+import { getWritableOrganizationId, invitationDraftSchema, parseInvitationDraft } from "@/lib/invitation-server";
 
 beforeEach(() => prismaMock.membership.findFirst.mockReset().mockResolvedValue({ organizationId: "customer-workspace" }));
 afterEach(() => vi.unstubAllEnvs());
@@ -30,6 +30,22 @@ test("does not create a self-service draft in a reseller workspace", async () =>
 
   await expect(getWritableOrganizationId("reseller-only-user")).resolves.toBeNull();
   expect(prismaMock.membership.findFirst.mock.calls[0]?.[0]?.where.organization).toEqual({ type: "PERSONAL", status: "ACTIVE" });
+});
+
+test("preserves and canonicalizes the seal monogram through the draft API payload and published snapshot", () => {
+  const apiSchema = invitationDraftSchema.omit({ id: true, updatedAt: true, publishedAt: true, isPublished: true, qaFixture: true });
+  const saved = apiSchema.parse({ ...createInitialDraft(), sealMonogram: " nr " });
+  expect(saved.sealMonogram).toBe("NR");
+  const published = JSON.parse(JSON.stringify({ ...saved, id: "73ea210e-c986-4e31-8b44-603812b5b1ac" }));
+  expect(parseInvitationDraft(published)?.sealMonogram).toBe("NR");
+});
+
+test("keeps older snapshots compatible with automatic initials and rejects unsupported seal letters", () => {
+  const snapshot = { ...createInitialDraft(), id: "73ea210e-c986-4e31-8b44-603812b5b1ac", sealMonogram: undefined };
+  expect(parseInvitationDraft(snapshot)?.sealMonogram).toBe("");
+  for (const sealMonogram of ["ABCD", "N1", "N&R", "<N>"]) {
+    expect(invitationDraftSchema.safeParse({ ...snapshot, sealMonogram }).success).toBe(false);
+  }
 });
 
 test("parses the synthetic cover only for the marked staging QA invitation", () => {

@@ -1,7 +1,9 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { CheckCircle2, Copy, Flag, Heart, Music2, Pause, Play, Send, X } from "lucide-react";
+import { GUESTBOOK_CHILD_DATA_GUARDIAN_CONSENT_COPY, RSVP_CHILD_DATA_GUARDIAN_CONSENT_COPY } from "@/lib/consent-copy";
+import { getFirstInvalidFormMessage } from "@/lib/form-validation-message";
 
 type GuestbookMessage = { id: string; displayName: string; message: string; createdAt: string };
 type ReportReason = "SPAM" | "HARASSMENT" | "PERSONAL_INFORMATION" | "OTHER";
@@ -49,9 +51,72 @@ export function PublicInvitationRsvp({ slug, initialCount, recipientName, guestT
   const [guestName, setGuestName] = useState(recipientName ?? "");
   const [attendance, setAttendance] = useState<"Hadir" | "Berhalangan">("Hadir");
   const [attendeeCount, setAttendeeCount] = useState(1);
+  const [includesChildData, setIncludesChildData] = useState(false);
+  const [guardianConsent, setGuardianConsent] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [rsvpCount, setRsvpCount] = useState(initialCount);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const dialogRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    const getFocusableElements = () => Array.from(dialog.querySelectorAll<HTMLElement>(
+      'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+    )).filter((element) => element.getClientRects().length > 0);
+    const firstInput = dialog.querySelector<HTMLElement>('input:not([type="checkbox"]):not([readonly]):not(:disabled)');
+    (firstInput ?? getFocusableElements()[0] ?? dialog).focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setOpen(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const focusableElements = getFocusableElements();
+      const first = focusableElements[0];
+      const last = focusableElements.at(-1);
+      if (!first || !last) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+
+      const active = document.activeElement;
+      if (!dialog.contains(active) || active === dialog) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      triggerRef.current?.focus();
+    };
+  }, [open]);
+  const attendanceCopy = attendance === "Hadir"
+    ? {
+        eyebrow: "KABAR BAIK UNTUK KAMI",
+        title: "Kamu bisa hadir?",
+        submittedData: "Nama, pilihan kehadiran, dan jumlah tamu yang dikirim akan diterima",
+      }
+    : {
+        eyebrow: "TERIMA KASIH SUDAH MEMBERI KABAR",
+        title: "Kami mengerti kamu berhalangan hadir",
+        submittedData: "Nama dan pilihan kehadiran yang dikirim akan diterima",
+      };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -60,7 +125,7 @@ export function PublicInvitationRsvp({ slug, initialCount, recipientName, guestT
     const response = await fetch(`/api/public/invitations/${encodeURIComponent(slug)}/rsvp`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: guestName.trim(), ...(guestToken ? { guestToken } : {}), attendance: attendance === "Hadir" ? "ATTENDING" : "DECLINED", attendeeCount }),
+      body: JSON.stringify({ name: guestName.trim(), ...(guestToken ? { guestToken } : {}), attendance: attendance === "Hadir" ? "ATTENDING" : "DECLINED", attendeeCount, includesChildData, guardianConsent }),
     }).catch(() => null);
     const result = await response?.json().catch(() => ({})) as { error?: string; created?: boolean } | undefined;
     if (!response?.ok) {
@@ -73,9 +138,9 @@ export function PublicInvitationRsvp({ slug, initialCount, recipientName, guestT
 
   return (
     <>
-      <button type="button" className="button button--dark" onClick={() => { setOpen(true); setSubmitted(false); setError(""); }}><Heart size={15} /> Konfirmasi kehadiran</button>
+      <button ref={triggerRef} type="button" className="button button--dark" onClick={() => { setOpen(true); setSubmitted(false); setError(""); setIncludesChildData(false); setGuardianConsent(false); }}><Heart size={15} /> Konfirmasi kehadiran</button>
       <span className="rsvp-count"><CheckCircle2 size={14} /> {rsvpCount > 0 ? `${rsvpCount} tamu telah mengirim RSVP` : "Jadilah yang pertama mengirim RSVP"}</span>
-      {open && <div className="modal-backdrop" role="presentation"><section className="rsvp-modal" role="dialog" aria-modal="true" aria-labelledby="rsvp-title"><button type="button" className="modal-close" onClick={() => setOpen(false)} aria-label="Tutup"><X size={18} /></button>{submitted ? <div className="rsvp-confirmation"><span><CheckCircle2 size={28} /></span><h2>Terima kasih, {guestName}!</h2><p>Konfirmasimu sudah dicatat untuk undangan ini. Kami tunggu kehadiranmu.</p><button type="button" className="button button--dark" onClick={() => setOpen(false)}>Selesai</button></div> : <><span className="eyebrow">KABAR BAIK UNTUK KAMI</span><h2 id="rsvp-title">Kamu bisa hadir?</h2><p className="rsvp-modal-intro">Beri tahu kami agar persiapan hari bahagia jadi lebih mudah.</p><form onSubmit={submit}>{guestToken ? <div className="editor-field"><span className="field-label">Undangan untuk</span><input className="text-input" aria-label="Undangan untuk" value={guestName} readOnly /></div> : <label className="editor-field"><span className="field-label">Nama lengkap</span><input className="text-input" required maxLength={100} value={guestName} onChange={(event) => setGuestName(event.target.value)} placeholder="Nama kamu" /></label>}<div className="rsvp-options"><button type="button" className={attendance === "Hadir" ? "is-selected" : ""} onClick={() => setAttendance("Hadir")}>Dengan senang hati hadir</button><button type="button" className={attendance === "Berhalangan" ? "is-selected" : ""} onClick={() => setAttendance("Berhalangan")}>Mohon maaf berhalangan</button></div>{attendance === "Hadir" && <label className="editor-field"><span className="field-label">Jumlah tamu yang hadir</span><select className="text-input" value={attendeeCount} onChange={(event) => setAttendeeCount(Number(event.target.value))}>{Array.from({ length: 10 }, (_, index) => index + 1).map((count) => <option key={count} value={count}>{count} orang</option>)}</select></label>}{error && <div className="editor-error" role="alert">{error}</div>}<button className="button button--dark button--wide" type="submit">Kirim konfirmasi <Send size={15} /></button><small className="rsvp-demo-note"><Music2 size={12} /> Pengundang akan menerima email konfirmasi bila alamat emailnya tersedia.</small></form></>}</section></div>}
+      {open && <div className="modal-backdrop" role="presentation"><section ref={dialogRef} tabIndex={-1} className="rsvp-modal" role="dialog" aria-modal="true" aria-labelledby="rsvp-title"><button type="button" className="modal-close" onClick={() => setOpen(false)} aria-label="Tutup"><X size={18} /></button>{submitted ? <div className="rsvp-confirmation"><span><CheckCircle2 size={28} /></span><h2>Terima kasih, {guestName}!</h2><p>Jawabanmu sudah dicatat untuk undangan ini. Terima kasih sudah memberi kabar.</p><button type="button" className="button button--dark" onClick={() => setOpen(false)}>Selesai</button></div> : <><span className="eyebrow">{attendanceCopy.eyebrow}</span><h2 id="rsvp-title">{attendanceCopy.title}</h2><p className="rsvp-modal-intro">{attendanceCopy.submittedData} oleh pemilik undangan untuk mengelola acara. Jangan masukkan kontak atau data sensitif anak. Jika RSVP mencantumkan nama atau informasi anak, orang tua/wali harus mengisi dan menyetujuinya di bawah.</p><form onSubmit={submit} onInvalidCapture={(event) => { event.preventDefault(); setError(getFirstInvalidFormMessage(event.currentTarget)); }} onChangeCapture={() => setError("")}>{guestToken ? <div className="editor-field"><span className="field-label">Undangan untuk</span><input className="text-input" aria-label="Undangan untuk" value={guestName} readOnly /></div> : <label className="editor-field"><span className="field-label">Nama lengkap</span><input className="text-input" required maxLength={100} value={guestName} onChange={(event) => setGuestName(event.target.value)} placeholder="Nama kamu" /></label>}<fieldset className="rsvp-options"><legend className="field-label">Pilih kehadiran</legend><button type="button" aria-pressed={attendance === "Hadir"} className={attendance === "Hadir" ? "is-selected" : ""} onClick={() => { setAttendance("Hadir"); setError(""); }}>Dengan senang hati hadir</button><button type="button" aria-pressed={attendance === "Berhalangan"} className={attendance === "Berhalangan" ? "is-selected" : ""} onClick={() => { setAttendance("Berhalangan"); setError(""); }}>Mohon maaf berhalangan</button></fieldset>{attendance === "Hadir" && <label className="editor-field"><span className="field-label">Jumlah tamu yang hadir</span><select className="text-input" value={attendeeCount} onChange={(event) => setAttendeeCount(Number(event.target.value))}>{Array.from({ length: 10 }, (_, index) => index + 1).map((count) => <option key={count} value={count}>{count} orang</option>)}</select></label>}<label className="public-consent-row"><input type="checkbox" checked={includesChildData} onChange={(event) => { setIncludesChildData(event.target.checked); setGuardianConsent(false); setError(""); }} /><span>RSVP ini mencantumkan nama atau informasi anak.</span></label>{includesChildData && <label className="public-consent-row public-consent-row--nested"><input type="checkbox" name="guardianConsent" required checked={guardianConsent} onChange={(event) => { setGuardianConsent(event.target.checked); setError(""); }} /><span>{RSVP_CHILD_DATA_GUARDIAN_CONSENT_COPY}</span></label>}{error && <div className="editor-error" role="alert">{error}</div>}<button className="button button--dark button--wide" type="submit">Kirim konfirmasi <Send size={15} /></button><small className="rsvp-demo-note"><Music2 size={12} /> Pengundang akan menerima email konfirmasi bila alamat emailnya tersedia.</small></form></>}</section></div>}
     </>
   );
 }
@@ -83,6 +148,8 @@ export function PublicInvitationRsvp({ slug, initialCount, recipientName, guestT
 export function PublicInvitationGuestbook({ slug, entries }: { slug: string; entries: GuestbookMessage[] }) {
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
+  const [includesChildData, setIncludesChildData] = useState(false);
+  const [guardianConsent, setGuardianConsent] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
@@ -99,7 +166,7 @@ export function PublicInvitationGuestbook({ slug, entries }: { slug: string; ent
     const response = await fetch(`/api/public/invitations/${encodeURIComponent(slug)}/guestbook`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), message: message.trim() }),
+      body: JSON.stringify({ name: name.trim(), message: message.trim(), includesChildData, guardianConsent }),
     }).catch(() => null);
     const result = await response?.json().catch(() => ({})) as { error?: string } | undefined;
     setSending(false);
@@ -109,6 +176,8 @@ export function PublicInvitationGuestbook({ slug, entries }: { slug: string; ent
     }
     setName("");
     setMessage("");
+    setIncludesChildData(false);
+    setGuardianConsent(false);
     setSent(true);
   };
 
@@ -133,10 +202,12 @@ export function PublicInvitationGuestbook({ slug, entries }: { slug: string; ent
   return (
     <section className="public-guestbook-section">
       <div className="guestbook-inner">
-        <div className="guestbook-heading"><span className="eyebrow">UCAPAN & DOA</span><h2>Kirimkan <em>doa terbaikmu.</em></h2><p>Ucapan akan tampil setelah disetujui oleh pengundang.</p></div>
-        <form className="guestbook-form" onSubmit={submit}>
+        <div className="guestbook-heading"><span className="eyebrow">UCAPAN & DOA</span><h2>Kirimkan <em>doa terbaikmu.</em></h2><p>Nama dan ucapan yang kamu kirim diterima oleh pemilik undangan untuk ditinjau; ucapan tampil pada halaman undangan setelah disetujui. Jangan masukkan kontak atau data sensitif anak. Jika ucapan mencantumkan nama atau informasi anak, orang tua/wali harus mengirim dan menyetujuinya.</p></div>
+        <form className="guestbook-form" onSubmit={submit} onInvalidCapture={(event) => { event.preventDefault(); setError(getFirstInvalidFormMessage(event.currentTarget)); }} onChangeCapture={() => setError("")}>
           <label className="editor-field"><span className="field-label">Namamu</span><input className="text-input" required minLength={2} maxLength={100} value={name} onChange={(event) => setName(event.target.value)} placeholder="Nama lengkap" /></label>
           <label className="editor-field"><span className="field-label">Ucapan</span><textarea className="text-input text-area" required minLength={2} maxLength={1000} rows={4} value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Tulis doa atau pesan untuk pengantin..." /></label>
+          <label className="public-consent-row"><input type="checkbox" checked={includesChildData} onChange={(event) => { setIncludesChildData(event.target.checked); setGuardianConsent(false); setError(""); }} /><span>Ucapan ini mencantumkan nama atau informasi anak.</span></label>
+          {includesChildData && <label className="public-consent-row public-consent-row--nested"><input type="checkbox" name="guardianConsent" required checked={guardianConsent} onChange={(event) => { setGuardianConsent(event.target.checked); setError(""); }} /><span>{GUESTBOOK_CHILD_DATA_GUARDIAN_CONSENT_COPY}</span></label>}
           {error && <div className="editor-error" role="alert">{error}</div>}
           {sent && <p className="guestbook-success" role="status">Terima kasih. Ucapanmu menunggu persetujuan pengundang.</p>}
           <button className="button button--dark" type="submit" disabled={sending}>{sending ? "Mengirim..." : "Kirim ucapan"} <Send size={14} /></button>

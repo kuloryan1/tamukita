@@ -35,3 +35,26 @@ export async function getAdminContentReports(view: "pending" | "history") {
     },
   });
 }
+
+export async function getAdminInvitationReports(view: "pending" | "history") {
+  const prisma = getPrismaClient();
+  const historyStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  return prisma.invitationReport.findMany({
+    where: view === "pending"
+      ? { status: "PENDING" }
+      : { status: { in: ["DISMISSED", "HIDDEN", "RESTORED"] }, reviewedAt: { gte: historyStart } },
+    orderBy: view === "pending" ? [{ createdAt: "asc" }, { id: "asc" }] : [{ reviewedAt: "desc" }, { id: "desc" }],
+    take: 100,
+    select: {
+      id: true,
+      reason: true,
+      status: true,
+      createdAt: true,
+      reviewedAt: true,
+      invitation: {
+        select: { id: true, title: true, slug: true, status: true, expiresAt: true },
+      },
+    },
+  });
+}

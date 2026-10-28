@@ -50,6 +50,28 @@ test.afterAll(async () => {
   await databasePool?.end();
 });
 
+test("signed-out visitors return to the selected template after signing in", async ({ page }, testInfo) => {
+  test.setTimeout(60_000);
+  const { email, password } = getCustomerCredentials(testInfo);
+  if (!email || !password) {
+    test.skip(true, "Requires the disposable PostgreSQL customer fixture.");
+    return;
+  }
+
+  await page.goto("/templates/royal-gold");
+  await page.getByRole("link", { name: "Gunakan template ini" }).click();
+  await expect(page).toHaveURL(/\/login\?callbackUrl=/);
+  await page.getByLabel("Alamat email").fill(email);
+  await page.getByLabel("Kata sandi").fill(password);
+  await page.getByRole("button", { name: "Masuk" }).click();
+  await page.waitForURL((url) =>
+    url.pathname === "/dashboard/invitations/new/edit"
+    && url.searchParams.get("new") === "1"
+    && url.searchParams.get("template") === "royal-gold",
+  );
+  await expect(page.getByRole("heading", { name: "Buat undanganmu" })).toBeVisible();
+});
+
 async function signIn(page: Page, email: string, password: string) {
   await page.goto("/login");
   await page.getByLabel("Alamat email").fill(email);

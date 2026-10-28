@@ -3,20 +3,24 @@ import { z } from "zod";
 import { allowRequest, getRequestAddress } from "@/lib/rate-limit";
 import { getPrismaClient } from "@/lib/prisma";
 import { readJsonBody } from "@/lib/request-json";
+import { childDataConsentRecord, CHILD_DATA_CONSENT_ERROR, guardianConsentMatchesChildData } from "@/lib/child-data-consent";
+import { GUESTBOOK_CHILD_DATA_GUARDIAN_CONSENT_VERSION } from "@/lib/consent-versions";
 
 export const runtime = "nodejs";
 
 const guestbookSchema = z.object({
   name: z.string().trim().min(2).max(100),
   message: z.string().trim().min(2).max(1000),
-});
+  includesChildData: z.boolean().default(false),
+  guardianConsent: z.boolean().default(false),
+}).refine((value) => guardianConsentMatchesChildData(value.includesChildData, value.guardianConsent), { message: CHILD_DATA_CONSENT_ERROR });
 
 export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const body = await readJsonBody(request, 16_000);
   if (!body.ok) return NextResponse.json({ error: "Isi ucapan tidak valid." }, { status: body.status });
   const parsed = guestbookSchema.safeParse(body.value);
-  if (!parsed.success) return NextResponse.json({ error: "Isi nama dan ucapan dengan benar." }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: `Isi nama dan ucapan dengan benar. ${CHILD_DATA_CONSENT_ERROR}` }, { status: 400 });
 
   const prisma = getPrismaClient();
   const invitation = await prisma.invitation.findFirst({
@@ -33,7 +37,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   }
 
   await prisma.guestbookEntry.create({
-    data: { invitationId: invitation.id, displayName: parsed.data.name, message: parsed.data.message },
+    data: { invitationId: invitation.id, displayName: parsed.data.name, message: parsed.data.message, ...childDataConsentRecord(parsed.data.includesChildData, GUESTBOOK_CHILD_DATA_GUARDIAN_CONSENT_VERSION) },
     select: { id: true },
   });
   return NextResponse.json({ saved: true, moderated: true }, { status: 201 });

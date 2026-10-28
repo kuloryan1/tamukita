@@ -1,5 +1,6 @@
 import { isSlugAllowed, safeHttpsUrl, slugify, type InvitationDraft } from "@/lib/invitations";
 import { templateFieldMaximumLength, type Template } from "@/lib/template-sdk";
+import { SEAL_MONOGRAM_PATTERN } from "@/lib/seal-monogram";
 
 export type DraftValidation = { valid: boolean; message?: string; step?: number };
 
@@ -25,6 +26,9 @@ export function validateInvitationDraft(draft: InvitationDraft): DraftValidation
   }
   if (!wedding && !draft.eventTitle.trim()) {
     return { valid: false, message: "Isi judul acaramu dulu.", step: 0 };
+  }
+  if (draft.sealMonogram && !SEAL_MONOGRAM_PATTERN.test(draft.sealMonogram.trim())) {
+    return { valid: false, message: "Huruf segel amplop harus terdiri dari 1–3 huruf A–Z.", step: 0 };
   }
   if (!isValidCalendarDate(draft.eventDate)) {
     return { valid: false, message: "Pilih tanggal acara yang valid.", step: 1 };

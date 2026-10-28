@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page, type Request } from "@playwright/test";
 import { Pool } from "pg";
 
 const invitationId = "10000000-0000-4000-8000-000000000001";
@@ -38,8 +38,70 @@ async function readPlatformViewCount(metricKey: "template_catalog_views" | "temp
   return Number(result.rows[0]?.value ?? "0");
 }
 
+async function readGuestbookModerationAuditActions(targetId: string) {
+  if (!analyticsPool) throw new Error("The disposable E2E database is required.");
+  const result = await analyticsPool.query<{ action: string }>(
+    `SELECT action FROM audit_logs
+     WHERE "targetType" = 'GuestbookEntry'
+       AND "targetId" = $1
+       AND action IN ('admin.content_report.hidden', 'admin.content_report.restored')
+     ORDER BY "createdAt"`,
+    [targetId],
+  );
+  return result.rows.map((row) => row.action);
+}
+
+async function readInvitationModerationAuditActions(targetId: string) {
+  if (!analyticsPool) throw new Error("The disposable E2E database is required.");
+  const result = await analyticsPool.query<{ action: string }>(
+    `SELECT action FROM audit_logs
+     WHERE "targetType" = 'Invitation'
+       AND "targetId" = $1
+       AND action IN ('admin.invitation_report.hidden', 'admin.invitation_report.restored')
+     ORDER BY "createdAt"`,
+    [targetId],
+  );
+  return result.rows.map((row) => row.action);
+}
+
+async function resetInvitationModerationFixture() {
+  if (!analyticsPool) throw new Error("The disposable E2E database is required.");
+  await analyticsPool.query(`DELETE FROM invitation_reports WHERE "invitationId" = $1`, [invitationId]);
+  await analyticsPool.query(
+    `DELETE FROM audit_logs WHERE "targetType" = 'Invitation' AND "targetId" = $1 AND action LIKE 'admin.invitation_report.%'`,
+    [invitationId],
+  );
+  const result = await analyticsPool.query(
+    `UPDATE invitations SET status = 'PUBLISHED' WHERE id = $1 AND "deletedAt" IS NULL AND "publishedSnapshot" IS NOT NULL`,
+    [invitationId],
+  );
+  if (result.rowCount !== 1) throw new Error("The published E2E invitation fixture could not be reset.");
+}
+
 test.afterAll(async () => {
   await analyticsPool?.end();
+});
+
+test("RSVP dialog supports keyboard dismissal and keeps focus inside", async ({ page }) => {
+  await resetInvitationModerationFixture();
+  const response = await page.goto(`/${invitationSlug}`);
+  expect(response?.status()).toBe(200);
+  const trigger = page.getByRole("button", { name: "Konfirmasi kehadiran" });
+  await trigger.focus();
+  await page.keyboard.press("Enter");
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(page.getByLabel("Nama lengkap")).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(page.getByRole("button", { name: "Tutup" })).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(page.getByRole("button", { name: "Kirim konfirmasi" })).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Tutup" })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(trigger).toBeFocused();
 });
 
 async function signIn(page: Page, email: string, password: string) {
@@ -61,6 +123,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
     return;
   }
 
+  await resetInvitationModerationFixture();
   await signIn(page, customerEmail, customerPassword);
   const guestName = `Tamu ${randomUUID().slice(0, 8)}`;
   const guestResponse = await page.request.post(`/api/invitations/${invitationId}/guests`, { data: { names: [guestName] } });
@@ -131,7 +194,14 @@ test("public guest flows and marketplace page view metrics work, and content rev
   const expectedRsvpCountText = `${initialRsvpCount + 1} tamu telah mengirim RSVP`;
 
   await page.setExtraHTTPHeaders({ "x-forwarded-for": `198.51.100.${1 + Math.floor(Math.random() * 253)}` });
+  const childRsvpWithoutGuardianConsent = await page.request.post(`/api/public/invitations/${invitationSlug}/rsvp`, {
+    data: { guestToken, attendance: "ATTENDING", attendeeCount: 1, includesChildData: true },
+  });
+  expect(childRsvpWithoutGuardianConsent.status()).toBe(400);
   await page.getByRole("button", { name: "Konfirmasi kehadiran" }).click();
+  await expect(page.locator(".rsvp-modal-intro")).toContainText("diterima oleh pemilik undangan");
+  await expect(page.getByRole("group", { name: "Pilih kehadiran" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Dengan senang hati hadir" })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByLabel("Undangan untuk")).toHaveValue(guestName);
   await page.getByLabel("Jumlah tamu yang hadir").selectOption("2");
   const rsvpResponsePromise = page.waitForResponse((candidate) =>
@@ -142,19 +212,44 @@ test("public guest flows and marketplace page view metrics work, and content rev
   expect(firstRsvpResponse.status()).toBe(201);
   expect(await firstRsvpResponse.json()).toMatchObject({ saved: true, created: true });
   await expect(page.getByRole("heading", { name: `Terima kasih, ${guestName}!` })).toBeVisible();
+  await expect(page.locator(".rsvp-confirmation p")).toHaveText("Jawabanmu sudah dicatat untuk undangan ini. Terima kasih sudah memberi kabar.");
   await expect(page.locator(".rsvp-count")).toContainText(expectedRsvpCountText);
   await page.getByRole("button", { name: "Selesai" }).click();
   await expect(page.getByRole("dialog")).toBeHidden();
 
   await page.getByRole("button", { name: "Konfirmasi kehadiran" }).click();
   await page.getByRole("button", { name: "Mohon maaf berhalangan" }).click();
+  await expect(page.getByRole("button", { name: "Mohon maaf berhalangan" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "Dengan senang hati hadir" })).toHaveAttribute("aria-pressed", "false");
+  await expect(page.getByText("TERIMA KASIH SUDAH MEMBERI KABAR", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Kami mengerti kamu berhalangan hadir" })).toBeVisible();
+  await expect(page.getByLabel("Jumlah tamu yang hadir")).toHaveCount(0);
+  let childRsvpBrowserRequests = 0;
+  await page.route(`**/api/public/invitations/${invitationSlug}/rsvp`, async (route) => {
+    childRsvpBrowserRequests += 1;
+    await route.continue();
+  });
+  await page.getByRole("checkbox", { name: "RSVP ini mencantumkan nama atau informasi anak." }).check();
+  await page.getByRole("button", { name: "Kirim konfirmasi" }).click();
+  await expect(page.locator('.editor-error[role="alert"]')).toHaveText("Persetujuan orang tua/wali wajib sebelum mengirim data anak.");
+  expect(childRsvpBrowserRequests).toBe(0);
+  await page.getByRole("checkbox", { name: /Saya orang tua\/wali yang berwenang/ }).check();
   const repeatedRsvpPromise = page.waitForResponse((candidate) =>
     candidate.url().endsWith(`/api/public/invitations/${invitationSlug}/rsvp`) && candidate.request().method() === "POST",
   );
   await page.getByRole("button", { name: "Kirim konfirmasi" }).click();
   const repeatedRsvpResponse = await repeatedRsvpPromise;
+  expect(childRsvpBrowserRequests).toBe(1);
   expect(repeatedRsvpResponse.status()).toBe(201);
   expect(await repeatedRsvpResponse.json()).toMatchObject({ saved: true, created: false });
+  await expect(page.locator(".rsvp-confirmation p")).toHaveText("Jawabanmu sudah dicatat untuk undangan ini. Terima kasih sudah memberi kabar.");
+  const rsvpConsent = await analyticsPool.query<{ includesChildData: boolean; guardianConsentAt: Date | null; guardianConsentVersion: string | null }>(
+    'SELECT "includesChildData", "guardianConsentAt", "guardianConsentVersion" FROM rsvps WHERE "invitationId" = $1 AND "displayName" = $2',
+    [invitationId, guestName],
+  );
+  expect(rsvpConsent.rows).toHaveLength(1);
+  expect(rsvpConsent.rows[0]).toMatchObject({ includesChildData: true, guardianConsentVersion: "child-rsvp-guardian-2026-10-v1" });
+  expect(rsvpConsent.rows[0]?.guardianConsentAt).toBeInstanceOf(Date);
   await expect(page.locator(".rsvp-count")).toContainText(expectedRsvpCountText);
   await page.getByRole("button", { name: "Selesai" }).click();
   await expect(page.getByRole("dialog")).toBeHidden();
@@ -196,13 +291,39 @@ test("public guest flows and marketplace page view metrics work, and content rev
   await expect(page.locator(".public-hero-side h1")).toContainText(guestName);
 
   const guestbookMessage = `Semoga selalu bahagia ${randomUUID().slice(0, 8)}`;
+  const childGuestbookWithoutGuardianConsent = await page.request.post(`/api/public/invitations/${invitationSlug}/guestbook`, {
+    data: { name: guestName, message: guestbookMessage, includesChildData: true },
+  });
+  expect(childGuestbookWithoutGuardianConsent.status()).toBe(400);
+  await expect(page.locator(".guestbook-heading")).toContainText("diterima oleh pemilik undangan");
+  let guestbookBrowserRequests = 0;
+  await page.route(`**/api/public/invitations/${invitationSlug}/guestbook`, async (route) => {
+    guestbookBrowserRequests += 1;
+    await route.continue();
+  });
+  await page.getByRole("button", { name: "Kirim ucapan" }).click();
+  await expect(page.locator('.editor-error[role="alert"]')).toHaveText("Namamu wajib diisi.");
+  expect(guestbookBrowserRequests).toBe(0);
   await page.getByLabel("Namamu").fill(guestName);
   await page.getByLabel("Ucapan", { exact: true }).fill(guestbookMessage);
+  await page.getByRole("checkbox", { name: "Ucapan ini mencantumkan nama atau informasi anak." }).check();
+  await page.getByRole("button", { name: "Kirim ucapan" }).click();
+  await expect(page.locator('.editor-error[role="alert"]')).toHaveText("Persetujuan orang tua/wali wajib sebelum mengirim data anak.");
+  expect(guestbookBrowserRequests).toBe(0);
+  await page.getByRole("checkbox", { name: /Saya orang tua\/wali yang berwenang/ }).check();
   const guestbookResponsePromise = page.waitForResponse((candidate) =>
     candidate.url().endsWith(`/api/public/invitations/${invitationSlug}/guestbook`) && candidate.request().method() === "POST",
   );
   await page.getByRole("button", { name: "Kirim ucapan" }).click();
   expect((await guestbookResponsePromise).status()).toBe(201);
+  expect(guestbookBrowserRequests).toBe(1);
+  const guestbookConsent = await analyticsPool.query<{ includesChildData: boolean; guardianConsentAt: Date | null; guardianConsentVersion: string | null }>(
+    'SELECT "includesChildData", "guardianConsentAt", "guardianConsentVersion" FROM guestbook WHERE "invitationId" = $1 AND message = $2',
+    [invitationId, guestbookMessage],
+  );
+  expect(guestbookConsent.rows).toHaveLength(1);
+  expect(guestbookConsent.rows[0]).toMatchObject({ includesChildData: true, guardianConsentVersion: "child-guestbook-guardian-2026-10-v1" });
+  expect(guestbookConsent.rows[0]?.guardianConsentAt).toBeInstanceOf(Date);
   await expect(page.getByRole("status")).toContainText("menunggu persetujuan");
 
   await page.goto(`/dashboard/invitations/${invitationId}/guestbook`);
@@ -258,10 +379,12 @@ test("public guest flows and marketplace page view metrics work, and content rev
     await expect(hiddenOwnerEntry.getByRole("button", { name: "Setujui" })).toHaveCount(0);
     const hiddenEntryId = await hiddenOwnerEntry.getAttribute("data-entry-id");
     if (!hiddenEntryId) throw new Error("The hidden guestbook entry did not expose its fixture ID.");
+    expect(await readGuestbookModerationAuditActions(hiddenEntryId)).toContain("admin.content_report.hidden");
     const ownerReapproval = await page.request.patch(`/api/invitations/${invitationId}/guestbook/${hiddenEntryId}`, { data: { status: "APPROVED" } });
     expect(ownerReapproval.status()).toBe(409);
 
-    await reviewerPage.getByRole("button", { name: "Riwayat 30 hari" }).click();
+    const guestbookModeration = reviewerPage.locator(".admin-content-moderation").first();
+    await guestbookModeration.getByRole("button", { name: "Riwayat 30 hari" }).click();
     const historyCard = reviewerPage.locator(".admin-report-card").filter({ hasText: guestbookMessage });
     await expect(historyCard).toBeVisible();
     const restoreResponsePromise = reviewerPage.waitForResponse((candidate) =>
@@ -269,6 +392,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
     );
     await historyCard.getByRole("button", { name: "Pulihkan ucapan" }).click();
     expect((await restoreResponsePromise).status()).toBe(200);
+    expect(await readGuestbookModerationAuditActions(hiddenEntryId)).toContain("admin.content_report.restored");
     await page.goto(`/${invitationSlug}`);
     await expect(page.locator(".guestbook-entry").filter({ hasText: guestbookMessage })).toBeVisible();
 
@@ -280,7 +404,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
     );
     await page.getByRole("button", { name: "Kirim laporan" }).click();
     expect((await secondReportResponsePromise).status()).toBe(201);
-    await reviewerPage.getByRole("button", { name: "Perlu ditinjau" }).click();
+    await guestbookModeration.getByRole("button", { name: "Perlu ditinjau" }).click();
     const repeatedReportCard = reviewerPage.locator(".admin-report-card").filter({ hasText: guestbookMessage });
     const dismissResponsePromise = reviewerPage.waitForResponse((candidate) =>
       candidate.url().includes("/api/admin/content-reports/") && candidate.request().method() === "PATCH",
@@ -289,6 +413,68 @@ test("public guest flows and marketplace page view metrics work, and content rev
     expect((await dismissResponsePromise).status()).toBe(200);
     await page.reload();
     await expect(page.locator(".guestbook-entry").filter({ hasText: guestbookMessage })).toBeVisible();
+
+    const reporterAddress = `203.0.113.${(Number.parseInt(randomUUID().slice(0, 2), 16) % 254) + 1}`;
+    await page.route(`**/api/public/invitations/${invitationSlug}/reports`, async (route) => {
+      await route.continue({ headers: { ...route.request().headers(), "x-forwarded-for": reporterAddress } });
+    });
+    await page.getByRole("button", { name: "Laporkan undangan" }).click();
+    const publicReportForm = page.locator(".public-invitation-report-form");
+    await expect(publicReportForm).toBeVisible();
+    const invitationReportReason = page.getByLabel("Alasan laporan");
+    await expect(invitationReportReason).toHaveValue("");
+    expect(await invitationReportReason.evaluate((element) => !(element as HTMLSelectElement).checkValidity())).toBe(true);
+    let unselectedReportRequests = 0;
+    const countUnselectedReportRequest = (request: Request) => {
+      if (request.url().endsWith(`/api/public/invitations/${invitationSlug}/reports`) && request.method() === "POST") unselectedReportRequests += 1;
+    };
+    page.on("request", countUnselectedReportRequest);
+    await page.getByRole("button", { name: "Kirim laporan" }).click();
+    expect(unselectedReportRequests).toBe(0);
+    expect(await invitationReportReason.evaluate((element) => (element as HTMLSelectElement).validationMessage))
+      .toBe("Pilih satu alasan laporan sebelum mengirim.");
+    page.off("request", countUnselectedReportRequest);
+    await page.getByLabel("Alasan laporan").selectOption("PERSONAL_INFORMATION");
+    await page.getByRole("button", { name: "Batal" }).click();
+    await expect(publicReportForm).toBeHidden();
+    await page.getByRole("button", { name: "Laporkan undangan" }).click();
+    await expect(page.getByLabel("Alasan laporan")).toHaveValue("PERSONAL_INFORMATION");
+    const invitationReportPromise = page.waitForResponse((candidate) =>
+      candidate.url().endsWith(`/api/public/invitations/${invitationSlug}/reports`) && candidate.request().method() === "POST",
+    );
+    await page.getByRole("button", { name: "Kirim laporan" }).click();
+    expect((await invitationReportPromise).status()).toBe(201);
+    await expect(page.locator(".public-invitation-report [role='status']")).toContainText("Laporan diterima untuk ditinjau");
+    expect((await page.request.get("/api/admin/invitation-reports")).status()).toBe(403);
+
+    const invitationReportsResponse = await reviewerPage.request.get("/api/admin/invitation-reports");
+    expect(invitationReportsResponse.status()).toBe(200);
+    const invitationReportsBody = await invitationReportsResponse.json() as { reports: Array<Record<string, unknown>> };
+    expect(invitationReportsBody.reports.some((report) => JSON.stringify(report).includes(invitationSlug))).toBe(true);
+    expect(JSON.stringify(invitationReportsBody)).not.toContain("reporterFingerprint");
+    const invitationModeration = reviewerPage.locator(".admin-content-moderation").nth(1);
+    await invitationModeration.getByRole("button", { name: "Perlu ditinjau" }).click();
+    const invitationReportCard = reviewerPage.locator(".admin-report-card").filter({ hasText: invitationSlug });
+    await expect(invitationReportCard).toBeVisible();
+    const suspendResponsePromise = reviewerPage.waitForResponse((candidate) =>
+      candidate.url().includes("/api/admin/invitation-reports/") && candidate.request().method() === "PATCH",
+    );
+    reviewerPage.once("dialog", (dialog) => dialog.accept());
+    await invitationReportCard.getByRole("button", { name: "Tangguhkan halaman" }).click();
+    expect((await suspendResponsePromise).status()).toBe(200);
+    expect(await readInvitationModerationAuditActions(invitationId)).toContain("admin.invitation_report.hidden");
+    expect((await page.goto(`/${invitationSlug}`))?.status()).toBe(404);
+
+    await invitationModeration.getByRole("button", { name: "Riwayat 30 hari" }).click();
+    const hiddenInvitationCard = invitationModeration.locator(".admin-report-card").filter({ hasText: invitationSlug }).filter({ hasText: "Halaman ditangguhkan" }).first();
+    await expect(hiddenInvitationCard).toContainText("Halaman ditangguhkan");
+    const restoreInvitationPromise = reviewerPage.waitForResponse((candidate) =>
+      candidate.url().includes("/api/admin/invitation-reports/") && candidate.request().method() === "PATCH",
+    );
+    await hiddenInvitationCard.getByRole("button", { name: "Pulihkan undangan" }).click();
+    expect((await restoreInvitationPromise).status()).toBe(200);
+    expect(await readInvitationModerationAuditActions(invitationId)).toContain("admin.invitation_report.restored");
+    expect((await page.goto(`/${invitationSlug}`))?.status()).toBe(200);
   } finally {
     await reviewerContext.close();
   }

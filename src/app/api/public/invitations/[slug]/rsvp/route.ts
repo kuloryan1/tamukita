@@ -5,6 +5,8 @@ import { allowRequest, getRequestAddress } from "@/lib/rate-limit";
 import { getPrismaClient } from "@/lib/prisma";
 import { readJsonBody } from "@/lib/request-json";
 import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
+import { childDataConsentRecord, CHILD_DATA_CONSENT_ERROR, guardianConsentMatchesChildData } from "@/lib/child-data-consent";
+import { RSVP_CHILD_DATA_GUARDIAN_CONSENT_VERSION } from "@/lib/consent-versions";
 
 export const runtime = "nodejs";
 
@@ -13,14 +15,17 @@ const rsvpSchema = z.object({
   guestToken: z.string().regex(/^[A-Za-z0-9_-]{43}$/).optional(),
   attendance: z.enum(["ATTENDING", "DECLINED"]),
   attendeeCount: z.number().int().min(1).max(10).default(1),
-}).refine((value) => value.guestToken || value.name, { message: "Nama tamu diperlukan." });
+  includesChildData: z.boolean().default(false),
+  guardianConsent: z.boolean().default(false),
+}).refine((value) => value.guestToken || value.name, { message: "Nama tamu diperlukan." })
+  .refine((value) => guardianConsentMatchesChildData(value.includesChildData, value.guardianConsent), { message: CHILD_DATA_CONSENT_ERROR });
 
 export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const body = await readJsonBody(request, 16_000);
   if (!body.ok) return NextResponse.json({ error: "Isi RSVP tidak valid." }, { status: body.status });
   const parsed = rsvpSchema.safeParse(body.value);
-  if (!parsed.success) return NextResponse.json({ error: "Isi nama dan pilihan kehadiran dengan benar." }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: `Isi nama dan pilihan kehadiran dengan benar. ${CHILD_DATA_CONSENT_ERROR}` }, { status: 400 });
   const prisma = getPrismaClient();
   const invitation = await prisma.invitation.findFirst({
     where: { slug, status: "PUBLISHED", deletedAt: null, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }], organization: { status: "ACTIVE" } },
@@ -60,11 +65,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
       await tx.$queryRaw<Array<{ id: string }>>`SELECT "id" FROM "guests" WHERE "id" = ${guestId}::uuid FOR UPDATE`;
       const previous = await tx.rSVP.findFirst({ where: { invitationId: invitation.id, guestId }, select: { id: true } });
       if (previous) {
-        await tx.rSVP.update({ where: { id: previous.id }, data: { displayName, attendance: parsed.data.attendance, attendeeCount: parsed.data.attendeeCount, respondedAt } });
+        await tx.rSVP.update({ where: { id: previous.id }, data: { displayName, attendance: parsed.data.attendance, attendeeCount: parsed.data.attendeeCount, respondedAt, ...childDataConsentRecord(parsed.data.includesChildData, RSVP_CHILD_DATA_GUARDIAN_CONSENT_VERSION, respondedAt) } });
         rsvpId = previous.id;
       } else {
         const createdRsvp = await tx.rSVP.create({
-          data: { invitationId: invitation.id, guestId, displayName, attendance: parsed.data.attendance, attendeeCount: parsed.data.attendeeCount, respondedAt },
+          data: { invitationId: invitation.id, guestId, displayName, attendance: parsed.data.attendance, attendeeCount: parsed.data.attendeeCount, respondedAt, ...childDataConsentRecord(parsed.data.includesChildData, RSVP_CHILD_DATA_GUARDIAN_CONSENT_VERSION, respondedAt) },
           select: { id: true },
         });
         rsvpId = createdRsvp.id;
@@ -72,7 +77,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
       }
     } else {
       const createdRsvp = await tx.rSVP.create({
-        data: { invitationId: invitation.id, displayName, attendance: parsed.data.attendance, attendeeCount: parsed.data.attendeeCount, respondedAt },
+        data: { invitationId: invitation.id, displayName, attendance: parsed.data.attendance, attendeeCount: parsed.data.attendeeCount, respondedAt, ...childDataConsentRecord(parsed.data.includesChildData, RSVP_CHILD_DATA_GUARDIAN_CONSENT_VERSION, respondedAt) },
         select: { id: true },
       });
       rsvpId = createdRsvp.id;

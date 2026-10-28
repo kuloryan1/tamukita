@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator, type Route } from "@playwright/test";
 
 test("admin creates customer drafts and notifies an existing customer", async ({ page, browser }) => {
   test.setTimeout(60_000);
@@ -79,30 +79,64 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   await page.goto(new URL("/admin/audit?q=admin.user_platform_role_changed", page.url()).toString());
   expect(await page.getByText("admin · user_platform_role_changed", { exact: true }).count()).toBeGreaterThanOrEqual(2);
   await page.goto("/admin");
-  await page.getByRole("link", { name: "Paket" }).click();
-  await expect(page.getByRole("heading", { name: "Paket dan entitlement" })).toBeVisible();
+  const initialPlanListUrl = /\/api\/admin\/plans\?q=&page=1$/;
+  let releaseInitialPlanList!: () => void;
+  let signalInitialPlanListFetched!: () => void;
+  const initialPlanListGate = new Promise<void>((resolve) => { releaseInitialPlanList = resolve; });
+  const initialPlanListFetched = new Promise<void>((resolve) => { signalInitialPlanListFetched = resolve; });
+  let initialPlanListHeld = false;
   const planKey = `e2e-${randomUUID().slice(0, 8)}`;
-  await page.getByLabel("Kode paket").fill(planKey);
-  await page.getByLabel("Nama paket").fill("Paket uji E2E");
-  await page.getByLabel("Deskripsi").fill("Paket konfigurasi uji");
-  await page.getByLabel("Harga (IDR)").fill("10000");
-  await page.getByLabel("Masa berlaku (hari)").fill("90");
-  await page.getByLabel("Entitlement JSON").fill('{"gallery.limit":6,"music":true}');
-  const activePlanCreation = await page.request.post(new URL("/api/admin/plans", page.url()).toString(), { data: { key: planKey, name: "Paket aktif langsung", description: null, priceIdr: 10000, durationDays: 90, isActive: true, entitlements: [] } });
-  expect(activePlanCreation.status()).toBe(400);
-  const invalidPlan = await page.request.post(new URL("/api/admin/plans", page.url()).toString(), { data: { key: planKey, name: "Paket invalid", description: null, priceIdr: 10000, durationDays: 90, entitlements: [{ featureKey: "music", value: true }, { featureKey: "music", value: false }] } });
-  expect(invalidPlan.status()).toBe(400);
-  const reservedEntitlementPlan = await page.request.post(new URL("/api/admin/plans", page.url()).toString(), { data: { key: planKey, name: "Paket invalid", description: null, priceIdr: 10000, durationDays: 90, entitlements: [{ featureKey: "hosting", value: { periodDays: 90 } }] } });
-  expect(reservedEntitlementPlan.status()).toBe(400);
-  const planCreationPromise = page.waitForResponse((response) => response.url().endsWith("/api/admin/plans") && response.request().method() === "POST");
-  await page.getByRole("button", { name: "Buat paket" }).click();
-  const planCreation = await planCreationPromise;
-  expect(planCreation.status()).toBe(201);
-  const createdPlan = await planCreation.json() as { plan: { id: string; isActive: boolean; priceIdr: number; updatedAt: string } };
-  expect(createdPlan.plan.isActive).toBe(false);
-  expect(createdPlan.plan.priceIdr).toBe(10_000);
-  const planRow = page.getByTestId(`admin-plan-row-${createdPlan.plan.id}`);
-  await expect(planRow).toBeVisible();
+  const holdInitialPlanList = async (route: Route) => {
+    const url = new URL(route.request().url());
+    if (!initialPlanListHeld && route.request().method() === "GET" && url.pathname === "/api/admin/plans" && url.searchParams.get("q") === "" && url.searchParams.get("page") === "1") {
+      initialPlanListHeld = true;
+      const response = await route.fetch();
+      signalInitialPlanListFetched();
+      await initialPlanListGate;
+      await route.fulfill({ response });
+      return;
+    }
+    await route.continue();
+  };
+  let createdPlan!: { plan: { id: string; isActive: boolean; priceIdr: number; updatedAt: string } };
+  let planRow!: Locator;
+  await page.route("**/api/admin/plans?*", holdInitialPlanList);
+  try {
+    await page.getByRole("link", { name: "Paket" }).click();
+    await expect(page.getByRole("heading", { name: "Paket dan entitlement" })).toBeVisible();
+    await initialPlanListFetched;
+    await page.getByLabel("Kode paket").fill(planKey);
+    await page.getByLabel("Nama paket").fill("Paket uji E2E");
+    await page.getByLabel("Deskripsi").fill("Paket konfigurasi uji");
+    await page.getByLabel("Harga (IDR)").fill("10000");
+    await page.getByLabel("Masa berlaku (hari)").fill("90");
+    await page.getByLabel("Entitlement JSON").fill('{"gallery.limit":6,"music":true}');
+    const activePlanCreation = await page.request.post(new URL("/api/admin/plans", page.url()).toString(), { data: { key: planKey, name: "Paket aktif langsung", description: null, priceIdr: 10000, durationDays: 90, isActive: true, entitlements: [] } });
+    expect(activePlanCreation.status()).toBe(400);
+    const invalidPlan = await page.request.post(new URL("/api/admin/plans", page.url()).toString(), { data: { key: planKey, name: "Paket invalid", description: null, priceIdr: 10000, durationDays: 90, entitlements: [{ featureKey: "music", value: true }, { featureKey: "music", value: false }] } });
+    expect(invalidPlan.status()).toBe(400);
+    const reservedEntitlementPlan = await page.request.post(new URL("/api/admin/plans", page.url()).toString(), { data: { key: planKey, name: "Paket invalid", description: null, priceIdr: 10000, durationDays: 90, entitlements: [{ featureKey: "hosting", value: { periodDays: 90 } }] } });
+    expect(reservedEntitlementPlan.status()).toBe(400);
+    const planCreationPromise = page.waitForResponse((response) => response.url().endsWith("/api/admin/plans") && response.request().method() === "POST");
+    await page.getByRole("button", { name: "Buat paket" }).click();
+    const planCreation = await planCreationPromise;
+    expect(planCreation.status()).toBe(201);
+    createdPlan = await planCreation.json() as { plan: { id: string; isActive: boolean; priceIdr: number; updatedAt: string } };
+    expect(createdPlan.plan.isActive).toBe(false);
+    expect(createdPlan.plan.priceIdr).toBe(10_000);
+    planRow = page.getByTestId(`admin-plan-row-${createdPlan.plan.id}`);
+    await expect(planRow).toBeVisible();
+    const stalePlanListResponse = page.waitForResponse((response) => initialPlanListUrl.test(response.url()) && response.request().method() === "GET");
+    releaseInitialPlanList();
+    const stalePlanList = await stalePlanListResponse;
+    const stalePlanPayload = await stalePlanList.json() as { plans: Array<{ id: string }> };
+    expect(stalePlanPayload.plans.some((plan) => plan.id === createdPlan.plan.id)).toBe(false);
+    await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+    await expect(planRow).toBeVisible();
+  } finally {
+    releaseInitialPlanList();
+    await page.unroute("**/api/admin/plans?*", holdInitialPlanList);
+  }
   await planRow.getByRole("button", { name: "Edit paket Paket uji E2E" }).click();
   await page.getByLabel("Harga (IDR)").fill("12000");
   await page.getByLabel("Entitlement JSON").fill('{"gallery.limit":6,"music":true,"rsvp.enabled":true}');
@@ -198,9 +232,38 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   const onboardingEmailResponse = await page.request.get(`http://127.0.0.1:3140/messages?to=${encodeURIComponent(customerEmail)}`);
   expect(onboardingEmailResponse.status()).toBe(200);
   const onboardingEmailPayload = await onboardingEmailResponse.json() as { messages: Array<{ subject: string; text: string }> };
-  expect(onboardingEmailPayload.messages.some((message) =>
-    message.subject === "Atur kata sandi TamuKita" && message.text.includes(`${new URL(page.url()).origin}/reset-password?token=`),
-  )).toBe(true);
+  const onboardingMessage = onboardingEmailPayload.messages.find((message) => message.subject === "Atur kata sandi TamuKita");
+  expect(onboardingMessage?.text).toContain(`${new URL(page.url()).origin}/reset-password?token=`);
+  const onboardingUrl = onboardingMessage?.text.match(/https?:\/\/[^\s]+\/reset-password\?token=[A-Za-z0-9_-]{43}/)?.[0];
+  expect(onboardingUrl).toBeTruthy();
+  if (!onboardingUrl) throw new Error("The onboarding email did not contain a valid password setup link.");
+  const onboardingContext = await browser.newContext({ baseURL: new URL(page.url()).origin });
+  const onboardingPage = await onboardingContext.newPage();
+  try {
+    await onboardingPage.goto(onboardingUrl);
+    const onboardingPassword = `TamuKita-${suffix}-Password`;
+    await onboardingPage.getByLabel("Kata sandi baru").fill(onboardingPassword);
+    await onboardingPage.getByLabel("Ulangi kata sandi").fill(onboardingPassword);
+    const resetToken = new URL(onboardingUrl).searchParams.get("token");
+    if (!resetToken) throw new Error("The onboarding link did not include its reset token.");
+    const missingAgeAttestation = await onboardingPage.request.post("/api/auth/password/reset", {
+      data: { token: resetToken, password: onboardingPassword, adultAttested: false },
+    });
+    expect(missingAgeAttestation.status()).toBe(400);
+    await onboardingPage.getByRole("checkbox", { name: "Saya menyatakan berusia 18 tahun ke atas dan membuat akun ini untuk digunakan sendiri." }).check();
+    const resetResponsePromise = onboardingPage.waitForResponse((response) =>
+      response.url().endsWith("/api/auth/password/reset") && response.request().method() === "POST",
+    );
+    await onboardingPage.getByRole("button", { name: "Simpan kata sandi" }).click();
+    expect((await resetResponsePromise).status()).toBe(200);
+    await onboardingPage.goto("/login");
+    await onboardingPage.getByLabel("Alamat email").fill(customerEmail);
+    await onboardingPage.getByLabel("Kata sandi").fill(onboardingPassword);
+    await onboardingPage.getByRole("button", { name: "Masuk" }).click();
+    await onboardingPage.waitForURL(/\/dashboard(?:\/|$)/);
+  } finally {
+    await onboardingContext.close();
+  }
   await expect(page.getByRole("status")).toContainText("Akun pelanggan dibuat");
 
   const existingInvitationSlug = `e2e-managed-existing-${suffix}`;
