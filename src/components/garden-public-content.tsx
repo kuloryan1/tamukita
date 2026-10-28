@@ -26,11 +26,11 @@ export function GardenPublicContent({ draft, dateString, mapsUrl, slug, recipien
     { name: "burgundy", color: "#73303b" },
   ].filter(({ name }) => fields.dressCode?.toLowerCase().includes(name));
   const schedule = [
-    { label: "Guest arrival", time: fields.guestArrivalTime },
-    { label: draft.eventKind === "Pernikahan" ? "Ceremony" : "Main event", time: fields.ceremonyTime || draft.eventTime },
-    { label: "Mocktail hour", time: fields.mocktailTime },
-    { label: "Dinner", time: fields.dinnerTime },
-    { label: "Dancing", time: fields.danceTime },
+    { label: "Kedatangan tamu", time: fields.guestArrivalTime },
+    { label: draft.eventKind === "Pernikahan" ? "Prosesi pernikahan" : "Acara utama", time: fields.ceremonyTime || draft.eventTime },
+    { label: "Jamuan pembuka", time: fields.mocktailTime },
+    { label: "Makan malam", time: fields.dinnerTime },
+    { label: "Tarian", time: fields.danceTime },
   ].filter((item) => item.time);
   const mapQuery = [draft.venue, draft.address].filter(Boolean).join(", ");
 
@@ -52,7 +52,7 @@ export function GardenPublicContent({ draft, dateString, mapsUrl, slug, recipien
 
     <section className="garden-events-section garden-paper" id="detail-acara" aria-labelledby="garden-events-title">
       <div className="garden-public-inner" data-garden-reveal>
-        <h2 id="garden-events-title">Schedule of Events</h2>
+        <h2 id="garden-events-title">Rangkaian Acara</h2>
         <p className="garden-section-date">{dateString}</p>
         <ol className="garden-event-list">
           {schedule.map((item, index) => <li className="garden-event-row" key={item.label}>
@@ -66,7 +66,7 @@ export function GardenPublicContent({ draft, dateString, mapsUrl, slug, recipien
 
     <section className="garden-location-section" aria-labelledby="garden-location-title">
       <div className="garden-public-inner garden-location-card" data-garden-reveal>
-        <h2 id="garden-location-title">Location</h2>
+        <h2 id="garden-location-title">Lokasi</h2>
         <GardenFlourish />
         <h3>{draft.venue || "Lokasi acara"}</h3>
         <p>{draft.address || "Lokasi acara akan diumumkan."}</p>
@@ -88,13 +88,13 @@ export function GardenPublicContent({ draft, dateString, mapsUrl, slug, recipien
       <div className="garden-public-inner garden-notes-grid">
         {fields.dressCode && <article className="garden-note garden-paper" data-garden-reveal>
           <GardenFlourish />
-          <h2>Dress Code</h2>
+          <h2>Panduan Busana</h2>
           <p>{fields.dressCode}</p>
           {palette.length > 0 && <div className="garden-color-palette" role="img" aria-label={`Warna inspirasi: ${palette.map(({ name }) => name).join(", ")}`}>{palette.map(({ name, color }) => <span key={name} style={{ backgroundColor: color }} />)}</div>}
         </article>}
         {fields.giftPreference && <article className="garden-note garden-paper" data-garden-reveal>
           <GardenRose />
-          <h2>Gift Preference</h2>
+          <h2>Preferensi Hadiah</h2>
           <p>{fields.giftPreference}</p>
           <GardenFlourish />
         </article>}
@@ -104,7 +104,7 @@ export function GardenPublicContent({ draft, dateString, mapsUrl, slug, recipien
     {featureAccess.rsvp && <section className="garden-rsvp-section" id="rsvp" aria-labelledby="garden-rsvp-title">
       <div className="garden-public-inner" data-garden-reveal>
         <span className="garden-rsvp-envelope" aria-hidden="true"><span>{hostNames.map((name) => name.charAt(0)).join(" & ")}</span></span>
-        <h2 id="garden-rsvp-title">Confirm Your Attendance</h2>
+        <h2 id="garden-rsvp-title">Konfirmasi Kehadiran</h2>
         <p>Kabar kehadiran Anda melengkapi kebahagiaan kami.<br />Sampai bertemu di hari istimewa.</p>
         {isExample
           ? <span className="public-rsvp-demo-status" role="status">Contoh undangan · RSVP nonaktif</span>

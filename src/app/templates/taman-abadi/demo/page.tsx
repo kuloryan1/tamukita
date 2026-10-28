@@ -33,7 +33,7 @@ export default function TamanAbadiDemoPage() {
       mocktailTime: "14:00",
       dinnerTime: "17:00",
       danceTime: "19:30",
-      dressCode: "Garden formal. Sentuhan warna sage, champagne, atau burgundy akan terasa serasi dengan taman.",
+      dressCode: "Busana formal bernuansa taman. Sentuhan warna sage, champagne, atau burgundy akan terasa serasi.",
       giftPreference: "Kehadiran dan doa restu Anda adalah hadiah yang paling berarti bagi kami.",
     },
   };

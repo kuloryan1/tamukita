@@ -88,7 +88,7 @@
 .garden-petals i:nth-child(4) { left: 85%; animation-delay: 5.4s; }
 .garden-petals i:nth-child(5) { left: 9%; animation-delay: 7.2s; }
 
-.garden-story { font-family: var(--garden-serif); margin: 0 auto; max-width: 590px; padding: 0 18px; text-align: center; }
+.garden-story { font-family: var(--garden-serif); margin: 0 auto; max-width: 476px; padding: 0 18px; text-align: center; }
 .garden-public-inner { margin: 0 auto; max-width: 460px; position: relative; text-align: center; z-index: 1; }
 .garden-story h2 { color: var(--garden-gold); font-family: var(--garden-script); font-size: 42px; font-style: normal; font-weight: 400; letter-spacing: 0; line-height: 1.25; margin: 0 0 18px; }
 .garden-story p { color: var(--garden-text); font-family: var(--garden-serif); font-size: 21px; line-height: 1.45; margin: 0 auto; max-width: 380px; }

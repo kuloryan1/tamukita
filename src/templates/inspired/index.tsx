@@ -112,7 +112,8 @@ export function TamanAbadiTemplate({ draft, recipientName, full = false, mode }:
   const hostNames = [draft.hostOne, draft.hostTwo].filter(Boolean);
   const Heading = mode === "public" ? "h1" : "h2";
   const [year, month, day] = draft.eventDate.slice(0, 10).split("-");
-  const shortDate = year && month && day ? `${day}.${month}.${year.slice(-2)}` : "DATE TO BE ANNOUNCED";
+  const shortDate = year && month && day ? `${day}.${month}.${year.slice(-2)}` : "Tanggal menyusul";
+  const coverLabel = draft.eventKind === "Pernikahan" ? "Hari Pernikahan" : draft.eventKind;
   const coverStyle = invitationCoverStyle(draft);
   const backgroundStyle = draft.coverPhoto
     ? coverStyle
@@ -123,14 +124,14 @@ export function TamanAbadiTemplate({ draft, recipientName, full = false, mode }:
         <span className="garden-photo-art" aria-hidden="true"><span className="garden-photo-drift" style={backgroundStyle} /></span>
         {!draft.coverPhoto && <span className="garden-petals" aria-hidden="true"><i /><i /><i /><i /><i /></span>}
         <div className="garden-copy">
-          <span className="garden-kicker">Wedding Day</span>
+          <span className="garden-kicker">{coverLabel}</span>
           <time>{shortDate}</time>
           <Heading className="garden-copy-heading" tabIndex={mode === "public" ? -1 : undefined}>{draft.eventKind === "Pernikahan" && hostNames.length > 0
             ? <><span>{hostNames[0]}</span>{hostNames[1] && <><i aria-hidden="true">&amp;</i><span>{hostNames[1]}</span></>}</>
             : <span>{invitationTitle(draft)}</span>}
           </Heading>
           {mode !== "public" && <span className="garden-copy-note">{draft.eventKind === "Pernikahan" ? invitationDate(draft.eventDate) : invitationKicker(draft)}</span>}
-          {mode === "public" ? <a href="#countdown" className="garden-scroll-cue">Scroll down <span aria-hidden="true">↓</span></a> : <span className="garden-scroll-cue">SCROLL TO EXPLORE <span aria-hidden="true">↓</span></span>}
+          {mode === "public" ? <a href="#countdown" className="garden-scroll-cue">Gulir ke bawah <span aria-hidden="true">↓</span></a> : <span className="garden-scroll-cue">Gulir untuk melihat <span aria-hidden="true">↓</span></span>}
         </div>
       </div>
       <InvitationDetailsPanel draft={draft} recipientName={recipientName} className="garden-details" message="Dengan penuh syukur, kami menantikan kehadiran Anda untuk merayakan hari istimewa ini bersama." />
