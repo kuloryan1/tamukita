@@ -64,7 +64,9 @@ Daftar vendor yang dipilih untuk rancangan produksi adalah:
 
 - **Dokploy-managed VPS** untuk aplikasi, worker, PostgreSQL, dan Redis. Nama penyedia VPS dan lokasi fisik region belum tercatat pada bukti repo.
 - **Cloudflare** untuk DNS, Tunnel, dan R2. Bucket R2 staging terverifikasi di Automatic Asia-Pacific; keputusan target produksi adalah R2 Asia-Pacific. Cloudflare dapat memproses data jaringan secara global, jadi pilihan region bucket bukan janji bahwa seluruh pemrosesan terjadi di Indonesia.
-- **Xendit** untuk sesi pembayaran dan refund.
+- **Bank/e-wallet dan pengelola QRIS tujuan** untuk menerima pembayaran QR manual; operator harus mencatat identitas merchant dan penyedia QRIS sebelum rilis.
+- **WhatsApp** jika pembeli memilih tautan pengiriman bukti: tautan memuat nomor order dan nominal; pembeli memilih sendiri bukti yang dikirim.
+- **Xendit** untuk sesi pembayaran dan refund bila mode gateway diaktifkan; order QR manual baru tidak dikirim ke Xendit.
 - **Resend** untuk email transaksional bila diaktifkan.
 - **GitHub Actions** untuk CI; workflow staging menggunakan akun/data sintetis `.invalid` dan tidak boleh menerima data pelanggan nyata.
 

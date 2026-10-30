@@ -1,0 +1,183 @@
+import { randomUUID } from "node:crypto";
+import { expect, test, type Page } from "@playwright/test";
+import { Pool } from "pg";
+import sharp from "sharp";
+import { createInitialDraft } from "../src/lib/invitations";
+
+async function signIn(page: Page, email: string, password: string) {
+  await page.goto("/login");
+  await page.getByLabel("Alamat email").fill(email);
+  await page.getByLabel("Kata sandi").fill(password);
+  await page.getByRole("button", { name: "Masuk" }).click();
+  await page.waitForURL(/\/dashboard(?:\/|$)/);
+}
+
+test("manual QR orders require admin verification, settle once, renew, and refund credits without a gateway", async ({ page, browser, request }, testInfo) => {
+  test.setTimeout(180_000);
+  test.skip(testInfo.project.name !== "desktop-chromium", "The payment mutation scenario runs once per disposable database.");
+  const databaseUrl = process.env.DATABASE_URL;
+  const adminEmail = process.env.E2E_ADMIN_EMAIL;
+  const adminPassword = process.env.E2E_ADMIN_PASSWORD;
+  const customerEmail = process.env.E2E_CUSTOMER_EMAIL;
+  const customerPassword = process.env.E2E_CUSTOMER_PASSWORD;
+  const resellerEmail = process.env.E2E_REFUND_RESELLER_EMAIL;
+  const resellerPassword = process.env.E2E_REFUND_RESELLER_PASSWORD;
+  const otherEmail = process.env.E2E_OTHER_CUSTOMER_EMAIL;
+  const otherPassword = process.env.E2E_OTHER_CUSTOMER_PASSWORD;
+  if (!databaseUrl || !adminEmail || !adminPassword || !customerEmail || !customerPassword || !resellerEmail || !resellerPassword || !otherEmail || !otherPassword) {
+    test.skip(true, "Requires disposable database and fixture accounts."); return;
+  }
+  const dbUrl = new URL(databaseUrl); dbUrl.searchParams.delete("schema");
+  const localDisposable = ["localhost", "127.0.0.1"].includes(dbUrl.hostname) && dbUrl.pathname === "/tamukita_manual_e2e" && process.env.E2E_ALLOW_DESTRUCTIVE === "1";
+  const ciDisposable = process.env.CI === "true" && dbUrl.hostname === "postgres" && dbUrl.pathname === "/tamukita";
+  if (!localDisposable && !ciDisposable) throw new Error("Manual payment E2E requires the explicitly allowed disposable database.");
+  const pool = new Pool({ connectionString: dbUrl.toString() });
+  const customerContext = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
+  const otherContext = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
+  const resellerContext = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
+  const customer = await customerContext.newPage();
+  const other = await otherContext.newPage();
+  const reseller = await resellerContext.newPage();
+  await signIn(page, adminEmail, adminPassword);
+  const previous = await (await page.request.get("/api/admin/settings")).json();
+  const marker = randomUUID().slice(0, 8);
+  try {
+    await signIn(customer, customerEmail, customerPassword);
+    await signIn(other, otherEmail, otherPassword);
+    await signIn(reseller, resellerEmail, resellerPassword);
+    const qr = await sharp(Buffer.from('<svg width="400" height="500" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="500" fill="white"/><text x="30" y="80" font-size="24">QA ONLY</text><text x="30" y="120" font-size="16">BUKAN QR PEMBAYARAN</text></svg>')).png().toBuffer();
+    expect((await customer.request.post("/api/admin/settings/payment-qr", { headers: { "content-type": "image/png" }, data: qr })).status()).toBe(403);
+    expect((await page.request.patch("/api/admin/settings", { data: { paymentMode: "manual", manualQrImageUrl: "https://untrusted.example/qr.png" } })).status()).toBe(400);
+    const incomplete = await page.request.patch("/api/admin/settings", { data: { paymentMode: "manual", manualQrImageUrl: "", manualWhatsapp: "", hostingRenewalIdr: 49_000 } });
+    expect(incomplete.status()).toBe(200);
+
+    const { id: _id, updatedAt: _updatedAt, ...draft } = createInitialDraft();
+    const create = await customer.request.post("/api/invitations/drafts", { data: draft });
+    expect(create.status()).toBe(201);
+    const created = (await create.json()).draft;
+    const slug = `manual-qa-${marker}`;
+    expect((await customer.request.patch(`/api/invitations/${created.id}`, { data: { ...created, slug } })).status()).toBe(200);
+    const catalog = await (await customer.request.get("/api/customer/plans")).json();
+    const plan = catalog.plans[0];
+    const selection = plan ? { planId: plan.id, planUpdatedAt: plan.updatedAt } : {};
+    expect((await customer.request.post(`/api/invitations/${created.id}/publish`, { data: selection })).status()).toBe(503);
+    await page.goto("/admin/settings");
+    const qrUpload = page.waitForResponse(response => response.url().endsWith("/api/admin/settings/payment-qr") && response.request().method() === "POST", { timeout: 15_000 });
+    await page.getByLabel("QRIS pembayaran asli").setInputFiles({ name: "qa-only.png", mimeType: "image/png", buffer: qr });
+    const uploaded = await qrUpload;
+    expect(uploaded.status()).toBe(201);
+    const { url: qrImageUrl } = await uploaded.json();
+    await page.getByLabel("WhatsApp konfirmasi pembayaran").fill("6280000000000");
+    const saveSettings = page.waitForResponse(response => response.url().endsWith("/api/admin/settings") && response.request().method() === "PATCH", { timeout: 15_000 });
+    await page.getByRole("button", { name: "Simpan pembayaran" }).click();
+    const configured = await saveSettings;
+    expect(configured.status()).toBe(200);
+    expect((await configured.json()).payment.ready).toBe(true);
+    await expect(page.getByText("Pembayaran tersimpan dan siap untuk order baru.")).toBeVisible();
+    await page.locator(".admin-payment-settings").screenshot({ path: testInfo.outputPath("manual-payment-settings.png") });
+
+    const checkout = await customer.request.post(`/api/invitations/${created.id}/publish`, { data: selection });
+    expect(checkout.status()).toBe(200);
+    const payment = await checkout.json();
+    expect(payment.paymentMode).toBe("manual");
+    expect(payment.checkoutUrl).toBe(`/dashboard/payments/${payment.orderId}`);
+    expect((await (await customer.request.post(`/api/invitations/${created.id}/publish`, { data: selection })).json()).checkoutUrl).toBe(payment.checkoutUrl);
+    const order = await (await customer.request.get(`/api/orders/${payment.orderId}/payment`)).json();
+    expect(order.status).toBe("PENDING");
+    expect((await request.get(`/api/orders/${payment.orderId}/payment`)).status()).toBe(401);
+    expect((await other.request.get(`/api/orders/${payment.orderId}/payment`)).status()).toBe(404);
+    const confirmation = { action: "confirm", amountIdr: order.amountIdr, reference: `QR-IN-${marker}`, fundsReceived: true };
+    const confirmPath = `/api/admin/orders/${payment.orderId}/manual-payment`;
+    expect((await request.post(confirmPath, { data: confirmation })).status()).toBe(401);
+    expect((await customer.request.post(confirmPath, { data: confirmation })).status()).toBe(403);
+    expect((await page.request.post(confirmPath, { data: { ...confirmation, fundsReceived: false } })).status()).toBe(400);
+    expect((await page.request.post(confirmPath, { data: { ...confirmation, amountIdr: order.amountIdr - 1 } })).status()).toBe(409);
+    expect((await request.get(`/${slug}`)).status()).toBe(404);
+    expect((await page.request.patch("/api/admin/settings", { data: { manualWhatsapp: "6281111111111" } })).status()).toBe(200);
+    await customer.goto(payment.checkoutUrl);
+    await expect(customer.getByRole("heading", { name: "Pembayaran QR" })).toBeVisible();
+    await expect(customer.getByRole("link", { name: "Kirim bukti via WhatsApp" })).toHaveAttribute("href", /^https:\/\/wa\.me\/6280000000000\?text=/);
+    await expect(customer.getByAltText("QR pembayaran TamuKita untuk dipindai dengan aplikasi bank atau e-wallet")).toBeVisible();
+    await expect(customer.getByAltText("QR pembayaran TamuKita untuk dipindai dengan aplikasi bank atau e-wallet")).toHaveAttribute("src", qrImageUrl);
+    await customer.getByRole("button", { name: "Cek status pembayaran" }).click();
+    await customer.screenshot({ path: testInfo.outputPath("manual-payment-desktop.png"), fullPage: true });
+    await customer.setViewportSize({ width: 390, height: 844 });
+    expect(await customer.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await customer.screenshot({ path: testInfo.outputPath("manual-payment-mobile.png"), fullPage: true });
+
+    await page.goto("/admin/orders");
+    await page.getByLabel("Cari order").fill(payment.orderId);
+    const row = page.locator(".admin-order-row").filter({ hasText: payment.orderId });
+    await row.getByRole("button", { name: "Verifikasi QR" }).click();
+    const dialog = page.getByRole("dialog", { name: "Konfirmasi dana masuk" });
+    await dialog.getByLabel("Referensi transaksi pada mutasi").fill(confirmation.reference);
+    await dialog.getByRole("checkbox").check();
+    await dialog.screenshot({ path: testInfo.outputPath("manual-payment-verification.png") });
+    const confirmationResponse = page.waitForResponse(response => response.url().endsWith(confirmPath) && response.request().method() === "POST", { timeout: 15_000 });
+    await dialog.getByRole("button", { name: "Konfirmasi pembayaran & aktifkan" }).click();
+    expect((await confirmationResponse).status()).toBe(200);
+    await expect(row.getByText("Lunas", { exact: true })).toBeVisible();
+    expect(await (await page.request.post(confirmPath, { data: confirmation })).json()).toMatchObject({ status: "PAID", alreadyProcessed: true });
+    expect((await page.request.post(confirmPath, { data: { ...confirmation, reference: `OTHER-${marker}` } })).status()).toBe(409);
+    expect((await request.get(`/${slug}`)).status()).toBe(200);
+    const grants = await pool.query('SELECT COUNT(*)::int AS count FROM entitlements WHERE "orderId" = $1', [payment.orderId]);
+    expect(grants.rows[0].count).toBeGreaterThan(0);
+    const licenses = await pool.query('SELECT COUNT(*)::int AS count FROM template_licenses WHERE "invitationId" = $1', [created.id]);
+    expect(licenses.rows[0].count).toBe(1);
+    await customer.reload();
+    await expect(customer.getByText("Pembayaran terkonfirmasi", { exact: true })).toBeVisible();
+
+    const previousExpiry = new Date(Date.now() + 86_400_000);
+    await pool.query('UPDATE invitations SET "expiresAt" = $1 WHERE id = $2', [previousExpiry, created.id]);
+    const renewal = await customer.request.post(`/api/invitations/${created.id}/renew`);
+    expect(renewal.status()).toBe(200);
+    const renewalOrder = await renewal.json();
+    const renewalBody = { action: "confirm", amountIdr: 49_000, reference: `QR-RENEW-${marker}`, fundsReceived: true };
+    expect((await page.request.post(`/api/admin/orders/${renewalOrder.orderId}/manual-payment`, { data: renewalBody })).status()).toBe(200);
+    const expiry = await pool.query('SELECT "expiresAt" FROM invitations WHERE id = $1', [created.id]);
+    expect(expiry.rows[0].expiresAt.getTime()).toBeGreaterThan(previousExpiry.getTime());
+    await page.request.post(`/api/admin/orders/${renewalOrder.orderId}/manual-payment`, { data: renewalBody });
+    expect((await pool.query('SELECT "expiresAt" FROM invitations WHERE id = $1', [created.id])).rows[0].expiresAt).toEqual(expiry.rows[0].expiresAt);
+
+    const topupBody = { sku: "BASIC_ACTIVATION", quantity: 1 };
+    const topup = await reseller.request.post("/api/reseller/credits/checkout", { data: topupBody });
+    expect(topup.status()).toBe(200);
+    const topupOrder = await topup.json();
+    expect((await (await reseller.request.post("/api/reseller/credits/checkout", { data: topupBody })).json()).orderId).toBe(topupOrder.orderId);
+    const topupView = await (await reseller.request.get(`/api/orders/${topupOrder.orderId}/payment`)).json();
+    const topupConfirm = { ...confirmation, amountIdr: topupView.amountIdr };
+    expect((await page.request.post(`/api/admin/orders/${topupOrder.orderId}/manual-payment`, { data: topupConfirm })).status()).toBe(409);
+    topupConfirm.reference = `QR-TOPUP-${marker}`;
+    const simultaneous = await Promise.all([1, 2].map(() => page.request.post(`/api/admin/orders/${topupOrder.orderId}/manual-payment`, { data: topupConfirm })));
+    expect(simultaneous.some(response => response.status() === 200)).toBe(true);
+    expect(simultaneous.every(response => [200, 409].includes(response.status()))).toBe(true);
+    await page.request.post(`/api/admin/orders/${topupOrder.orderId}/manual-payment`, { data: topupConfirm });
+    expect((await pool.query('SELECT COUNT(*)::int AS count FROM credit_ledger WHERE "orderId" = $1 AND type = \'TOP_UP\'', [topupOrder.orderId])).rows[0].count).toBe(1);
+    const refundBody = { amount: topupView.amountIdr, reason: "REQUESTED_BY_CUSTOMER", manualTransferReference: `QR-REFUND-${marker}`, fundsReturned: true };
+    const refundPath = `/api/admin/orders/${topupOrder.orderId}/refunds`;
+    expect((await page.request.post(refundPath, { data: { ...refundBody, fundsReturned: false } })).status()).toBe(400);
+    expect((await page.request.post(refundPath, { data: refundBody })).status()).toBe(200);
+    expect(await (await page.request.post(refundPath, { data: refundBody })).json()).toMatchObject({ status: "SUCCEEDED", alreadyProcessed: true });
+    const ledger = await pool.query('SELECT SUM("unitsDelta")::int AS units FROM credit_ledger WHERE "orderId" = $1', [topupOrder.orderId]);
+    expect(ledger.rows[0].units).toBe(0);
+
+    const today = new Date().toISOString().slice(0, 10);
+    const reconciliation = await page.request.get(`/api/admin/orders/reconciliation?from=${today}&to=${today}`);
+    expect(reconciliation.status()).toBe(200);
+    const csv = await reconciliation.text();
+    expect(csv).toContain("manual_payment_reference");
+    expect(csv).toContain("manual_refund_reference");
+    expect(csv).toContain(confirmation.reference);
+    expect(csv).toContain(refundBody.manualTransferReference);
+
+    const cancelOrder = await (await reseller.request.post("/api/reseller/credits/checkout", { data: { ...topupBody, quantity: 2 } })).json();
+    const cancelPath = `/api/admin/orders/${cancelOrder.orderId}/manual-payment`;
+    expect((await page.request.post(cancelPath, { data: { action: "cancel", reason: "Order QA tidak dibayar" } })).status()).toBe(200);
+    expect((await page.request.post(cancelPath, { data: { ...topupConfirm, amountIdr: topupView.amountIdr * 2, reference: `QR-CANCELED-${marker}` } })).status()).toBe(409);
+    const manualSessions = await pool.query('SELECT provider, "providerSessionId" FROM payment_sessions WHERE "orderId" = ANY($1::uuid[])', [[payment.orderId, renewalOrder.orderId, topupOrder.orderId, cancelOrder.orderId]]);
+    expect(manualSessions.rows.every(row => row.provider === "MANUAL" && row.providerSessionId === null)).toBe(true);
+  } finally {
+    await page.request.patch("/api/admin/settings", { data: { paymentMode: previous.payment.mode, manualQrImageUrl: previous.payment.qrImageUrl, manualWhatsapp: previous.payment.whatsapp, hostingRenewalIdr: previous.prices.hostingRenewalIdr } });
+    await Promise.all([customerContext.close(), otherContext.close(), resellerContext.close(), pool.end()]);
+  }
+});

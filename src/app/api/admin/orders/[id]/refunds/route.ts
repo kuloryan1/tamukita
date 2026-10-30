@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { Prisma } from "@/generated/prisma/client";
 import { z } from "zod";
@@ -10,6 +10,7 @@ import { isUntrackedAdjustmentActivation } from "@/lib/credit-lots";
 import { getResellerCreditState, lockResellerCreditBalance } from "@/lib/reseller-credits";
 import { getXenditApiUrl } from "@/lib/xendit-api";
 import { getXenditSecretKey } from "@/lib/xendit-config";
+import { containsControlCharacters } from "@/lib/text";
 
 export const runtime = "nodejs";
 
@@ -17,6 +18,8 @@ const schema = z.object({
   reason: z.enum(["FRAUDULENT", "DUPLICATE", "REQUESTED_BY_CUSTOMER", "CANCELLATION", "OTHERS"]),
   amount: z.number().int().positive().max(2_147_483_647),
   adminNote: z.string().trim().max(500).optional().default(""),
+  manualTransferReference: z.string().trim().min(5).max(100).refine(value => !containsControlCharacters(value)).optional(),
+  fundsReturned: z.boolean().optional(),
 });
 
 type XenditRefundResponse = {
@@ -53,8 +56,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const prisma = getPrismaClient();
   const admin = await prisma.user.findUnique({ where: { id: userId }, select: { platformRole: true } });
   if (admin?.platformRole !== "SUPER_ADMIN" && admin?.platformRole !== "FINANCE") return NextResponse.json({ error: "Akses ditolak." }, { status: 403 });
-  const secret = getXenditSecretKey();
-  if (!secret) return NextResponse.json({ error: "Kunci API Xendit belum dikonfigurasi." }, { status: 503 });
+  const paidSession = await prisma.paymentSession.findFirst({ where: { orderId: id, status: "SUCCEEDED" }, orderBy: { createdAt: "desc" }, select: { provider: true } });
+  const isManual = paidSession?.provider === "MANUAL";
+  if (isManual && (!parsed.data.manualTransferReference || parsed.data.fundsReturned !== true)) return NextResponse.json({ error: "Catat referensi transfer pengembalian dan pastikan dana sudah dikirim kembali." }, { status: 400 });
+  if (!isManual && (parsed.data.manualTransferReference || parsed.data.fundsReturned)) return NextResponse.json({ error: "Order gateway menggunakan proses refund gateway." }, { status: 400 });
+  const secret = isManual ? null : getXenditSecretKey();
+  if (!isManual && !secret) return NextResponse.json({ error: "Kunci API Xendit belum dikonfigurasi." }, { status: 503 });
+  const manualReferenceId = isManual ? `manual-refund:${createHash("sha256").update((parsed.data.manualTransferReference ?? "").replace(/\s+/g, "").toUpperCase()).digest("hex")}` : null;
 
   const reservation = await prisma.$transaction(async (tx) => {
     await tx.$queryRaw<Array<{ id: string }>>`SELECT "id" FROM "orders" WHERE "id" = ${id}::uuid FOR UPDATE`;
@@ -62,11 +70,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       where: { id },
       include: {
         items: { select: { itemType: true, sku: true, quantity: true, unitPriceIdr: true, totalPriceIdr: true, templateId: true, templateVersionId: true, entitlementSnapshot: true } },
-        paymentSessions: { orderBy: { createdAt: "desc" }, select: { id: true, status: true, providerPaymentRequestId: true, currency: true } },
+        paymentSessions: { orderBy: { createdAt: "desc" }, select: { id: true, status: true, provider: true, providerPaymentRequestId: true, currency: true } },
         refunds: { where: { status: { in: ["INITIATING", "PENDING", "SUCCEEDED"] } }, select: { id: true, status: true, amount: true } },
       },
     });
     if (!order) return { error: "Order tidak ditemukan.", status: 404 as const };
+    if (manualReferenceId) {
+      const existing = await tx.refund.findUnique({ where: { referenceId: manualReferenceId }, select: { id: true, orderId: true, amount: true, status: true } });
+      if (existing) {
+        if (existing.orderId !== id || existing.amount !== parsed.data.amount) return { error: "Referensi transfer refund sudah digunakan untuk pencatatan lain.", status: 409 as const };
+        return { kind: "manual" as const, refund: existing, alreadyProcessed: true };
+      }
+    }
     if (order.refunds.some((refund) => refund.status === "INITIATING" || refund.status === "PENDING")) return { error: "Refund lain untuk order ini masih diproses. Tunggu hasil Xendit sebelum mengajukan lagi.", status: 409 as const };
     const item = order.items[0];
     const creditItem = order.items.length === 1 && item?.itemType === "RESELLER_CREDIT" ? item : null;
@@ -132,9 +147,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         return { error: "Kredit dari pembelian top-up ini yang belum digunakan tidak cukup untuk jumlah refund tersebut.", status: 409 as const };
       }
     }
-    const payment = order.paymentSessions.find((item) => item.status === "SUCCEEDED" && item.providerPaymentRequestId);
-    if (!payment?.providerPaymentRequestId) return { error: "Referensi Payment Request Xendit belum tersedia untuk order ini.", status: 409 as const };
-    const referenceId = randomUUID();
+    const payment = order.paymentSessions.find(item => item.status === "SUCCEEDED" && (isManual ? item.provider === "MANUAL" : item.provider === "XENDIT" && Boolean(item.providerPaymentRequestId)));
+    if (!payment) return { error: "Referensi pembayaran belum tersedia untuk order ini.", status: 409 as const };
+    const referenceId = manualReferenceId ?? randomUUID();
     const refund = await tx.refund.create({
       data: {
         orderId: order.id,
@@ -145,6 +160,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         currency: order.currency,
         reason: parsed.data.reason,
         adminNote: parsed.data.adminNote || null,
+        ...(isManual ? { status: "SUCCEEDED" as const, responseSnapshot: { reference: parsed.data.manualTransferReference ?? "", recordedBy: userId, fundsReturned: true } } : {}),
         requestSnapshot: { reference_id: referenceId, payment_request_id: payment.providerPaymentRequestId, amount: parsed.data.amount, currency: order.currency, reason: parsed.data.reason, resellerCreditSku, resellerCreditUnits },
       },
     });
@@ -158,17 +174,25 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           type: "REFUND",
           unitsDelta: -resellerCreditUnits,
           reference: `refund:${refund.id}`,
-          metadata: { refundId: refund.id, reserved: true },
+          metadata: { refundId: refund.id, reserved: !isManual },
         },
       });
     }
     await tx.auditLog.create({
-      data: { organizationId: order.organizationId, actorId: userId, action: "admin.refund_requested", targetType: "Order", targetId: order.id, metadata: { refundId: refund.id, amount: refund.amount, currency: refund.currency, reason: refund.reason, referenceId: refund.referenceId, resellerCreditUnits } },
+      data: { organizationId: order.organizationId, actorId: userId, action: isManual ? "admin.manual_refund_recorded" : "admin.refund_requested", targetType: "Order", targetId: order.id, metadata: { refundId: refund.id, amount: refund.amount, currency: refund.currency, reason: refund.reason, referenceId: refund.referenceId, resellerCreditUnits } },
     });
-    return { refund, paymentRequestId: payment.providerPaymentRequestId, invitationId: order.invitationId, organizationId: order.organizationId, amount: parsed.data.amount, currency: order.currency, itemType: creditItem ? "RESELLER_CREDIT" : "TEMPLATE_LICENSE" };
-  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    if (isManual) {
+      await recalculateRefundedOrder(tx, id);
+      return { kind: "manual" as const, refund, alreadyProcessed: false };
+    }
+    return { kind: "xendit" as const, refund, paymentRequestId: payment.providerPaymentRequestId, invitationId: order.invitationId, organizationId: order.organizationId, amount: parsed.data.amount, currency: order.currency, itemType: creditItem ? "RESELLER_CREDIT" : "TEMPLATE_LICENSE" };
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }).catch(error => {
+    if (typeof error === "object" && error !== null && "code" in error && ["P2002", "P2034"].includes(String(error.code))) return { error: "Catatan transaksi berubah atau referensi sudah digunakan. Muat ulang dan periksa kembali.", status: 409 as const };
+    throw error;
+  });
 
   if ("error" in reservation) return NextResponse.json({ error: reservation.error }, { status: reservation.status });
+  if (reservation.kind === "manual") return NextResponse.json({ requested: true, refundId: reservation.refund.id, status: reservation.refund.status, alreadyProcessed: reservation.alreadyProcessed });
 
   let response: Response;
   try {

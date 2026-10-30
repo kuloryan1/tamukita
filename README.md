@@ -1,6 +1,8 @@
 # TamuKita
 
-Platform awal TamuKita untuk membuat dan membagikan undangan digital. Aplikasi memakai Next.js App Router, TypeScript, Tailwind CSS, PostgreSQL, Prisma ORM, Auth.js, dan Xendit Payment Sessions.
+Platform awal TamuKita untuk membuat dan membagikan undangan digital. Aplikasi memakai Next.js App Router, TypeScript, Tailwind CSS, PostgreSQL, Prisma ORM, Auth.js, serta pembayaran QR manual dengan verifikasi admin. Integrasi Xendit tetap tersedia untuk mode gateway yang diaktifkan kemudian.
+
+Alur pembayaran rilis awal, konfigurasi QR/WhatsApp, verifikasi dana, dan refund dicatat di [runbook QR manual](docs/deploy/manual-payments.md). Snapshot kesiapan di bawah tetap merupakan bukti historis bertanggal; keputusan mode QR manual tidak menutup gate produksi lainnya.
 
 Smart Editor menyesuaikan identitas utama untuk jenis acara yang dipilih dan menyediakan keterangan keluarga atau penyelenggara yang disimpan di draft serta ditampilkan oleh setiap renderer undangan.
 

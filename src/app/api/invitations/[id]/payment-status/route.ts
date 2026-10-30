@@ -17,13 +17,13 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       status: true,
       slug: true,
       expiresAt: true,
-      orders: { orderBy: { createdAt: "desc" }, take: 1, select: { status: true, paymentSessions: { orderBy: { createdAt: "desc" }, take: 1, select: { status: true, expiresAt: true } } } },
+      orders: { orderBy: { createdAt: "desc" }, take: 1, select: { status: true, paymentSessions: { orderBy: { createdAt: "desc" }, take: 1, select: { status: true, provider: true, expiresAt: true } } } },
     },
   });
   if (!invitation) return NextResponse.json({ error: "Undangan tidak ditemukan." }, { status: 404 });
   const latestOrder = invitation.orders[0];
   const latestPayment = latestOrder?.paymentSessions[0];
-  const paymentInProgress = latestOrder?.status === "PENDING" && latestPayment?.status === "PENDING" && Boolean(latestPayment.expiresAt && latestPayment.expiresAt > new Date());
+  const paymentInProgress = latestOrder?.status === "PENDING" && latestPayment?.status === "PENDING" && (latestPayment.provider === "MANUAL" || Boolean(latestPayment.expiresAt && latestPayment.expiresAt > new Date()));
   const published = invitation.status === "PUBLISHED" && !paymentInProgress;
   return NextResponse.json({
     published,

@@ -5,6 +5,8 @@ import { getPrismaClient } from "@/lib/prisma";
 import { allowRequest } from "@/lib/rate-limit";
 import { readJsonBody } from "@/lib/request-json";
 import { getPlatformSettingsOverview, platformCustomerActivationKey, platformHostingKeys, platformPriceKeys } from "@/lib/platform-settings";
+import { isPaymentQrUrl, paymentSettingKeys } from "@/lib/payment-settings";
+import { normalizePaymentWhatsapp } from "@/lib/payment-methods";
 
 export const runtime = "nodejs";
 
@@ -14,7 +16,10 @@ const schema = z.object({
   customerActivationIdr: z.number().int().min(0).max(2_147_483_647).optional(),
   hostingRenewalIdr: z.number().int().min(0).max(2_147_483_647).optional(),
   hostingTermDays: z.number().int().min(30).max(3_650).optional(),
-}).refine((value) => value.basicActivationIdr !== undefined || value.premiumActivationIdr !== undefined || value.customerActivationIdr !== undefined || value.hostingRenewalIdr !== undefined || value.hostingTermDays !== undefined);
+  paymentMode: z.enum(["manual", "xendit"]).optional(),
+  manualQrImageUrl: z.string().max(1_000).refine(value => value === "" || isPaymentQrUrl(value)).optional(),
+  manualWhatsapp: z.string().trim().max(30).refine(value => value === "" || normalizePaymentWhatsapp(value) !== null).optional(),
+}).strict().refine(value => Object.values(value).some(entry => entry !== undefined));
 
 async function getSuperAdmin() {
   const session = await auth();
@@ -40,7 +45,7 @@ export async function PATCH(request: Request) {
   const body = await readJsonBody(request, 4_000);
   if (!body.ok) return NextResponse.json({ error: "Pengaturan harga tidak valid." }, { status: body.status });
   const parsed = schema.safeParse(body.value);
-  if (!parsed.success) return NextResponse.json({ error: "Isi harga Basic atau Premium dalam rupiah dengan benar." }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: "Periksa nominal, QR yang diunggah, dan nomor WhatsApp pada pengaturan." }, { status: 400 });
 
   const entries = [
     ...(parsed.data.basicActivationIdr === undefined ? [] : [{ key: platformPriceKeys.BASIC_ACTIVATION.key, value: parsed.data.basicActivationIdr }]),
@@ -48,6 +53,9 @@ export async function PATCH(request: Request) {
     ...(parsed.data.customerActivationIdr === undefined ? [] : [{ key: platformCustomerActivationKey.key, value: parsed.data.customerActivationIdr }]),
     ...(parsed.data.hostingRenewalIdr === undefined ? [] : [{ key: platformHostingKeys.renewalPrice.key, value: parsed.data.hostingRenewalIdr }]),
     ...(parsed.data.hostingTermDays === undefined ? [] : [{ key: platformHostingKeys.termDays.key, value: parsed.data.hostingTermDays }]),
+    ...(parsed.data.paymentMode === undefined ? [] : [{ key: paymentSettingKeys.mode, value: parsed.data.paymentMode }]),
+    ...(parsed.data.manualQrImageUrl === undefined ? [] : [{ key: paymentSettingKeys.qrImageUrl, value: parsed.data.manualQrImageUrl }]),
+    ...(parsed.data.manualWhatsapp === undefined ? [] : [{ key: paymentSettingKeys.whatsapp, value: normalizePaymentWhatsapp(parsed.data.manualWhatsapp) ?? "" }]),
   ];
   await admin.prisma.$transaction(async (tx) => {
     for (const entry of entries) {
@@ -58,7 +66,7 @@ export async function PATCH(request: Request) {
         update: { value: entry.value, updatedById: admin.userId },
       });
       await tx.auditLog.create({
-        data: { actorId: admin.userId, action: "admin.platform_setting_changed", targetType: "PlatformSetting", targetId: entry.key, metadata: { previousValue: typeof previous?.value === "number" ? previous.value : null, nextValue: entry.value } },
+        data: { actorId: admin.userId, action: "admin.platform_setting_changed", targetType: "PlatformSetting", targetId: entry.key, metadata: entry.key.startsWith("payment.") ? { changed: true } : { previousValue: typeof previous?.value === "number" ? previous.value : null, nextValue: entry.value } },
       });
     }
   });

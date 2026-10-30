@@ -42,9 +42,9 @@ Rincian faktual berikut belum diberikan atau diverifikasi dalam repo/percakapan 
 
 ## Catatan implementasi
 
-- Checkout mengaktifkan layanan setelah webhook pembayaran Xendit tervalidasi. Sistem memisahkan lisensi template, biaya aktivasi, dan masa hosting; pengaturan harga dan masa hosting dapat berubah melalui admin.
+- Rilis awal menggunakan QR manual: admin mencocokkan dana masuk, nominal, dan referensi transaksi sebelum layanan diaktifkan. Checkout gateway yang diaktifkan kemudian tetap membutuhkan webhook tervalidasi. Sistem memisahkan lisensi template, biaya aktivasi, dan masa hosting; pengaturan harga dan masa hosting dapat berubah melalui admin.
 - Masa hosting default saat ini 365 hari, tetapi nilainya dapat diatur. Jangan menuliskan angka ini sebagai janji tetap sebelum operator memutuskan kebijakan komersial.
-- Admin dapat mengajukan refund penuh/sebagian melalui Xendit. Status akhir bergantung pada webhook penyedia. Refund top-up reseller hanya dapat mengambil kredit utuh yang belum dipakai dari lot top-up asal.
+- Untuk QR manual, admin mencatat refund penuh/sebagian setelah benar-benar mengirim dana kembali; sistem tidak mentransfer uang. Transaksi gateway tetap menunggu webhook penyedia. Refund top-up reseller hanya dapat mengambil kredit utuh yang belum dipakai dari lot top-up asal.
 - Aplikasi belum menyediakan penghapusan akun mandiri atau jadwal purge untuk semua kategori data. Dokumen publik tidak boleh menjanjikan otomatisasi tersebut sebelum mekanisme operasional/teknis tersedia.
 - Pelanggan dapat memasukkan data tamu dan menerbitkan undangan publik. Pembagian peran pengendali/pemroses data perlu ditetapkan dan ditinjau secara hukum berdasarkan alur nyata, bukan hanya label dalam draf ini.
 - Nilai retensi pada draf adalah keputusan internal untuk memandu implementasi. Fitur purge, rotasi backup, permintaan subjek data, dan penghapusan provider belum dibuktikan pada produksi.

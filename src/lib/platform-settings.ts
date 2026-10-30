@@ -4,6 +4,7 @@ import IORedis from "ioredis";
 import { getPrismaClient } from "@/lib/prisma";
 import { getIntegrationConfigurations } from "@/lib/integration-status";
 import { parseWorkerIntegrationSnapshot, WORKER_CONFIGURATION_KEY } from "@/lib/worker-health";
+import { getPaymentSettings } from "@/lib/payment-settings";
 
 const priceKeys = {
   BASIC_ACTIVATION: { key: "reseller.basic_activation_price_idr", env: "RESELLER_BASIC_ACTIVATION_PRICE_IDR" },
@@ -83,9 +84,10 @@ export async function getCustomerActivationPrice() {
 
 export async function getPlatformSettingsOverview() {
   const prisma = getPrismaClient();
-  const [settings, workerConfiguration] = await Promise.all([
+  const [settings, workerConfiguration, payment] = await Promise.all([
     prisma.platformSetting.findMany({ where: { key: { in: [...Object.values(priceKeys).map(({ key }) => key), ...Object.values(hostingKeys).map(({ key }) => key), customerActivationKey.key] } }, select: { key: true, value: true } }),
     getWorkerIntegrationSnapshot(),
+    getPaymentSettings(),
   ]);
   const values = new Map(settings.map((setting) => [setting.key, setting.value]));
   const resolvePrice = (sku: keyof typeof priceKeys) => {
@@ -111,6 +113,7 @@ export async function getPlatformSettingsOverview() {
   const storedTerm = values.get(hostingKeys.termDays.key);
   const envTerm = Number(process.env[hostingKeys.termDays.env]);
   return {
+    payment,
     prices: { basicActivationIdr: resolvePrice("BASIC_ACTIVATION"), premiumActivationIdr: resolvePrice("PREMIUM_ACTIVATION"), customerActivationIdr: resolveCustomerActivationPrice(), hostingRenewalIdr: resolveHostingPrice() },
     hostingTermDays: validTermDays(storedTerm) ? storedTerm : validTermDays(envTerm) ? envTerm : 365,
     integrations: getIntegrationConfigurations(),

@@ -7,7 +7,7 @@
 ## Identitas operator dan konsumen
 
 - [ ] Tetapkan dan buktikan nama legal operator, alamat, nomor pendaftaran/izin usaha yang relevan, serta siapa yang menerima pembayaran. Nama produk atau atribusi merek tidak cukup sebagai identitas legal.
-- [ ] Validasi model transaksi default di Syarat Layanan: platform menjual lisensi template, aktivasi, hosting, dan kredit melalui Xendit; reseller bertindak berdasarkan perjanjian tertulis terpisah. Tetapkan pihak penerima pembayaran dan tanggung jawab untuk tiap item.
+- [ ] Validasi model transaksi default di Syarat Layanan: platform menjual lisensi template, aktivasi, hosting, dan kredit melalui QR manual pada rilis awal; reseller bertindak berdasarkan perjanjian tertulis terpisah. Tetapkan pihak penerima pembayaran dan tanggung jawab untuk tiap item.
 - [ ] Aktifkan dan uji alias yang dipilih `bantuan@tamukita.io`, `privasi@tamukita.io`, dan `keamanan@tamukita.io`; tetapkan inbox, petugas, jadwal pantau, SLA, eskalasi sengketa, dan bukti uji kirim/terima. Alias belum terbukti aktif dan jangan dipublikasikan dahulu.
 - [ ] Tetapkan pemilik antrean laporan kendala editor, waktu respons yang dijanjikan, akses peran, jalur eskalasi, dan masa retensi laporan sebelum menawarkan kanal ini sebagai dukungan publik.
 - [ ] Verifikasi kewajiban informasi, transaksi, dan perlindungan konsumen terhadap PP 80/2019 dan [Permendag 19/2026](https://jdih.kemendag.go.id/peraturan/peraturan-menteri-perdagangan-republik-indonesia-nomor-19-tahun-2026-tentang-penyelenggaraan-usaha-perdagangan-melalui-sistem-elektronik-1), berlaku sejak 8 Juni 2026 dan mencabut Permendag 31/2023.
@@ -47,7 +47,7 @@
 - [ ] Pastikan redaksi refund tidak mengesampingkan hak wajib konsumen dan cocok dengan proses Xendit/webhook serta perilaku penghentian entitlement.
 - [ ] Tetapkan masa berlaku, transferabilitas, bonus, pajak, dan refund kredit reseller; sinkronkan dengan ledger dan persetujuan reseller.
 - [ ] Tetapkan kontrak reseller: komisi/margin, dukungan pelanggan, pajak, izin mengakses data pelanggan, penggunaan merek, dan penyelesaian sengketa.
-- [ ] Jalankan checkout/refund dengan kredensial Xendit Test Mode/staging dan verifikasi bukti transaksi/pengaduan sebelum production.
+- [ ] Untuk rilis QR manual, unggah QRIS merchant asli, verifikasi tujuan dana, jalankan checkout → bukti → verifikasi mutasi → aktivasi serta pencatatan refund, dan tetapkan petugas pemeriksa. Kredensial dan QA Xendit wajib hanya bila mode gateway akan diaktifkan.
 
 ## Kesiapan publikasi
 

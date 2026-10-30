@@ -11,6 +11,7 @@ import { getCustomerActivationPrice, getHostingTermDays } from "@/lib/platform-s
 import { buildCustomerCheckoutOrder, isCustomerPlanSnapshot, type CustomerPlanSnapshot } from "@/lib/customer-checkout";
 import { getXenditApiUrl } from "@/lib/xendit-api";
 import { getXenditSecretKey } from "@/lib/xendit-config";
+import { getPaymentSettings, isReusableCheckout, paymentSessionInput } from "@/lib/payment-settings";
 import { readJsonBody } from "@/lib/request-json";
 import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
 import { resolveInvitationFeatureAccess, validateDraftFeatureAccess } from "@/lib/invitation-features";
@@ -119,8 +120,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ published: true, slug: invitation.slug });
   }
 
+  const paymentSettings = await getPaymentSettings();
   const activeSession = await prisma.paymentSession.findFirst({
-    where: { order: { invitationId: invitation.id, status: "PENDING" }, status: "PENDING", expiresAt: { gt: new Date() }, checkoutUrl: { not: null } },
+    where: { order: { invitationId: invitation.id, status: "PENDING" }, provider: paymentSettings.mode === "manual" ? "MANUAL" : "XENDIT", status: "PENDING", ...(paymentSettings.mode === "xendit" ? { expiresAt: { gt: new Date() } } : {}), checkoutUrl: { not: null } },
     orderBy: { createdAt: "desc" },
     select: { checkoutUrl: true },
   });
@@ -222,8 +224,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ published: true, slug: invitation.slug, free: true });
   }
 
-  const secret = getXenditSecretKey();
-  if (!secret) return NextResponse.json({ error: "Pembayaran belum dikonfigurasi di server." }, { status: 503 });
+  const secret = paymentSettings.mode === "xendit" ? getXenditSecretKey() : null;
+  if (!paymentSettings.ready || (paymentSettings.mode === "xendit" && !secret)) return NextResponse.json({ error: "Pembayaran belum tersedia. Hubungi admin untuk melengkapi pengaturan pembayaran." }, { status: 503 });
   const customerOrder = buildCustomerCheckoutOrder({
     template: {
       id: template.template.id,
@@ -258,13 +260,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       });
       const pendingSession = pendingOrder?.paymentSessions[0];
       if (pendingSession) {
-        if (pendingSession.status === "PENDING" && pendingSession.checkoutUrl && pendingSession.expiresAt && pendingSession.expiresAt > new Date()) {
+        if (isReusableCheckout(pendingSession, paymentSettings)) {
           return { kind: "checkout" as const, checkoutUrl: pendingSession.checkoutUrl };
         }
         throw new PublishConflict();
       }
+      const orderId = randomUUID();
       const order = await tx.order.create({
         data: {
+          id: orderId,
           organizationId: invitation.organizationId,
           buyerId: userId,
           invitationId: invitation.id,
@@ -287,7 +291,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
               entitlementSnapshot: JSON.parse(JSON.stringify(item.entitlementSnapshot)) as Prisma.InputJsonValue,
             })),
           },
-          paymentSessions: { create: [{ amountIdr: customerOrder.totalAmountIdr, currency: "IDR", status: "CREATED", requestSnapshot: { flow: "PAYMENT_LINK", sessionType: "PAY" } }] },
+          paymentSessions: { create: [paymentSessionInput(orderId, customerOrder.totalAmountIdr, paymentSettings, "PAYMENT_LINK")] },
         },
         include: { paymentSessions: true, items: true },
       });
@@ -300,6 +304,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (orderResult.kind === "checkout") return NextResponse.json({ checkoutUrl: orderResult.checkoutUrl });
   const order = orderResult.order;
   const paymentSession = order.paymentSessions[0];
+  if (paymentSettings.mode === "manual") return NextResponse.json({ checkoutUrl: paymentSession.checkoutUrl, paymentMode: "manual", orderId: order.id });
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
   const successUrl = new URL("/dashboard/checkout/return", baseUrl);
   successUrl.searchParams.set("invitationId", id);

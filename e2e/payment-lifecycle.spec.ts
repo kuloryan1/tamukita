@@ -117,7 +117,7 @@ test("Xendit expiry and refund callbacks retry safely and update reseller balanc
     await signIn(adminPage, adminEmail, adminPassword);
 
     await adminPage.goto("/admin/orders");
-    await expect(adminPage.getByText("Ekspor rekonsiliasi Xendit")).toBeVisible();
+    await expect(adminPage.getByText("Ekspor rekonsiliasi pembayaran")).toBeVisible();
     const rangeTo = new Date();
     const rangeFrom = new Date(rangeTo);
     rangeFrom.setUTCDate(rangeFrom.getUTCDate() - 30);
