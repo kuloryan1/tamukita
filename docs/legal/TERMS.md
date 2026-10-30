@@ -6,7 +6,7 @@
 
 **Kontak dukungan/pengaduan (pilihan internal):** `bantuan@tamukita.io` — belum diverifikasi; satu inbox yang dipantau untuk support, refund, dan pengaduan.
 
-**Tanggal versi draf:** 26 Oktober 2026
+**Tanggal versi draf:** 30 Oktober 2026
 
 **Berlaku sejak:** [ISI SETELAH DISETUJUI OPERATOR]
 

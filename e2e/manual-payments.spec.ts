@@ -42,6 +42,9 @@ test("manual QR orders require admin verification, settle once, renew, and refun
   await signIn(page, adminEmail, adminPassword);
   const previous = await (await page.request.get("/api/admin/settings")).json();
   const marker = randomUUID().slice(0, 8);
+  const selfPublishedCount = async () => Number((await page.locator(".admin-metric-card").filter({ hasText: "Pelanggan publikasi mandiri" }).locator("strong").innerText()).replaceAll(".", ""));
+  await page.goto("/admin/analytics");
+  const selfPublishedBefore = await selfPublishedCount();
   try {
     await signIn(customer, customerEmail, customerPassword);
     await signIn(other, otherEmail, otherPassword);
@@ -178,6 +181,8 @@ test("manual QR orders require admin verification, settle once, renew, and refun
     expect((await page.request.post(cancelPath, { data: { ...topupConfirm, amountIdr: topupView.amountIdr * 2, reference: `QR-CANCELED-${marker}` } })).status()).toBe(409);
     const manualSessions = await pool.query('SELECT provider, "providerSessionId" FROM payment_sessions WHERE "orderId" = ANY($1::uuid[])', [[payment.orderId, renewalOrder.orderId, topupOrder.orderId, cancelOrder.orderId]]);
     expect(manualSessions.rows.every(row => row.provider === "MANUAL" && row.providerSessionId === null)).toBe(true);
+    await page.goto("/admin/analytics");
+    expect(await selfPublishedCount()).toBe(selfPublishedBefore + 1);
   } finally {
     await page.request.patch("/api/admin/settings", { data: { paymentMode: previous.payment.mode, manualQrImageUrl: previous.payment.qrImageUrl, manualWhatsapp: previous.payment.whatsapp, hostingRenewalIdr: previous.prices.hostingRenewalIdr } });
     await Promise.all([customerContext.close(), otherContext.close(), resellerContext.close(), pool.end()]);

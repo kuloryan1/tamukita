@@ -6,7 +6,7 @@
 
 **Alamat:** [ISI ALAMAT USAHA]
 
-**Tanggal versi draf:** 26 Oktober 2026
+**Tanggal versi draf:** 30 Oktober 2026
 
 **Berlaku sejak:** [ISI SETELAH DISETUJUI OPERATOR]
 

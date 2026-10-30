@@ -6,7 +6,7 @@
 
 **Kontak pengajuan/pengaduan (pilihan internal):** `bantuan@tamukita.io` — arahkan ke satu inbox yang dipantau; alamat dan alias belum diverifikasi.
 
-**Tanggal versi draf:** 26 Oktober 2026
+**Tanggal versi draf:** 30 Oktober 2026
 
 **Berlaku untuk pelanggan:** setelah disahkan dan dipublikasikan oleh operator.
 
