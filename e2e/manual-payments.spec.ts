@@ -18,8 +18,9 @@ test("manual QR orders require admin verification, settle once, renew, and refun
   const databaseUrl = process.env.DATABASE_URL;
   const adminEmail = process.env.E2E_ADMIN_EMAIL;
   const adminPassword = process.env.E2E_ADMIN_PASSWORD;
-  const customerEmail = process.env.E2E_CUSTOMER_EMAIL;
-  const customerPassword = process.env.E2E_CUSTOMER_PASSWORD;
+  // This workflow has its own customer so it does not consume the shared login rate-limit budget.
+  const customerEmail = process.env.E2E_MANUAL_CUSTOMER_EMAIL;
+  const customerPassword = process.env.E2E_MANUAL_CUSTOMER_PASSWORD;
   const resellerEmail = process.env.E2E_REFUND_RESELLER_EMAIL;
   const resellerPassword = process.env.E2E_REFUND_RESELLER_PASSWORD;
   const otherEmail = process.env.E2E_OTHER_CUSTOMER_EMAIL;
@@ -167,6 +168,7 @@ test("manual QR orders require admin verification, settle once, renew, and refun
     const csv = await reconciliation.text();
     expect(csv).toContain("manual_payment_reference");
     expect(csv).toContain("manual_refund_reference");
+    expect(csv).not.toContain('"manual:');
     expect(csv).toContain(confirmation.reference);
     expect(csv).toContain(refundBody.manualTransferReference);
 

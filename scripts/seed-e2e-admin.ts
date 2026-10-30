@@ -13,6 +13,8 @@ const adminEmail = process.env.E2E_ADMIN_EMAIL?.trim().toLowerCase();
 const adminPassword = process.env.E2E_ADMIN_PASSWORD;
 const financeEmail = process.env.E2E_FINANCE_EMAIL?.trim().toLowerCase();
 const financePassword = process.env.E2E_FINANCE_PASSWORD;
+const manualCustomerEmail = process.env.E2E_MANUAL_CUSTOMER_EMAIL?.trim().toLowerCase();
+const manualCustomerPassword = process.env.E2E_MANUAL_CUSTOMER_PASSWORD;
 const customerEmail = process.env.E2E_CUSTOMER_EMAIL?.trim().toLowerCase();
 const customerPassword = process.env.E2E_CUSTOMER_PASSWORD;
 const otherCustomerEmail = process.env.E2E_OTHER_CUSTOMER_EMAIL?.trim().toLowerCase();
@@ -65,6 +67,8 @@ if (
   || !refundResellerEmail
   || !refundResellerPassword
   || refundResellerPassword.length < 12
+  || Boolean(manualCustomerEmail) !== Boolean(manualCustomerPassword)
+  || (manualCustomerPassword !== undefined && manualCustomerPassword.length < 12)
   || Boolean(supportEmail) !== Boolean(supportPassword)
   || (supportPassword !== undefined && supportPassword.length < 12)
 ) {
@@ -75,6 +79,7 @@ const e2eAccounts = {
   admin: { email: adminEmail, password: adminPassword },
   finance: { email: financeEmail, password: financePassword },
   customer: { email: customerEmail, password: customerPassword },
+  ...(manualCustomerEmail && manualCustomerPassword ? { manualCustomer: { email: manualCustomerEmail, password: manualCustomerPassword } } : {}),
   otherCustomer: { email: otherCustomerEmail, password: otherCustomerPassword },
   mobileCustomer: { email: mobileCustomerEmail, password: mobileCustomerPassword },
   webkitCustomer: { email: webkitCustomerEmail, password: webkitCustomerPassword },
@@ -124,6 +129,7 @@ try {
     return { userId: user.id, organizationId: organization.id };
   }
 
+  if (e2eAccounts.manualCustomer) await seedAccount({ ...e2eAccounts.manualCustomer, name: "E2E Manual Payment Customer", platformRole: "CUSTOMER" });
   const adminAccount = await seedAccount({ ...e2eAccounts.admin, name: "E2E Admin", platformRole: "SUPER_ADMIN" });
   const adminBucketKeys = ["admin:plans:read", "admin:plans:write", "admin:users:search", "admin:user-role"].map((key) =>
     createHmac("sha256", authSecret).update(`${key}:${adminAccount.userId}`).digest("hex"),

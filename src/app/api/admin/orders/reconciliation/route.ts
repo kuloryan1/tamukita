@@ -84,6 +84,9 @@ function providerAmount(value: unknown) {
 function paymentRecord(values: CsvValue[], provider: string, paymentReference?: unknown, refundReference?: unknown): CsvValue[] {
   const row = [...values];
   while (row.length < 27) row.push(undefined);
+  if (provider === "MANUAL") {
+    for (const field of ["xendit_session_id", "xendit_payment_request_id", "xendit_payment_id", "xendit_event_object_id", "xendit_refund_id"] as const) row[headers.indexOf(field)] = null;
+  }
   return [...row, provider, provider === "MANUAL" ? providerText(paymentReference) : null, provider === "MANUAL" ? providerText(refundReference) : null];
 }
 
