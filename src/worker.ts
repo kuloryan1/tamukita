@@ -11,6 +11,8 @@ import { getTransactionalEmailEndpoint } from "./lib/email-transport";
 import { getR2BucketNames } from "./lib/r2-buckets";
 import { getWorkerIntegrationConfigurations } from "./lib/integration-status";
 import { runDataRetentionSweep } from "./lib/data-retention";
+import { deletePaparazziPhotoObjects, failPaparazziPhoto, InvalidPaparazziPhotoError, processPaparazziPhoto } from "./lib/paparazzi-processing";
+import { startPaparazziMaintenance } from "./lib/paparazzi-maintenance";
 import {
   createWorkerIntegrationSnapshot,
   WORKER_CONFIGURATION_KEY,
@@ -314,6 +316,12 @@ async function processJob(job: Job<{ notificationJobId: string }>) {
         where: { id: notification.id },
         data: { payload: { ...(isRecord(notification.payload) ? notification.payload : {}), ...result } },
       });
+    } else if (notification.jobType === "PAPARAZZI_PROCESSING") {
+      if (!mediaS3 || !mediaConfig) throw new Error("Penyimpanan foto belum tersedia pada worker.");
+      await processPaparazziPhoto(prisma, mediaS3, mediaConfig.privateBucket, notification.payload);
+    } else if (notification.jobType === "PAPARAZZI_DELETE") {
+      if (!mediaS3 || !mediaConfig || !isRecord(notification.payload) || typeof notification.payload.photoId !== "string" || !/^[0-9a-f-]{36}$/i.test(notification.payload.photoId)) throw new Error("Data penghapusan foto tidak valid.");
+      await deletePaparazziPhotoObjects(prisma, mediaS3, mediaConfig.privateBucket, notification.payload.photoId);
     } else {
       throw new Error("Jenis notifikasi tidak dikenal.");
     }
@@ -324,6 +332,11 @@ async function processJob(job: Job<{ notificationJobId: string }>) {
   } catch (error) {
     const maxAttempts = Number(job.opts.attempts ?? 5);
     const message = error instanceof Error ? error.message.slice(0, 500) : "Pengiriman notifikasi gagal.";
+    if (notification.jobType === "PAPARAZZI_PROCESSING" && (error instanceof InvalidPaparazziPhotoError || attempt >= maxAttempts)) {
+      await failPaparazziPhoto(prisma, mediaS3, mediaConfig?.privateBucket, notification.payload).catch(() => undefined);
+      await prisma.notificationJob.update({ where: { id: notification.id }, data: { attempts: attempt, failedAt: new Date(), lastError: "Foto Paparazi tidak dapat diproses." } });
+      return;
+    }
     const mediaFailure = (notification.jobType === "MEDIA_PROCESSING" || notification.jobType === "MEDIA_EDIT_PROCESSING")
       && (error instanceof InvalidMediaAssetError || attempt >= maxAttempts);
     if (mediaFailure) {
@@ -523,12 +536,14 @@ void scheduleEventReminders();
 const eventReminderTimer = setInterval(() => void scheduleEventReminders(), 60_000);
 const workerHeartbeatTimer = setInterval(() => void refreshWorkerHeartbeat(), 15_000);
 const dataRetentionTimer = setInterval(() => void scheduleDataRetentionSweep(), DATA_RETENTION_INTERVAL_MS);
+const stopPaparazziMaintenance = startPaparazziMaintenance(prisma, mediaS3, mediaConfig?.privateBucket);
 
 async function shutdown() {
   clearInterval(reconciliationTimer);
   clearInterval(eventReminderTimer);
   clearInterval(workerHeartbeatTimer);
   clearInterval(dataRetentionTimer);
+  stopPaparazziMaintenance();
   await worker.close();
   await queue.close();
   await prisma.$disconnect();

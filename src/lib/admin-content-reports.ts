@@ -53,7 +53,7 @@ export async function getAdminInvitationReports(view: "pending" | "history") {
       createdAt: true,
       reviewedAt: true,
       invitation: {
-        select: { id: true, title: true, slug: true, status: true, expiresAt: true },
+        select: { id: true, title: true, slug: true, status: true, expiresAt: true, paparazziAlbum: { select: { token: true } } },
       },
     },
   });

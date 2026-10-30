@@ -89,6 +89,7 @@ export const reservedSlugs = new Set([
   "developers",
   "forgot-password",
   "login",
+  "paparazi",
   "register",
   "reseller",
   "reset-password",

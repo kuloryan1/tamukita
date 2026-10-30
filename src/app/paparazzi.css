@@ -1,0 +1,178 @@
+.paparazzi-guest{min-height:100dvh;background:#f7f7f2;color:#293c34;overflow-wrap:anywhere}
+.paparazzi-brand{display:flex;align-items:center;gap:10px;max-width:1100px;margin:auto;padding:23px 28px;border-bottom:1px solid #e3e7df;font-family:Georgia,serif;font-size:25px;letter-spacing:-1px}
+.paparazzi-brand .muted{color:#8c9b8a}
+.paparazzi-brand-icon{display:flex;align-items:center;justify-content:center;width:34px;height:34px;background:#e4ece3;border-radius:50%;color:#355e50}
+.paparazzi-brand-label{margin-left:auto;color:#718071;font-family:Arial,sans-serif;font-size:10px;font-weight:700;letter-spacing:1.8px}
+.paparazzi-guest-body{max-width:1060px;margin:auto;padding:44px 28px 28px}
+.paparazzi-intro{max-width:570px;text-align:center;margin:0 auto 28px}
+.paparazzi-intro .eyebrow{color:#8d8272;font-size:10px;letter-spacing:2.2px;margin-bottom:14px}
+.paparazzi-intro h1{font-family:Georgia,serif;font-weight:400;font-size:clamp(30px,5vw,46px);line-height:1.15;margin:0 0 12px}
+.paparazzi-intro>p:not(.eyebrow){color:#718071;font-size:14px;line-height:1.8}
+.paparazzi-public-badge{display:inline-flex;align-items:center;gap:6px;background:#e9eee6;border:1px solid #dde5d8;border-radius:30px;padding:7px 11px;margin-top:15px;font-size:11px;color:#426044}
+.paparazzi-start,.paparazzi-review,.paparazzi-sent,.paparazzi-empty,.paparazzi-camera{max-width:520px;margin:0 auto;background:#fff;border:1px solid #e0e6dd;border-radius:16px;box-shadow:0 8px 28px #23392d04;padding:30px}
+.paparazzi-start{text-align:center}
+.paparazzi-camera-art{position:relative;display:flex;align-items:center;justify-content:center;width:112px;height:112px;margin:0 auto 24px;border:1px solid #d9e3d6;border-radius:50%;background:#f0f4ed;color:#5f7f60}
+.paparazzi-camera-art>span{position:absolute;right:2px;bottom:7px;width:25px;height:25px;border-radius:50%;background:#355948;color:white;display:grid;place-items:center;border:3px solid white}
+.paparazzi-start h2,.paparazzi-sent h2,.paparazzi-empty h2{font-family:Georgia,serif;font-size:27px;font-weight:400;line-height:1.25;margin-bottom:12px}
+.paparazzi-start>p,.paparazzi-sent>p,.paparazzi-empty>p{color:#70806f;font-size:13px;line-height:1.9;margin-bottom:26px}
+.paparazzi-start>.button{margin:0 0 12px;min-height:49px}
+.paparazzi-native-link{display:inline-block;font-size:12px!important;margin-top:9px;text-decoration:underline;text-underline-offset:4px}
+.paparazzi-file-input{display:none}
+.paparazzi-review-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.paparazzi-review-heading h2{font-family:Georgia,serif;font-weight:400;font-size:27px;outline:none}
+.paparazzi-review-heading .text-link{display:flex;align-items:center;gap:5px;font-size:12px;flex-shrink:0}
+.paparazzi-photo-preview{display:block;width:100%;height:auto;max-height:480px;object-fit:contain;background:#f3f4ef;border-radius:10px;border:1px solid #e5e8e1;margin-bottom:22px}
+.paparazzi-consent-form{display:grid;gap:16px}
+.paparazzi-check{display:flex;align-items:flex-start;gap:11px;font-size:12px;line-height:1.8;color:#526453;cursor:pointer}
+.paparazzi-check input{flex-shrink:0;width:18px;height:18px;margin:2px 0 0;accent-color:#315e4b}
+.paparazzi-guardian{background:#f3f3eb;padding:13px;border-radius:8px}
+.paparazzi-consent-form .button{min-height:49px}
+.paparazzi-processing-note{font-size:11px;line-height:1.8;color:#7e877a;text-align:center}
+.paparazzi-sent{text-align:center}
+.paparazzi-sent>span{display:inline-flex;align-items:center;justify-content:center;width:74px;height:74px;border-radius:50%;background:#e8f0e4;color:#406f48;margin-bottom:21px}
+.paparazzi-sent .text-link{display:inline-block;margin-top:20px;font-size:13px}
+.paparazzi-empty{text-align:center;padding:44px 28px}
+.paparazzi-empty>svg{margin:0 auto 20px;color:#83927e}
+.paparazzi-error{max-width:520px;margin:16px auto 0;border:1px solid #e9c6b9;border-radius:10px;background:#fff5ef;padding:14px 16px;font-size:12px;color:#915f4d;line-height:1.8}
+.paparazzi-guest-footnote{max-width:500px;margin:22px auto 0;color:#859080;font-size:10px;line-height:1.9;text-align:center}
+.paparazzi-footer{display:flex;justify-content:center;gap:9px;padding:28px 16px 34px;color:#8e9789;font-size:10px}
+.paparazzi-footer>span{color:#4e6a52}
+.paparazzi-camera{padding:0;overflow:hidden;background:#15261f;color:white}
+.paparazzi-camera-bar{padding:13px 16px;display:flex;justify-content:space-between;align-items:center;font-size:12px}
+.paparazzi-camera-bar button{display:flex;align-items:center;justify-content:center;min-width:40px;min-height:40px;border:1px solid #52705e;border-radius:50%;color:white;background:transparent}
+.paparazzi-camera video{display:block;width:100%;height:min(55dvh,480px);object-fit:contain;background:#0b1712}
+.paparazzi-camera-wait{height:290px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;font-size:13px;line-height:1.8;padding:20px;text-align:center}
+.paparazzi-camera-controls{display:flex;align-items:center;justify-content:center;gap:25px;padding:19px 16px}
+.paparazzi-camera-controls>.button{padding:0;min-width:45px;height:45px;border-color:#5c7667;color:white;background:transparent}
+.paparazzi-camera-controls>span{font-size:11px;min-width:45px}
+.paparazzi-shutter{height:70px;width:70px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:50%;border:5px solid #c7d3c6;background:white;color:#244a37;box-shadow:0 0 0 3px #4b6754}
+.paparazzi-shutter:disabled{opacity:.45}
+.paparazzi-camera button:focus-visible{outline:3px solid #e8d6aa;outline-offset:4px}
+.paparazzi-public-gallery{margin:64px auto 0;padding-top:35px;border-top:1px solid #dfe5da}
+.paparazzi-gallery-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:23px}
+.paparazzi-gallery-heading .eyebrow{font-size:9px;color:#9d8b70;letter-spacing:2px;margin-bottom:9px}
+.paparazzi-gallery-heading h2{font-family:Georgia,serif;font-weight:400;font-size:32px;margin-bottom:9px}
+.paparazzi-gallery-heading p:not(.eyebrow){font-size:12px;color:#7e8a77;line-height:1.8}
+.paparazzi-gallery-heading>.button{min-width:42px;min-height:42px;flex-shrink:0}
+.paparazzi-public-photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:17px}
+.paparazzi-public-photo{border:1px solid #e0e5d9;border-radius:11px;overflow:hidden;background:#fff;margin:0;min-width:0}
+.paparazzi-public-photo>a{display:block}
+.paparazzi-public-photo img{display:block;width:100%;height:255px;object-fit:contain;background:#eeefe8}
+.paparazzi-public-photo figcaption{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;font-size:10px;color:#8b9483}
+.paparazzi-public-photo figcaption a{display:grid;place-items:center;min-width:35px;min-height:35px;color:#4b6e51}
+.paparazzi-gallery-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px;padding:30px 18px;text-align:center;border:1px dashed #dbe3d5;border-radius:12px;background:#fafbf7;color:#809073}
+.paparazzi-gallery-empty h3{font-family:Georgia,serif;font-size:24px;font-weight:400;color:#53694c;margin:18px 0 10px}
+.paparazzi-gallery-empty p{font-size:12px;color:#87917e;line-height:1.9}
+.paparazzi-load-more{display:flex!important;align-items:center;justify-content:center;gap:8px;margin:24px auto 0}
+.dashboard-paparazzi-page{min-width:0}
+.paparazzi-owner-layout{display:grid;grid-template-columns:minmax(290px,360px) minmax(0,1fr);align-items:start;gap:24px}
+.paparazzi-owner-layout>.dashboard-content-card{min-width:0;padding:24px}
+.paparazzi-qr-panel .card-heading{align-items:start;padding-bottom:18px;margin-bottom:0}
+.paparazzi-owner-layout .card-heading h2{font-size:23px}
+.paparazzi-owner-layout .card-heading p{line-height:1.8}
+.paparazzi-qr-panel .editor-field{min-width:0}
+.paparazzi-print-sheet{text-align:center;padding:24px 0 20px}
+.paparazzi-print-sheet .eyebrow{font-size:8px;letter-spacing:1.4px;color:#a18d72;margin-bottom:13px}
+.paparazzi-print-sheet h3{font-family:Georgia,serif;font-weight:400;font-size:25px;overflow-wrap:anywhere;line-height:1.3}
+.paparazzi-print-sheet img{display:block;width:100%;max-width:285px;height:auto;margin:10px auto}
+.paparazzi-print-sheet p:not(.eyebrow){font-size:12px;line-height:1.8;color:#5c7059}
+.paparazzi-print-sheet small{display:block;font-size:9px;line-height:1.8;color:#89947f}
+.paparazzi-qr-downloads{display:flex;justify-content:center;flex-wrap:wrap;gap:7px;margin:0 0 22px}
+.paparazzi-qr-downloads>.button{font-size:10px;padding:10px;min-height:40px}
+.paparazzi-share-url{font-size:10px!important;min-width:0}
+.paparazzi-link-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:12px 0 22px}
+.paparazzi-link-actions>.text-link{font-size:10px;display:flex;align-items:center;gap:5px}
+.paparazzi-collection-status{display:flex;gap:7px;align-items:center;font-size:11px;background:#f4f0e7;padding:12px;border-radius:8px;color:#937953;margin-bottom:12px}
+.paparazzi-collection-status>span{width:6px;height:6px;flex-shrink:0;border-radius:50%;background:#a89068}
+.paparazzi-collection-status.is-open{color:#497748;background:#edf3e8}
+.paparazzi-collection-status.is-open>span{background:#69985c}
+.paparazzi-owner-info{font-size:10px!important;line-height:1.9;color:#819076;margin:15px 0}
+.paparazzi-close-setting{display:flex;align-items:flex-end;gap:8px;margin-top:22px}
+.paparazzi-close-setting>.editor-field{flex:1;min-width:0}
+.paparazzi-close-setting>.button{flex-shrink:0;font-size:10px;min-height:43px}
+.paparazzi-close-setting .field-label{font-size:9px}
+.paparazzi-close-setting .text-input{font-size:11px!important;padding:10px 8px}
+.paparazzi-rotate{display:flex;align-items:center;gap:5px;font-size:10px;margin-top:19px;text-decoration:underline;text-underline-offset:3px;color:#8c7959}
+.paparazzi-owner-notice{display:flex;align-items:center;gap:8px;margin:0 0 20px;padding:15px;line-height:1.7;font-size:12px}
+.paparazzi-owner-notice svg{flex-shrink:0}
+.paparazzi-setup{padding:30px 0 10px;text-align:center}
+.paparazzi-setup>span{display:inline-flex;padding:22px;border:1px solid #dfe6d8;border-radius:50%;color:#788f6c;background:#f3f6ed;margin-bottom:22px}
+.paparazzi-setup h3{font-family:Georgia,serif;font-size:24px;font-weight:400;line-height:1.3;margin-bottom:14px}
+.paparazzi-setup>p{font-size:12px;color:#7d8c74;line-height:1.8}
+.paparazzi-setup>small{display:block;font-size:10px;color:#978569;line-height:1.9;margin-top:15px}
+.paparazzi-setup>.button{margin-top:22px}
+.paparazzi-owner-photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+.paparazzi-owner-photo{border:1px solid #e0e6da;border-radius:10px;overflow:hidden;min-width:0;background:white}
+.paparazzi-owner-photo>a{display:block}
+.paparazzi-owner-photo img{display:block;width:100%;height:210px;object-fit:contain;background:#f0f2ec}
+.paparazzi-photo-processing{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;height:210px;font-size:11px;color:#87977c;background:#f3f5ef}
+.paparazzi-photo-meta{padding:13px}
+.paparazzi-photo-meta>small{display:block;font-size:9px;color:#a1a896;margin-top:7px}
+.paparazzi-photo-shown,.paparazzi-photo-hidden{display:flex;align-items:center;gap:5px;font-size:10px;line-height:1.5;color:#6c8c5c}
+.paparazzi-photo-hidden{color:#a38b63}
+.paparazzi-photo-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:13px}
+.paparazzi-photo-actions>.button{padding:8px;font-size:9px;gap:4px;min-height:38px}
+.paparazzi-delete{color:#ab7465!important}
+@keyframes paparazzi-rotate{to{transform:rotate(360deg)}}
+.paparazzi-spin{animation:paparazzi-rotate 1.2s linear infinite}
+@media(max-width:1050px){.paparazzi-owner-layout{grid-template-columns:1fr}
+.paparazzi-qr-panel .paparazzi-print-sheet img{max-width:310px}
+.paparazzi-close-setting{max-width:480px}
+.paparazzi-owner-photo-grid{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}}
+@media(max-width:600px){.paparazzi-brand{padding:19px 18px;font-size:23px}
+.paparazzi-brand-label{font-size:8px;letter-spacing:1px}
+.paparazzi-guest-body{padding:31px 16px 18px}
+.paparazzi-intro{margin-bottom:23px}
+.paparazzi-intro h1{font-size:34px}
+.paparazzi-intro>p:not(.eyebrow){font-size:12px}
+.paparazzi-public-badge{font-size:10px;gap:5px;padding:7px 9px}
+.paparazzi-start,.paparazzi-sent,.paparazzi-review{padding:24px 20px}
+.paparazzi-start h2,.paparazzi-sent h2{font-size:25px}
+.paparazzi-start>p{font-size:12px}
+.paparazzi-camera-art{width:94px;height:94px;margin-bottom:21px}
+.paparazzi-camera-art>svg{width:48px}
+.paparazzi-review-heading h2{font-size:24px}
+.paparazzi-photo-preview{max-height:400px}
+.paparazzi-check{font-size:11px}
+.paparazzi-guest-footnote{font-size:9px;padding:0 9px}
+.paparazzi-footer{font-size:9px;gap:6px;flex-wrap:wrap}
+.paparazzi-public-gallery{margin-top:45px;padding-top:28px}
+.paparazzi-gallery-heading h2{font-size:29px}
+.paparazzi-gallery-heading p:not(.eyebrow){font-size:11px}
+.paparazzi-public-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.paparazzi-public-photo img{height:194px}
+.paparazzi-public-photo figcaption{padding:5px 8px;font-size:9px}
+.paparazzi-owner-layout>.dashboard-content-card{padding:20px}
+.paparazzi-owner-layout{gap:20px}
+.paparazzi-owner-photo-grid{grid-template-columns:1fr}
+.paparazzi-owner-photo img{height:280px}
+.paparazzi-photo-actions>.button{min-height:42px;font-size:11px}
+.paparazzi-photo-meta{padding:16px}
+.paparazzi-photo-meta>small{font-size:10px}
+.paparazzi-photo-shown,.paparazzi-photo-hidden{font-size:11px}
+.paparazzi-qr-downloads>.button{min-height:44px;font-size:11px}
+.paparazzi-link-actions>.text-link{font-size:11px}
+.paparazzi-close-setting{flex-direction:column;align-items:stretch}
+.paparazzi-close-setting .field-label{font-size:10px}
+.paparazzi-close-setting .text-input{font-size:12px!important}
+.paparazzi-owner-info{font-size:11px!important}
+.paparazzi-rotate{font-size:11px;min-height:40px}}
+@media(prefers-reduced-motion:reduce){.paparazzi-spin{animation:none}}
+@media print{body:has(.paparazzi-owner) *{visibility:hidden}body:has(.paparazzi-owner) .paparazzi-print-sheet,body:has(.paparazzi-owner) .paparazzi-print-sheet *{visibility:visible}body:has(.paparazzi-owner) .paparazzi-print-sheet{position:fixed;inset:0;background:white;padding:45px 25px;text-align:center}body:has(.paparazzi-owner) .paparazzi-print-sheet img{max-width:430px}body:has(.paparazzi-owner) .paparazzi-print-sheet h3{font-size:34px}}
+
+.paparazzi-content-report{margin-top:24px;text-align:center}
+.paparazzi-content-report .public-invitation-report{margin:0 auto;max-width:520px}
+.paparazzi-content-report .public-invitation-report-form{text-align:left}
+
+.paparazzi-guest button.text-link{min-height:44px}
+.paparazzi-public-photo figcaption a{min-width:44px;min-height:44px}
+.paparazzi-photo-actions>.button{min-height:44px}
+.paparazzi-camera-bar button{min-width:44px;min-height:44px}
+.paparazzi-content-report .public-invitation-report-trigger{min-height:44px}
+.paparazzi-intro>p:not(.eyebrow),.paparazzi-start>p,.paparazzi-sent>p,.paparazzi-empty>p,.paparazzi-gallery-heading p:not(.eyebrow),.paparazzi-gallery-empty p,.paparazzi-guest-footnote,.paparazzi-owner-info,.paparazzi-photo-meta>small,.paparazzi-processing-note{color:#61705c}
+.paparazzi-print-sheet .eyebrow,.paparazzi-gallery-heading .eyebrow{color:#7d6e58}
+.paparazzi-collection-status{color:#7c6240}
+
+.dashboard-paparazzi-page .dashboard-page-heading h1{display:flex;align-items:center;gap:12px}
+.paparazzi-photo-actions>.button{font-size:11px}
+.paparazzi-photo-meta>small{font-size:10px}

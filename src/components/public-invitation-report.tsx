@@ -5,7 +5,7 @@ import { Flag } from "lucide-react";
 
 type Reason = "CHILD_SAFETY" | "PERSONAL_INFORMATION" | "COPYRIGHT" | "IMPERSONATION" | "SPAM" | "OTHER";
 
-export function PublicInvitationReport({ slug }: { slug: string }) {
+export function PublicInvitationReport({ slug, label = "Laporkan undangan" }: { slug: string; label?: string }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<Reason | "">("");
   const [error, setError] = useState("");
@@ -34,7 +34,7 @@ export function PublicInvitationReport({ slug }: { slug: string }) {
   return <div className="public-invitation-report">
     {sent ? <span className="public-invitation-report-status" role="status">Laporan diterima untuk ditinjau.</span> : <>
       <button className="public-invitation-report-trigger" type="button" aria-expanded={open} aria-controls="public-invitation-report-form" onClick={() => { setOpen((value) => !value); setError(""); }}>
-        <Flag size={13} /> Laporkan undangan
+        <Flag size={13} /> {label}
       </button>
       {open && <form id="public-invitation-report-form" className="public-invitation-report-form" onSubmit={submit}>
         <p>Pilih satu alasan laporan sebelum mengirim. Kami menyimpan alasan dan penanda anonim untuk mencegah laporan berulang.</p>
