@@ -26,10 +26,23 @@ jobs:
           if (target.protocol !== "https:" || target.pathname !== "/api/health" || target.search || target.hash || target.username || target.password) {
             throw new Error("PRODUCTION_HEALTH_URL must be an HTTPS /api/health URL without credentials, query, or fragment.");
           }
+          let lastError;
+          for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+              const response = await fetch(target, { redirect: "error", signal: AbortSignal.timeout(20_000) });
+              if (!response.ok || !response.headers.get("content-type")?.includes("application/json")) throw new Error("Production must return a successful JSON health response.");
+              const health = await response.json();
+              if (health.status !== "ok" || ["database", "redis", "worker"].some(key => health.dependencies?.[key] !== "ok")) throw new Error("Production dependencies are not healthy.");
+              console.log("TamuKita production database, Redis, and worker are healthy.");
+              lastError = null;
+              break;
+            } catch (error) {
+              lastError = error;
+              if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 5_000));
+            }
+          }
+          if (lastError) throw lastError;
           NODE
-          curl --fail-with-body --show-error --silent \
-            --max-time 20 --retry 2 --retry-all-errors --retry-delay 5 \
-            "$PRODUCTION_HEALTH_URL"
       - name: Notify configured webhook on failure
         if: failure()
         shell: bash

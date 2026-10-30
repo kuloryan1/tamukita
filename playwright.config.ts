@@ -64,6 +64,7 @@ const localWebServers = configuredBaseURL
         env: {
           AUTH_SECRET: process.env.AUTH_SECRET ?? "local-e2e-only-secret",
           XENDIT_SECRET_KEY: process.env.XENDIT_SECRET_KEY ?? "ci-only-e2e-secret",
+          PAYMENT_MODE: "xendit",
           XENDIT_API_BASE_URL: "http://127.0.0.1:3137",
           E2E_XENDIT_MOCK: "true",
           ...e2eMediaEnvironment,

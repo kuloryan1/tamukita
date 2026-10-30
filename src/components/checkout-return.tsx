@@ -35,7 +35,7 @@ export function CheckoutReturn({ invitationId, wasCancelled, isRenewal = false }
     <section className="dashboard-empty-state">
       <span className="review-check">{failed ? <RotateCcw size={20} /> : state.published ? <CheckCircle2 size={20} /> : <Clock3 size={20} />}</span>
       <h1>{failed || wasCancelled ? "Pembayaran belum selesai" : timedOut ? "Konfirmasi masih diproses" : "Memeriksa pembayaran..."}</h1>
-      <p>{failed || wasCancelled ? "Undangan tetap tersimpan di dashboard. Kamu bisa mengulang proses pembayaran kapan saja." : timedOut ? "Xendit belum mengirim konfirmasi akhir. Halaman ini tetap aman untuk dimuat ulang setelah beberapa saat." : isRenewal ? "Masa hosting diperpanjang setelah konfirmasi pembayaran diterima dari Xendit." : "Undangan baru diterbitkan setelah konfirmasi pembayaran diterima dari Xendit."}</p>
+      <p>{failed || wasCancelled ? "Undangan tetap tersimpan di dashboard. Kamu bisa mengulang proses pembayaran kapan saja." : timedOut ? "Pembayaran belum mendapat konfirmasi akhir. Halaman ini tetap aman untuk dimuat ulang setelah beberapa saat." : isRenewal ? "Masa hosting diperpanjang setelah konfirmasi pembayaran diterima." : "Undangan baru diterbitkan setelah konfirmasi pembayaran diterima."}</p>
       {state.error && <p role="alert">{state.error}</p>}
       <div className="step-navigation"><button type="button" className="button button--outline" onClick={() => router.refresh()}><CircleHelp size={15} /> Periksa lagi</button><button type="button" className="button button--dark" onClick={() => router.push("/dashboard")}>Kembali ke dashboard</button></div>
     </section>

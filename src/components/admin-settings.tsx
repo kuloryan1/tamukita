@@ -4,8 +4,10 @@ import { useState, type FormEvent } from "react";
 import { Save, ShieldCheck } from "lucide-react";
 import type { IntegrationConfiguration } from "@/lib/integration-status";
 import type { WorkerIntegrationSnapshot } from "@/lib/worker-health";
+import type { PaymentSettings } from "@/lib/payment-methods";
+import { AdminPaymentSettings } from "@/components/admin-payment-settings";
 
-type Settings = { prices: { basicActivationIdr: number; premiumActivationIdr: number; customerActivationIdr: number; hostingRenewalIdr: number }; hostingTermDays: number; integrations: IntegrationConfiguration[]; workerConfiguration: WorkerIntegrationSnapshot | null };
+type Settings = { payment: PaymentSettings; prices: { basicActivationIdr: number; premiumActivationIdr: number; customerActivationIdr: number; hostingRenewalIdr: number }; hostingTermDays: number; integrations: IntegrationConfiguration[]; workerConfiguration: WorkerIntegrationSnapshot | null };
 const money = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
 
 const integrationStatusText: Record<IntegrationConfiguration["status"], string> = {
@@ -49,6 +51,7 @@ export function AdminSettings({ initial }: { initial: Settings }) {
   }
 
   return <div className="admin-settings-grid">
+    <AdminPaymentSettings initial={initial.payment} />
     <section className="dashboard-content-card admin-settings-card">
       <div className="card-heading"><div><h2>Harga dan masa hosting</h2><p>Pengaturan ini digunakan untuk checkout baru. Secret dan credential integrasi tetap berasal dari konfigurasi deployment.</p></div></div>
       <form className="admin-settings-form" onSubmit={save}>

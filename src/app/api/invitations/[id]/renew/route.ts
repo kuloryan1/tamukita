@@ -7,6 +7,7 @@ import { getHostingRenewalPrice, getHostingTermDays } from "@/lib/platform-setti
 import { canRenewHosting, HOSTING_RENEWAL_WINDOW_DAYS } from "@/lib/hosting-renewal";
 import { getXenditApiUrl } from "@/lib/xendit-api";
 import { getXenditSecretKey } from "@/lib/xendit-config";
+import { getPaymentSettings, isReusableCheckout, paymentSessionInput } from "@/lib/payment-settings";
 
 export const runtime = "nodejs";
 
@@ -54,8 +55,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   });
   if (!validLicense) return NextResponse.json({ error: "Lisensi template untuk undangan ini tidak aktif sehingga hosting tidak dapat diperpanjang." }, { status: 409 });
   if (!amountIdr) return NextResponse.json({ error: "Harga renewal belum diaktifkan oleh admin." }, { status: 503 });
-  const secret = getXenditSecretKey();
-  if (!secret) return NextResponse.json({ error: "Pembayaran belum dikonfigurasi di server." }, { status: 503 });
+  const paymentSettings = await getPaymentSettings();
+  const secret = paymentSettings.mode === "xendit" ? getXenditSecretKey() : null;
+  if (!paymentSettings.ready || (paymentSettings.mode === "xendit" && !secret)) return NextResponse.json({ error: "Pembayaran belum tersedia. Hubungi admin untuk melengkapi pengaturan pembayaran." }, { status: 503 });
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
   const successUrl = new URL("/dashboard/checkout/return", baseUrl);
   successUrl.searchParams.set("invitationId", invitation.id);
@@ -67,7 +69,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const givenNames = name.split(/\s+/)[0] || "TamuKita";
   const surname = name.split(/\s+/).slice(1).join(" ");
 
-  let orderResult: { kind: "checkout"; checkoutUrl: string } | { kind: "order"; order: Awaited<ReturnType<typeof prisma.order.create>> & { items: { id: string }[]; paymentSessions: { id: string }[] } };
+  let orderResult: { kind: "checkout"; checkoutUrl: string | null } | { kind: "order"; order: Awaited<ReturnType<typeof prisma.order.create>> & { items: { id: string }[]; paymentSessions: { id: string; checkoutUrl: string | null }[] } };
   try {
     orderResult = await prisma.$transaction(async (tx) => {
       await tx.$queryRaw<Array<{ id: string }>>`SELECT id FROM "invitations" WHERE id = ${invitation.id}::uuid FOR UPDATE`;
@@ -89,12 +91,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       });
       const pendingSession = pending?.paymentSessions[0];
       if (pendingSession) {
-        if (pendingSession.status === "PENDING" && pendingSession.checkoutUrl && pendingSession.expiresAt && pendingSession.expiresAt > new Date()) return { kind: "checkout" as const, checkoutUrl: pendingSession.checkoutUrl };
+        if (isReusableCheckout(pendingSession, paymentSettings)) return { kind: "checkout" as const, checkoutUrl: pendingSession.checkoutUrl };
         throw new RenewalConflict();
       }
 
+      const orderId = randomUUID();
       const order = await tx.order.create({
         data: {
+          id: orderId,
           organizationId: invitation.organizationId,
           buyerId: userId,
           invitationId: invitation.id,
@@ -104,7 +108,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           idempotencyKey: randomUUID(),
           priceSnapshot: { flow: "INVITATION_HOSTING_RENEWAL", amountIdr, periodDays, previousExpiresAt: current.expiresAt.toISOString() },
           items: { create: [{ itemType: "RENEWAL", sku: `hosting-renewal:${periodDays}d`, quantity: 1, unitPriceIdr: amountIdr, totalPriceIdr: amountIdr, entitlementSnapshot: { periodDays, previousExpiresAt: current.expiresAt.toISOString() } }] },
-          paymentSessions: { create: [{ amountIdr, currency: "IDR", status: "CREATED", requestSnapshot: { flow: "INVITATION_HOSTING_RENEWAL", sessionType: "PAY" } }] },
+          paymentSessions: { create: [paymentSessionInput(orderId, amountIdr, paymentSettings, "INVITATION_HOSTING_RENEWAL")] },
         },
         include: { items: true, paymentSessions: true },
       });
@@ -117,6 +121,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (orderResult.kind === "checkout") return NextResponse.json({ checkoutUrl: orderResult.checkoutUrl });
   const order = orderResult.order;
   const paymentSession = order.paymentSessions[0];
+  if (paymentSettings.mode === "manual") return NextResponse.json({ checkoutUrl: paymentSession.checkoutUrl, paymentMode: "manual", orderId: order.id });
   const requestBody = {
     reference_id: order.id,
     session_type: "PAY",

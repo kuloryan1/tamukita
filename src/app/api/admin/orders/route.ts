@@ -38,7 +38,7 @@ export async function GET(request: Request) {
         organization: { select: { name: true } },
         invitation: { select: { title: true, slug: true } },
         items: { orderBy: { createdAt: "asc" }, select: { sku: true, quantity: true, itemType: true, unitPriceIdr: true } },
-        paymentSessions: { orderBy: { createdAt: "desc" }, take: 1, select: { status: true, providerPaymentRequestId: true } },
+        paymentSessions: { orderBy: { createdAt: "desc" }, take: 1, select: { status: true, provider: true, providerPaymentRequestId: true, responseSnapshot: true } },
         refunds: { orderBy: { createdAt: "desc" }, select: { id: true, amount: true, currency: true, reason: true, adminNote: true, failureCode: true, status: true, createdAt: true, requestedBy: { select: { name: true, email: true } } } },
       },
     }),
@@ -48,6 +48,8 @@ export async function GET(request: Request) {
     const settledRefundedAmount = order.refunds.filter((refund) => refund.status === "SUCCEEDED").reduce((sum, refund) => sum + refund.amount, 0);
     const reservedRefundAmount = order.refunds.filter((refund) => refund.status === "INITIATING" || refund.status === "PENDING").reduce((sum, refund) => sum + refund.amount, 0);
     const creditItem = order.items.find((item) => item.itemType === "RESELLER_CREDIT");
+    const latestPayment = order.paymentSessions[0];
+    const confirmation = latestPayment?.provider === "MANUAL" && typeof latestPayment.responseSnapshot === "object" && latestPayment.responseSnapshot !== null && !Array.isArray(latestPayment.responseSnapshot) ? latestPayment.responseSnapshot as Record<string, unknown> : null;
     return {
       id: order.id,
       status: order.status,
@@ -65,7 +67,9 @@ export async function GET(request: Request) {
       itemQuantity: creditItem?.quantity ?? order.items.reduce((sum, item) => sum + item.quantity, 0),
       itemUnitPriceIdr: creditItem?.unitPriceIdr ?? 0,
       paymentStatus: order.paymentSessions[0]?.status ?? "TANPA PEMBAYARAN",
-      hasRefundPaymentReference: Boolean(order.paymentSessions[0]?.providerPaymentRequestId),
+      paymentProvider: latestPayment?.provider ?? "NONE",
+      manualPaymentReference: typeof confirmation?.reference === "string" ? confirmation.reference : null,
+      hasRefundPaymentReference: latestPayment?.provider === "MANUAL" ? latestPayment.status === "SUCCEEDED" : Boolean(latestPayment?.providerPaymentRequestId),
       refundedAmount: settledRefundedAmount,
       reservedRefundAmount,
       availableRefundAmount: Math.max(0, order.totalAmount - settledRefundedAmount - reservedRefundAmount),

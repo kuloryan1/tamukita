@@ -38,7 +38,8 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   await expect(page.getByText("Keluhan editor", { exact: true })).toBeVisible();
   const metricValue = async (label: string) => Number((await page.locator(".admin-metric-card").filter({ hasText: label }).locator("strong").innerText()).replaceAll(".", ""));
   expect(await metricValue("Pelanggan menyelesaikan form (unik)")).toBeLessThanOrEqual(await metricValue("Pelanggan mulai draft (unik)"));
-  expect(await metricValue("Pelanggan publikasi mandiri")).toBe(1);
+  const selfPublishedBefore = await metricValue("Pelanggan publikasi mandiri");
+  expect(selfPublishedBefore).toBeGreaterThanOrEqual(1);
   await page.goto("/admin");
   await page.getByRole("link", { name: "Audit log" }).click();
   await expect(page.getByRole("heading", { name: "Audit log" })).toBeVisible();
@@ -314,4 +315,6 @@ test("admin creates customer drafts and notifies an existing customer", async ({
   } finally {
     await customerPage.close();
   }
+  await page.goto("/admin/analytics");
+  expect(await metricValue("Pelanggan publikasi mandiri")).toBe(selfPublishedBefore);
 });

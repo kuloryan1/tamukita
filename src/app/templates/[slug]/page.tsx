@@ -62,7 +62,7 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
               <h1>{template.name}</h1>
               <p className="detail-subtitle">{template.subtitle}</p>
               <p className="detail-description">{template.description} Tambahkan detail acaramu, pilih foto favorit, dan bagikan ke orang-orang yang kamu sayangi.</p>
-              <div className="detail-price-block"><strong>{formatRupiah(template.price)}</strong><span>Lisensi satu kali per undangan · Checkout Xendit</span></div>
+              <div className="detail-price-block"><strong>{formatRupiah(template.price)}</strong><span>Lisensi satu kali per undangan · Pembayaran terverifikasi</span></div>
               <div className="detail-features">
                 <span><Check size={15} /> Bisa diakses di ponsel</span>
                 <span><Check size={15} /> RSVP aktif setelah publikasi</span>
@@ -71,7 +71,7 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
               <Link href={useTemplateHref} className="button button--dark button--wide">Gunakan template ini <ArrowRight size={16} /></Link>
               <Link href="#template-demo" className="detail-demo-link">Lihat contoh undangan <ArrowDown size={14} /></Link>
               {template.slug === "taman-abadi" && <Link href="/templates/taman-abadi/demo" className="detail-demo-link">Buka demo undangan lengkap <ArrowRight size={14} /></Link>}
-              <div className="detail-safe-note"><ShieldCheck size={16} /><span>Undangan terbit setelah pembayaran berhasil dikonfirmasi oleh webhook Xendit.</span></div>
+              <div className="detail-safe-note"><ShieldCheck size={16} /><span>Undangan terbit setelah pembayaran berhasil diverifikasi.</span></div>
               <div className="detail-tags">{template.tags.map((tag) => <span key={tag}><Heart size={11} /> {tag}</span>)}</div>
             </div>
           </div>

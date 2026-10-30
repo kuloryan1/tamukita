@@ -35,6 +35,9 @@ const headers = [
   "refund_status",
   "refund_amount_idr",
   "refund_currency",
+  "payment_provider",
+  "manual_payment_reference",
+  "manual_refund_reference",
 ] as const;
 
 type CsvValue = string | number | null | undefined;
@@ -76,6 +79,15 @@ function providerText(value: unknown) {
 
 function providerAmount(value: unknown) {
   return typeof value === "number" && Number.isSafeInteger(value) ? value : null;
+}
+
+function paymentRecord(values: CsvValue[], provider: string, paymentReference?: unknown, refundReference?: unknown): CsvValue[] {
+  const row = [...values];
+  while (row.length < 27) row.push(undefined);
+  if (provider === "MANUAL") {
+    for (const field of ["xendit_session_id", "xendit_payment_request_id", "xendit_payment_id", "xendit_event_object_id", "xendit_refund_id"] as const) row[headers.indexOf(field)] = null;
+  }
+  return [...row, provider, provider === "MANUAL" ? providerText(paymentReference) : null, provider === "MANUAL" ? providerText(refundReference) : null];
 }
 
 function csvRow(values: CsvValue[]) {
@@ -125,6 +137,8 @@ export async function GET(request: Request) {
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       select: {
         id: true,
+        provider: true,
+        responseSnapshot: true,
         providerSessionId: true,
         providerPaymentRequestId: true,
         providerPaymentId: true,
@@ -148,6 +162,7 @@ export async function GET(request: Request) {
       orderBy: [{ receivedAt: "asc" }, { id: "asc" }],
       select: {
         id: true,
+        provider: true,
         providerEventId: true,
         eventType: true,
         payload: true,
@@ -156,7 +171,9 @@ export async function GET(request: Request) {
         paymentSession: {
           select: {
             id: true,
-            providerSessionId: true,
+            provider: true,
+        responseSnapshot: true,
+        providerSessionId: true,
             providerPaymentRequestId: true,
             providerPaymentId: true,
             status: true,
@@ -172,6 +189,7 @@ export async function GET(request: Request) {
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       select: {
         id: true,
+        responseSnapshot: true,
         providerRefundId: true,
         referenceId: true,
         status: true,
@@ -182,7 +200,9 @@ export async function GET(request: Request) {
         paymentSession: {
           select: {
             id: true,
-            providerSessionId: true,
+            provider: true,
+        responseSnapshot: true,
+        providerSessionId: true,
             providerPaymentRequestId: true,
             providerPaymentId: true,
             status: true,
@@ -198,18 +218,18 @@ export async function GET(request: Request) {
       "ORDER_WITHOUT_PAYMENT", order.createdAt.toISOString(), order.id, order.status,
       order.totalAmount, order.currency,
     ]),
-    ...paymentSessions.map((payment) => [
+    ...paymentSessions.map((payment) => paymentRecord([
       "PAYMENT_SESSION", payment.createdAt.toISOString(), payment.order.id, payment.order.status,
-      payment.order.totalAmount, payment.order.currency, payment.id, payment.providerSessionId,
-      payment.providerPaymentRequestId, payment.providerPaymentId, payment.status,
+      payment.order.totalAmount, payment.order.currency, payment.id, payment.provider === "XENDIT" ? payment.providerSessionId : null,
+      payment.provider === "XENDIT" ? payment.providerPaymentRequestId : null, payment.provider === "XENDIT" ? payment.providerPaymentId : null, payment.status,
       payment.amountIdr, payment.currency,
       payment.order.items.map((item) => `${item.sku} × ${item.quantity} @ ${item.unitPriceIdr}`).join(" | "),
-    ]),
+    ], payment.provider, record(payment.responseSnapshot)?.reference)),
     ...paymentEvents.map((event) => {
       const data = providerData(event.payload);
       const payment = event.paymentSession;
       const order = payment?.order ?? event.order;
-      return [
+      return paymentRecord([
         "PAYMENT_EVENT", event.receivedAt.toISOString(), order?.id, order?.status,
         order?.totalAmount, order?.currency, payment?.id,
         payment?.providerSessionId ?? providerText(data?.payment_session_id),
@@ -217,17 +237,17 @@ export async function GET(request: Request) {
         payment?.providerPaymentId ?? providerText(data?.payment_id), payment?.status,
         payment?.amountIdr, payment?.currency, undefined, event.id,
         providerText(data?.id), event.eventType, providerText(data?.reference_id),
-        providerText(data?.status), providerAmount(data?.amount), providerText(data?.currency),
-      ];
+        providerText(data?.status), providerAmount(data?.amount ?? data?.amountIdr), providerText(data?.currency),
+      ], event.provider, data?.reference);
     }),
-    ...refunds.map((refund) => [
+    ...refunds.map((refund) => paymentRecord([
       "REFUND", refund.createdAt.toISOString(), refund.order.id, refund.order.status,
       refund.order.totalAmount, refund.order.currency, refund.paymentSession.id,
       refund.paymentSession.providerSessionId, refund.paymentSession.providerPaymentRequestId,
       refund.paymentSession.providerPaymentId, refund.paymentSession.status, undefined, undefined,
       undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined,
       refund.id, refund.providerRefundId, refund.referenceId, refund.status, refund.amount, refund.currency,
-    ]),
+    ], refund.paymentSession.provider, record(refund.paymentSession.responseSnapshot)?.reference, record(refund.responseSnapshot)?.reference)),
   ];
 
   const csv = `\uFEFF${rows.map(csvRow).join("\r\n")}\r\n`;

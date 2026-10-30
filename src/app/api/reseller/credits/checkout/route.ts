@@ -8,6 +8,7 @@ import { readJsonBody } from "@/lib/request-json";
 import { getResellerCreditPrice } from "@/lib/platform-settings";
 import { getXenditApiUrl } from "@/lib/xendit-api";
 import { getXenditSecretKey } from "@/lib/xendit-config";
+import { getPaymentSettings, paymentSessionInput } from "@/lib/payment-settings";
 
 export const runtime = "nodejs";
 
@@ -34,8 +35,9 @@ export async function POST(request: Request) {
 
   const unitPrice = await getResellerCreditPrice(parsed.data.sku);
   if (!unitPrice) return NextResponse.json({ error: "Harga kredit reseller belum dikonfigurasi." }, { status: 503 });
-  const secret = getXenditSecretKey();
-  if (!secret) return NextResponse.json({ error: "Pembayaran belum dikonfigurasi di server." }, { status: 503 });
+  const paymentSettings = await getPaymentSettings();
+  const secret = paymentSettings.mode === "xendit" ? getXenditSecretKey() : null;
+  if (!paymentSettings.ready || (paymentSettings.mode === "xendit" && !secret)) return NextResponse.json({ error: "Pembayaran belum tersedia. Hubungi admin untuk melengkapi pengaturan pembayaran." }, { status: 503 });
 
   const prisma = getPrismaClient();
   const profile = await prisma.resellerProfile.findFirst({
@@ -46,8 +48,19 @@ export async function POST(request: Request) {
 
   const totalAmount = unitPrice * parsed.data.quantity;
   if (!Number.isSafeInteger(totalAmount) || totalAmount > 2_147_483_647) return NextResponse.json({ error: "Jumlah pembayaran terlalu besar." }, { status: 400 });
-  const order = await prisma.order.create({
+  const order = await prisma.$transaction(async (tx) => {
+    if (paymentSettings.mode === "manual") {
+      await tx.$queryRaw`SELECT id FROM "users" WHERE id = ${userId}::uuid FOR UPDATE`;
+      const pending = await tx.order.findFirst({
+        where: { buyerId: userId, organizationId: profile.organizationId, status: "PENDING", totalAmount, items: { some: { sku: `credit:${parsed.data.sku}`, quantity: parsed.data.quantity } }, paymentSessions: { some: { provider: "MANUAL", status: "PENDING" } } },
+        orderBy: { createdAt: "desc" }, include: { paymentSessions: { orderBy: { createdAt: "desc" } }, items: true },
+      });
+      if (pending) return pending;
+    }
+    const orderId = randomUUID();
+    return tx.order.create({
     data: {
+      id: orderId,
       organizationId: profile.organizationId,
       buyerId: userId,
       status: "PENDING",
@@ -56,11 +69,13 @@ export async function POST(request: Request) {
       idempotencyKey: randomUUID(),
       priceSnapshot: { creditSku: parsed.data.sku, units: parsed.data.quantity, unitPriceIdr: unitPrice },
       items: { create: [{ itemType: "RESELLER_CREDIT", sku: `credit:${parsed.data.sku}`, quantity: parsed.data.quantity, unitPriceIdr: unitPrice, totalPriceIdr: totalAmount, entitlementSnapshot: { creditSku: parsed.data.sku, units: parsed.data.quantity } }] },
-      paymentSessions: { create: [{ amountIdr: totalAmount, currency: "IDR", status: "CREATED", requestSnapshot: { flow: "RESELLER_CREDIT_TOP_UP", sessionType: "PAY" } }] },
+      paymentSessions: { create: [paymentSessionInput(orderId, totalAmount, paymentSettings, "RESELLER_CREDIT_TOP_UP")] },
     },
     include: { paymentSessions: true, items: true },
+    });
   });
   const paymentSession = order.paymentSessions[0];
+  if (paymentSettings.mode === "manual") return NextResponse.json({ checkoutUrl: paymentSession.checkoutUrl, paymentMode: "manual", orderId: order.id });
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
   const successUrl = new URL("/reseller", baseUrl);
   successUrl.searchParams.set("payment", "return");

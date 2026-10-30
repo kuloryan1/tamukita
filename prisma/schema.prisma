@@ -146,6 +146,7 @@ enum OrderItemType {
 
 enum PaymentProvider {
   XENDIT
+  MANUAL
 }
 
 enum PaymentStatus {
