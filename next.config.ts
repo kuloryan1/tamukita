@@ -18,7 +18,14 @@ const nextConfig: NextConfig = {
       securityHeaders.push({ key: "Strict-Transport-Security", value: "max-age=31536000" });
     }
 
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      { source: "/paparazi/:path*", headers: [
+        { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=()" },
+        { key: "Cache-Control", value: "private, no-store" },
+        { key: "X-Robots-Tag", value: "noindex, nofollow" },
+      ] },
+    ];
   },
 };
 

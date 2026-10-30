@@ -31,6 +31,8 @@ jobs:
       E2E_FINANCE_PASSWORD: ci-only-finance-password-123
       E2E_MANUAL_CUSTOMER_EMAIL: e2e-manual-payment@tamukita.test
       E2E_MANUAL_CUSTOMER_PASSWORD: ci-only-manual-payment-password-123
+      E2E_PAPARAZZI_CUSTOMER_EMAIL: e2e-paparazzi@tamukita.test
+      E2E_PAPARAZZI_CUSTOMER_PASSWORD: ci-only-paparazzi-password-123
       E2E_CUSTOMER_EMAIL: e2e-customer@tamukita.test
       E2E_CUSTOMER_PASSWORD: ci-only-customer-password-123
       E2E_OTHER_CUSTOMER_EMAIL: e2e-other-customer@tamukita.test
