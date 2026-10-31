@@ -49,10 +49,14 @@ Retensi tetap maksimal 90 hari, sesuai informasi pada halaman pemilik.
    masih terbaca. Sertakan volume foto dan database dalam backup acara; lakukan
    restore ke volume terpisah untuk memeriksa salinannya.
 
-Pada 31 Oktober, probe publik `tamukita.io` masih mendapat halaman parkir Hostinger;
-`/api/health` production menjawab HTML, bukan health JSON TamuKita. Deployment dan
-ruang kosong production belum terverifikasi. Pengujian lokal/CI tidak membuktikan
-konfigurasi volume dan backup pada VPS production.
+Pada 31 Oktober pukul 20:32 WIB, production sudah aktif melalui Tunnel khusus
+dan `/api/health` menjawab JSON dengan database, Redis, serta worker `ok`.
+Inspeksi mount web dan worker membuktikan keduanya memakai volume production
+`tamukita-tamukita-hadbj0_tamukita-paparazzi` pada `/data/paparazzi`, RW.
+Unggah pada acara production, kamera ponsel sungguhan, ruang kosong filesystem,
+dan backup/restore VPS masih belum dites. Lihat
+[catatan aktivasi production](production-event-test-2026-10-31.md) untuk bukti
+publik dan ruang lingkup pemeriksaan.
 
 ## Saat beralih ke R2
 

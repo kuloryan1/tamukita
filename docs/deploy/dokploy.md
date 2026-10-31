@@ -1,5 +1,19 @@
 # Deployment Dokploy
 
+## Snapshot terbaru — 31 Oktober 2026
+
+Production dan staging sudah menjalankan aplikasi `0e7737c`. Production aktif
+di `https://tamukita.io` melalui Tunnel khusus `tamukita-production`, dengan
+web, worker, PostgreSQL, dan Redis sehat serta migrasi exit 0. Web dan worker
+memakai volume foto production yang sama pada `/data/paparazzi`; connector
+hanya terhubung ke network origin production. Auto-deploy tetap mati.
+
+[Catatan aktivasi dan bukti uji acara production](production-event-test-2026-10-31.md)
+mencatat source, routing, volume, smoke check publik, rollback, dan batas bukti.
+Unggah acara production, kamera ponsel sungguhan, serta backup/restore VPS masih
+belum dites. Snapshot bertanggal lebih lama di bawah adalah riwayat, bukan
+status production saat ini.
+
 ## Snapshot live terbaru — 27 Oktober 2026
 
 - Pemeriksaan Dokploy 27 Oktober menunjukkan service production `tamukita` belum pernah dideploy, belum memiliki container, dan tab Domains kosong. Auto-deploy mati; konfigurasi menunjuk ke `main` dan `./docker-compose.yml`. Daftar service production hanya menampilkan `tamukita Compose`; tidak ada connector `cloudflared` dan tab Patches menyatakan `No patches yet`. Route publik `tamukita.io` belum terhubung ke aplikasi. Target hostname `tamukita.io` melalui Tunnel Cloudflare khusus production tetap menjadi pilihan. Nilai environment tetap termask dan tidak dibuka/diubah.
