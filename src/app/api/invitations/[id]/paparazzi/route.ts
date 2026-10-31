@@ -5,8 +5,8 @@ import { auth } from "@/auth";
 import { getPrismaClient } from "@/lib/prisma";
 import { allowRequest } from "@/lib/rate-limit";
 import { readJsonBody } from "@/lib/request-json";
-import { getR2Config } from "@/lib/r2";
-import { getOwnerPaparazziAlbum, paparazziInvitationSelect, paparazziOwnerWhere, paparazziPrivateHeaders } from "@/lib/paparazzi-server";
+import { ensurePaparazziStorage } from "@/lib/paparazzi-web-storage";
+import { getOwnerPaparazziAlbum, paparazziInvitationSelect, paparazziOwnerWhere, paparazziPrivateHeaders, paparazziTransactionOptions } from "@/lib/paparazzi-server";
 
 const schema = z.object({ enabled: z.boolean().optional(), closesAt: z.string().datetime().optional(), rotateQr: z.literal(true).optional() }).strict().refine(value => Object.keys(value).length > 0);
 
@@ -26,7 +26,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const body = await readJsonBody(request, 2_000); if (!body.ok) return NextResponse.json({ error: "Pengaturan tidak valid." }, { status: body.status });
   const parsed = schema.safeParse(body.value); if (!parsed.success) return NextResponse.json({ error: "Pengaturan Paparazi tidak valid." }, { status: 400 });
   if (!await allowRequest(`paparazzi:settings:${userId}`, 60, 3_600)) return NextResponse.json({ error: "Terlalu banyak perubahan. Coba lagi nanti." }, { status: 429 });
-  if (parsed.data.enabled && !getR2Config()) return NextResponse.json({ error: "Penyimpanan foto belum tersedia." }, { status: 503 });
+  if (parsed.data.enabled) { try { await ensurePaparazziStorage(); } catch { return NextResponse.json({ error: "Penyimpanan foto belum tersedia." }, { status: 503 }); } }
   const prisma = getPrismaClient();
   const result = await prisma.$transaction(async tx => {
     await tx.$queryRaw`SELECT id FROM "invitations" WHERE id = ${id}::uuid FOR UPDATE`;
@@ -44,7 +44,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     });
     await tx.auditLog.create({ data: { actorId: userId, organizationId: invitation.organizationId, action: "paparazzi.settings_updated", targetType: "PaparazziAlbum", targetId: album.id, metadata: { enabled: album.enabled, closesAt: album.closesAt.toISOString(), qrRotated: Boolean(parsed.data.rotateQr), visibility: "PUBLIC_EVENT_GALLERY" } } });
     return { error: null, status: 200 };
-  });
+  }, paparazziTransactionOptions);
   if (result.error) return NextResponse.json({ error: result.error }, { status: result.status });
   return NextResponse.json(await getOwnerPaparazziAlbum(userId, id), { headers: paparazziPrivateHeaders });
 }

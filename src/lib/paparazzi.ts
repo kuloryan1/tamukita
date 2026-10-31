@@ -2,7 +2,6 @@ import { z } from "zod";
 import { guardianConsentMatchesChildData } from "./child-data-consent";
 
 export const PAPARAZZI_MAX_BYTES = 10_000_000;
-export const PAPARAZZI_MAX_PHOTOS = 200;
 export const PAPARAZZI_RETENTION_DAYS = 90;
 export const PAPARAZZI_UPLOAD_TTL_MS = 15 * 60 * 1_000;
 export const PAPARAZZI_CONSENT_VERSION = "paparazzi-public-2026-10-v1";
@@ -34,12 +33,12 @@ export function paparazziRetentionAt(now: Date, hostingExpiresAt: Date | null) {
   return new Date(hostingExpiresAt ? Math.min(maximum, hostingExpiresAt.getTime() + 30 * 86_400_000) : maximum);
 }
 
-export function paparazziGalleryVisible(invitation: { status: string; deletedAt: Date | null; expiresAt: Date | null; organization: { status: string } }, now = new Date()) {
-  return invitation.status === "PUBLISHED" && !invitation.deletedAt && Boolean(invitation.expiresAt && invitation.expiresAt > now) && invitation.organization.status === "ACTIVE";
+export function paparazziGalleryVisible(invitation: { status: string; deletedAt: Date | null; expiresAt: Date | null; organization: { status: string } | null } | null | undefined, now = new Date()) {
+  return Boolean(invitation && invitation.status === "PUBLISHED" && !invitation.deletedAt && invitation.expiresAt && invitation.expiresAt > now && invitation.organization?.status === "ACTIVE");
 }
 
-export function paparazziIsOpen(album: { enabled: boolean; closesAt: Date; invitation: Parameters<typeof paparazziGalleryVisible>[0] }, now = new Date()) {
-  return album.enabled && album.closesAt > now && paparazziGalleryVisible(album.invitation, now);
+export function paparazziIsOpen(album: { enabled: boolean; closesAt: Date; invitation: Parameters<typeof paparazziGalleryVisible>[0] } | null | undefined, now = new Date()) {
+  return Boolean(album?.enabled && album.closesAt > now && paparazziGalleryVisible(album.invitation, now));
 }
 
 export type PaparazziPublicAlbum = { title: string; open: boolean; galleryAvailable: boolean; invitationSlug: string | null; closesAt: string; maxBytes: number; retentionDays: number };
@@ -47,7 +46,7 @@ export type PaparazziOwnerPhoto = { id: string; status: string; isVisible: boole
 export type PaparazziGallery = { photos: Array<{ id: string; width: number | null; height: number | null; createdAt: string }>; nextCursor: string | null };
 export type PaparazziOwnerAlbum = {
   invitation: { id: string; title: string; slug: string; status: string; expiresAt: string | null };
-  album: { enabled: boolean; open: boolean; closesAt: string; maxPhotos: number; shareUrl: string; qrVersion: string; count: number; readyCount: number } | null;
+  album: { enabled: boolean; open: boolean; closesAt: string; maxPhotos: number | null; shareUrl: string; qrVersion: string; count: number; readyCount: number } | null;
   photos: PaparazziOwnerPhoto[];
   nextCursor: string | null;
 };

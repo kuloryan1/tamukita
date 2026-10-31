@@ -479,7 +479,7 @@ model PaparazziAlbum {
   token        String           @unique
   enabled      Boolean          @default(false)
   closesAt     DateTime
-  maxPhotos    Int              @default(200)
+  maxPhotos    Int?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   invitation   Invitation       @relation(fields: [invitationId], references: [id], onDelete: Cascade)
@@ -488,11 +488,17 @@ model PaparazziAlbum {
   @@map("paparazzi_albums")
 }
 
+enum PaparazziStorageProvider {
+  R2
+  SERVER
+}
+
 model PaparazziPhoto {
   id                     String         @id @default(uuid()) @db.Uuid
   albumId                String         @db.Uuid
   sourceKey              String         @unique
   processedKey           String         @unique
+  storageProvider        PaparazziStorageProvider @default(R2)
   mimeType               String
   sizeBytes              BigInt
   processedBytes         BigInt?

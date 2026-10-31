@@ -82,6 +82,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run db:deploy
+      - run: npm run test:paparazzi-storage
+        env:
+          E2E_ALLOW_DESTRUCTIVE: "1"
+          E2E_ALLOW_GITHUB_SERVICE_DATABASE: "1"
       - run: npm run db:seed:e2e
       - run: npm run test:data-retention
         env:

@@ -2,15 +2,10 @@ import { NextResponse } from "next/server";
 import { getPrismaClient } from "@/lib/prisma";
 import { allowRequest } from "@/lib/rate-limit";
 import { readJsonBody } from "@/lib/request-json";
-import { getR2Config } from "@/lib/r2";
-import { PAPARAZZI_UPLOAD_TTL_MS, paparazziIsOpen, paparazziPhotoIdSchema, paparazziReceiptSchema, paparazziTokenSchema } from "@/lib/paparazzi";
-import { paparazziInvitationSelect, paparazziPrivateHeaders, paparazziReceiptMatches } from "@/lib/paparazzi-server";
+import { ensurePaparazziStorage } from "@/lib/paparazzi-web-storage";
+import { PAPARAZZI_UPLOAD_TTL_MS, paparazziIsOpen, paparazziReceiptSchema } from "@/lib/paparazzi";
+import { paparazziInvitationSelect, paparazziPrivateHeaders, paparazziTransactionOptions, getPaparazziUploadPhoto as getPhoto } from "@/lib/paparazzi-server";
 
-async function getPhoto(token: string, photoId: string, receipt: string) {
-  if (!paparazziTokenSchema.safeParse(token).success || !paparazziPhotoIdSchema.safeParse(photoId).success) return null;
-  const photo = await getPrismaClient().paparazziPhoto.findFirst({ where: { id: photoId, album: { token } }, include: { album: { include: { invitation: { select: paparazziInvitationSelect } } } } });
-  return photo && photo.retentionAt > new Date() && paparazziReceiptMatches(receipt, photo.receiptHash) ? photo : null;
-}
 
 export async function GET(request: Request, { params }: { params: Promise<{ token: string; photoId: string }> }) {
   const { token, photoId } = await params;
@@ -32,7 +27,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
   if (photo.deletedAt || photo.status === "FAILED" || photo.status === "DELETED") return NextResponse.json({ error: "Foto ini tidak dapat diproses. Pilih foto lain." }, { status: 409 });
   if (!paparazziIsOpen(photo.album)) return NextResponse.json({ error: "Pengumpulan foto sudah ditutup." }, { status: 410 });
   if (photo.status === "PENDING" && Date.now() - photo.createdAt.getTime() > PAPARAZZI_UPLOAD_TTL_MS) return NextResponse.json({ error: "Waktu unggah habis. Pilih foto lagi untuk memulai ulang." }, { status: 410 });
-  if (!getR2Config()) return NextResponse.json({ error: "Penyimpanan foto belum tersedia." }, { status: 503 });
+  try { await ensurePaparazziStorage(photo.storageProvider); } catch { return NextResponse.json({ error: "Penyimpanan foto belum tersedia." }, { status: 503 }); }
   if (!await allowRequest(`paparazzi:complete:${photo.id}`, 30, 900)) return NextResponse.json({ error: "Terlalu banyak konfirmasi. Periksa lagi sebentar." }, { status: 429 });
   const startedAt = new Date();
   const accepted = await getPrismaClient().$transaction(async tx => {
@@ -42,7 +37,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
     const claim = await tx.paparazziPhoto.updateMany({ where: { id: photo.id, status: "PENDING", deletedAt: null }, data: { status: "PROCESSING", processingStartedAt: startedAt } });
     if (claim.count) await tx.notificationJob.create({ data: { jobKey: `paparazzi-process:${photo.id}`, jobType: "PAPARAZZI_PROCESSING", payload: { photoId: photo.id, processingStartedAt: startedAt.toISOString() } } });
     return true;
-  });
+  }, paparazziTransactionOptions);
   if (!accepted) return NextResponse.json({ error: "Pengumpulan foto sudah ditutup atau QR sudah diganti." }, { status: 410 });
   return NextResponse.json({ status: "PROCESSING" }, { status: 202, headers: paparazziPrivateHeaders });
 }

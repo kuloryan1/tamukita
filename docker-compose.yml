@@ -64,6 +64,9 @@ services:
       RESELLER_BASIC_ACTIVATION_PRICE_IDR: ${RESELLER_BASIC_ACTIVATION_PRICE_IDR:-}
       RESELLER_PREMIUM_ACTIVATION_PRICE_IDR: ${RESELLER_PREMIUM_ACTIVATION_PRICE_IDR:-}
       CUSTOMER_ACTIVATION_PRICE_IDR: ${CUSTOMER_ACTIVATION_PRICE_IDR:-0}
+      PAPARAZZI_STORAGE_DRIVER: ${PAPARAZZI_STORAGE_DRIVER:-server}
+      PAPARAZZI_STORAGE_DIR: /data/paparazzi
+      PAPARAZZI_MIN_FREE_BYTES: ${PAPARAZZI_MIN_FREE_BYTES:-536870912}
       R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
       R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
       R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
@@ -71,6 +74,8 @@ services:
       R2_PUBLIC_BUCKET_NAME: ${R2_PUBLIC_BUCKET_NAME:-}
       R2_PUBLIC_BASE_URL: ${R2_PUBLIC_BASE_URL:-}
       R2_BUCKET_NAME: ${R2_BUCKET_NAME:-}
+    volumes:
+      - tamukita-paparazzi:/data/paparazzi
     expose:
       - "3000"
     depends_on:
@@ -102,6 +107,9 @@ services:
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:?Set NEXT_PUBLIC_APP_URL in the deployment environment}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       EMAIL_FROM: "${EMAIL_FROM:-}"
+      PAPARAZZI_STORAGE_DRIVER: ${PAPARAZZI_STORAGE_DRIVER:-server}
+      PAPARAZZI_STORAGE_DIR: /data/paparazzi
+      PAPARAZZI_MIN_FREE_BYTES: ${PAPARAZZI_MIN_FREE_BYTES:-536870912}
       R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
       R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
       R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
@@ -110,6 +118,8 @@ services:
       R2_PUBLIC_BASE_URL: ${R2_PUBLIC_BASE_URL:-}
       R2_BUCKET_NAME: ${R2_BUCKET_NAME:-}
       DATA_RETENTION_ENABLED: ${DATA_RETENTION_ENABLED:-false}
+    volumes:
+      - tamukita-paparazzi:/data/paparazzi
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -126,6 +136,7 @@ services:
 volumes:
   tamukita-postgres:
   tamukita-redis:
+  tamukita-paparazzi:
 
 networks:
   default:

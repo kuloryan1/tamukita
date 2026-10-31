@@ -3,10 +3,12 @@ import "server-only";
 import { createHash, timingSafeEqual } from "node:crypto";
 import type { Prisma } from "@/generated/prisma/client";
 import { getPrismaClient } from "@/lib/prisma";
-import { PAPARAZZI_CONSENT_VERSION, PAPARAZZI_MAX_BYTES, PAPARAZZI_RETENTION_DAYS, paparazziGalleryVisible, paparazziIsOpen, paparazziTokenSchema, paparazziUrl, type PaparazziOwnerAlbum, type PaparazziPublicAlbum } from "@/lib/paparazzi";
+import { PAPARAZZI_CONSENT_VERSION, PAPARAZZI_MAX_BYTES, PAPARAZZI_RETENTION_DAYS, paparazziGalleryVisible, paparazziIsOpen, paparazziTokenSchema, paparazziPhotoIdSchema, paparazziUrl, type PaparazziOwnerAlbum, type PaparazziPublicAlbum } from "@/lib/paparazzi";
 import { PAPARAZZI_CHILD_DATA_GUARDIAN_CONSENT_VERSION } from "@/lib/consent-versions";
 
 export const paparazziPrivateHeaders = { "Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer", "X-Robots-Tag": "noindex, nofollow" };
+// Event bursts can briefly queue behind the album lock and the bounded PostgreSQL pool.
+export const paparazziTransactionOptions = { maxWait: 30_000, timeout: 15_000 };
 export const paparazziInvitationSelect = {
   id: true, ownerId: true, organizationId: true, title: true, slug: true, status: true,
   deletedAt: true, startsAt: true, expiresAt: true, organization: { select: { status: true } },
@@ -66,4 +68,10 @@ export function paparazziPublicPhotoWhere(token: string, photoId?: string): Pris
   return { ...(photoId ? { id: photoId } : {}), status: "READY", isVisible: true, deletedAt: null, retentionAt: { gt: now }, consentVersion: PAPARAZZI_CONSENT_VERSION,
     OR: [{ includesChildData: false }, { includesChildData: true, guardianConsentAt: { not: null }, guardianConsentVersion: PAPARAZZI_CHILD_DATA_GUARDIAN_CONSENT_VERSION }],
     album: { token, invitation: { status: "PUBLISHED", deletedAt: null, expiresAt: { gt: now }, organization: { status: "ACTIVE" } } } };
+}
+
+export async function getPaparazziUploadPhoto(token: string, photoId: string, receipt: string) {
+  if (!paparazziTokenSchema.safeParse(token).success || !paparazziPhotoIdSchema.safeParse(photoId).success) return null;
+  const photo = await getPrismaClient().paparazziPhoto.findFirst({ where: { id: photoId, album: { token } }, include: { album: { include: { invitation: { select: paparazziInvitationSelect } } } } });
+  return photo && photo.retentionAt > new Date() && paparazziReceiptMatches(receipt, photo.receiptHash) ? photo : null;
 }
