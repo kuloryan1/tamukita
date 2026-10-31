@@ -9,7 +9,7 @@ async function fixture({ duplicate = false, deleteDuringPut = false, deleteAfter
   const source = await sharp({ create: { width: 100, height: 70, channels: 3, background: "#69876a" } }).jpeg().toBuffer();
   const id = randomUUID(); const organizationId = randomUUID(); const invitationId = randomUUID(); const startedAt = new Date();
   const prefix = `${organizationId}/${invitationId}/${id}`;
-  const state = { id, createdAt: startedAt, sourceKey: `private/pending/paparazzi/${prefix}/input.jpg`, processedKey: `private/paparazzi/${prefix}.jpg`, mimeType: "image/jpeg", sizeBytes: BigInt(source.length), status: "PROCESSING", deletedAt: null as Date | null, storageDeletedAt: null as Date | null, processingStartedAt: startedAt as Date | null, retentionAt: new Date(Date.now() + 86_400_000), receiptHash: "test-only-hash", guardianConsentAt: null, guardianConsentVersion: null, album: { invitation: { id: invitationId, organizationId } } };
+  const state = { id, storageProvider: "R2" as const, createdAt: startedAt, sourceKey: `private/pending/paparazzi/${prefix}/input.jpg`, processedKey: `private/paparazzi/${prefix}.jpg`, mimeType: "image/jpeg", sizeBytes: BigInt(source.length), status: "PROCESSING", deletedAt: null as Date | null, storageDeletedAt: null as Date | null, processingStartedAt: startedAt as Date | null, retentionAt: new Date(Date.now() + 86_400_000), receiptHash: "test-only-hash", guardianConsentAt: null, guardianConsentVersion: null, album: { invitation: { id: invitationId, organizationId } } };
   const objects = new Map<string, Buffer>([[state.sourceKey, source]]);
   let readyRelease: () => void = () => {};
   const committed = new Promise<void>(resolve => { readyRelease = resolve; });

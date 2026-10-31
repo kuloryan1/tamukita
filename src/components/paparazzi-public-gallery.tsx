@@ -24,7 +24,7 @@ export function PaparazziPublicGallery({ token, available, refreshKey }: { token
   // biome-ignore lint/correctness/useExhaustiveDependencies: A completed upload changes refreshKey to reload the public gallery.
   useEffect(() => { setExpanded(false); void load(); }, [load, refreshKey]);
   useEffect(() => {
-    const timer = setInterval(() => { if (!document.hidden && !expanded) void load(); }, 15_000);
+    const timer = setInterval(() => { if (!document.hidden && !expanded) void load(); }, 5_000);
     return () => clearInterval(timer);
   }, [expanded, load]);
   if (!available) return null;

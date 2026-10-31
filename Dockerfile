@@ -23,6 +23,7 @@ RUN mkdir -p public && npm run db:generate && npm run build
 FROM base AS runner
 ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
+RUN mkdir -p /data/paparazzi && chown nextjs:nodejs /data/paparazzi && chmod 700 /data/paparazzi
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
@@ -35,6 +36,7 @@ CMD ["node", "server.js"]
 FROM base AS worker
 ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
+RUN mkdir -p /data/paparazzi && chown nextjs:nodejs /data/paparazzi && chmod 700 /data/paparazzi
 COPY --from=production-dependencies /app/node_modules ./node_modules
 COPY --from=builder /app/src/generated/prisma ./src/generated/prisma
 COPY --from=builder /app/src/worker.ts ./src/worker.ts
@@ -46,6 +48,8 @@ COPY --from=builder /app/src/lib/xendit-config.ts ./src/lib/xendit-config.ts
 COPY --from=builder /app/src/lib/media-processing.ts ./src/lib/media-processing.ts
 COPY --from=builder /app/src/lib/paparazzi.ts ./src/lib/paparazzi.ts
 COPY --from=builder /app/src/lib/paparazzi-processing.ts ./src/lib/paparazzi-processing.ts
+COPY --from=builder /app/src/lib/paparazzi-storage.ts ./src/lib/paparazzi-storage.ts
+COPY --from=builder /app/src/lib/paparazzi-server-files.ts ./src/lib/paparazzi-server-files.ts
 COPY --from=builder /app/src/lib/paparazzi-maintenance.ts ./src/lib/paparazzi-maintenance.ts
 COPY --from=builder /app/src/lib/child-data-consent.ts ./src/lib/child-data-consent.ts
 COPY --from=builder /app/src/lib/consent-versions.ts ./src/lib/consent-versions.ts

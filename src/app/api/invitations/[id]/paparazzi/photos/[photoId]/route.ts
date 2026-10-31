@@ -1,9 +1,8 @@
-import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { getPrismaClient } from "@/lib/prisma";
-import { getR2Client, getR2Config } from "@/lib/r2";
+import { paparazziWebStore } from "@/lib/paparazzi-web-storage";
 import { paparazziOwnerWhere, paparazziPrivateHeaders } from "@/lib/paparazzi-server";
 import { allowRequest } from "@/lib/rate-limit";
 import { readJsonBody } from "@/lib/request-json";
@@ -23,11 +22,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const result = await context(params);
   if ("error" in result) return NextResponse.json({ error: result.error }, { status: result.status });
   if (result.photo.status !== "READY") return NextResponse.json({ error: "Foto masih diproses." }, { status: 409 });
-  const config = getR2Config(); if (!config) return NextResponse.json({ error: "Penyimpanan foto belum tersedia." }, { status: 503 });
   try {
-    const object = await getR2Client().send(new GetObjectCommand({ Bucket: config.privateBucket, Key: result.photo.processedKey }));
-    if (!object.Body) throw new Error("Empty object");
-    return new NextResponse(object.Body.transformToWebStream(), { headers: { ...paparazziPrivateHeaders, "Content-Type": "image/jpeg", "X-Content-Type-Options": "nosniff", ...(new URL(request.url).searchParams.get("download") === "1" ? { "Content-Disposition": `attachment; filename="paparazi-${result.photo.id}.jpg"` } : {}) } });
+    const stream = await paparazziWebStore(result.photo.storageProvider).read(result.photo.processedKey);
+    return new NextResponse(stream, { headers: { ...paparazziPrivateHeaders, "Content-Type": "image/jpeg", "X-Content-Type-Options": "nosniff", ...(new URL(request.url).searchParams.get("download") === "1" ? { "Content-Disposition": `attachment; filename="paparazi-${result.photo.id}.jpg"` } : {}) } });
   } catch { return NextResponse.json({ error: "Foto belum dapat dimuat. Coba lagi nanti." }, { status: 503 }); }
 }
 

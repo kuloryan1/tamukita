@@ -8,7 +8,7 @@ import { PaparazziPublicGallery } from "@/components/paparazzi-public-gallery";
 import { PublicInvitationReport } from "@/components/public-invitation-report";
 import { PAPARAZZI_CONSENT_COPY, PAPARAZZI_GUARDIAN_COPY, type PaparazziPublicAlbum } from "@/lib/paparazzi";
 
-type Ticket = { photoId: string; receipt: string; uploadUrl: string; uploadExpiresAt: number; uploaded: boolean; completed: boolean };
+type Ticket = { photoId: string; receipt: string; uploadUrl: string; uploadHeaders?: Record<string, string>; uploadExpiresAt: number; uploaded: boolean; completed: boolean };
 const pause = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export function PaparazziGuest({ token, initial }: { token: string; initial: PaparazziPublicAlbum }) {
@@ -54,7 +54,7 @@ export function PaparazziGuest({ token, initial }: { token: string; initial: Pap
       const ticket = ticketRef.current;
       if (!ticket) throw new Error("Unggahan belum siap.");
       if (!ticket.uploaded) {
-        const put = await fetch(ticket.uploadUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file, signal: controller.signal });
+        const put = await fetch(ticket.uploadUrl, { method: "PUT", headers: { "Content-Type": file.type, ...ticket.uploadHeaders }, body: file, signal: controller.signal });
         if (!put.ok) throw new Error("Foto belum berhasil diunggah. Periksa koneksi lalu coba lagi. Jika tautan kedaluwarsa, pilih ulang foto.");
         ticket.uploaded = true;
       }

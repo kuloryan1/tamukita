@@ -6,6 +6,12 @@ const now = new Date("2026-10-30T08:00:00Z");
 const invitation = { status: "PUBLISHED", deletedAt: null, expiresAt: new Date("2027-02-01T00:00:00Z"), organization: { status: "ACTIVE" } };
 
 describe("event QR and availability", () => {
+  it("closes uploads and gallery access when the parent event has been removed", () => {
+    expect(paparazziGalleryVisible(null, now)).toBe(false);
+    expect(paparazziIsOpen(null, now)).toBe(false);
+    expect(paparazziIsOpen({ enabled: true, closesAt: new Date("2027-01-01"), invitation: null }, now)).toBe(false);
+    expect(paparazziGalleryVisible({ ...invitation, organization: null }, now)).toBe(false);
+  });
   it("builds the QR destination only from a canonical secure origin", () => {
     expect(paparazziUrl(token, "https://staging.tamukita.io")).toBe(`https://staging.tamukita.io/paparazi/${token}`);
     expect(paparazziUrl(token, "http://127.0.0.1:23300/")).toBe(`http://127.0.0.1:23300/paparazi/${token}`);

@@ -1,4 +1,7 @@
-import { randomUUID } from "node:crypto";
+import { access, readFile, rm } from "node:fs/promises";
+import path from "node:path";
+import { paparazziFilePath } from "../src/lib/paparazzi-server-files";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { chromium, expect, test, type APIRequestContext, type Page } from "@playwright/test";
 import { Pool } from "pg";
 import sharp from "sharp";
@@ -55,6 +58,7 @@ test("event QR opens the camera, stores validated photos, and immediately publis
     await page.getByRole("button", { name: "Siapkan QR & buka unggahan", exact: true }).click();
     await expect(page.getByText("Menerima foto dari tamu", { exact: true })).toBeVisible();
     const album = (await (await page.request.get(ownerPath)).json()).album;
+    expect(album.maxPhotos).toBeNull();
     expect(new URL(album.shareUrl).origin).toBe(new URL(String(testInfo.project.use.baseURL)).origin);
     const token = new URL(album.shareUrl).pathname.split("/").at(-1) ?? "";
     expect(token).toMatch(/^[a-f0-9]{64}$/);
@@ -116,15 +120,24 @@ test("event QR opens the camera, stores validated photos, and immediately publis
     expect((await reserve(request, source, { sizeBytes: 10_000_001 })).status()).toBe(400);
     const second = await (await reserve(request, source, { includesChildData: true, guardianConsent: true })).json();
     expect((await request.get(`${galleryPath}/${second.photoId}`)).status()).toBe(404);
-    expect((await request.put(second.uploadUrl, { data: source, headers: { "content-type": "image/jpeg", "content-length": String(source.length) } })).ok()).toBeTruthy();
+    expect((await request.put(second.uploadUrl, { data: source, headers: { "content-type": "image/jpeg" } })).status()).toBe(404);
+    expect((await request.put(second.uploadUrl, { data: source, headers: { "content-type": "image/png", ...second.uploadHeaders } })).status()).toBe(400);
+    expect((await request.put(second.uploadUrl, { data: source, headers: { "content-type": "image/jpeg", "content-length": String(source.length), ...second.uploadHeaders } })).ok()).toBeTruthy();
+    expect((await request.put(second.uploadUrl, { data: source, headers: { "content-type": "image/jpeg", "content-length": String(source.length), ...second.uploadHeaders } })).ok()).toBeTruthy();
     expect((await request.post(`${publicPath}/photos/${second.photoId}`, { data: { receipt: second.receipt } })).ok()).toBeTruthy();
     await expect.poll(async () => (await request.get(`${galleryPath}/${second.photoId}`)).status(), { timeout: 90_000 }).toBe(200);
     const processed = await sharp(await (await request.get(`${galleryPath}/${second.photoId}`)).body()).metadata();
     expect(processed.format).toBe("jpeg"); expect(processed.width).toBe(64); expect(processed.height).toBe(96);
     expect(processed.exif).toBeUndefined(); expect(processed.orientation).toBeUndefined();
-    const stored = (await pool.query('SELECT "sourceKey", "processedKey", "consentVersion", "guardianConsentVersion" FROM paparazzi_photos WHERE id=$1', [second.photoId])).rows[0];
+    const stored = (await pool.query('SELECT "sourceKey", "processedKey", "storageProvider", "consentVersion", "guardianConsentVersion" FROM paparazzi_photos WHERE id=$1', [second.photoId])).rows[0];
     expect(stored.consentVersion).toBe("paparazzi-public-2026-10-v1"); expect(stored.guardianConsentVersion).toBe("child-paparazzi-public-guardian-2026-10-v1");
-    await expect.poll(async () => (await request.get(`http://127.0.0.1:3138/private/${stored.sourceKey}`)).status()).toBe(404);
+    expect(stored.storageProvider).toBe("SERVER");
+    const diskRoot = path.resolve(process.env.PAPARAZZI_STORAGE_DIR || ".local-storage/paparazzi-e2e");
+    async function exists(key: string) { try { await access(paparazziFilePath(key, diskRoot)); return true; } catch { return false; } }
+    await expect.poll(() => exists(stored.sourceKey)).toBe(false);
+    expect(await readFile(paparazziFilePath(stored.processedKey, diskRoot))).toEqual(await (await request.get(`${galleryPath}/${second.photoId}`)).body());
+    expect((await request.get(`http://127.0.0.1:3138/private/${stored.processedKey}`)).status()).toBe(404);
+    expect((await request.get(`/${stored.processedKey}`)).status()).toBe(404);
     expect((await request.get(`http://127.0.0.1:3138/public/${stored.processedKey}`)).status()).toBe(404);
     await guest.reload(); await expect(guest.locator(".paparazzi-public-photo img")).toHaveCount(2);
     expect(await guest.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -138,10 +151,12 @@ test("event QR opens the camera, stores validated photos, and immediately publis
     expect((await page.request.patch(`${ownerPath}/photos/${second.photoId}`, { data: { visible: true } })).status()).toBe(409);
     await pool.query('UPDATE paparazzi_photos SET "consentVersion" = $2 WHERE id = $1', [second.photoId, "paparazzi-public-2026-10-v1"]);
     const invalid = Buffer.from("This is not an image."); const bad = await (await reserve(request, invalid)).json();
-    await request.put(bad.uploadUrl, { data: invalid, headers: { "content-type": "image/jpeg", "content-length": String(invalid.length) } });
+    await request.put(bad.uploadUrl, { data: invalid, headers: { "content-type": "image/jpeg", "content-length": String(invalid.length), ...bad.uploadHeaders } });
     await request.post(`${publicPath}/photos/${bad.photoId}`, { data: { receipt: bad.receipt } });
     await expect.poll(async () => (await request.get(`${publicPath}/photos/${bad.photoId}`, { headers: { "x-paparazzi-receipt": bad.receipt } })).status(), { timeout: 90_000 }).toBe(422);
     expect((await request.get(`${galleryPath}/${bad.photoId}`)).status()).toBe(404);
+    const badKey = (await pool.query('SELECT "sourceKey" FROM paparazzi_photos WHERE id=$1', [bad.photoId])).rows[0].sourceKey;
+    await expect.poll(() => exists(badKey)).toBe(false);
     await page.request.patch(ownerPath, { data: { enabled: false } });
     expect((await reserve(request, source)).status()).toBe(410);
     expect((await request.get(photoPath)).ok()).toBeTruthy();
@@ -151,7 +166,7 @@ test("event QR opens the camera, stores validated photos, and immediately publis
     await pool.query('UPDATE paparazzi_albums SET "maxPhotos" = (SELECT count(*) + 1 FROM paparazzi_photos WHERE "albumId" = paparazzi_albums.id AND "deletedAt" IS NULL) WHERE "invitationId"=$1', [invitationId]);
     const reservations = await Promise.all([reserve(request, source), reserve(request, source)]);
     expect(reservations.filter(response => response.ok())).toHaveLength(1); expect(reservations.filter(response => response.status() === 409)).toHaveLength(1);
-    await pool.query('UPDATE paparazzi_albums SET "maxPhotos"=200 WHERE "invitationId"=$1', [invitationId]);
+    await pool.query('UPDATE paparazzi_albums SET "maxPhotos"=NULL WHERE "invitationId"=$1', [invitationId]);
     await pool.query('UPDATE invitations SET status=\'SUSPENDED\' WHERE id=$1', [invitationId]);
     expect((await request.get(photoPath)).status()).toBe(404); expect((await request.get(galleryPath)).status()).toBe(404);
     await pool.query('UPDATE invitations SET status=\'PUBLISHED\', "expiresAt"=now()-interval \'1 second\' WHERE id=$1', [invitationId]);
@@ -159,7 +174,7 @@ test("event QR opens the camera, stores validated photos, and immediately publis
     await pool.query('UPDATE invitations SET "expiresAt"=now()+interval \'365 days\' WHERE id=$1', [invitationId]);
     const firstKey = (await pool.query('SELECT "processedKey" FROM paparazzi_photos WHERE id=$1', [firstTicket.photoId])).rows[0].processedKey;
     await page.request.delete(ownerPhoto); expect((await request.get(photoPath)).status()).toBe(404); expect((await page.request.get(ownerPhoto)).status()).toBe(404);
-    await expect.poll(async () => (await request.get(`http://127.0.0.1:3138/private/${firstKey}`)).status(), { timeout: 90_000 }).toBe(404);
+    await expect.poll(() => exists(firstKey), { timeout: 90_000 }).toBe(false);
     const rotated = await page.request.patch(ownerPath, { data: { rotateQr: true } }); expect(rotated.ok()).toBeTruthy();
     expect((await request.get(publicPath)).status()).toBe(404); expect((await request.get(`${galleryPath}/${second.photoId}`)).status()).toBe(404);
     const newShare = (await rotated.json()).album.shareUrl; expect(newShare).not.toBe(album.shareUrl);
@@ -167,16 +182,57 @@ test("event QR opens the camera, stores validated photos, and immediately publis
     await guest.getByRole("button", { name: "Laporkan konten acara", exact: true }).click();
     await guest.getByLabel("Alasan laporan").selectOption("SPAM");
     await guest.getByRole("button", { name: "Kirim laporan", exact: true }).click();
-    await expect(guest.getByText("Laporan diterima untuk ditinjau.", { exact: true })).toBeVisible();
+    await expect(guest.getByText("Laporan diterima untuk ditinjau.", { exact: true })).toBeVisible({ timeout: 15_000 });
     expect((await other.request.get("/api/admin/invitation-reports")).status()).toBe(403);
     await pool.query('UPDATE users SET "platformRole"=\'CONTENT_REVIEWER\' WHERE email=$1', [email]);
     const reviewer = await reviewerContext.newPage(); reviewer.on("pageerror", error => clientErrors.push(error.message));
     await signIn(reviewer, email, password); await reviewer.goto("/admin/moderation");
     await expect(reviewer.getByRole("link", { name: "Tinjau galeri acara", exact: true })).toHaveAttribute("href", new URL(newShare).pathname);
+    await guest.goto(newShare);
+    const activeToken = new URL(newShare).pathname.split("/").at(-1) ?? "";
+    const activePublic = `/api/public/paparazzi/${activeToken}`;
+    const legacyId = randomUUID(); const legacyReceipt = randomBytes(32).toString("hex");
+    const legacy = (await pool.query('SELECT a.id, i."organizationId" FROM paparazzi_albums a JOIN invitations i ON i.id=a."invitationId" WHERE i.id=$1', [invitationId])).rows[0];
+    const legacyPrefix = `${legacy.organizationId}/${invitationId}/${legacyId}`;
+    const legacySource = `private/pending/paparazzi/${legacyPrefix}/source`; const legacyOutput = `private/paparazzi/${legacyPrefix}.jpg`;
+    await pool.query(`INSERT INTO paparazzi_photos (id,"albumId","sourceKey","processedKey","storageProvider","mimeType","sizeBytes","receiptHash","consentAt","consentVersion","includesChildData","retentionAt") VALUES ($1,$2,$3,$4,'R2','image/jpeg',$5,$6,now(),'paparazzi-public-2026-10-v1',false,now()+interval '90 days')`, [legacyId,legacy.id,legacySource,legacyOutput,source.length,createHash("sha256").update(legacyReceipt).digest("hex")]);
+    expect((await request.put(`http://127.0.0.1:3138/private/${legacySource}`, { data: source, headers: { "content-type": "image/jpeg" } })).ok()).toBeTruthy();
+    expect((await request.post(`${activePublic}/photos/${legacyId}`, { data: { receipt: legacyReceipt } })).ok()).toBeTruthy();
+    await expect.poll(async () => (await request.get(`${activePublic}/gallery/${legacyId}`)).status(), { timeout: 90_000 }).toBe(200);
+    expect(await exists(legacyOutput)).toBe(false);
+
+    // Native camera-sized synthetic photos, with enough detail to exercise JPEG processing.
+    const burstSource = await sharp(randomBytes(1920 * 1280 * 3), { raw: { width: 1920, height: 1280, channels: 3 } }).blur(0.8).jpeg({ quality: 90 }).toBuffer();
+    // Model the event estimate: 60 guests reserve, upload, and submit at once.
+    const burstResults = await Promise.allSettled(Array.from({ length: 60 }, async () => {
+      const reservation = await request.post(`${activePublic}/uploads`, { data: { contentType: "image/jpeg", sizeBytes: burstSource.length, consent: true, includesChildData: false, guardianConsent: false } });
+      expect(reservation.status()).toBe(201); const ticket = await reservation.json();
+      expect(ticket.uploadUrl).toMatch(/\/file$/);
+      expect((await request.put(ticket.uploadUrl, { data: burstSource, headers: { "content-type": "image/jpeg", ...ticket.uploadHeaders } })).status()).toBe(201);
+      expect((await request.post(`${activePublic}/photos/${ticket.photoId}`, { data: { receipt: ticket.receipt } })).ok()).toBeTruthy();
+      return ticket.photoId as string;
+    }));
+    for (const result of burstResults) if (result.status === "rejected") throw result.reason;
+    const burst = burstResults.flatMap(result => result.status === "fulfilled" ? [result.value] : []);
+    await expect.poll(async () => Number((await pool.query(`SELECT count(*) FROM paparazzi_photos WHERE id=ANY($1::uuid[]) AND status='READY' AND "storageProvider"='SERVER'`, [burst])).rows[0].count), { timeout: 90_000 }).toBe(60);
+    expect((await request.get(`${activePublic}/gallery/${burst[59]}`)).status()).toBe(200);
+    await testInfo.attach("server-upload-burst", { body: JSON.stringify({ simultaneousGuests: 60, processed: 60, provider: "SERVER", inputWidth: 1920, inputHeight: 1280, bytesPerPhoto: burstSource.length }), contentType: "application/json" });
+    const refreshedGallery = await (await request.get(`${activePublic}/gallery`)).json();
+    expect(refreshedGallery.photos.length).toBeGreaterThan(2);
+    await expect(guest.locator(".paparazzi-public-photo img")).toHaveCount(refreshedGallery.photos.length, { timeout: 15_000 });
+    // A legacy limit of 200 must no longer cap new event reservations.
+    await pool.query(`INSERT INTO paparazzi_photos (id,"albumId","sourceKey","processedKey","storageProvider","mimeType","sizeBytes","receiptHash","consentAt","consentVersion","includesChildData","retentionAt") SELECT g.id,$1,'private/pending/paparazzi/'||$2||'/'||$3||'/'||g.id||'/source','private/paparazzi/'||$2||'/'||$3||'/'||g.id||'.jpg','SERVER','image/jpeg',$4,$5,now(),'paparazzi-public-2026-10-v1',false,now()+interval '90 days' FROM (SELECT gen_random_uuid() AS id FROM generate_series(1,200)) g`, [legacy.id,legacy.organizationId,invitationId,source.length,createHash("sha256").update(legacyReceipt).digest("hex")]);
+    expect((await request.post(`${activePublic}/uploads`, { data: { contentType: "image/jpeg", sizeBytes: source.length, consent: true, includesChildData: false, guardianConsent: false } })).status()).toBe(201);
     expect(clientErrors).toEqual([]);
   } finally {
     await pool.query('UPDATE users SET "platformRole"=\'CUSTOMER\' WHERE email=$1', [email]);
-    if (invitationId) await pool.query('DELETE FROM invitations WHERE id=$1 AND "ownerId"=(SELECT id FROM users WHERE email=$2)', [invitationId, email]);
+    if (invitationId) {
+      const owned = (await pool.query('DELETE FROM invitations WHERE id=$1 AND "ownerId"=(SELECT id FROM users WHERE email=$2) RETURNING "organizationId"', [invitationId, email])).rows[0];
+      if (owned) {
+        const diskRoot = path.resolve(process.env.PAPARAZZI_STORAGE_DIR || ".local-storage/paparazzi-e2e");
+        for (const prefix of ["private/pending/paparazzi", "private/paparazzi"]) await rm(path.join(diskRoot, prefix, owned.organizationId, invitationId), { recursive: true, force: true });
+      }
+    }
     await pool.end(); await reviewerContext.close(); await otherContext.close(); await guestContext.close(); await cameraBrowser.close();
   }
 });

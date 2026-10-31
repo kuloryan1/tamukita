@@ -317,11 +317,10 @@ async function processJob(job: Job<{ notificationJobId: string }>) {
         data: { payload: { ...(isRecord(notification.payload) ? notification.payload : {}), ...result } },
       });
     } else if (notification.jobType === "PAPARAZZI_PROCESSING") {
-      if (!mediaS3 || !mediaConfig) throw new Error("Penyimpanan foto belum tersedia pada worker.");
-      await processPaparazziPhoto(prisma, mediaS3, mediaConfig.privateBucket, notification.payload);
+      await processPaparazziPhoto(prisma, mediaS3, mediaConfig?.privateBucket, notification.payload);
     } else if (notification.jobType === "PAPARAZZI_DELETE") {
-      if (!mediaS3 || !mediaConfig || !isRecord(notification.payload) || typeof notification.payload.photoId !== "string" || !/^[0-9a-f-]{36}$/i.test(notification.payload.photoId)) throw new Error("Data penghapusan foto tidak valid.");
-      await deletePaparazziPhotoObjects(prisma, mediaS3, mediaConfig.privateBucket, notification.payload.photoId);
+      if (!isRecord(notification.payload) || typeof notification.payload.photoId !== "string" || !/^[0-9a-f-]{36}$/i.test(notification.payload.photoId)) throw new Error("Data penghapusan foto tidak valid.");
+      await deletePaparazziPhotoObjects(prisma, mediaS3, mediaConfig?.privateBucket, notification.payload.photoId);
     } else {
       throw new Error("Jenis notifikasi tidak dikenal.");
     }

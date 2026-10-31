@@ -13,6 +13,7 @@
     "test:templates": "vitest run src/templates/registry.test.tsx",
     "test:e2e": "playwright test",
     "test:data-retention": "tsx scripts/test-data-retention.ts",
+    "test:paparazzi-storage": "node scripts/test-paparazzi-storage-upgrade.mjs",
     "test:staging-media": "playwright test --config=playwright.staging-media.config.ts",
     "test:load:public": "k6 run tests/load/public-invitation.js",
     "test:load:api": "k6 run tests/load/api-health.js",
