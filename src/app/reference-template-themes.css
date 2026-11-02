@@ -112,7 +112,7 @@
   .reference-section-inner h2 { font-size: 34px; }
   .reference-countdown-section .public-countdown > div { gap: 4px; }
   .reference-countdown-section .public-countdown b { font-size: 31px; min-width: 34px; }
-  .reference-countdown-section .public-countdown b small { font-size: 11px; }
+  .reference-countdown-section .public-countdown b small { font-size: 12px; }
 }
 
 .reference-invitation--royal-gold { --ref-ink: #392621; --ref-accent: #742f38; --ref-paper: #f6f2ec; --ref-muted: #74665c; background: #ebe3d8; }

@@ -256,6 +256,6 @@
   .reference-demo-timeline::before { left: 34px; }
   .reference-demo-timeline li > img { height: 44px; width: 44px; }
   .reference-demo-palette { gap: 2px; }
-  .reference-demo-palette li { font-size: 11px; }
+  .reference-demo-palette li { font-size: 12px; }
   .reference-demo-palette i { height: 30px; width: 30px; }
 }

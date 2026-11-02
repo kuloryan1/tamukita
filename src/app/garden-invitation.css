@@ -37,10 +37,10 @@
 .garden-envelope-overlay.is-playing .garden-envelope-cover { opacity: 0; pointer-events: none; }
 .garden-envelope-overlay.is-playing .garden-envelope-video-layer { opacity: 1; }
 .garden-envelope-overlay.is-revealing { opacity: 0; }
-.garden-envelope-prompt { align-items: center; bottom: 30%; color: #8c643cbf; display: flex; flex-direction: column; font-family: Georgia, serif; font-size: 11px; gap: 7px; left: 50%; letter-spacing: .26em; position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.garden-envelope-prompt { align-items: center; bottom: 30%; color: #74502d; display: flex; flex-direction: column; font-family: Georgia, serif; font-size: 12px; gap: 7px; left: 50%; letter-spacing: .18em; position: absolute; transform: translateX(-50%); white-space: nowrap; }
 .garden-envelope-chevron { border-right: 1.5px solid #8c643c99; border-top: 1.5px solid #8c643c99; height: 10px; transform: rotate(-45deg); width: 10px; }
 .garden-envelope-status { bottom: 75px; color: #816d47; font: 12px Arial, sans-serif; left: 0; position: absolute; right: 0; text-align: center; z-index: 8; }
-.garden-envelope-skip { background: #f9f0e0e6; border: 0; border-bottom: 1px solid #bca77d; bottom: 17px; color: #816d47; cursor: pointer; font-family: Arial, sans-serif; font-size: 11px; left: 50%; min-height: 44px; padding: 8px 12px; position: absolute; transform: translateX(-50%); z-index: 8; }
+.garden-envelope-skip { background: #f9f0e0e6; border: 0; border-bottom: 1px solid #bca77d; bottom: 17px; color: #72582e; cursor: pointer; font-family: Arial, sans-serif; font-size: 12px; left: 50%; min-height: 44px; padding: 8px 12px; position: absolute; transform: translateX(-50%); z-index: 8; }
 .garden-envelope-skip:focus-visible { outline: 2px solid #9b7c3d; outline-offset: 3px; }
 
 .garden-monogram-control { align-items: center; display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) 112px; }
@@ -114,7 +114,7 @@
 .garden-event-list::before { background: #b3a17a88; bottom: 44px; content: ""; left: 50%; position: absolute; top: 44px; width: 1px; }
 .garden-event-row { align-items: center; border: 0; display: grid; gap: 10px; grid-template-columns: 1fr 48px 1fr; min-height: 87px; padding: 0; position: relative; text-align: left; }
 .garden-event-row time { color: #6d5c40; font-family: var(--garden-serif); font-size: 29px; font-weight: 400; line-height: 1; text-align: right; }
-.garden-event-row time small { display: block; font-family: Arial, sans-serif; font-size: 10px; letter-spacing: .1em; margin-top: 6px; }
+.garden-event-row time small { color: #594c35; display: block; font-family: Arial, sans-serif; font-size: 12px; letter-spacing: .05em; line-height: 1.4; margin-top: 6px; }
 .garden-event-marker { align-items: center; display: flex; height: 48px; justify-content: center; position: relative; width: 48px; }
 .garden-event-marker > span { background: #a08c6b; height: 7px; transform: rotate(45deg); width: 7px; }
 .garden-event-marker .garden-rose { height: 46px; margin: 0; width: 46px; }
@@ -158,6 +158,8 @@
 .public-invitation-page[data-template="taman-abadi"] .public-footer a { color: #8e743d; }
 .public-invitation-page[data-template="taman-abadi"] .public-footer-actions { justify-content: center; }
 .public-invitation-page[data-template="taman-abadi"] .public-gift-section { background: transparent; }
+.public-invitation-page[data-template="taman-abadi"] .public-footer { color: #594c35; font-size: 12px; line-height: 1.5; }
+.public-invitation-page[data-template="taman-abadi"] .public-footer a { color: #594c35; font-size: 12px; }
 
 @media (max-width: 440px) {
   .public-invitation-page[data-template="taman-abadi"] .garden-kicker { font-size: clamp(15px, 4.4cqw, 18px); }
