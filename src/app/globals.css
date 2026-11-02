@@ -246,15 +246,15 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .phone-frame .invite-photo { min-height: 57%; }
 .phone-frame .invite-details { min-height: 43%; padding: 17px 15px 13px; }
 .phone-frame .invite-copy h2 { font-size: 26px; }
-.phone-frame .invite-kicker, .phone-frame .invite-date-short { font-size: 7px; }
-.phone-frame .invite-message { font-size: 7px; margin-bottom: 10px; }
-.phone-frame .invite-greeting { font-size: 7px; margin-bottom: 7px; }
+.phone-frame .invite-kicker, .phone-frame .invite-date-short { font-size: 12px; }
+.phone-frame .invite-message { font-size: 12px; margin-bottom: 10px; }
+.phone-frame .invite-greeting { font-size: 12px; margin-bottom: 7px; }
 .phone-frame .invite-family-details { margin-bottom: 6px; }
-.phone-frame .invite-family-details > span { font-size: 5px; }
-.phone-frame .invite-family-details p { font-size: 6px; }
-.phone-frame .invite-detail-row { font-size: 8px; gap: 7px; margin-top: 9px; }
+.phone-frame .invite-family-details > span { font-size: 12px; }
+.phone-frame .invite-family-details p { font-size: 12px; }
+.phone-frame .invite-detail-row { font-size: 12px; gap: 7px; margin-top: 9px; }
 .phone-frame .invite-detail-row svg { height: 12px; width: 12px; }
-.phone-frame .invite-detail-row small { font-size: 6px; margin-top: 3px; }
+.phone-frame .invite-detail-row small { font-size: 12px; margin-top: 3px; }
 .phone-frame .invite-decoration { display: none; }
 .promo-mini-tag { align-items: center; background: white; border-radius: 5px; box-shadow: 0 10px 24px rgba(9,20,16,.2); color: var(--ink); display: flex; gap: 9px; padding: 10px 13px; position: absolute; right: 2%; top: 76px; transform: rotate(-2deg); z-index: 2; }
 .promo-mini-tag b, .promo-mini-tag small { display: block; }
@@ -491,7 +491,7 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .preview-phone.is-desktop .template-code-renderer--boarding .boarding-details { grid-column: 2; grid-row: 1 / 3; min-height: 0; overflow: auto; padding: 10px; }
 .preview-phone.is-desktop .boarding-ticket-meta { flex-basis: 57px; grid-template-columns: 1fr; gap: 3px; overflow: hidden; padding: 6px 9px; }
 .preview-phone.is-desktop .boarding-ticket-meta > div { border: 0; flex-direction: row; justify-content: space-between; padding: 0; }
-.preview-phone.is-desktop .boarding-ticket-meta small, .preview-phone.is-desktop .boarding-ticket-meta b { font-size: 5px; }
+.preview-phone.is-desktop .boarding-ticket-meta small, .preview-phone.is-desktop .boarding-ticket-meta b { font-size: 12px; }
 
 /* Template catalog and details */
 .catalog-page, .detail-page { background: #fbfaf7; min-height: 70vh; padding-bottom: 90px; }
@@ -868,33 +868,33 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .preview-phone .invite-photo { min-height: 58%; }
 .preview-phone .invite-details { min-height: 42%; padding: 15px 13px 11px; }
 .preview-phone .invite-copy h2 { font-size: 26px; }
-.preview-phone .invite-kicker, .preview-phone .invite-date-short { font-size: 6px; }
-.preview-phone .invite-greeting { font-size: 7px; margin-bottom: 6px; }
-.preview-phone .invite-message { font-size: 7px; margin-bottom: 8px; }
-.preview-phone .invite-detail-row { font-size: 7px; gap: 6px; margin-top: 8px; }
+.preview-phone .invite-kicker, .preview-phone .invite-date-short { font-size: 12px; }
+.preview-phone .invite-greeting { font-size: 12px; margin-bottom: 6px; }
+.preview-phone .invite-message { font-size: 12px; margin-bottom: 8px; }
+.preview-phone .invite-detail-row { font-size: 12px; gap: 6px; margin-top: 8px; }
 .preview-phone .invite-detail-row svg { height: 11px; width: 11px; }
-.preview-phone .invite-detail-row > span { font-size: 8px; }
-.preview-phone .invite-detail-row small { font-size: 6px; }
+.preview-phone .invite-detail-row > span { font-size: 12px; }
+.preview-phone .invite-detail-row small { font-size: 12px; }
 .preview-phone .invite-decoration { display: none; }
 .preview-phone.is-desktop { background: #fff; border-radius: 11px; height: 300px; max-width: 100%; width: 100%; }
 .preview-phone.is-desktop .invite-preview { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 35% 65%; height: 100%; min-height: 0; width: 100%; }
 .preview-phone.is-desktop .invite-photo { flex: initial; grid-column: 1; grid-row: 1 / 3; height: auto; margin: 0; min-height: 0; min-width: 0; width: auto; }
 .preview-phone.is-desktop .invite-copy { margin-bottom: 10%; }
 .preview-phone.is-desktop .invite-copy h2 { font-size: 18px; margin: 7px 0; }
-.preview-phone.is-desktop .invite-kicker, .preview-phone.is-desktop .invite-date-short { font-size: 6px; }
+.preview-phone.is-desktop .invite-kicker, .preview-phone.is-desktop .invite-date-short { font-size: 12px; }
 .preview-phone.is-desktop .invite-details { flex: initial; grid-column: 2; grid-row: 1 / 3; min-height: 0; overflow: auto; padding: 10px; }
-.preview-phone.is-desktop .invite-message { font-size: 8px; line-height: 1.4; margin-bottom: 7px; }
-.preview-phone.is-desktop .invite-detail-row { font-size: 7px; gap: 5px; margin-top: 7px; }
+.preview-phone.is-desktop .invite-message { font-size: 12px; line-height: 1.4; margin-bottom: 7px; }
+.preview-phone.is-desktop .invite-detail-row { font-size: 12px; gap: 5px; margin-top: 7px; }
 .preview-phone.is-desktop .invite-detail-row svg { height: 10px; width: 10px; }
-.preview-phone.is-desktop .invite-detail-row > span { font-size: 8px; }
-.preview-phone.is-desktop .invite-detail-row small { font-size: 6px; }
+.preview-phone.is-desktop .invite-detail-row > span { font-size: 12px; }
+.preview-phone.is-desktop .invite-detail-row small { font-size: 12px; }
 .preview-phone.is-desktop .template-cream-heading, .preview-phone.is-desktop .template-sage-heading { flex: initial; grid-column: 2; grid-row: 1; min-height: 0; padding: 6px 8px; }
 .preview-phone.is-desktop .template-cream-heading h2, .preview-phone.is-desktop .template-sage-heading h2 { font-size: 14px; margin: 4px 0; }
-.preview-phone.is-desktop .template-cream-heading > span, .preview-phone.is-desktop .template-sage-heading > span { font-size: 6px; }
+.preview-phone.is-desktop .template-cream-heading > span, .preview-phone.is-desktop .template-sage-heading > span { font-size: 12px; }
 .preview-phone.is-desktop .template-cream-photo, .preview-phone.is-desktop .template-sage-photo { flex: initial; grid-row: 1 / 3; margin: 0; min-height: 0; width: auto; }
 .preview-phone.is-desktop .template-cream-details, .preview-phone.is-desktop .template-sage-details { grid-row: 2; padding: 7px 9px; }
-.preview-phone.is-desktop .template-cream-details .invite-message, .preview-phone.is-desktop .template-sage-details .invite-message { font-size: 8px; line-height: 1.35; margin: 0 auto 6px; }
-.preview-phone.is-desktop .template-cream-event, .preview-phone.is-desktop .template-sage-event { font-size: 7px; gap: 4px; }
+.preview-phone.is-desktop .template-cream-details .invite-message, .preview-phone.is-desktop .template-sage-details .invite-message { font-size: 12px; line-height: 1.4; margin: 0 auto 6px; }
+.preview-phone.is-desktop .template-cream-event, .preview-phone.is-desktop .template-sage-event { font-size: 12px; gap: 4px; }
 .preview-link-row { align-items: center; border-bottom: 1px solid #eff1ec; display: flex; gap: 8px; padding: 12px 14px; }
 .preview-link-icon { align-items: center; background: #e7eee5; border-radius: 50%; color: #63816b; display: flex; font-size: 12px; height: 26px; justify-content: center; width: 26px; }
 .preview-link-row > span:nth-child(2) { flex: 1; min-width: 0; }
@@ -1726,7 +1726,7 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
   .auth-back-row { margin-bottom: 33px; }
   .auth-form-wrap > h2 { font-size: 39px; }
   .public-topbar { height: 46px; padding-inline: 17px; }
-  .public-topbar > span:nth-child(2) { font-size: 6px; }
+  .public-topbar > span:nth-child(2) { font-size: 12px; }
   .public-top-spacer { display: none; }
   .public-music-toggle { font-size: 0; gap: 4px; min-height: 29px; padding: 0 8px; }
   .public-music-toggle svg { height: 12px; width: 12px; }
@@ -1754,7 +1754,7 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
   .public-detail-inner h2 { font-size: 31px; }
   .public-detail-cards { gap: 8px; }
   .public-detail-card { min-height: 155px; padding: 12px 8px; }
-  .public-detail-card b { font-size: 11px; }
+  .public-detail-card b { font-size: 14px; }
   .public-footer { align-items: flex-start; flex-direction: column; gap: 9px; padding: 14px 18px; }
   .public-footer-actions { align-items: flex-start; justify-content: flex-start; width: 100%; }
   .public-invitation-report { align-items: flex-start; }
@@ -1838,3 +1838,100 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 
 .artwork--garden .artwork-paper { text-shadow: 0 1px 2px rgba(255,252,242,.55); }
 .artwork--garden .artwork-caption { color: rgba(72,69,53,.72); }
+
+/* Keep invitation copy readable in every built-in and curated template. */
+.invite-preview .invite-greeting,
+.invite-preview .invite-family-details p,
+.invite-preview .invite-message,
+.invite-preview .invite-custom-field p,
+.invite-preview .invite-detail-row > span {
+  color: #4f5951;
+  font-family: var(--invite-body-font, var(--sans));
+  font-size: 14px;
+  font-style: normal;
+  line-height: 1.55;
+}
+.invite-preview .invite-greeting { color: #5d625b; font-size: 13px; }
+.invite-preview .invite-family-details > span,
+.invite-preview .invite-custom-field b,
+.invite-preview .invite-detail-row small,
+.invite-preview .invite-footer-wordmark,
+.invite-preview :is(.invite-kicker, .invite-date-short, .template-cream-heading > span, .template-cream-date, .template-sage-heading > span, .template-sage-date, .blush-heading > span, .blush-photo-date, .heritage-copy > span, .heritage-copy i, .wisteria-copy > span, .wisteria-copy i, .boarding-ticket-heading, .boarding-ticket-main > span, .boarding-ticket-main i, .boarding-ticket-meta small, .boarding-ticket-meta b, .garden-kicker, .garden-copy-note, .garden-copy time, .template-cream-event, .template-sage-event) {
+  font-size: 12px;
+  line-height: 1.45;
+}
+.invite-preview .invite-family-details > span,
+.invite-preview .invite-custom-field b { color: #5c594e; }
+.invite-preview .invite-detail-row small { color: #5c625a; }
+.invite-preview .invite-footer-wordmark { color: #68675f; }
+.invite-preview .template-cream-heading > span,
+.invite-preview .template-cream-event { color: #6c5945; }
+.invite-preview .garden-copy-note { color: #655536; }
+.invite-preview :is(.invite-kicker, .invite-date-short, .blush-heading > span, .blush-photo-date, .heritage-copy > span, .heritage-copy i, .wisteria-copy > span, .wisteria-copy i, .boarding-ticket-main > span, .boarding-ticket-main i) {
+  text-shadow: 0 1px 4px rgba(28, 24, 25, .72);
+}
+
+/* Public invitation shell labels and controls stay legible on desktop and mobile. */
+.public-invitation-page:not([data-template="taman-abadi"]) :is(p, li) {
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.65;
+}
+.public-invitation-page:not([data-template="taman-abadi"]) :is(small, label, button, a) { font-size: 12px; }
+.public-invitation-page:not([data-template="taman-abadi"]) :is(.public-eyebrow, .public-demo-pill, .public-rsvp-demo-status, .public-date-card small, .public-scroll-link, .public-side-caption, .public-countdown > span, .public-countdown b small, .public-detail-card > small, .public-detail-card > span:not(.detail-card-icon), .public-detail-card a, .public-gift-account > span, .rsvp-count, .guestbook-entry time) {
+  color: #596157;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.public-invitation-page:not([data-template="taman-abadi"]) .public-hero-message {
+  color: #596157;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-style: normal;
+}
+.public-invitation-page:not([data-template="taman-abadi"]) .public-date-card b,
+.public-invitation-page:not([data-template="taman-abadi"]) .public-detail-card b { color: #46564a; font-size: 14px; line-height: 1.5; }
+.public-invitation-page:not([data-template="taman-abadi"]) .public-gift-card > p { color: #596157; font-size: 14px; }
+.public-invitation-page:not([data-template="taman-abadi"]) .public-brand { font-size: 16px; }
+.public-invitation-page:not([data-template="taman-abadi"]) .public-footer { color: #50584f; font-size: 12px; line-height: 1.5; }
+.public-invitation-page:not([data-template="taman-abadi"]) .public-footer a { color: #4f6f57; font-size: 12px; }
+
+/* Phone previews are thumbnails; keep their information at a readable 12px. */
+:is(.phone-frame, .preview-phone) .invite-preview :is(
+  .invite-greeting,
+  .invite-family-details > span,
+  .invite-family-details p,
+  .invite-message,
+  .invite-custom-field b,
+  .invite-custom-field p,
+  .invite-detail-row,
+  .invite-detail-row > span,
+  .invite-detail-row small,
+  .invite-kicker,
+  .invite-date-short,
+  .template-cream-heading > span,
+  .template-cream-date,
+  .template-cream-details .invite-message,
+  .template-cream-event,
+  .template-sage-heading > span,
+  .template-sage-date,
+  .template-sage-details .invite-message,
+  .template-sage-event,
+  .blush-heading > span,
+  .blush-photo-date,
+  .heritage-copy > span,
+  .heritage-copy i,
+  .wisteria-copy > span,
+  .wisteria-copy i,
+  .boarding-ticket-heading,
+  .boarding-ticket-main > span,
+  .boarding-ticket-main i,
+  .boarding-ticket-meta small,
+  .boarding-ticket-meta b,
+  .garden-kicker,
+  .garden-copy-note,
+  .garden-copy time
+) {
+  font-size: 12px;
+  line-height: 1.45;
+}
