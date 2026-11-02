@@ -2,7 +2,7 @@ import { Heart, MapPin, Plane, QrCode } from "lucide-react";
 import { PublicInvitationCountdown } from "@/components/public-invitation-countdown";
 import { ReferenceDemoRsvp } from "@/components/reference-demo-rsvp";
 import { ReferenceEnvelopeIntro } from "@/components/reference-envelope-intro";
-import { ReferenceMotionProvider, ReferenceMotionToggle } from "@/components/reference-motion-provider";
+import { ReferenceMotionProvider } from "@/components/reference-motion-provider";
 import type { InvitationDraft } from "@/lib/invitations";
 import type { ReferenceTemplatePreset } from "@/lib/reference-template-presets";
 
@@ -21,7 +21,6 @@ export function ReferenceBoardingPassDemo({ draft, dateString, mapsUrl, preset }
     <ReferenceMotionProvider isExample>
       <main className="reference-invitation reference-invitation--destinasi-cinta" data-template="destinasi-cinta" data-invitation-publication="demo">
         <div className="reference-invitation-frame reference-boarding-page" data-reference-content data-demo-fixture="static-visual-only">
-          <ReferenceMotionToggle variant="page" />
           <section className="reference-boarding-ticket-section" aria-labelledby="reference-boarding-title">
             <p className="reference-boarding-eyebrow">SAVE THE DATE</p>
             <article className="reference-boarding-ticket">
@@ -71,7 +70,7 @@ export function ReferenceBoardingPassDemo({ draft, dateString, mapsUrl, preset }
             <small>Demo lokal TamuKita · jawaban RSVP tidak dikirim atau disimpan</small>
           </footer>
         </div>
-        <ReferenceEnvelopeIntro preset={preset} hostOne={draft.hostOne} hostTwo={draft.hostTwo} isExample />
+        <ReferenceEnvelopeIntro preset={preset} hostOne={draft.hostOne} hostTwo={draft.hostTwo} />
       </main>
     </ReferenceMotionProvider>
   );
