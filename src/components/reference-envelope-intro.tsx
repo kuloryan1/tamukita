@@ -3,13 +3,12 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import type { ReferenceTemplatePreset } from "@/lib/reference-template-presets";
-import { ReferenceMotionToggle, useReferenceMotionEnabled } from "@/components/reference-motion-provider";
+import { useReferenceMotionEnabled } from "@/components/reference-motion-provider";
 
-export function ReferenceEnvelopeIntro({ preset, hostOne, hostTwo, isExample }: {
+export function ReferenceEnvelopeIntro({ preset, hostOne, hostTwo }: {
   preset: ReferenceTemplatePreset;
   hostOne: string;
   hostTwo: string;
-  isExample: boolean;
 }) {
   const [opening, setOpening] = useState(false);
   const [revealing, setRevealing] = useState(false);
@@ -104,7 +103,6 @@ export function ReferenceEnvelopeIntro({ preset, hostOne, hostTwo, isExample }: 
           onLoadedData={(event) => { if (preset.showOpeningFrame) event.currentTarget.currentTime = 0.12; }}
           onError={() => { if (opening) finishOpening(); }}
         /> : <Image className="reference-envelope-video" src={preset.coverPoster} fill alt="" aria-hidden="true" priority unoptimized />}
-        {isExample && <ReferenceMotionToggle variant="cover" />}
         {coverMessage && <div className="reference-envelope-copy" aria-hidden="true">{coverMessage}</div>}
         <button className="reference-envelope-open" type="button" onClick={openInvitation} aria-label={`Putar animasi pembukaan undangan${names ? ` untuk ${names}` : ""}`}>
           <span className="reference-envelope-open-label">Tap to open</span>

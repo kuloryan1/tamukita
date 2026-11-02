@@ -8,7 +8,7 @@ import { ReferenceDemoSections } from "@/components/reference-demo-sections";
 import { ReferenceDemoRsvp } from "@/components/reference-demo-rsvp";
 import { ReferenceBoardingPassDemo } from "@/components/reference-boarding-pass-demo";
 import { ReferenceEnvelopeIntro } from "@/components/reference-envelope-intro";
-import { ReferenceMotionProvider, ReferenceMotionToggle } from "@/components/reference-motion-provider";
+import { ReferenceMotionProvider } from "@/components/reference-motion-provider";
 import { ReferenceHeroMedia } from "@/components/reference-hero-media";
 import { ReferenceBackdropMedia } from "@/components/reference-backdrop-media";
 import { InvitationFamilyDetails, invitationKicker, invitationTitle } from "@/templates/shared";
@@ -92,7 +92,6 @@ export function ReferenceInvitation({
     <ReferenceMotionProvider isExample={isExample}>
       <main className={`reference-invitation reference-invitation--${preset.slug}`} data-template={preset.slug} data-theme-font={draft.themeFont ?? "classic"} data-theme-color={draft.themeColor ?? "default"} data-invitation-publication={isExample ? "demo" : "published"}>
         <div className="reference-invitation-frame" data-reference-content>
-          {isExample && <ReferenceMotionToggle variant="page" />}
           {draft.musicUrl && featureAccess.music && <div className="reference-music"><PublicInvitationMusic src={draft.musicUrl} title={draft.musicTitle} /></div>}
           <section className="reference-hero" aria-label="Undangan pernikahan">
             <ReferenceHeroMedia preset={preset} />
@@ -164,7 +163,7 @@ export function ReferenceInvitation({
           </footer>
         </div>
         {(preset.slug === "blush-serenade" || preset.slug === "wisteria-senja" || preset.slug === "elegant-cream" || preset.slug === "modern-sage") && <ReferenceBackdropMedia preset={preset} />}
-        <ReferenceEnvelopeIntro preset={preset} hostOne={draft.hostOne} hostTwo={draft.hostTwo} isExample={isExample} />
+        <ReferenceEnvelopeIntro preset={preset} hostOne={draft.hostOne} hostTwo={draft.hostTwo} />
       </main>
     </ReferenceMotionProvider>
   );
