@@ -6,6 +6,14 @@
   src: url("/fonts/pinyon-script-regular.ttf") format("truetype");
 }
 
+@font-face {
+  font-display: swap;
+  font-family: "Elegant Cream Serif";
+  font-style: normal;
+  font-weight: 400;
+  src: url("/fonts/cormorant-garamond-latin.woff2") format("woff2");
+}
+
 .reference-invitation {
   --ref-ink: #352b26;
   --ref-accent: #8b4251;
@@ -36,6 +44,20 @@
   --ref-muted: #7d6a53;
   --ref-script: var(--ref-serif);
   background: #f1ecdf;
+}
+
+.reference-invitation--elegant-cream {
+  --ref-serif: "Elegant Cream Serif", Georgia, serif;
+  --ref-script: var(--ref-serif);
+}
+
+.reference-invitation--elegant-cream .reference-hero-title {
+  font-size: clamp(32px, 10cqw, 39px);
+}
+
+.reference-invitation.reference-invitation--elegant-cream .reference-scroll-cue {
+  color: #5d4b33;
+  text-shadow: 0 1px 3px #fff7;
 }
 
 .reference-invitation[data-theme-font="modern"] {
