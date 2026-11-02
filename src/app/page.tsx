@@ -5,7 +5,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { TemplateCard } from "@/components/template-card";
 import { InvitationPreview } from "@/components/invitation-preview";
 import { templates } from "@/lib/templates";
-import { createInitialDraft } from "@/lib/invitations";
+import { createDemoDraft, DEMO_COUPLE_NAMES } from "@/lib/invitations";
 
 const steps = [
   { number: "01", title: "Pilih desain yang kamu suka", text: "Temukan template yang terasa paling kamu. Semuanya dibuat untuk mudah dibaca di layar ponsel." },
@@ -14,7 +14,7 @@ const steps = [
 ];
 
 export default function HomePage() {
-  const draft = createInitialDraft();
+  const draft = createDemoDraft();
   return (
     <>
       <SiteHeader />
@@ -37,7 +37,7 @@ export default function HomePage() {
             <div className="hero-visual">
               <div className="hero-blush" />
               <div className="hero-preview-wrap"><InvitationPreview draft={draft} /></div>
-              <div className="floating-note floating-note--top"><span className="floating-icon"><Heart size={15} fill="currentColor" /></span><span><b>Dibuat dengan cinta</b><small>oleh Nara & Dimas</small></span></div>
+              <div className="floating-note floating-note--top"><span className="floating-icon"><Heart size={15} fill="currentColor" /></span><span><b>Dibuat dengan cinta</b><small>{DEMO_COUPLE_NAMES.hostOne} & {DEMO_COUPLE_NAMES.hostTwo}</small></span></div>
               <div className="floating-note floating-note--bottom"><span className="floating-check"><Check size={14} /></span><span><b>Sudah siap dibagikan</b><small>Undangan digitalmu, selesai!</small></span><ArrowUpRight size={15} className="floating-arrow" /></div>
               <span className="hero-stamp">your<br />day, your<br /><i>story.</i></span>
               <span className="hero-sparkle hero-sparkle--a">✳</span><span className="hero-sparkle hero-sparkle--b">✧</span>

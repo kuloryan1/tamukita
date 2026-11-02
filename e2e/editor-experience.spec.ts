@@ -55,7 +55,7 @@ test("editor supports undo, redo, responsive preview, and saved personalization"
   } else {
     await page.getByRole("button", { name: "Urungkan perubahan" }).click();
   }
-  await expect(firstName).toHaveValue("Nara");
+  await expect(firstName).toHaveValue("Ryan");
   if (testInfo.project.name === "mobile-webkit") {
     await page.getByRole("button", { name: "Ulangi perubahan" }).focus();
     await page.keyboard.press("Control+Shift+z");

@@ -3,13 +3,13 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test } from "vitest";
 import { InvitationPreview } from "@/components/invitation-preview";
 import { PublicInvitation } from "@/components/public-invitation";
-import { createInitialDraft } from "@/lib/invitations";
+import { createDemoDraft, createInitialDraft, DEMO_COUPLE_NAMES } from "@/lib/invitations";
 import { isEditorCompatibleTemplate } from "@/lib/template-sdk";
 import { templates } from "@/lib/templates";
 import { getTemplateRenderer, hasTemplateRenderer, registeredTemplateRenderers, templateVersionRequiresAdminReview } from "@/templates/registry";
 
 test("source template versions have compatible, rendered React components and review policy", () => {
-  const draft = { ...createInitialDraft(), familyDetails: "Keluarga Hadi dan Rina" };
+  const draft = { ...createDemoDraft(), familyDetails: "Keluarga Hadi dan Rina" };
   expect(templates.length).toBeGreaterThanOrEqual(3);
   expect(new Set(templates.map((template) => template.slug)).size).toBe(templates.length);
   expect(new Set(templates.map((template) => `${template.slug}@${template.version}`)).size).toBe(templates.length);
@@ -20,8 +20,8 @@ test("source template versions have compatible, rendered React components and re
     expect(template, `${key} must belong to a source template in the catalog`).toBeDefined();
     const markup = renderToStaticMarkup(createElement(Renderer, { draft, template, mode: "example" }));
     expect(markup).toContain(`data-template="${slug}"`);
-    expect(markup).toContain("Nara");
-    expect(markup).toContain("Dimas");
+    expect(markup).toContain(DEMO_COUPLE_NAMES.hostOne);
+    expect(markup).toContain(DEMO_COUPLE_NAMES.hostTwo);
     expect(markup).toContain("Keluarga Hadi dan Rina");
   }
 

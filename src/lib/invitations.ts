@@ -82,6 +82,16 @@ const DRAFT_KEY = "tamukita.invitation.draft.v1";
 const PUBLISHED_KEY = "tamukita.invitations.published.v1";
 const RSVP_KEY = "tamukita.rsvps.v1";
 
+export const DEMO_COUPLE_NAMES = {
+  hostOne: "Ryan Pratam",
+  hostTwo: "Dwi Wulan Maulida",
+} as const;
+export const BUILT_IN_DEMO_SLUGS = ["ryan-wulan", "nara-dimas"] as const;
+
+export function isBuiltInDemoSlug(slug: string) {
+  return (BUILT_IN_DEMO_SLUGS as readonly string[]).includes(slug);
+}
+
 export const reservedSlugs = new Set([
   "admin",
   "api",
@@ -100,11 +110,11 @@ export const reservedSlugs = new Set([
 export function createInitialDraft(): InvitationDraft {
   return {
     id: "invitation-demo",
-    slug: "nara-dimas",
+    slug: "ryan-wulan",
     eventKind: "Pernikahan",
     eventTitle: "Undangan Pernikahan",
-    hostOne: "Nara",
-    hostTwo: "Dimas",
+    hostOne: "Ryan",
+    hostTwo: "Wulan",
     sealMonogram: "",
     familyDetails: "",
     eventDate: "2027-05-22",
@@ -130,6 +140,15 @@ export function createInitialDraft(): InvitationDraft {
     musicTitle: "",
     customFields: {},
     updatedAt: new Date().toISOString(),
+  };
+}
+
+export function createDemoDraft(): InvitationDraft {
+  return {
+    ...createInitialDraft(),
+    slug: "contoh-undangan",
+    ...DEMO_COUPLE_NAMES,
+    sealMonogram: "RD",
   };
 }
 

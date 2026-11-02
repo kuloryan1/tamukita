@@ -1,7 +1,9 @@
 import { ArrowUpRight, MapPin } from "lucide-react";
 import { GardenFlourish, GardenPavilion, GardenRose } from "@/components/garden-ornaments";
+import { GardenDemoRsvp } from "@/components/garden-demo-rsvp";
 import { PublicInvitationCountdown } from "@/components/public-invitation-countdown";
 import { PublicInvitationRsvp } from "@/components/public-invitation-actions";
+import { resolveSealMonogram } from "@/lib/seal-monogram";
 import type { InvitationFeatureAccess } from "@/lib/invitation-features";
 import type { InvitationDraft } from "@/lib/invitations";
 
@@ -20,6 +22,7 @@ type GardenPublicContentProps = {
 export function GardenPublicContent({ draft, dateString, mapsUrl, slug, recipientName, guestToken, isExample, initialRsvpCount, featureAccess }: GardenPublicContentProps) {
   const fields = draft.customFields ?? {};
   const hostNames = [draft.hostOne, draft.hostTwo].filter(Boolean);
+  const sealMonogram = resolveSealMonogram(draft.sealMonogram, hostNames);
   const palette = [
     { name: "sage", color: "#98a187" },
     { name: "champagne", color: "#d9c5a1" },
@@ -103,11 +106,11 @@ export function GardenPublicContent({ draft, dateString, mapsUrl, slug, recipien
 
     {featureAccess.rsvp && <section className="garden-rsvp-section" id="rsvp" aria-labelledby="garden-rsvp-title">
       <div className="garden-public-inner" data-garden-reveal>
-        <span className="garden-rsvp-envelope" aria-hidden="true"><span>{hostNames.map((name) => name.charAt(0)).join(" & ")}</span></span>
+        <span className="garden-rsvp-envelope" aria-hidden="true"><span>{sealMonogram}</span></span>
         <h2 id="garden-rsvp-title">Konfirmasi Kehadiran</h2>
         <p>Kabar kehadiran Anda melengkapi kebahagiaan kami.<br />Sampai bertemu di hari istimewa.</p>
         {isExample
-          ? <span className="public-rsvp-demo-status" role="status">Contoh undangan · RSVP nonaktif</span>
+          ? <GardenDemoRsvp />
           : <PublicInvitationRsvp slug={slug} initialCount={initialRsvpCount} recipientName={recipientName} guestToken={guestToken} />}
       </div>
     </section>}

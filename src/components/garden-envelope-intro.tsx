@@ -8,7 +8,7 @@ import { resolveSealMonogram } from "@/lib/seal-monogram";
 const envelopeCover = "/templates/taman-abadi-envelope-cover.png";
 const envelopeVideo = "/templates/taman-abadi-envelope-opening.mp4";
 
-export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram }: { hostOne: string; hostTwo: string; monogram?: string }) {
+export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram, isExample = false }: { hostOne: string; hostTwo: string; monogram?: string; isExample?: boolean }) {
   const [opening, setOpening] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [revealing, setRevealing] = useState(false);
@@ -119,6 +119,7 @@ export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram }: { hostOne: s
   function openInvitation() {
     if (opening || finished.current) return;
     window.scrollTo({ top: 0, behavior: "instant" });
+    if (isExample && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return finishOpening();
     setOpening(true);
     const video = videoRef.current;
     if (!video) return finishOpening();

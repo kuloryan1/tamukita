@@ -1,4 +1,5 @@
 import { CalendarDays } from "lucide-react";
+import { DEMO_COUPLE_NAMES } from "@/lib/invitations";
 import type { Template } from "@/lib/templates";
 
 export function TemplateArtwork({ template, large = false }: { template: Template; large?: boolean }) {
@@ -11,7 +12,7 @@ export function TemplateArtwork({ template, large = false }: { template: Templat
       {!isGarden && <><div className="artwork-spark artwork-spark--one">✳</div><div className="artwork-spark artwork-spark--two">✧</div></>}
       <div className="artwork-paper">
         <span className="artwork-kicker">{isBoardingPass ? "SAVE THE DATE" : isGarden ? "WEDDING DAY" : "THE WEDDING OF"}</span>
-        <span className="artwork-names">Nara <i>&</i><br />Dimas</span>
+        <span className="artwork-names"><span>{DEMO_COUPLE_NAMES.hostOne}</span><i>&</i><span>{DEMO_COUPLE_NAMES.hostTwo}</span></span>
         <span className="artwork-line" />
         <span className="artwork-date"><CalendarDays size={12} /> {isBoardingPass ? "DESTINATION · 22 . 05 . 27" : "22 . 05 . 27"}</span>
       </div>

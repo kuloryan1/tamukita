@@ -1,7 +1,9 @@
 import { ImageResponse } from "next/og";
-import { createInitialDraft } from "@/lib/invitations";
+import { createDemoDraft, isBuiltInDemoSlug, type InvitationDraft } from "@/lib/invitations";
 import { parseInvitationDraft } from "@/lib/invitation-server";
 import { getPrismaClient } from "@/lib/prisma";
+import { isEditorCompatibleTemplate, validateTemplateManifest } from "@/lib/template-sdk";
+import { getTemplate } from "@/lib/templates";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,10 +13,9 @@ export const contentType = "image/png";
 
 export default async function OpenGraphImage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  let draft = slug === "nara-dimas" ? { ...createInitialDraft(), slug } : null;
-
-  if (!draft) {
-    const invitation = await getPrismaClient().invitation.findFirst({
+  let draft: InvitationDraft | null = null;
+  const invitation = process.env.DATABASE_URL || !isBuiltInDemoSlug(slug)
+    ? await getPrismaClient().invitation.findFirst({
       where: {
         slug,
         status: "PUBLISHED",
@@ -24,18 +25,27 @@ export default async function OpenGraphImage({ params }: { params: Promise<{ slu
       },
       select: {
         publishedSnapshot: true,
-        templateVersion: { select: { version: true, template: { select: { slug: true } } } },
+        templateVersion: { select: { version: true, manifest: true, template: { select: { slug: true } } } },
       },
-    });
-    if (!invitation) {
-      return new Response("Undangan tidak ditemukan.", { status: 404 });
-    }
+    })
+    : null;
+  if (invitation) {
     const publishedDraft = parseInvitationDraft(invitation.publishedSnapshot);
-    if (!publishedDraft || publishedDraft.templateId !== invitation.templateVersion.template.slug || publishedDraft.templateVersion !== invitation.templateVersion.version) {
-      return new Response("Undangan tidak ditemukan.", { status: 404 });
+    const manifest = validateTemplateManifest(invitation.templateVersion.manifest);
+    const template = manifest.success
+      && manifest.data.slug === invitation.templateVersion.template.slug
+      && manifest.data.version === invitation.templateVersion.version
+      && isEditorCompatibleTemplate(manifest.data)
+      ? manifest.data
+      : getTemplate(invitation.templateVersion.template.slug);
+    if (!publishedDraft || publishedDraft.templateId !== invitation.templateVersion.template.slug || !template) {
+      if (!isBuiltInDemoSlug(slug)) return new Response("Undangan tidak ditemukan.", { status: 404 });
+    } else {
+      draft = publishedDraft;
     }
-    draft = publishedDraft;
   }
+  if (!draft && isBuiltInDemoSlug(slug)) draft = { ...createDemoDraft(), slug };
+  if (!draft) return new Response("Undangan tidak ditemukan.", { status: 404 });
 
   const title = draft.eventKind === "Pernikahan"
     ? `${draft.hostOne} & ${draft.hostTwo}`.trim()

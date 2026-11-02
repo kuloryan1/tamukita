@@ -38,7 +38,7 @@ export function PublicInvitation({ slug, initialDraft, initialRsvpCount, initial
 
   return (
     <main className="public-invitation-page" data-template={activeTemplateSlug} data-invitation-publication={isExample ? "demo" : "published"} data-theme-font={draft.themeFont ?? "classic"}>
-      {isGardenTemplate && <GardenEnvelopeIntro hostOne={draft.hostOne} hostTwo={draft.hostTwo} monogram={draft.sealMonogram} />}
+      {isGardenTemplate && <GardenEnvelopeIntro hostOne={draft.hostOne} hostTwo={draft.hostTwo} monogram={draft.sealMonogram} isExample={isExample} />}
       <div className="public-topbar">
         <Link href="/" className="public-brand"><Heart size={14} fill="currentColor" /> tamukita</Link>
         <span>UNDANGAN DIGITAL</span>

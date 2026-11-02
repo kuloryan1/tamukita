@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 import { PublicInvitation } from "@/components/public-invitation";
 import { InvitationPreview } from "@/components/invitation-preview";
-import { createInitialDraft, reservedSlugs } from "@/lib/invitations";
+import { createDemoDraft, DEMO_COUPLE_NAMES, isBuiltInDemoSlug, reservedSlugs } from "@/lib/invitations";
 import { parseInvitationDraft } from "@/lib/invitation-server";
 import { getPrismaClient } from "@/lib/prisma";
 import { getTemplate } from "@/lib/templates";
@@ -63,8 +63,8 @@ const findPublished = cache(async (slug: string) => {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const record = await findPublished(slug);
-  if (record) return invitationMetadata(slug, record.title, record.draft?.story || "Undangan digital yang dibuat dengan TamuKita.");
-  if (slug === "nara-dimas") return invitationMetadata(slug, "Pernikahan Nara & Dimas", "Contoh undangan digital TamuKita.");
+  if (record?.draft && record.template) return invitationMetadata(slug, record.title, record.draft.story || "Undangan digital yang dibuat dengan TamuKita.");
+  if (isBuiltInDemoSlug(slug)) return invitationMetadata(slug, `Pernikahan ${DEMO_COUPLE_NAMES.hostOne} & ${DEMO_COUPLE_NAMES.hostTwo}`, "Contoh undangan digital TamuKita.");
   return { title: "Undangan tidak tersedia", description: "Undangan digital yang dibuat dengan TamuKita.", robots: { index: false, follow: false } };
 }
 
@@ -74,8 +74,8 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
   if (reservedSlugs.has(slug.toLowerCase())) notFound();
   const record = await findPublished(slug);
   if (!record?.draft || !record.template) {
-    if (slug === "nara-dimas") {
-      const exampleDraft = { ...createInitialDraft(), slug, publishedAt: "2026-01-01T00:00:00.000Z" };
+    if (isBuiltInDemoSlug(slug)) {
+      const exampleDraft = { ...createDemoDraft(), slug, publishedAt: "2026-01-01T00:00:00.000Z" };
       return <PublicInvitation slug={slug} initialDraft={exampleDraft} initialRsvpCount={0} isExample templateSlug={exampleDraft.templateId} preview={<InvitationPreview draft={exampleDraft} full mode="example" />} />;
     }
     notFound();

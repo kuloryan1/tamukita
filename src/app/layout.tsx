@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./garden-invitation.css";
+import "./reference-invitation.css";
+import "./reference-template-themes.css";
+import "./reference-demo-sections.css";
 import "./manual-payments.css";
 import "./paparazzi.css";
 

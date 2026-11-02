@@ -1,0 +1,464 @@
+.reference-invitation--blush-serenade .reference-hero-shade { background: transparent; }
+.reference-invitation--blush-serenade .reference-hero-copy { padding: 0; }
+.reference-invitation--blush-serenade .reference-hero-kicker { display: none; }
+.reference-invitation--blush-serenade .reference-hero-title { height: 100%; inset: 0 5% auto; margin: 0; position: absolute; font-size: clamp(36px, 9.5cqw, 42px); line-height: 1.2; }
+.reference-invitation--blush-serenade .reference-hero-title span:first-child { inset: 15% 0 auto; position: absolute; }
+.reference-invitation--blush-serenade .reference-hero-title i { inset: 28% 0 auto; margin: 0; position: absolute; }
+.reference-invitation--blush-serenade .reference-hero-title span:last-child { font-size: .94em; inset: 34% 0 auto; position: absolute; }
+.reference-invitation--blush-serenade .reference-hero-intro { inset: 42% 6% auto; margin: 0; max-width: none; position: absolute; }
+.reference-invitation--blush-serenade .reference-hero-divider { inset: 54% 0 auto; justify-content: center; margin: 0; position: absolute; }
+.reference-invitation--blush-serenade .reference-hero-copy time { inset: 59% 0 auto; position: absolute; }
+.reference-invitation--blush-serenade .reference-scroll-cue { bottom: 5%; }
+.reference-envelope-overlay--blush-serenade .reference-envelope-copy { font-size: clamp(16px, 4.5cqw, 19px); inset: 68% 4% auto; }
+.reference-invitation--blush-serenade .reference-scroll-cue { bottom: 0%; }
+.reference-envelope-overlay.is-opening .reference-envelope-copy,
+.reference-envelope-overlay.is-opening .reference-envelope-open-label { opacity: 0; transition: opacity .25s ease; }
+.reference-envelope-overlay.is-opening .reference-envelope-open { pointer-events: none; }
+
+.reference-envelope-overlay--ivory-heritage { background: #f0e9da; }
+.reference-envelope-overlay--ivory-heritage .reference-envelope-card { background: #f0e9da; }
+.reference-envelope-overlay--ivory-heritage .reference-envelope-copy { bottom: 20%; color: #9a5551; font-family: var(--ref-serif); font-size: clamp(12px, 3.6cqw, 15px); font-style: italic; inset: auto 5% 20%; letter-spacing: .07em; line-height: 1.2; text-transform: uppercase; white-space: normal; z-index: 3; }
+.reference-envelope-overlay--ivory-heritage .reference-envelope-open-label { bottom: 5.8%; color: #795626; font-family: var(--ref-serif); font-size: 15px; letter-spacing: .19em; text-shadow: none; text-transform: uppercase; }
+.reference-envelope-overlay--ivory-heritage .reference-envelope-skip { color: #67451e; }
+
+.reference-invitation--ivory-heritage .reference-hero { aspect-ratio: auto; height: min(670px, 80svh); }
+.reference-invitation--ivory-heritage .reference-hero-media { object-position: center; }
+.reference-invitation--ivory-heritage .reference-hero-shade { background: linear-gradient(180deg, #281a1022 0%, transparent 22%, #f4eddf10 72%, #21170e38 100%); }
+.reference-invitation--ivory-heritage .reference-hero-copy { justify-content: flex-start; padding: 0; }
+.reference-invitation--ivory-heritage .reference-hero-kicker { display: none; }
+.reference-invitation--ivory-heritage .reference-hero-title { color: #4c351e; font-family: var(--ref-serif); font-size: clamp(22px, 6.2cqw, 26px); font-weight: 500; left: 4%; letter-spacing: .08em; line-height: 1.16; margin: 0; position: absolute; right: 4%; text-transform: uppercase; text-shadow: 0 1px 8px #f5e8d880; top: 53%; transform: translateY(-50%); white-space: nowrap; }
+.reference-invitation--ivory-heritage .reference-hero-title span { white-space: nowrap; }
+.reference-invitation--ivory-heritage .reference-hero-title i { color: #806033; font-size: .74em; font-style: normal; line-height: 1.25; margin: 3px 0; }
+.reference-invitation--ivory-heritage .reference-hero-intro { color: #fffaf1; font-family: var(--ref-serif); font-size: 18px; left: 5%; margin: 0; max-width: none; position: absolute; right: 5%; text-shadow: 0 1px 5px #25180f; top: 63%; }
+.reference-invitation--ivory-heritage .reference-hero-divider { color: #d0a65e; left: 0; margin: 0; position: absolute; right: 0; top: 71%; }
+.reference-invitation--ivory-heritage .reference-hero-copy time { color: #fff7e8; font-family: var(--ref-serif); font-size: 19px; font-style: italic; left: 5%; position: absolute; right: 5%; text-shadow: 0 1px 5px #25180f; top: 76%; }
+.reference-invitation--ivory-heritage .reference-scroll-cue { bottom: 7px; color: #e4c380; font-size: 11px; text-shadow: 0 1px 3px #342213; }
+.reference-invitation--ivory-heritage .reference-countdown-section,
+.reference-invitation--ivory-heritage .reference-story-section,
+.reference-invitation--ivory-heritage .reference-event-section,
+.reference-invitation--ivory-heritage .reference-gallery-section,
+.reference-invitation--ivory-heritage .reference-gift-section,
+.reference-invitation--ivory-heritage .reference-rsvp-section,
+.reference-invitation--ivory-heritage .reference-demo-section,
+.reference-invitation--ivory-heritage .reference-footer { background-color: #f4eddf; background-image: linear-gradient(180deg, #f4eddfec, #f4eddfec); }
+.reference-invitation--ivory-heritage .reference-countdown-section { padding: 43px 24px 65px; }
+.reference-invitation--ivory-heritage .reference-countdown-section > .reference-kicker { display: none; }
+.reference-invitation--ivory-heritage .reference-countdown-section h2,
+.reference-invitation--ivory-heritage .reference-demo-section h2,
+.reference-invitation--ivory-heritage .reference-rsvp-section h2 { color: #73532c; font-family: var(--ref-serif); font-size: 28px; font-style: normal; font-weight: 500; letter-spacing: .045em; text-transform: uppercase; }
+.reference-invitation--ivory-heritage .reference-countdown-intro { color: #78634c; font-family: var(--ref-serif); font-size: 16px; font-style: italic; margin: -5px auto 20px; }
+.reference-invitation--ivory-heritage .reference-countdown-section .public-countdown > div { gap: 9px; width: 100%; }
+.reference-invitation--ivory-heritage .reference-countdown-section .public-countdown b { background: #fbf7efbb; border: 1px solid #c7a87366; border-radius: 3px; color: #71532c; font-family: var(--ref-serif); font-size: 31px; min-width: 0; padding: 12px 6px; }
+.reference-invitation--ivory-heritage .reference-countdown-section .public-countdown b small { color: #85745c; font-family: var(--ref-serif); font-size: 10px; letter-spacing: .08em; }
+.reference-invitation--ivory-heritage .reference-section-inner > p,
+.reference-invitation--ivory-heritage .reference-demo-section p { color: #6d5a43; }
+.reference-invitation--ivory-heritage .reference-event-details article,
+.reference-invitation--ivory-heritage .reference-gift-account,
+.reference-invitation--ivory-heritage .reference-demo-gift-card { background: #fbf7efcc; border-color: #b8955b52; }
+.reference-invitation--ivory-heritage .reference-demo-section h3 { color: #503b24; }
+.reference-invitation--ivory-heritage .reference-demo-section .reference-demo-icon--ivory { color: #9d7a42; }
+.reference-invitation--ivory-heritage .reference-demo-schedule { min-height: 850px; }
+.reference-invitation--ivory-heritage .reference-demo-schedule .reference-kicker { display: none; }
+.reference-invitation--ivory-heritage .reference-demo-schedule h2 { margin: 4px 0 8px; }
+.reference-invitation--ivory-heritage .reference-demo-schedule .reference-demo-lead { font-style: italic; margin-bottom: 18px !important; }
+.reference-invitation--ivory-heritage .reference-demo-timeline--ivory { margin: 14px auto 0; max-width: 344px; padding: 0; }
+.reference-invitation--ivory-heritage .reference-demo-timeline--ivory::before { background: linear-gradient(#86906d, #b69a61, #86906d); height: calc(100% - 48px); left: 50%; opacity: .78; top: 24px; transform: translateX(-50%); }
+.reference-invitation--ivory-heritage .reference-demo-timeline--ivory li { align-items: center; display: grid; grid-template-columns: minmax(0,1fr) 54px minmax(0,1fr); min-height: 144px; padding: 12px 0; }
+.reference-invitation--ivory-heritage .reference-demo-timeline--ivory li::before { background: #f4eddf; border: 1px solid #967844; border-radius: 50%; content: ""; height: 8px; left: 50%; position: absolute; top: 50%; transform: translate(-50%,-50%); width: 8px; z-index: 1; }
+.reference-invitation--ivory-heritage .reference-demo-timeline-asset--ivory { height: 52px !important; object-fit: contain; width: 52px !important; }
+.reference-invitation--ivory-heritage .reference-demo-timeline--ivory li.is-left > img { grid-column: 1; grid-row: 1; justify-self: center; }
+.reference-invitation--ivory-heritage .reference-demo-timeline--ivory li.is-left > div { grid-column: 3; grid-row: 1; padding: 0 0 0 8px; text-align: left; }
+.reference-invitation--ivory-heritage .reference-demo-timeline--ivory li.is-right > img { grid-column: 3; grid-row: 1; justify-self: center; }
+.reference-invitation--ivory-heritage .reference-demo-timeline--ivory li.is-right > div { grid-column: 1; grid-row: 1; padding: 0 8px 0 0; text-align: right; }
+.reference-invitation--ivory-heritage .reference-demo-timeline--ivory li h3 { color: #813f3a; font-family: var(--ref-serif); font-size: 13px; font-weight: 500; letter-spacing: .045em; line-height: 1.2; text-transform: uppercase; }
+.reference-invitation--ivory-heritage .reference-demo-timeline-time--ivory { color: #835e3e; display: block; font-family: var(--ref-serif); font-size: 12px; margin-top: 5px; }
+.reference-invitation--ivory-heritage .reference-demo-flow--ivory { display: flex; flex-direction: column; }
+.reference-invitation--ivory-heritage .reference-demo-flow--ivory > .reference-demo-section { order: 2; }
+.reference-invitation--ivory-heritage .reference-demo-flow--ivory > .reference-demo-schedule { order: 0; }
+.reference-invitation--ivory-heritage .reference-demo-flow--ivory > .reference-demo-venue { order: 1; }
+.reference-invitation--ivory-heritage .reference-demo-venue { min-height: 720px; padding-top: 80px; }
+.reference-invitation--ivory-heritage .reference-demo-venue-art { display: none; }
+.reference-invitation--ivory-heritage .reference-demo-venue-card { background: #fbf7efcc; border: 1px solid #b8955b52; gap: 12px; margin: 32px auto 0; max-width: 344px; padding: 25px 18px; }
+.reference-invitation--ivory-heritage .reference-demo-venue-card svg { color: #9d7a42; display: block; }
+.reference-invitation--ivory-heritage .reference-demo-venue-card > span { color: #876332; }
+.reference-invitation--ivory-heritage .reference-demo-venue-card b { color: #503b24; font-family: var(--ref-serif); font-size: 19px; font-weight: 500; }
+.reference-invitation--ivory-heritage .reference-demo-venue-card a { border: 1px solid #b8955b88; border-radius: 2px; justify-content: center; margin-top: 12px; min-height: 42px; min-width: 172px; padding: 8px 18px; }
+.reference-invitation--ivory-heritage .reference-demo-attire { min-height: 760px; }
+.reference-invitation--ivory-heritage .reference-demo-attire h2 { color: #813f3a; font-style: italic; font-weight: 400; }
+.reference-invitation--ivory-heritage .reference-demo-attire-panel { background: #fbf7efcc; border: 1px solid #b8955b44; border-radius: 16px; margin: 20px auto 0; max-width: 360px; padding: 20px 18px 31px; }
+.reference-invitation--ivory-heritage .reference-demo-attire-image--ivory { display: block; height: 230px; margin: 0 auto 28px; object-fit: contain; width: 100%; }
+.reference-invitation--ivory-heritage .reference-demo-attire-subtitle { color: #76552c !important; font-family: var(--ref-serif) !important; font-size: 20px !important; font-style: normal; font-weight: 500 !important; text-transform: uppercase; }
+.reference-invitation--ivory-heritage .reference-demo-attire-details--ivory { border-top: 1px solid #b8955b30; display: grid; gap: 18px; grid-template-columns: repeat(2,minmax(0,1fr)); margin: 22px auto 0; max-width: 300px; padding: 20px 0 0; text-align: center; }
+.reference-invitation--ivory-heritage .reference-demo-attire-details--ivory article { display: grid; gap: 10px; }
+.reference-invitation--ivory-heritage .reference-demo-attire-details--ivory span { color: #813f3a; font-family: var(--ref-serif); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.reference-invitation--ivory-heritage .reference-demo-attire-details--ivory b { color: #813f3a; font-family: var(--ref-serif); font-size: 15px; font-weight: 400; }
+.reference-invitation--ivory-heritage .reference-demo-cake--ivory { min-height: 430px; padding: 48px 26px; }
+.reference-invitation--ivory-heritage .reference-demo-cake--ivory img { display: block; height: auto; margin: 24px auto 0; max-width: 230px; object-fit: contain; width: 80%; }
+.reference-invitation--ivory-heritage .reference-demo-cake--ivory h2 { font-style: italic; font-size: 27px; text-transform: none; }
+.reference-invitation--ivory-heritage .reference-demo-rsvp-section .reference-demo-rsvp-form { border-color: #b8955b66; }
+.reference-invitation--ivory-heritage .reference-footer { color: #73532c; }
+
+@media (min-width: 600px) {
+  .reference-invitation-frame { box-shadow: 0 0 65px #47371b18; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reference-envelope-overlay { transition: none; }
+  .reference-envelope-video { opacity: .98; }
+  .reference-hero-video { display: none; }
+  .reference-global-backdrop-video { display: none; }
+}
+
+@media (max-width: 360px) {
+  .reference-section-inner h2 { font-size: 34px; }
+  .reference-countdown-section .public-countdown > div { gap: 4px; }
+  .reference-countdown-section .public-countdown b { font-size: 31px; min-width: 34px; }
+  .reference-countdown-section .public-countdown b small { font-size: 9px; }
+}
+
+.reference-invitation--royal-gold { --ref-ink: #392621; --ref-accent: #742f38; --ref-paper: #f6f2ec; --ref-muted: #74665c; background: #ebe3d8; }
+.reference-invitation--royal-gold .reference-invitation-frame { background: #f6f2ec; }
+.reference-envelope-overlay--royal-gold, .reference-envelope-overlay--royal-gold .reference-envelope-card { background: #eee6d8; }
+.reference-envelope-overlay--royal-gold .reference-envelope-copy { color: #873e4c; display: block; font-family: var(--ref-serif); font-size: 13px; font-style: italic; inset: 75% 5% auto; letter-spacing: .03em; line-height: 1.2; white-space: nowrap; z-index: 3; }
+.reference-envelope-overlay--royal-gold .reference-envelope-open-label { display: none; }
+.reference-envelope-overlay--royal-gold .reference-envelope-skip { background: #f7f1e9ed; color: #742f38; }
+.reference-invitation--royal-gold .reference-hero { aspect-ratio: auto; height: min(694px, 82svh); }
+.reference-invitation--royal-gold .reference-hero-media { object-position: center; }
+.reference-invitation--royal-gold .reference-hero-shade { background: transparent; }
+.reference-invitation--royal-gold .reference-hero-copy { display: block; padding: 0; }
+.reference-invitation--royal-gold .reference-hero-kicker { display: none; }
+.reference-invitation--royal-gold .reference-hero-title { color: #71313a; font-family: var(--ref-serif); font-size: clamp(23px, 6.2cqw, 26px); font-weight: 500; left: 4%; letter-spacing: .055em; line-height: 1.12; margin: 0; position: absolute; right: 4%; text-transform: uppercase; text-shadow: 0 1px 6px #fff5; top: 53%; transform: translateY(-50%); }
+.reference-invitation--royal-gold .reference-hero-title i { color: #7f3a40; font-family: var(--ref-serif); font-size: .66em; font-style: italic; margin: 3px 0; }
+.reference-invitation--royal-gold .reference-hero-intro { color: #fffaf4; font-family: var(--ref-script); font-size: clamp(17px, 4.4cqw, 19px); left: 4%; margin: 0; max-width: none; position: absolute; right: 4%; text-shadow: 0 1px 5px #46272c; top: 60%; }
+.reference-invitation--royal-gold .reference-hero-divider { color: #a7834d; left: 0; margin: 0; position: absolute; right: 0; top: 68%; }
+.reference-invitation--royal-gold .reference-hero-copy time { color: #742f38; font-family: var(--ref-serif); font-size: clamp(17px, 5.2cqw, 21px); font-style: normal; left: 4%; position: absolute; right: 4%; text-transform: uppercase; top: 74%; }
+.reference-invitation--royal-gold .reference-scroll-cue { bottom: 1%; color: #742f38; font-size: 11px; letter-spacing: .17em; }
+.reference-invitation--royal-gold .reference-countdown-section,
+.reference-invitation--royal-gold .reference-demo-section,
+.reference-invitation--royal-gold .reference-rsvp-section,
+.reference-invitation--royal-gold .reference-footer { background-color: #f4f0e9; background-image: linear-gradient(180deg, #f4f0e9ed, #f4f0e9ed); }
+.reference-invitation--royal-gold .reference-countdown-section { padding: 31px 24px 133px; }
+.reference-invitation--royal-gold .reference-countdown-section > .reference-kicker { display: none; }
+.reference-invitation--royal-gold .reference-countdown-section h2,
+.reference-invitation--royal-gold .reference-demo-section h2,
+.reference-invitation--royal-gold .reference-rsvp-section h2 { color: #742f38; font-family: var(--ref-serif); font-size: clamp(28px, 8cqw, 34px); font-style: italic; font-weight: 500; letter-spacing: .025em; text-transform: uppercase; }
+.reference-invitation--royal-gold .reference-countdown-intro { color: #7a323b; font-family: var(--ref-serif); font-size: 16px; font-style: italic; margin: -3px auto 20px; }
+.reference-invitation--royal-gold .reference-countdown-section .public-countdown > div { gap: 8px; }
+.reference-invitation--royal-gold .reference-countdown-section .public-countdown b { background: #eee9df; border: 1px solid #c7b58e; border-radius: 6px; color: #742f38; font-family: var(--ref-serif); font-size: 30px; min-width: 0; padding: 11px 6px; }
+.reference-invitation--royal-gold .reference-countdown-section .public-countdown b small { color: #837264; font-family: var(--ref-serif); font-size: 10px; letter-spacing: .07em; }
+.reference-invitation--royal-gold .reference-countdown-section h2 { font-size: 30px; margin-top: 10px; }
+.reference-invitation--royal-gold .reference-demo-section p { color: #6f5c54; }
+.reference-invitation--royal-gold .reference-demo-section h3 { color: #57303a; }
+.reference-invitation--royal-gold .reference-demo-flow--royal { display: flex; flex-direction: column; }
+.reference-invitation--royal-gold .reference-demo-flow--royal > .reference-demo-section { order: 2; }
+.reference-invitation--royal-gold .reference-demo-flow--royal > .reference-demo-schedule { order: 0; }
+.reference-invitation--royal-gold .reference-demo-flow--royal > .reference-demo-venue { order: 1; }
+.reference-invitation--royal-gold .reference-demo-schedule { min-height: 937px; padding-top: 70px; }
+.reference-invitation--royal-gold .reference-demo-schedule .reference-kicker { display: none; }
+.reference-invitation--royal-gold .reference-demo-schedule h2 { margin: 0 0 8px; }
+.reference-invitation--royal-gold .reference-demo-schedule .reference-demo-lead { color: #7d3940; font-style: italic; margin-bottom: 18px !important; }
+.reference-invitation--royal-gold .reference-demo-timeline--royal { margin: 12px auto 0; max-width: 344px; padding: 0; }
+.reference-invitation--royal-gold .reference-demo-timeline--royal::before { background: linear-gradient(#48563a, #748057, #48563a); height: calc(100% - 48px); left: 50%; opacity: .9; top: 24px; transform: translateX(-50%); width: 2px; }
+.reference-invitation--royal-gold .reference-demo-timeline--royal li { align-items: center; display: grid; grid-template-columns: minmax(0,1fr) 54px minmax(0,1fr); min-height: 152px; padding: 12px 0; }
+.reference-invitation--royal-gold .reference-demo-timeline--royal li::before { background: #f4f0e9; border: 1px solid #92733e; border-radius: 50%; content: ""; height: 8px; left: 50%; position: absolute; top: 50%; transform: translate(-50%,-50%); width: 8px; z-index: 1; }
+.reference-invitation--royal-gold .reference-demo-timeline--royal li > img { height: 50px; object-fit: contain; width: 50px; }
+.reference-invitation--royal-gold .reference-demo-timeline--royal li.is-left > img { grid-column: 1; grid-row: 1; justify-self: center; }
+.reference-invitation--royal-gold .reference-demo-timeline--royal li.is-left > div { grid-column: 3; grid-row: 1; padding-left: 8px; text-align: left; }
+.reference-invitation--royal-gold .reference-demo-timeline--royal li.is-right > img { grid-column: 3; grid-row: 1; justify-self: center; }
+.reference-invitation--royal-gold .reference-demo-timeline--royal li.is-right > div { grid-column: 1; grid-row: 1; padding-right: 8px; text-align: right; }
+.reference-invitation--royal-gold .reference-demo-timeline--royal li h3 { color: #742f38; font-family: var(--ref-serif); font-size: 13px; font-weight: 500; letter-spacing: .07em; text-transform: uppercase; }
+.reference-invitation--royal-gold .reference-demo-timeline-time--ivory { color: #493a33; display: block; font-family: var(--ref-serif); font-size: 12px; margin-top: 5px; }
+.reference-invitation--royal-gold .reference-demo-venue { min-height: 760px; padding-top: 82px; }
+.reference-invitation--royal-gold .reference-demo-venue .reference-kicker { display: none; }
+.reference-invitation--royal-gold .reference-demo-venue-card { background: #fbf8f2; border: 1px solid #c7b58e; gap: 12px; margin: 34px auto 0; max-width: 344px; padding: 25px 18px; }
+.reference-invitation--royal-gold .reference-demo-venue-card svg { color: #9a7840; display: block; }
+.reference-invitation--royal-gold .reference-demo-venue-card > span { color: #742f38; }
+.reference-invitation--royal-gold .reference-demo-venue-card b { color: #492f2a; font-family: var(--ref-serif); font-size: 19px; font-weight: 500; }
+.reference-invitation--royal-gold .reference-demo-venue-card a { border: 1px solid #c7b58e; border-radius: 20px; justify-content: center; margin-top: 12px; min-height: 42px; min-width: 172px; padding: 8px 18px; }
+.reference-invitation--royal-gold .reference-demo-attire { min-height: 760px; }
+.reference-invitation--royal-gold .reference-demo-attire .reference-demo-icon--royal-dress { height: 42px; margin: 0 auto 10px; width: 42px; }
+.reference-invitation--royal-gold .reference-demo-attire h2 { color: #742f38; font-size: 31px; font-style: italic; }
+.reference-invitation--royal-gold .reference-demo-attire-panel { background: #f8f5f0; border: 1px solid #d4cfc5; border-radius: 14px; margin: 20px auto 0; max-width: 360px; padding: 20px 18px 31px; }
+.reference-invitation--royal-gold .reference-demo-attire-image--ivory { display: block; height: 230px; margin: 0 auto 24px; object-fit: contain; width: 100%; }
+.reference-invitation--royal-gold .reference-demo-attire-subtitle { color: #742f38 !important; font-family: var(--ref-serif) !important; font-size: 20px !important; font-variant: small-caps; font-weight: 600 !important; text-transform: none; }
+.reference-invitation--royal-gold .reference-demo-attire-details--ivory { border-top: 1px solid #c7b58e55; display: grid; gap: 18px; grid-template-columns: repeat(2,minmax(0,1fr)); margin: 20px auto 0; max-width: 300px; padding: 18px 0 0; text-align: center; }
+.reference-invitation--royal-gold .reference-demo-attire-details--ivory article { display: grid; gap: 8px; }
+.reference-invitation--royal-gold .reference-demo-attire-details--ivory span,
+.reference-invitation--royal-gold .reference-demo-attire-details--ivory b { color: #742f38; font-family: var(--ref-serif); }
+.reference-invitation--royal-gold .reference-demo-attire-details--ivory span { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+.reference-invitation--royal-gold .reference-demo-attire-details--ivory b { font-size: 15px; font-weight: 400; }
+.reference-invitation--royal-gold .reference-demo-cake--royal { min-height: 430px; padding: 48px 26px; }
+.reference-invitation--royal-gold .reference-demo-cake--royal img { display: block; height: auto; margin: 24px auto 0; max-width: 230px; object-fit: contain; width: 80%; }
+.reference-invitation--royal-gold .reference-demo-cake--royal h2 { font-size: 27px; font-style: italic; }
+.reference-invitation--royal-gold .reference-demo-rsvp-section .reference-demo-rsvp-form { border-color: #c7b58e; }
+.reference-invitation--royal-gold .reference-demo-rsvp-submit { background: #742f38; color: #fff8ed; }
+.reference-invitation--royal-gold .reference-footer { background: #eee7dc; color: #742f38; }
+
+.reference-invitation--wisteria-senja {
+  --ref-ink: #372d3c;
+  --ref-accent: #8a4c69;
+  --ref-paper: #faf6fb;
+  --ref-muted: #6f6274;
+  background: #e9e1ee;
+  isolation: isolate;
+  position: relative;
+}
+.reference-invitation--wisteria-senja .reference-invitation-frame { background: transparent; position: relative; z-index: 1; }
+.reference-invitation--wisteria-senja .reference-global-backdrop { background: #e9e1ee; }
+.reference-invitation--wisteria-senja .reference-global-backdrop-poster,
+.reference-invitation--wisteria-senja .reference-global-backdrop-video { object-position: center; }
+.reference-invitation--wisteria-senja .reference-hero-shade { background: linear-gradient(180deg, #261b2c05 0%, #fff5ef14 68%, #291a2618 100%); }
+.reference-invitation--wisteria-senja .reference-hero-copy { display: block; padding: 0; }
+.reference-invitation--wisteria-senja .reference-hero-kicker,
+.reference-invitation--wisteria-senja .reference-hero-divider { display: none; }
+.reference-invitation--wisteria-senja .reference-hero-title { color: #1f1720; height: 100%; inset: 0 4% auto; margin: 0; max-width: none; position: absolute; }
+.reference-invitation--wisteria-senja .reference-hero-title span:first-child { inset: 19% 0 auto; position: absolute; }
+.reference-invitation--wisteria-senja .reference-hero-title i { color: #1f1720; font-size: .44em; inset: 29% 0 auto; margin: 0; position: absolute; }
+.reference-invitation--wisteria-senja .reference-hero-title span:last-child { inset: 35% 0 auto; position: absolute; }
+.reference-invitation--wisteria-senja .reference-hero-intro { color: #a8403e; font-family: var(--ref-serif); font-size: clamp(17px, 4.7cqw, 20px); font-style: normal; inset: 42% 5% auto; margin: 0; max-width: none; position: absolute; }
+.reference-invitation--wisteria-senja .reference-hero-copy time { color: #1f1720; font-size: clamp(24px, 7.5cqw, 31px); inset: 59% 4% auto; position: absolute; }
+.reference-invitation--wisteria-senja .reference-scroll-cue { display: none; }
+.reference-envelope-overlay--wisteria-senja,
+.reference-envelope-overlay--wisteria-senja .reference-envelope-card { background: #ece5ef; }
+.reference-envelope-overlay--wisteria-senja .reference-envelope-copy { color: #9c4051; font-family: var(--ref-script); font-size: clamp(19px, 5.2cqw, 23px); inset: 66% 5% auto; }
+.reference-invitation--wisteria-senja .reference-countdown-section,
+.reference-invitation--wisteria-senja .reference-demo-section,
+.reference-invitation--wisteria-senja .reference-rsvp-section,
+.reference-invitation--wisteria-senja .reference-footer { background-color: transparent; background-image: linear-gradient(90deg, #e8deeedf 0%, #fbf8fbee 18%, #fbf8fbee 82%, #e8deeedf 100%); }
+.reference-invitation--wisteria-senja .reference-countdown-section { padding: 72px 24px 68px; }
+.reference-invitation--wisteria-senja .reference-countdown-section > .reference-kicker { display: none; }
+.reference-invitation--wisteria-senja .reference-countdown-section h2 { color: #904f70; font-size: 36px; }
+.reference-invitation--wisteria-senja .reference-countdown-intro { color: #493b4c; font-family: var(--ref-script); font-size: 22px; font-style: italic; margin: -5px auto 26px; }
+.reference-invitation--wisteria-senja .reference-countdown-section .public-countdown b { color: #694d70; }
+.reference-invitation--wisteria-senja .reference-demo-flow--wisteria .reference-demo-section { background-image: linear-gradient(90deg, #e8deeedf 0%, #fbf8fbee 18%, #fbf8fbee 82%, #e8deeedf 100%); }
+.reference-invitation--wisteria-senja .reference-demo-schedule { min-height: 1050px; padding-top: 64px; }
+.reference-invitation--wisteria-senja .reference-demo-schedule .reference-demo-lead { display: none; }
+.reference-invitation--wisteria-senja .reference-demo-schedule h2 { color: #8a4c69; font-size: clamp(31px, 8.4cqw, 36px); }
+.reference-invitation--wisteria-senja .reference-demo-timeline--wisteria { display: grid; grid-template-columns: minmax(0,1fr); margin-top: 8px; max-width: 344px; padding: 8px 0 0; }
+.reference-invitation--wisteria-senja .reference-demo-timeline--wisteria::before { background: #957d5f; height: calc(100% - 46px); left: 50%; top: 18px; transform: translateX(-50%); }
+.reference-invitation--wisteria-senja .reference-demo-timeline--wisteria li { align-items: start; display: grid; grid-template-columns: minmax(0,1fr) 32px minmax(0,1fr); min-height: 180px; padding: 10px 0 18px; }
+.reference-invitation--wisteria-senja .reference-demo-timeline--wisteria li::before { background: #fbf8fb; border: 2px solid #8a7255; border-radius: 50%; content: ""; height: 9px; left: 50%; position: absolute; top: 39px; transform: translateX(-50%); width: 9px; z-index: 2; }
+.reference-invitation--wisteria-senja .reference-demo-timeline--wisteria li > img { grid-row: 1; height: 52px; justify-self: center; margin: 0 auto 7px; width: 52px; }
+.reference-invitation--wisteria-senja .reference-demo-timeline--wisteria li > time { color: #211b24; font-family: var(--ref-script); font-size: 26px; grid-row: 2; justify-self: center; margin: 0 0 5px; }
+.reference-invitation--wisteria-senja .reference-demo-timeline--wisteria li > div { grid-row: 3; justify-self: center; padding: 0; text-align: center; width: 100%; }
+.reference-invitation--wisteria-senja .reference-demo-timeline--wisteria li.is-left > img,
+.reference-invitation--wisteria-senja .reference-demo-timeline--wisteria li.is-left > time,
+.reference-invitation--wisteria-senja .reference-demo-timeline--wisteria li.is-left > div { grid-column: 1; }
+.reference-invitation--wisteria-senja .reference-demo-timeline--wisteria li.is-right > img,
+.reference-invitation--wisteria-senja .reference-demo-timeline--wisteria li.is-right > time,
+.reference-invitation--wisteria-senja .reference-demo-timeline--wisteria li.is-right > div { grid-column: 3; }
+.reference-invitation--wisteria-senja .reference-demo-timeline--wisteria li h3 { color: #a74765; font-family: var(--ref-script); font-size: 19px; font-style: italic; font-weight: 400; text-transform: uppercase; }
+.reference-invitation--wisteria-senja .reference-demo-timeline--wisteria li p { color: #32283a; font-family: var(--ref-script); font-size: 18px; font-style: italic; line-height: 1.15; margin: 1px auto 0; max-width: 20ch; }
+.reference-invitation--wisteria-senja .reference-demo-attire { min-height: 760px; }
+.reference-invitation--wisteria-senja .reference-demo-attire-panel { background: #fbf7f0e8; border: 1px solid #c2b3c98a; border-radius: 14px; margin: 20px auto 0; max-width: 344px; padding: 23px 15px 28px; }
+.reference-invitation--wisteria-senja .reference-demo-attire-subtitle { color: #8a4c69 !important; font-family: var(--ref-script) !important; font-size: 24px !important; font-style: italic; font-weight: 400 !important; }
+.reference-invitation--wisteria-senja .reference-demo-palette-caption { color: #4b414e !important; font-family: var(--ref-script) !important; font-size: 21px !important; }
+.reference-invitation--wisteria-senja .reference-demo-palette i { border-color: #59496038; }
+.reference-invitation--wisteria-senja .reference-demo-rsvp-floral { display: none; }
+.reference-invitation--wisteria-senja .reference-demo-rsvp-form { background: #fffaf0ee; border-color: #c2b3c988; }
+.reference-invitation--wisteria-senja .reference-demo-rsvp-submit { background: #8a4c69; color: #fff; }
+.reference-invitation--wisteria-senja .reference-footer { color: #654867; }
+
+.reference-invitation--elegant-cream {
+  --ref-ink: #372f25;
+  --ref-accent: #816c49;
+  --ref-paper: #f7f2e8;
+  --ref-muted: #756a5d;
+  background: #eee8dc;
+  isolation: isolate;
+  position: relative;
+}
+.reference-invitation--elegant-cream .reference-invitation-frame { background: transparent; position: relative; z-index: 1; }
+.reference-invitation--elegant-cream .reference-global-backdrop { background: #f1eadc; }
+.reference-invitation--elegant-cream .reference-global-backdrop-poster,
+.reference-invitation--elegant-cream .reference-global-backdrop-video { object-position: center; }
+.reference-envelope-overlay--elegant-cream,
+.reference-envelope-overlay--elegant-cream .reference-envelope-card { background: #f4eddf; }
+.reference-envelope-overlay--elegant-cream .reference-envelope-open-label,
+.reference-envelope-overlay--modern-sage .reference-envelope-open-label { bottom: 7.3%; color: #a6484b; font-family: var(--ref-script); font-size: 15px; letter-spacing: 0; text-transform: none; }
+.reference-invitation--elegant-cream .reference-hero-shade { background: linear-gradient(180deg, #f7f1e2a6 0%, #fffaf03b 42%, #f7f1e2a6 100%); }
+.reference-invitation--elegant-cream .reference-hero-copy { display: block; padding: 0; }
+.reference-invitation--elegant-cream .reference-hero-kicker { display: none; }
+.reference-invitation--elegant-cream .reference-hero-title { color: #2e291f; height: 100%; inset: 0 4% auto; margin: 0; max-width: none; position: absolute; }
+.reference-invitation--elegant-cream .reference-hero-title span:first-child { inset: 22% 0 auto; position: absolute; }
+.reference-invitation--elegant-cream .reference-hero-title i { color: #594b34; font-size: .48em; inset: 32% 0 auto; margin: 0; position: absolute; }
+.reference-invitation--elegant-cream .reference-hero-title span:last-child { inset: 38% 0 auto; position: absolute; }
+.reference-invitation--elegant-cream .reference-hero-intro { color: #725c3d; font-family: var(--ref-script); font-size: clamp(20px, 5.7cqw, 24px); inset: 47% 5% auto; margin: 0; max-width: none; position: absolute; }
+.reference-invitation--elegant-cream .reference-hero-divider { inset: 55% 0 auto; justify-content: center; margin: 0; position: absolute; }
+.reference-invitation--elegant-cream .reference-hero-copy time { color: #372f25; font-size: clamp(22px, 6.6cqw, 28px); inset: 60% 4% auto; position: absolute; }
+.reference-invitation--elegant-cream .reference-scroll-cue { bottom: 4%; color: #f9f1e1; text-shadow: 0 1px 5px #382a19; }
+.reference-invitation--elegant-cream .reference-countdown-section,
+.reference-invitation--elegant-cream .reference-demo-section,
+.reference-invitation--elegant-cream .reference-rsvp-section,
+.reference-invitation--elegant-cream .reference-footer { background-color: transparent; background-image: linear-gradient(90deg, #e9e0d3e8 0%, #faf7efef 17%, #faf7efef 83%, #e9e0d3e8 100%); }
+.reference-invitation--elegant-cream .reference-countdown-section { padding: 68px 24px 60px; }
+.reference-invitation--elegant-cream .reference-countdown-section > .reference-kicker { display: none; }
+.reference-invitation--elegant-cream .reference-countdown-section h2,
+.reference-invitation--elegant-cream .reference-demo-section h2,
+.reference-invitation--elegant-cream .reference-rsvp-section h2 { color: #715d3f; }
+.reference-invitation--elegant-cream .reference-countdown-section .public-countdown b { color: #715d3f; }
+.reference-invitation--elegant-cream .reference-demo-flow--cream .reference-demo-section { background-image: linear-gradient(90deg, #e9e0d3e8 0%, #faf7efef 17%, #faf7efef 83%, #e9e0d3e8 100%); }
+.reference-invitation--elegant-cream .reference-demo-schedule { min-height: 1000px; padding-top: 62px; }
+.reference-invitation--elegant-cream .reference-demo-schedule .reference-demo-lead { display: none; }
+.reference-invitation--elegant-cream .reference-demo-schedule h2 { color: #715d3f; font-size: clamp(30px, 8.2cqw, 35px); }
+.reference-invitation--elegant-cream .reference-demo-timeline--cream { display: grid; grid-template-columns: minmax(0,1fr); margin-top: 10px; max-width: 344px; padding: 8px 0 0; }
+.reference-invitation--elegant-cream .reference-demo-timeline--cream::before { background: #b09769; height: calc(100% - 46px); left: 50%; top: 18px; transform: translateX(-50%); }
+.reference-invitation--elegant-cream .reference-demo-timeline--cream li { align-items: start; display: grid; grid-template-columns: minmax(0,1fr) 32px minmax(0,1fr); min-height: 180px; padding: 10px 0 18px; }
+.reference-invitation--elegant-cream .reference-demo-timeline--cream li::before { background: #faf7ef; border: 2px solid #8c754f; border-radius: 50%; content: ""; height: 9px; left: 50%; position: absolute; top: 39px; transform: translateX(-50%); width: 9px; z-index: 2; }
+.reference-invitation--elegant-cream .reference-demo-timeline--cream li > img { grid-row: 1; height: 52px; justify-self: center; margin: 0 auto 8px; width: 52px; }
+.reference-invitation--elegant-cream .reference-demo-timeline--cream li > time { color: #342a20; font-family: var(--ref-script); font-size: 25px; grid-row: 2; justify-self: center; margin: 0 0 5px; }
+.reference-invitation--elegant-cream .reference-demo-timeline--cream li > div { grid-row: 3; justify-self: center; padding: 0; text-align: center; width: 100%; }
+.reference-invitation--elegant-cream .reference-demo-timeline--cream li.is-left > img,
+.reference-invitation--elegant-cream .reference-demo-timeline--cream li.is-left > time,
+.reference-invitation--elegant-cream .reference-demo-timeline--cream li.is-left > div { grid-column: 1; }
+.reference-invitation--elegant-cream .reference-demo-timeline--cream li.is-right > img,
+.reference-invitation--elegant-cream .reference-demo-timeline--cream li.is-right > time,
+.reference-invitation--elegant-cream .reference-demo-timeline--cream li.is-right > div { grid-column: 3; }
+.reference-invitation--elegant-cream .reference-demo-timeline--cream li h3 { color: #8b6340; font-family: var(--ref-script); font-size: 20px; font-style: italic; font-weight: 400; text-transform: uppercase; }
+.reference-invitation--elegant-cream .reference-demo-timeline--cream li p { color: #493e31; font-family: var(--ref-script); font-size: 18px; font-style: italic; line-height: 1.15; margin: 2px auto 0; max-width: 20ch; }
+.reference-invitation--elegant-cream .reference-demo-attire-panel { background: #faf7efed; border: 1px solid #bdab8a8a; border-radius: 14px; margin: 20px auto 0; max-width: 344px; padding: 23px 15px 28px; }
+.reference-invitation--elegant-cream .reference-demo-attire-subtitle,
+.reference-invitation--elegant-cream .reference-demo-palette-caption { color: #715d3f !important; font-family: var(--ref-script) !important; font-style: italic; }
+.reference-invitation--elegant-cream .reference-demo-attire-details--sage { border-top: 1px solid #bdab8a55; display: grid; gap: 18px; grid-template-columns: repeat(2,minmax(0,1fr)); margin: 19px auto 0; max-width: 300px; padding: 17px 0 0; text-align: center; }
+.reference-invitation--elegant-cream .reference-demo-attire-details--sage article { display: grid; gap: 8px; }
+.reference-invitation--elegant-cream .reference-demo-attire-details--sage span { color: #8a7556; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+.reference-invitation--elegant-cream .reference-demo-attire-details--sage b { color: #493d2e; font-size: 15px; font-weight: 400; }
+.reference-invitation--elegant-cream .reference-demo-gift-card,
+.reference-invitation--elegant-cream .reference-demo-photo-wall figure,
+.reference-invitation--elegant-cream .reference-demo-faq-list details { background: #faf7efed; border-color: #bdab8a8a; }
+.reference-invitation--elegant-cream .reference-demo-rsvp-floral { display: none; }
+.reference-invitation--elegant-cream .reference-demo-rsvp-form { background: #faf7efed; border-color: #bdab8a8a; }
+.reference-invitation--elegant-cream .reference-demo-rsvp-submit { background: #816c49; color: #fffaf0; }
+.reference-invitation--elegant-cream .reference-footer { color: #715d3f; }
+
+.reference-invitation--modern-sage {
+  --ref-ink: #302f28;
+  --ref-accent: #94464a;
+  --ref-paper: #f5f2e8;
+  --ref-muted: #68685a;
+  background: #eeece2;
+  isolation: isolate;
+  position: relative;
+}
+.reference-invitation--modern-sage .reference-invitation-frame { background: transparent; position: relative; z-index: 1; }
+.reference-invitation--modern-sage .reference-global-backdrop { background: #f3f0e6; }
+.reference-invitation--modern-sage .reference-global-backdrop-poster,
+.reference-invitation--modern-sage .reference-global-backdrop-video { object-position: left center; }
+.reference-envelope-overlay--modern-sage,
+.reference-envelope-overlay--modern-sage .reference-envelope-card { background: #f1eee4; }
+.reference-envelope-overlay--modern-sage .reference-envelope-copy { display: none; }
+.reference-invitation--modern-sage .reference-hero-shade { background: linear-gradient(90deg, #fffdf4a8 0%, #fffdf4a0 100%); }
+.reference-invitation--modern-sage .reference-hero-copy { display: block; padding: 0; }
+.reference-invitation--modern-sage .reference-hero-kicker { display: none; }
+.reference-invitation--modern-sage .reference-hero-title { align-items: center; color: #a33f43; display: flex; font-size: clamp(23px, 6.7cqw, 29px); gap: 4px; height: auto; inset: 23% 5% auto; justify-content: center; line-height: 1.15; margin: 0; max-width: none; position: absolute; white-space: nowrap; }
+.reference-invitation--modern-sage .reference-hero-title span { display: inline; position: static; white-space: nowrap; }
+.reference-invitation--modern-sage .reference-hero-title i { color: #a33f43; display: inline; font-size: .8em; font-style: normal; margin: 0; position: static; }
+.reference-invitation--modern-sage .reference-hero-intro { color: #b3433b; font-family: var(--ref-serif); font-size: 15px; font-style: normal; inset: 50.5% 5% auto; letter-spacing: .03em; margin: 0; max-width: none; position: absolute; text-transform: uppercase; }
+.reference-invitation--modern-sage .reference-hero-divider { inset: 60.4% 0 auto; justify-content: center; margin: 0; position: absolute; }
+.reference-invitation--modern-sage .reference-hero-divider i { background: #b5575399; }
+.reference-invitation--modern-sage .reference-hero-copy time { color: #853b3d; font-family: var(--ref-serif); font-size: 18px; inset: 64.1% 5% auto; position: absolute; }
+.reference-invitation--modern-sage .reference-scroll-cue { bottom: 1.8%; color: #8c353b; font-family: var(--ref-serif); font-size: 11px; font-weight: 600; letter-spacing: .13em; }
+.reference-invitation--modern-sage .reference-scroll-cue svg { display: none; }
+.reference-invitation--modern-sage .reference-countdown-section,
+.reference-invitation--modern-sage .reference-demo-section,
+.reference-invitation--modern-sage .reference-rsvp-section,
+.reference-invitation--modern-sage .reference-footer { background-color: transparent; background-image: linear-gradient(90deg, #f2efe4dd 0%, #fbfaf5f0 16%, #fbfaf5f0 84%, #f2efe4dd 100%); }
+.reference-invitation--modern-sage .reference-countdown-section { padding: 70px 24px 62px; }
+.reference-invitation--modern-sage .reference-countdown-section > .reference-kicker { display: none; }
+.reference-invitation--modern-sage .reference-countdown-section h2,
+.reference-invitation--modern-sage .reference-demo-section h2,
+.reference-invitation--modern-sage .reference-rsvp-section h2 { color: #8b4548; }
+.reference-invitation--modern-sage .reference-countdown-section .public-countdown b { color: #6b7261; }
+.reference-invitation--modern-sage .reference-demo-flow--sage .reference-demo-section { background-image: linear-gradient(90deg, #f2efe4dd 0%, #fbfaf5f0 16%, #fbfaf5f0 84%, #f2efe4dd 100%); }
+.reference-invitation--modern-sage .reference-demo-schedule { min-height: 990px; padding-top: 62px; }
+.reference-invitation--modern-sage .reference-demo-schedule .reference-demo-lead { display: none; }
+.reference-invitation--modern-sage .reference-demo-schedule h2 { font-size: clamp(30px, 8cqw, 34px); }
+.reference-invitation--modern-sage .reference-demo-timeline--sage { display: grid; grid-template-columns: minmax(0,1fr); margin-top: 10px; max-width: 344px; padding: 8px 0 0; }
+.reference-invitation--modern-sage .reference-demo-timeline--sage::before { background: #879078; height: calc(100% - 46px); left: 50%; top: 18px; transform: translateX(-50%); }
+.reference-invitation--modern-sage .reference-demo-timeline--sage li { align-items: start; display: grid; grid-template-columns: minmax(0,1fr) 32px minmax(0,1fr); min-height: 180px; padding: 10px 0 18px; }
+.reference-invitation--modern-sage .reference-demo-timeline--sage li::before { background: #fbfaf5; border: 2px solid #778166; border-radius: 50%; content: ""; height: 9px; left: 50%; position: absolute; top: 39px; transform: translateX(-50%); width: 9px; z-index: 2; }
+.reference-invitation--modern-sage .reference-demo-timeline--sage li > img { grid-row: 1; height: 52px; justify-self: center; margin: 0 auto 8px; width: 52px; }
+.reference-invitation--modern-sage .reference-demo-timeline--sage li > time { color: #292a23; font-family: var(--ref-script); font-size: 25px; grid-row: 2; justify-self: center; margin: 0 0 5px; }
+.reference-invitation--modern-sage .reference-demo-timeline--sage li > div { grid-row: 3; justify-self: center; padding: 0; text-align: center; width: 100%; }
+.reference-invitation--modern-sage .reference-demo-timeline--sage li.is-left > img,
+.reference-invitation--modern-sage .reference-demo-timeline--sage li.is-left > time,
+.reference-invitation--modern-sage .reference-demo-timeline--sage li.is-left > div { grid-column: 1; }
+.reference-invitation--modern-sage .reference-demo-timeline--sage li.is-right > img,
+.reference-invitation--modern-sage .reference-demo-timeline--sage li.is-right > time,
+.reference-invitation--modern-sage .reference-demo-timeline--sage li.is-right > div { grid-column: 3; }
+.reference-invitation--modern-sage .reference-demo-timeline--sage li h3 { color: #a44b4c; font-family: var(--ref-script); font-size: 20px; font-style: italic; font-weight: 400; text-transform: uppercase; }
+.reference-invitation--modern-sage .reference-demo-timeline--sage li p { color: #37382f; font-family: var(--ref-script); font-size: 18px; font-style: italic; line-height: 1.15; margin: 2px auto 0; max-width: 20ch; }
+.reference-invitation--modern-sage .reference-demo-attire-panel { background: #faf8f0ed; border: 1px solid #a1a58d85; border-radius: 12px; margin: 20px auto 0; max-width: 344px; padding: 23px 15px 28px; }
+.reference-invitation--modern-sage .reference-demo-attire-subtitle,
+.reference-invitation--modern-sage .reference-demo-palette-caption { color: #8b4548 !important; font-family: var(--ref-script) !important; font-style: italic; }
+.reference-invitation--modern-sage .reference-demo-attire-details--sage { border-top: 1px solid #8f947544; display: grid; gap: 18px; grid-template-columns: repeat(2,minmax(0,1fr)); margin: 19px auto 0; max-width: 300px; padding: 17px 0 0; text-align: center; }
+.reference-invitation--modern-sage .reference-demo-attire-details--sage article { display: grid; gap: 8px; }
+.reference-invitation--modern-sage .reference-demo-attire-details--sage span { color: #777c69; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+.reference-invitation--modern-sage .reference-demo-attire-details--sage b { color: #393b30; font-size: 15px; font-weight: 400; }
+.reference-invitation--modern-sage .reference-demo-attire-panel .reference-demo-palette { margin-top: 22px; }
+.reference-invitation--modern-sage .reference-demo-rsvp-floral { display: none; }
+.reference-invitation--modern-sage .reference-demo-rsvp-form { background: #faf8f0ed; border-color: #a1a58d85; }
+.reference-invitation--modern-sage .reference-demo-rsvp-submit { background: #7d554e; color: #fffdf4; }
+.reference-invitation--modern-sage .reference-footer { color: #6e735e; }
+
+.reference-invitation--destinasi-cinta {
+  --ref-ink: #3e3528;
+  --ref-accent: #a77b30;
+  --ref-paper: #f6f1e5;
+  --ref-muted: #776d5d;
+  background: #eee8da;
+  isolation: isolate;
+  position: relative;
+}
+.reference-invitation--destinasi-cinta .reference-invitation-frame { background: #f5f0e4; max-width: 390px; }
+.reference-envelope-overlay--destinasi-cinta,
+.reference-envelope-overlay--destinasi-cinta .reference-envelope-card { background: #efe5cd; }
+.reference-envelope-overlay--destinasi-cinta .reference-envelope-open-label { bottom: 7%; color: #846631; font-family: var(--ref-script); font-size: 16px; letter-spacing: 0; text-transform: none; }
+.reference-boarding-ticket-section { background: linear-gradient(180deg, #f9f5e9, #f0e9d9); padding: 28px 24px 18px; text-align: center; }
+.reference-boarding-eyebrow { color: #a27831; font: 600 12px/1.2 var(--ref-serif); letter-spacing: .28em; margin: 0 auto 27px; }
+.reference-boarding-ticket { background: linear-gradient(155deg, #fffdf7, #f7f2e6); border: 1px solid #c6a360; border-radius: 28px; box-shadow: 0 10px 32px #6f57201a; margin: 0 auto; max-width: 342px; overflow: hidden; padding: 18px 20px 15px; position: relative; text-align: center; }
+.reference-boarding-ticket::before,
+.reference-boarding-ticket::after { background: #f3eddf; border: 1px solid #c6a360; border-radius: 50%; content: ""; height: 22px; position: absolute; top: 50%; transform: translateY(-50%); width: 22px; }
+.reference-boarding-ticket::before { left: -12px; }
+.reference-boarding-ticket::after { right: -12px; }
+.reference-boarding-ticket-header { align-items: center; border-bottom: 1px solid #c5ac7955; color: #423b2e; display: flex; font: 600 10px/1 var(--ref-serif); justify-content: space-between; letter-spacing: .15em; padding: 0 0 15px; }
+.reference-boarding-ticket-header span:last-child { align-items: center; color: #a47b37; display: flex; gap: 5px; font-weight: 400; }
+.reference-boarding-invited { color: #9d712a; font: 600 10px/1.2 var(--ref-serif); letter-spacing: .24em; margin: 20px 0 9px; }
+.reference-boarding-ticket h1 { color: #392f23; font-family: var(--ref-serif); font-size: clamp(24px, 7.1cqw, 29px); font-weight: 500; letter-spacing: .07em; line-height: 1.08; margin: 0; text-transform: uppercase; }
+.reference-boarding-ticket h1 i { font-size: .66em; font-style: normal; }
+.reference-boarding-tagline { color: #a07838; font: italic 18px/1.25 var(--ref-script); margin: 10px auto 17px; }
+.reference-boarding-rule { background: linear-gradient(90deg, transparent, #bd9d5e80 15% 85%, transparent); height: 1px; margin: 0 auto 17px; }
+.reference-boarding-date { display: grid; gap: 6px; justify-items: start; text-align: left; }
+.reference-boarding-date > span,
+.reference-boarding-travel-meta span,
+.reference-boarding-code > span,
+.reference-boarding-destination > span { color: #aa7c32; font: 600 9px/1.2 var(--ref-serif); letter-spacing: .18em; }
+.reference-boarding-date b { color: #3d362a; font: 500 15px/1.25 var(--ref-serif); letter-spacing: .04em; }
+.reference-boarding-date small { color: #706654; font: 12px/1.3 var(--ref-serif); }
+.reference-boarding-travel-meta { border-bottom: 1px solid #c5ac7955; display: grid; gap: 8px; grid-template-columns: repeat(3,minmax(0,1fr)); margin-top: 18px; padding: 0 0 16px; text-align: left; }
+.reference-boarding-travel-meta > div,
+.reference-boarding-code { display: grid; gap: 6px; }
+.reference-boarding-travel-meta b,
+.reference-boarding-code b { color: #383225; font: 500 13px/1.15 var(--ref-serif); letter-spacing: .07em; }
+.reference-boarding-code { border-bottom: 1px solid #c5ac7955; padding: 14px 0 15px; text-align: left; }
+.reference-boarding-destination { align-items: center; background: repeating-linear-gradient(135deg, #b6914c 0 1px, #c6a665 1px 3px); border-radius: 10px; color: #3f3524; display: grid; gap: 6px; justify-items: center; margin: 17px auto 15px; min-height: 104px; padding: 13px 10px; }
+.reference-boarding-destination > span { color: #54452a; justify-self: start; }
+.reference-boarding-destination > svg { margin-top: 1px; }
+.reference-boarding-destination b { color: #372f23; font: 600 13px/1.15 var(--ref-serif); letter-spacing: .06em; text-transform: uppercase; }
+.reference-boarding-destination small { color: #463c2b; font: 12px/1.2 var(--ref-serif); }
+.reference-boarding-destination a { align-items: center; background: #fffaf0e8; border: 1px solid #80653370; border-radius: 20px; color: #5b482a; display: inline-flex; font: 12px/1 var(--ref-serif); gap: 6px; margin-top: 3px; padding: 7px 12px; text-decoration: none; }
+.reference-boarding-ticket-footer { align-items: center; display: flex; gap: 12px; justify-content: space-between; }
+.reference-boarding-ticket-footer > svg { color: #675432; flex: 0 0 auto; }
+.reference-boarding-barcode { background: repeating-linear-gradient(90deg, #3b352a 0 2px, transparent 2px 4px, #3b352a 4px 5px, transparent 5px 8px, #3b352a 8px 11px, transparent 11px 14px); display: block; height: 38px; flex: 1 1 auto; }
+.reference-boarding-countdown { background: #f4efdf; padding: 26px 24px 34px; text-align: center; }
+.reference-boarding-countdown > p { color: #a77b30; font: 600 10px/1.2 var(--ref-serif); letter-spacing: .3em; margin: 0 auto 10px; }
+.reference-boarding-countdown h2 { color: #524630; font: italic 19px/1.2 var(--ref-script); margin: 0 auto 16px; }
+.reference-boarding-countdown .public-countdown-section { background: transparent; padding: 0; }
+.reference-boarding-countdown .public-countdown-section > span { display: none; }
+.reference-boarding-countdown .public-countdown > div { gap: 7px; }
+.reference-boarding-countdown .public-countdown b { background: #fffaf0; border: 1px solid #c6a360; border-radius: 13px; color: #423728; flex: 1 1 0; font: 500 23px/1.2 var(--ref-serif); min-width: 0; padding: 11px 4px 8px; }
+.reference-boarding-countdown .public-countdown b small { color: #997535; display: block; font: 600 9px/1.2 var(--ref-serif); letter-spacing: .11em; margin-top: 5px; text-transform: uppercase; }
+.reference-invitation--destinasi-cinta .reference-demo-rsvp-section { background: #f5f0e4; min-height: 700px; padding: 42px 24px 60px; }
+.reference-invitation--destinasi-cinta .reference-demo-rsvp-form { background: #fffaf0; border-color: #c6a360; }
+.reference-invitation--destinasi-cinta .reference-demo-rsvp-submit { background: #a77b30; color: #fffaf0; }
+.reference-invitation--destinasi-cinta .reference-footer { align-items: center; background: #ebe2cf; color: #685636; display: flex; flex-direction: column; font: 13px/1.4 var(--ref-serif); gap: 8px; padding: 24px; text-align: center; }
