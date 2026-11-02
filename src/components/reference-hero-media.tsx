@@ -3,28 +3,22 @@
 import { useEffect, useRef } from "react";
 import Image from "next/image";
 import type { ReferenceTemplatePreset } from "@/lib/reference-template-presets";
+import { useReferenceMotionEnabled } from "@/components/reference-motion-provider";
 
 export function ReferenceHeroMedia({ preset }: { preset: ReferenceTemplatePreset }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const motionEnabled = useReferenceMotionEnabled();
 
   useEffect(() => {
     const video = videoRef.current;
-    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (!video) return;
-    const updatePlayback = () => {
-      if (motion.matches) {
-        video.pause();
-        return;
-      }
-      void video.play().catch(() => undefined);
-    };
-    updatePlayback();
-    motion.addEventListener("change", updatePlayback);
-    return () => {
-      motion.removeEventListener("change", updatePlayback);
+    if (!motionEnabled) {
       video.pause();
-    };
-  }, []);
+      return;
+    }
+    void video.play().catch(() => undefined);
+    return () => video.pause();
+  }, [motionEnabled]);
 
   if (!preset.heroVideo) {
     return <Image className="reference-hero-media reference-hero-poster" src={preset.heroPoster} fill alt="" aria-hidden="true" priority unoptimized />;

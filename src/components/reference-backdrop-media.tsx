@@ -3,29 +3,23 @@
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import type { ReferenceTemplatePreset } from "@/lib/reference-template-presets";
+import { useReferenceMotionEnabled } from "@/components/reference-motion-provider";
 
 export function ReferenceBackdropMedia({ preset }: { preset: ReferenceTemplatePreset }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const poster = preset.backdropPoster ?? preset.heroPoster;
+  const motionEnabled = useReferenceMotionEnabled();
 
   useEffect(() => {
     const video = videoRef.current;
-    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (!video) return;
-    const updatePlayback = () => {
-      if (motion.matches) {
-        video.pause();
-        return;
-      }
-      void video.play().catch(() => undefined);
-    };
-    updatePlayback();
-    motion.addEventListener("change", updatePlayback);
-    return () => {
-      motion.removeEventListener("change", updatePlayback);
+    if (!motionEnabled) {
       video.pause();
-    };
-  }, []);
+      return;
+    }
+    void video.play().catch(() => undefined);
+    return () => video.pause();
+  }, [motionEnabled]);
 
   return (
     <div className="reference-global-backdrop" aria-hidden="true">

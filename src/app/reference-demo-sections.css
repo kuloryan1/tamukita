@@ -244,8 +244,8 @@
 @keyframes reference-demo-rise { from { opacity: .55; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .reference-demo-section[data-reveal-ready="true"],
-  .reference-demo-section[data-reveal-visible="true"] .reference-demo-section-inner > :not(.reference-demo-venue-art):not(.reference-demo-icon):not(.reference-demo-floral-border) { animation: none; opacity: 1; transform: none; transition: none; }
+  html:not([data-reference-motion="enabled"]) .reference-demo-section[data-reveal-ready="true"],
+  html:not([data-reference-motion="enabled"]) .reference-demo-section[data-reveal-visible="true"] .reference-demo-section-inner > :not(.reference-demo-venue-art):not(.reference-demo-icon):not(.reference-demo-floral-border) { animation: none; opacity: 1; transform: none; transition: none; }
 }
 
 @media (max-width: 360px) {

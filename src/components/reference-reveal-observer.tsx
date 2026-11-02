@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
+import { useReferenceMotionEnabled } from "@/components/reference-motion-provider";
 
 export function ReferenceRevealObserver() {
+  const motionEnabled = useReferenceMotionEnabled();
+
   useEffect(() => {
     const targets = Array.from(document.querySelectorAll<HTMLElement>("[data-reference-reveal]"));
-    if (!targets.length || window.matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) return;
+    if (!targets.length || !motionEnabled || !("IntersectionObserver" in window)) return;
 
     const observer = new IntersectionObserver((entries) => {
       for (const entry of entries) {
@@ -21,7 +24,7 @@ export function ReferenceRevealObserver() {
     }
 
     return () => observer.disconnect();
-  }, []);
+  }, [motionEnabled]);
 
   return null;
 }

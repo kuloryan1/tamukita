@@ -82,6 +82,7 @@ const presets: Record<string, ReferenceTemplatePreset> = {
     referenceUrl: "https://www.wooowinvites.com/invite/demo-305eb8",
     coverPoster: "/templates/reference-prototypes/cream-envelope-poster.jpg",
     coverMessage: "",
+    openingVideo: "/templates/reference-prototypes/cream-envelope.mp4",
     heroPoster: "/templates/reference-prototypes/sage-poster.jpg",
     heroVideo: "/templates/reference-prototypes/sage-hero.mp4",
     backdropPoster: "/templates/reference-prototypes/sage-poster.jpg",

@@ -3,11 +3,13 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import type { ReferenceTemplatePreset } from "@/lib/reference-template-presets";
+import { ReferenceMotionToggle, useReferenceMotionEnabled } from "@/components/reference-motion-provider";
 
-export function ReferenceEnvelopeIntro({ preset, hostOne, hostTwo }: {
+export function ReferenceEnvelopeIntro({ preset, hostOne, hostTwo, isExample }: {
   preset: ReferenceTemplatePreset;
   hostOne: string;
   hostTwo: string;
+  isExample: boolean;
 }) {
   const [opening, setOpening] = useState(false);
   const [revealing, setRevealing] = useState(false);
@@ -17,6 +19,7 @@ export function ReferenceEnvelopeIntro({ preset, hostOne, hostTwo }: {
   const completeRef = useRef(false);
   const names = [hostOne, hostTwo].filter(Boolean).join(" dan ");
   const coverMessage = preset.coverMessage ?? `${hostOne} & ${hostTwo}`;
+  const motionEnabled = useReferenceMotionEnabled();
 
   useEffect(() => {
     if (dismissed) return;
@@ -45,6 +48,14 @@ export function ReferenceEnvelopeIntro({ preset, hostOne, hostTwo }: {
   }, [opening, preset.showOpeningFrame]);
 
   useEffect(() => {
+    if (motionEnabled || !opening || completeRef.current) return;
+    completeRef.current = true;
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+    videoRef.current?.pause();
+    setDismissed(true);
+  }, [motionEnabled, opening]);
+
+  useEffect(() => {
     if (!dismissed) return;
     window.scrollTo({ top: 0, behavior: "instant" });
     document.querySelector<HTMLElement>(".reference-hero-title")?.focus({ preventScroll: true });
@@ -57,6 +68,10 @@ export function ReferenceEnvelopeIntro({ preset, hostOne, hostTwo }: {
     completeRef.current = true;
     if (timerRef.current !== null) window.clearTimeout(timerRef.current);
     videoRef.current?.pause();
+    if (!motionEnabled) {
+      setDismissed(true);
+      return;
+    }
     setRevealing(true);
     timerRef.current = window.setTimeout(() => setDismissed(true), 480);
   }
@@ -64,9 +79,8 @@ export function ReferenceEnvelopeIntro({ preset, hostOne, hostTwo }: {
   function openInvitation() {
     if (opening || completeRef.current) return;
     setOpening(true);
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const video = videoRef.current;
-    if (reducedMotion || !video) return finishOpening();
+    if (!motionEnabled || !video) return finishOpening();
     if (preset.showOpeningFrame) video.currentTime = 0;
     timerRef.current = window.setTimeout(finishOpening, 14_000);
     void video.play().catch(finishOpening);
@@ -90,6 +104,7 @@ export function ReferenceEnvelopeIntro({ preset, hostOne, hostTwo }: {
           onLoadedData={(event) => { if (preset.showOpeningFrame) event.currentTarget.currentTime = 0.12; }}
           onError={() => { if (opening) finishOpening(); }}
         /> : <Image className="reference-envelope-video" src={preset.coverPoster} fill alt="" aria-hidden="true" priority unoptimized />}
+        {isExample && <ReferenceMotionToggle variant="cover" />}
         {coverMessage && <div className="reference-envelope-copy" aria-hidden="true">{coverMessage}</div>}
         <button className="reference-envelope-open" type="button" onClick={openInvitation} aria-label={`Putar animasi pembukaan undangan${names ? ` untuk ${names}` : ""}`}>
           <span className="reference-envelope-open-label">Tap to open</span>

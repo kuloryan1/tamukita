@@ -254,6 +254,10 @@
 .reference-footer-actions a { align-items: center; color: var(--ref-accent); display: inline-flex; font-size: 12px; gap: 5px; text-decoration: none; }
 .reference-footer > small { align-items: center; color: #917f6c; display: flex; font-size: 10px; gap: 4px; letter-spacing: .04em; }
 .reference-footer > small svg { color: var(--ref-accent); }
+.reference-motion-toggle { background: #fffaf0f2; border: 1px solid #8b806c88; border-radius: 24px; color: #454639; cursor: pointer; font: 600 12px/1.2 var(--ref-sans); padding: 10px 14px; }
+.reference-motion-toggle:focus-visible { outline: 3px solid #913a54; outline-offset: 3px; }
+.reference-motion-toggle--page { bottom: max(12px, env(safe-area-inset-bottom)); position: fixed; right: max(12px, calc((100vw - 390px) / 2 + 12px)); z-index: 90; }
+.reference-motion-toggle--cover { left: 12px; position: absolute; top: 12px; z-index: 3; }
 .reference-music { position: absolute; right: 12px; top: 12px; z-index: 3; }
 .reference-music .public-music-toggle { background: #fffaf0dd; border: 1px solid #fff; border-radius: 24px; color: var(--ref-accent); padding: 9px 12px; }
 
