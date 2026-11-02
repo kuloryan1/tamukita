@@ -59,7 +59,7 @@
 .reference-demo-venue-art { height: 486px; left: 50%; object-fit: contain; opacity: .95; position: absolute; top: 122px; transform: translateX(-50%); width: 324px; z-index: -1; }
 .reference-demo-venue-card { align-items: center; background: transparent; border: 0; display: flex; flex-direction: column; gap: 8px; margin: 515px auto 0; max-width: 340px; padding: 0 8px; position: relative; }
 .reference-demo-venue-card svg { color: #a8875b; display: none; }
-.reference-demo-venue-card > span { color: var(--ref-accent); font-size: 10px; font-weight: 500; letter-spacing: .12em; }
+.reference-demo-venue-card > span { color: var(--ref-accent); font-family: var(--ref-serif); font-size: 12px; font-weight: 600; letter-spacing: .08em; }
 .reference-demo-venue-card b { color: var(--ref-ink); font-family: var(--ref-serif); font-size: 20px; font-weight: 600; line-height: 1.2; }
 .reference-demo-venue-card small { color: var(--ref-muted); font-family: var(--ref-serif); font-size: 16px; line-height: 1.4; }
 .reference-demo-venue-card a { align-items: center; color: var(--ref-accent); display: inline-flex; font-size: 13px; gap: 5px; margin-top: 5px; text-decoration: none; }
@@ -79,7 +79,7 @@
 .reference-demo-timeline li > div { grid-column: 2; grid-row: 2; padding-left: 13px; }
 .reference-demo-timeline li h3 { font-family: var(--ref-script); font-size: 25px; font-weight: 400; }
 .reference-demo-timeline li p { font-size: 15px; margin: 5px 0 0; max-width: 27ch; }
-.reference-demo-timeline-index { color: #bca17d; font-family: var(--ref-serif); font-size: 10px; letter-spacing: .14em; position: absolute; right: 0; top: 20px; }
+.reference-demo-timeline-index { color: #796243; font-family: var(--ref-serif); font-size: 12px; letter-spacing: .08em; position: absolute; right: 0; top: 20px; }
 
 .reference-demo-flow--blush .reference-demo-schedule { min-height: 1000px; }
 .reference-demo-flow--blush .reference-demo-schedule .reference-demo-lead { display: none; }
@@ -97,9 +97,9 @@
 .reference-demo-flow--blush .reference-demo-timeline li.is-right > img,
 .reference-demo-flow--blush .reference-demo-timeline li.is-right > time,
 .reference-demo-flow--blush .reference-demo-timeline li.is-right > div { grid-column: 3; }
-.reference-demo-flow--blush .reference-demo-timeline li h3 { color: var(--ref-accent); font-family: var(--ref-serif); font-size: 10px; font-weight: 600; letter-spacing: .12em; line-height: 1.3; }
+.reference-demo-flow--blush .reference-demo-timeline li h3 { color: var(--ref-accent); font-family: var(--ref-serif); font-size: 12px; font-weight: 600; letter-spacing: .08em; line-height: 1.3; }
 .reference-demo-flow--blush .reference-demo-timeline li p { color: var(--ref-ink); font-family: var(--ref-script); font-size: 19px; font-style: italic; line-height: 1.18; margin: 3px auto 0; max-width: 19ch; }
-.reference-demo-flow--blush .reference-demo-timeline li small { color: var(--ref-muted); display: block; font-family: var(--ref-serif); font-size: 12px; line-height: 1.35; margin: 5px auto 0; max-width: 20ch; }
+.reference-demo-flow--blush .reference-demo-timeline li small { color: var(--ref-muted); display: block; font-family: var(--ref-serif); font-size: 13px; line-height: 1.35; margin: 5px auto 0; max-width: 20ch; }
 
 .reference-demo-attire { align-items: flex-start; min-height: 700px; padding-top: 54px; }
 .reference-demo-flow--blush .reference-demo-attire { min-height: 818px; }
@@ -114,7 +114,7 @@
 .reference-demo-palette-caption { color: var(--ref-ink) !important; font-family: var(--ref-script) !important; font-size: 22px !important; font-style: italic; margin: 8px auto 0 !important; }
 .reference-demo-floral-border { height: 90px; left: 0; object-fit: cover; object-position: center 40%; opacity: .46; position: absolute; right: 0; top: -8px; width: 100%; z-index: 0; }
 .reference-demo-palette { display: flex; flex-wrap: nowrap; gap: 2px; justify-content: space-between; list-style: none; margin: 22px auto 0; max-width: 100%; padding: 0; }
-.reference-demo-palette li { align-items: center; color: var(--ref-muted); display: inline-flex; flex: 1 1 0; flex-direction: column; font-family: var(--ref-serif); font-size: 11px; gap: 6px; min-width: 0; white-space: nowrap; }
+.reference-demo-palette li { align-items: center; color: var(--ref-muted); display: inline-flex; flex: 1 1 0; flex-direction: column; font-family: var(--ref-serif); font-size: 12px; gap: 6px; min-width: 0; white-space: nowrap; }
 .reference-demo-palette i { background: var(--swatch); border: 1px solid #8a756540; border-radius: 50%; box-shadow: 0 2px 8px #4e35241c; display: block; height: 34px; width: 34px; }
 
 .reference-demo-gift { align-items: flex-start; min-height: 529px; padding-top: 100px; }
@@ -128,7 +128,7 @@
 .reference-demo-gift-card button { align-self: center; background: #d78396; border: 0; border-radius: 24px; color: #302722; font: 400 17px/1 var(--ref-script); min-width: 142px; padding: 10px 20px; }
 .reference-demo-gift-card button:disabled { cursor: not-allowed; opacity: .78; }
 .reference-demo-flow--blush .reference-demo-gift-card button:disabled { opacity: .92; }
-.reference-demo-gift-card small { color: var(--ref-muted); display: block; font-family: var(--ref-serif); font-size: 11px; line-height: 1.45; margin-top: auto; }
+.reference-demo-gift-card small { color: var(--ref-muted); display: block; font-family: var(--ref-serif); font-size: 12px; line-height: 1.45; margin-top: auto; }
 
 .reference-demo-menu { align-items: flex-start; min-height: 740px; padding-bottom: 42px; padding-top: 78px; }
 .reference-demo-menu .reference-kicker { display: none; }
@@ -143,7 +143,7 @@
 .reference-demo-menu-card article h3 { color: var(--ref-ink); font-family: var(--ref-script); font-size: 22px; font-weight: 400; line-height: 1.12; }
 .reference-demo-menu-card article p { color: var(--ref-ink); font-family: var(--ref-serif); font-size: 15px; font-style: italic; line-height: 1.2; margin-top: 3px; }
 .reference-demo-flow--blush .reference-demo-menu-card article p { font-family: var(--ref-script); font-size: 17px; line-height: 1.12; margin-top: 2px; }
-.reference-demo-menu-card > small { color: var(--ref-muted); display: block; font-family: var(--ref-serif); font-size: 10px; margin: 8px auto 0; }
+.reference-demo-menu-card > small { color: #6e6252; display: block; font-family: var(--ref-serif); font-size: 12px; margin: 8px auto 0; }
 .reference-demo-flow--blush .reference-demo-menu-card > small { display: none; }
 
 .reference-demo-story { align-items: flex-start; min-height: 404px; padding-bottom: 45px; padding-top: 44px; }
@@ -256,6 +256,6 @@
   .reference-demo-timeline::before { left: 34px; }
   .reference-demo-timeline li > img { height: 44px; width: 44px; }
   .reference-demo-palette { gap: 2px; }
-  .reference-demo-palette li { font-size: 10px; }
+  .reference-demo-palette li { font-size: 11px; }
   .reference-demo-palette i { height: 30px; width: 30px; }
 }

@@ -8,16 +8,15 @@
 .reference-invitation--blush-serenade .reference-hero-intro { inset: 42% 6% auto; margin: 0; max-width: none; position: absolute; }
 .reference-invitation--blush-serenade .reference-hero-divider { inset: 54% 0 auto; justify-content: center; margin: 0; position: absolute; }
 .reference-invitation--blush-serenade .reference-hero-copy time { inset: 59% 0 auto; position: absolute; }
-.reference-invitation--blush-serenade .reference-scroll-cue { bottom: 5%; }
 .reference-envelope-overlay--blush-serenade .reference-envelope-copy { font-size: clamp(16px, 4.5cqw, 19px); inset: 68% 4% auto; }
-.reference-invitation--blush-serenade .reference-scroll-cue { bottom: 0%; }
+.reference-invitation--blush-serenade .reference-scroll-cue { bottom: 0%; font-size: 14px; font-weight: 600; text-shadow: 0 1px 3px #fff; }
 .reference-envelope-overlay.is-opening .reference-envelope-copy,
 .reference-envelope-overlay.is-opening .reference-envelope-open-label { opacity: 0; transition: opacity .25s ease; }
 .reference-envelope-overlay.is-opening .reference-envelope-open { pointer-events: none; }
 
 .reference-envelope-overlay--ivory-heritage { background: #f0e9da; }
 .reference-envelope-overlay--ivory-heritage .reference-envelope-card { background: #f0e9da; }
-.reference-envelope-overlay--ivory-heritage .reference-envelope-copy { bottom: 20%; color: #9a5551; font-family: var(--ref-serif); font-size: clamp(12px, 3.6cqw, 15px); font-style: italic; inset: auto 5% 20%; letter-spacing: .07em; line-height: 1.2; text-transform: uppercase; white-space: normal; z-index: 3; }
+.reference-envelope-overlay--ivory-heritage .reference-envelope-copy { bottom: 20%; color: #9a5551; font-family: var(--ref-serif); font-size: clamp(14px, 3.8cqw, 16px); font-style: italic; inset: auto 5% 20%; letter-spacing: .05em; line-height: 1.2; text-transform: uppercase; white-space: normal; z-index: 3; }
 .reference-envelope-overlay--ivory-heritage .reference-envelope-open-label { bottom: 5.8%; color: #795626; font-family: var(--ref-serif); font-size: 15px; letter-spacing: .19em; text-shadow: none; text-transform: uppercase; }
 .reference-envelope-overlay--ivory-heritage .reference-envelope-skip { color: #67451e; }
 
@@ -29,10 +28,10 @@
 .reference-invitation--ivory-heritage .reference-hero-title { color: #4c351e; font-family: var(--ref-serif); font-size: clamp(22px, 6.2cqw, 26px); font-weight: 500; left: 4%; letter-spacing: .08em; line-height: 1.16; margin: 0; position: absolute; right: 4%; text-transform: uppercase; text-shadow: 0 1px 8px #f5e8d880; top: 53%; transform: translateY(-50%); white-space: nowrap; }
 .reference-invitation--ivory-heritage .reference-hero-title span { white-space: nowrap; }
 .reference-invitation--ivory-heritage .reference-hero-title i { color: #806033; font-size: .74em; font-style: normal; line-height: 1.25; margin: 3px 0; }
-.reference-invitation--ivory-heritage .reference-hero-intro { color: #fffaf1; font-family: var(--ref-serif); font-size: 18px; left: 5%; margin: 0; max-width: none; position: absolute; right: 5%; text-shadow: 0 1px 5px #25180f; top: 63%; }
+.reference-invitation--ivory-heritage .reference-hero-intro { color: #4b3824; font-family: var(--ref-serif); font-size: 18px; left: 5%; margin: 0; max-width: none; position: absolute; right: 5%; text-shadow: 0 1px 3px #fff9; top: 63%; }
 .reference-invitation--ivory-heritage .reference-hero-divider { color: #d0a65e; left: 0; margin: 0; position: absolute; right: 0; top: 71%; }
-.reference-invitation--ivory-heritage .reference-hero-copy time { color: #fff7e8; font-family: var(--ref-serif); font-size: 19px; font-style: italic; left: 5%; position: absolute; right: 5%; text-shadow: 0 1px 5px #25180f; top: 76%; }
-.reference-invitation--ivory-heritage .reference-scroll-cue { bottom: 7px; color: #e4c380; font-size: 11px; text-shadow: 0 1px 3px #342213; }
+.reference-invitation--ivory-heritage .reference-hero-copy time { color: #4b3824; font-family: var(--ref-serif); font-size: 19px; font-style: italic; left: 5%; position: absolute; right: 5%; text-shadow: 0 1px 3px #fff9; top: 76%; }
+.reference-invitation--ivory-heritage .reference-scroll-cue { bottom: 7px; color: #f2d28e; font-size: 14px; font-weight: 600; text-shadow: 0 1px 3px #342213; }
 .reference-invitation--ivory-heritage .reference-countdown-section,
 .reference-invitation--ivory-heritage .reference-story-section,
 .reference-invitation--ivory-heritage .reference-event-section,
@@ -49,7 +48,7 @@
 .reference-invitation--ivory-heritage .reference-countdown-intro { color: #78634c; font-family: var(--ref-serif); font-size: 16px; font-style: italic; margin: -5px auto 20px; }
 .reference-invitation--ivory-heritage .reference-countdown-section .public-countdown > div { gap: 9px; width: 100%; }
 .reference-invitation--ivory-heritage .reference-countdown-section .public-countdown b { background: #fbf7efbb; border: 1px solid #c7a87366; border-radius: 3px; color: #71532c; font-family: var(--ref-serif); font-size: 31px; min-width: 0; padding: 12px 6px; }
-.reference-invitation--ivory-heritage .reference-countdown-section .public-countdown b small { color: #85745c; font-family: var(--ref-serif); font-size: 10px; letter-spacing: .08em; }
+.reference-invitation--ivory-heritage .reference-countdown-section .public-countdown b small { color: #75634d; font-family: var(--ref-serif); font-size: 12px; letter-spacing: .04em; }
 .reference-invitation--ivory-heritage .reference-section-inner > p,
 .reference-invitation--ivory-heritage .reference-demo-section p { color: #6d5a43; }
 .reference-invitation--ivory-heritage .reference-event-details article,
@@ -90,7 +89,7 @@
 .reference-invitation--ivory-heritage .reference-demo-attire-subtitle { color: #76552c !important; font-family: var(--ref-serif) !important; font-size: 20px !important; font-style: normal; font-weight: 500 !important; text-transform: uppercase; }
 .reference-invitation--ivory-heritage .reference-demo-attire-details--ivory { border-top: 1px solid #b8955b30; display: grid; gap: 18px; grid-template-columns: repeat(2,minmax(0,1fr)); margin: 22px auto 0; max-width: 300px; padding: 20px 0 0; text-align: center; }
 .reference-invitation--ivory-heritage .reference-demo-attire-details--ivory article { display: grid; gap: 10px; }
-.reference-invitation--ivory-heritage .reference-demo-attire-details--ivory span { color: #813f3a; font-family: var(--ref-serif); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.reference-invitation--ivory-heritage .reference-demo-attire-details--ivory span { color: #813f3a; font-family: var(--ref-serif); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
 .reference-invitation--ivory-heritage .reference-demo-attire-details--ivory b { color: #813f3a; font-family: var(--ref-serif); font-size: 15px; font-weight: 400; }
 .reference-invitation--ivory-heritage .reference-demo-cake--ivory { min-height: 430px; padding: 48px 26px; }
 .reference-invitation--ivory-heritage .reference-demo-cake--ivory img { display: block; height: auto; margin: 24px auto 0; max-width: 230px; object-fit: contain; width: 80%; }
@@ -113,7 +112,7 @@
   .reference-section-inner h2 { font-size: 34px; }
   .reference-countdown-section .public-countdown > div { gap: 4px; }
   .reference-countdown-section .public-countdown b { font-size: 31px; min-width: 34px; }
-  .reference-countdown-section .public-countdown b small { font-size: 9px; }
+  .reference-countdown-section .public-countdown b small { font-size: 11px; }
 }
 
 .reference-invitation--royal-gold { --ref-ink: #392621; --ref-accent: #742f38; --ref-paper: #f6f2ec; --ref-muted: #74665c; background: #ebe3d8; }
@@ -129,10 +128,10 @@
 .reference-invitation--royal-gold .reference-hero-kicker { display: none; }
 .reference-invitation--royal-gold .reference-hero-title { color: #71313a; font-family: var(--ref-serif); font-size: clamp(23px, 6.2cqw, 26px); font-weight: 500; left: 4%; letter-spacing: .055em; line-height: 1.12; margin: 0; position: absolute; right: 4%; text-transform: uppercase; text-shadow: 0 1px 6px #fff5; top: 53%; transform: translateY(-50%); }
 .reference-invitation--royal-gold .reference-hero-title i { color: #7f3a40; font-family: var(--ref-serif); font-size: .66em; font-style: italic; margin: 3px 0; }
-.reference-invitation--royal-gold .reference-hero-intro { color: #fffaf4; font-family: var(--ref-script); font-size: clamp(17px, 4.4cqw, 19px); left: 4%; margin: 0; max-width: none; position: absolute; right: 4%; text-shadow: 0 1px 5px #46272c; top: 60%; }
+.reference-invitation--royal-gold .reference-hero-intro { color: #742f38; font-family: var(--ref-script); font-size: clamp(18px, 4.8cqw, 20px); font-weight: 500; left: 4%; margin: 0; max-width: none; position: absolute; right: 4%; text-shadow: 0 1px 3px #fff9; top: 60%; }
 .reference-invitation--royal-gold .reference-hero-divider { color: #a7834d; left: 0; margin: 0; position: absolute; right: 0; top: 68%; }
 .reference-invitation--royal-gold .reference-hero-copy time { color: #742f38; font-family: var(--ref-serif); font-size: clamp(17px, 5.2cqw, 21px); font-style: normal; left: 4%; position: absolute; right: 4%; text-transform: uppercase; top: 74%; }
-.reference-invitation--royal-gold .reference-scroll-cue { bottom: 1%; color: #742f38; font-size: 11px; letter-spacing: .17em; }
+.reference-invitation--royal-gold .reference-scroll-cue { bottom: 1%; color: #742f38; font-size: 14px; font-weight: 600; letter-spacing: .08em; text-shadow: 0 1px 3px #fff, 0 0 5px #fff; }
 .reference-invitation--royal-gold .reference-countdown-section,
 .reference-invitation--royal-gold .reference-demo-section,
 .reference-invitation--royal-gold .reference-rsvp-section,
@@ -145,7 +144,7 @@
 .reference-invitation--royal-gold .reference-countdown-intro { color: #7a323b; font-family: var(--ref-serif); font-size: 16px; font-style: italic; margin: -3px auto 20px; }
 .reference-invitation--royal-gold .reference-countdown-section .public-countdown > div { gap: 8px; }
 .reference-invitation--royal-gold .reference-countdown-section .public-countdown b { background: #eee9df; border: 1px solid #c7b58e; border-radius: 6px; color: #742f38; font-family: var(--ref-serif); font-size: 30px; min-width: 0; padding: 11px 6px; }
-.reference-invitation--royal-gold .reference-countdown-section .public-countdown b small { color: #837264; font-family: var(--ref-serif); font-size: 10px; letter-spacing: .07em; }
+.reference-invitation--royal-gold .reference-countdown-section .public-countdown b small { color: #6f6053; font-family: var(--ref-serif); font-size: 12px; letter-spacing: .04em; }
 .reference-invitation--royal-gold .reference-countdown-section h2 { font-size: 30px; margin-top: 10px; }
 .reference-invitation--royal-gold .reference-demo-section p { color: #6f5c54; }
 .reference-invitation--royal-gold .reference-demo-section h3 { color: #57303a; }
@@ -185,7 +184,7 @@
 .reference-invitation--royal-gold .reference-demo-attire-details--ivory article { display: grid; gap: 8px; }
 .reference-invitation--royal-gold .reference-demo-attire-details--ivory span,
 .reference-invitation--royal-gold .reference-demo-attire-details--ivory b { color: #742f38; font-family: var(--ref-serif); }
-.reference-invitation--royal-gold .reference-demo-attire-details--ivory span { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+.reference-invitation--royal-gold .reference-demo-attire-details--ivory span { font-size: 12px; letter-spacing: .07em; text-transform: uppercase; }
 .reference-invitation--royal-gold .reference-demo-attire-details--ivory b { font-size: 15px; font-weight: 400; }
 .reference-invitation--royal-gold .reference-demo-cake--royal { min-height: 430px; padding: 48px 26px; }
 .reference-invitation--royal-gold .reference-demo-cake--royal img { display: block; height: auto; margin: 24px auto 0; max-width: 230px; object-fit: contain; width: 80%; }
@@ -321,7 +320,7 @@
 .reference-invitation--elegant-cream .reference-demo-palette-caption { color: #715d3f !important; font-family: var(--ref-script) !important; font-style: italic; }
 .reference-invitation--elegant-cream .reference-demo-attire-details--sage { border-top: 1px solid #bdab8a55; display: grid; gap: 18px; grid-template-columns: repeat(2,minmax(0,1fr)); margin: 19px auto 0; max-width: 300px; padding: 17px 0 0; text-align: center; }
 .reference-invitation--elegant-cream .reference-demo-attire-details--sage article { display: grid; gap: 8px; }
-.reference-invitation--elegant-cream .reference-demo-attire-details--sage span { color: #8a7556; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+.reference-invitation--elegant-cream .reference-demo-attire-details--sage span { color: #705b3d; font-size: 12px; letter-spacing: .07em; text-transform: uppercase; }
 .reference-invitation--elegant-cream .reference-demo-attire-details--sage b { color: #493d2e; font-size: 15px; font-weight: 400; }
 .reference-invitation--elegant-cream .reference-demo-gift-card,
 .reference-invitation--elegant-cream .reference-demo-photo-wall figure,
@@ -357,7 +356,7 @@
 .reference-invitation--modern-sage .reference-hero-divider { inset: 60.4% 0 auto; justify-content: center; margin: 0; position: absolute; }
 .reference-invitation--modern-sage .reference-hero-divider i { background: #b5575399; }
 .reference-invitation--modern-sage .reference-hero-copy time { color: #853b3d; font-family: var(--ref-serif); font-size: 18px; inset: 64.1% 5% auto; position: absolute; }
-.reference-invitation--modern-sage .reference-scroll-cue { bottom: 1.8%; color: #8c353b; font-family: var(--ref-serif); font-size: 11px; font-weight: 600; letter-spacing: .13em; }
+.reference-invitation--modern-sage .reference-scroll-cue { bottom: 1.8%; color: #8c353b; font-family: var(--ref-serif); font-size: 14px; font-weight: 600; letter-spacing: .08em; }
 .reference-invitation--modern-sage .reference-scroll-cue svg { display: none; }
 .reference-invitation--modern-sage .reference-countdown-section,
 .reference-invitation--modern-sage .reference-demo-section,
@@ -393,7 +392,7 @@
 .reference-invitation--modern-sage .reference-demo-palette-caption { color: #8b4548 !important; font-family: var(--ref-script) !important; font-style: italic; }
 .reference-invitation--modern-sage .reference-demo-attire-details--sage { border-top: 1px solid #8f947544; display: grid; gap: 18px; grid-template-columns: repeat(2,minmax(0,1fr)); margin: 19px auto 0; max-width: 300px; padding: 17px 0 0; text-align: center; }
 .reference-invitation--modern-sage .reference-demo-attire-details--sage article { display: grid; gap: 8px; }
-.reference-invitation--modern-sage .reference-demo-attire-details--sage span { color: #777c69; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+.reference-invitation--modern-sage .reference-demo-attire-details--sage span { color: #5e6555; font-size: 12px; letter-spacing: .07em; text-transform: uppercase; }
 .reference-invitation--modern-sage .reference-demo-attire-details--sage b { color: #393b30; font-size: 15px; font-weight: 400; }
 .reference-invitation--modern-sage .reference-demo-attire-panel .reference-demo-palette { margin-top: 22px; }
 .reference-invitation--modern-sage .reference-demo-rsvp-floral { display: none; }
@@ -415,24 +414,24 @@
 .reference-envelope-overlay--destinasi-cinta .reference-envelope-card { background: #efe5cd; }
 .reference-envelope-overlay--destinasi-cinta .reference-envelope-open-label { bottom: 7%; color: #846631; font-family: var(--ref-script); font-size: 16px; letter-spacing: 0; text-transform: none; }
 .reference-boarding-ticket-section { background: linear-gradient(180deg, #f9f5e9, #f0e9d9); padding: 28px 24px 18px; text-align: center; }
-.reference-boarding-eyebrow { color: #a27831; font: 600 12px/1.2 var(--ref-serif); letter-spacing: .28em; margin: 0 auto 27px; }
+.reference-boarding-eyebrow { color: #805f26; font: 600 12px/1.2 var(--ref-serif); letter-spacing: .2em; margin: 0 auto 27px; }
 .reference-boarding-ticket { background: linear-gradient(155deg, #fffdf7, #f7f2e6); border: 1px solid #c6a360; border-radius: 28px; box-shadow: 0 10px 32px #6f57201a; margin: 0 auto; max-width: 342px; overflow: hidden; padding: 18px 20px 15px; position: relative; text-align: center; }
 .reference-boarding-ticket::before,
 .reference-boarding-ticket::after { background: #f3eddf; border: 1px solid #c6a360; border-radius: 50%; content: ""; height: 22px; position: absolute; top: 50%; transform: translateY(-50%); width: 22px; }
 .reference-boarding-ticket::before { left: -12px; }
 .reference-boarding-ticket::after { right: -12px; }
-.reference-boarding-ticket-header { align-items: center; border-bottom: 1px solid #c5ac7955; color: #423b2e; display: flex; font: 600 10px/1 var(--ref-serif); justify-content: space-between; letter-spacing: .15em; padding: 0 0 15px; }
-.reference-boarding-ticket-header span:last-child { align-items: center; color: #a47b37; display: flex; gap: 5px; font-weight: 400; }
-.reference-boarding-invited { color: #9d712a; font: 600 10px/1.2 var(--ref-serif); letter-spacing: .24em; margin: 20px 0 9px; }
+.reference-boarding-ticket-header { align-items: center; border-bottom: 1px solid #c5ac7955; color: #423b2e; display: flex; font: 600 12px/1.15 var(--ref-serif); justify-content: space-between; letter-spacing: .06em; padding: 0 0 15px; }
+.reference-boarding-ticket-header span:last-child { align-items: center; color: #715525; display: flex; gap: 5px; font-weight: 500; }
+.reference-boarding-invited { color: #77561f; font: 600 12px/1.2 var(--ref-serif); letter-spacing: .14em; margin: 20px 0 9px; }
 .reference-boarding-ticket h1 { color: #392f23; font-family: var(--ref-serif); font-size: clamp(24px, 7.1cqw, 29px); font-weight: 500; letter-spacing: .07em; line-height: 1.08; margin: 0; text-transform: uppercase; }
 .reference-boarding-ticket h1 i { font-size: .66em; font-style: normal; }
-.reference-boarding-tagline { color: #a07838; font: italic 18px/1.25 var(--ref-script); margin: 10px auto 17px; }
+.reference-boarding-tagline { color: #70521e; font: italic 18px/1.25 var(--ref-script); margin: 10px auto 17px; }
 .reference-boarding-rule { background: linear-gradient(90deg, transparent, #bd9d5e80 15% 85%, transparent); height: 1px; margin: 0 auto 17px; }
 .reference-boarding-date { display: grid; gap: 6px; justify-items: start; text-align: left; }
 .reference-boarding-date > span,
 .reference-boarding-travel-meta span,
 .reference-boarding-code > span,
-.reference-boarding-destination > span { color: #aa7c32; font: 600 9px/1.2 var(--ref-serif); letter-spacing: .18em; }
+.reference-boarding-destination > span { color: #73551f; font: 600 12px/1.2 var(--ref-serif); letter-spacing: .08em; }
 .reference-boarding-date b { color: #3d362a; font: 500 15px/1.25 var(--ref-serif); letter-spacing: .04em; }
 .reference-boarding-date small { color: #706654; font: 12px/1.3 var(--ref-serif); }
 .reference-boarding-travel-meta { border-bottom: 1px solid #c5ac7955; display: grid; gap: 8px; grid-template-columns: repeat(3,minmax(0,1fr)); margin-top: 18px; padding: 0 0 16px; text-align: left; }
@@ -451,13 +450,13 @@
 .reference-boarding-ticket-footer > svg { color: #675432; flex: 0 0 auto; }
 .reference-boarding-barcode { background: repeating-linear-gradient(90deg, #3b352a 0 2px, transparent 2px 4px, #3b352a 4px 5px, transparent 5px 8px, #3b352a 8px 11px, transparent 11px 14px); display: block; height: 38px; flex: 1 1 auto; }
 .reference-boarding-countdown { background: #f4efdf; padding: 26px 24px 34px; text-align: center; }
-.reference-boarding-countdown > p { color: #a77b30; font: 600 10px/1.2 var(--ref-serif); letter-spacing: .3em; margin: 0 auto 10px; }
+.reference-boarding-countdown > p { color: #78571f; font: 600 12px/1.2 var(--ref-serif); letter-spacing: .12em; margin: 0 auto 10px; }
 .reference-boarding-countdown h2 { color: #524630; font: italic 19px/1.2 var(--ref-script); margin: 0 auto 16px; }
 .reference-boarding-countdown .public-countdown-section { background: transparent; padding: 0; }
 .reference-boarding-countdown .public-countdown-section > span { display: none; }
 .reference-boarding-countdown .public-countdown > div { gap: 7px; }
 .reference-boarding-countdown .public-countdown b { background: #fffaf0; border: 1px solid #c6a360; border-radius: 13px; color: #423728; flex: 1 1 0; font: 500 23px/1.2 var(--ref-serif); min-width: 0; padding: 11px 4px 8px; }
-.reference-boarding-countdown .public-countdown b small { color: #997535; display: block; font: 600 9px/1.2 var(--ref-serif); letter-spacing: .11em; margin-top: 5px; text-transform: uppercase; }
+.reference-boarding-countdown .public-countdown b small { color: #805f2a; display: block; font: 600 12px/1.2 var(--ref-serif); letter-spacing: .04em; margin-top: 5px; text-transform: uppercase; }
 .reference-invitation--destinasi-cinta .reference-demo-rsvp-section { background: #f5f0e4; min-height: 700px; padding: 42px 24px 60px; }
 .reference-invitation--destinasi-cinta .reference-demo-rsvp-form { background: #fffaf0; border-color: #c6a360; }
 .reference-invitation--destinasi-cinta .reference-demo-rsvp-submit { background: #a77b30; color: #fffaf0; }

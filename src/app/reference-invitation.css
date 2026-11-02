@@ -8,7 +8,7 @@
 
 @font-face {
   font-display: swap;
-  font-family: "Elegant Cream Serif";
+  font-family: "Cormorant Garamond";
   font-style: normal;
   font-weight: 400;
   src: url("/fonts/cormorant-garamond-latin.woff2") format("woff2");
@@ -19,8 +19,9 @@
   --ref-accent: #8b4251;
   --ref-paper: #fbf5eb;
   --ref-muted: #8c796d;
-  --ref-script: "Pinyon Script", "Great Vibes", cursive;
   --ref-serif: "Cormorant Garamond", Georgia, serif;
+  --ref-script: var(--ref-serif);
+  --ref-display-script: "Pinyon Script", "Great Vibes", cursive;
   background: #f2ede4;
   color: var(--ref-ink);
   min-height: 100vh;
@@ -46,11 +47,6 @@
   background: #f1ecdf;
 }
 
-.reference-invitation--elegant-cream {
-  --ref-serif: "Elegant Cream Serif", Georgia, serif;
-  --ref-script: var(--ref-serif);
-}
-
 .reference-invitation--elegant-cream .reference-hero-title {
   font-size: clamp(32px, 10cqw, 39px);
 }
@@ -63,6 +59,12 @@
 .reference-invitation[data-theme-font="modern"] {
   --ref-script: var(--sans), Arial, sans-serif;
   --ref-serif: var(--sans), Arial, sans-serif;
+  --ref-display-script: var(--sans), Arial, sans-serif;
+}
+
+.reference-invitation--blush-serenade .reference-hero-title,
+.reference-invitation--wisteria-senja .reference-hero-title {
+  font-family: var(--ref-display-script);
 }
 
 .reference-invitation-frame {
@@ -92,7 +94,7 @@
 .reference-invitation--blush-serenade .reference-countdown-intro { color: var(--ref-ink); font: italic 18px/1.25 var(--ref-script); margin: -8px auto 38px; }
 .reference-invitation--blush-serenade .reference-countdown-section .public-countdown > div { align-items: flex-start; display: flex; gap: 8px; justify-content: center; width: 100%; }
 .reference-invitation--blush-serenade .reference-countdown-section .public-countdown b { align-items: center; background: linear-gradient(#fffaf0d9 0 63px, transparent 63px); border: 0; border-radius: 7px; box-sizing: border-box; color: #302722; display: flex; flex: 1 1 0; flex-direction: column; height: 96px; justify-content: flex-start; min-width: 0; padding: 12px 2px 0; }
-.reference-invitation--blush-serenade .reference-countdown-section .public-countdown b small { color: #5c5149; display: block; font-family: var(--ref-serif); font-size: 10px; font-style: italic; letter-spacing: .06em; line-height: 1; margin-top: auto; padding-bottom: 7px; text-transform: uppercase; }
+.reference-invitation--blush-serenade .reference-countdown-section .public-countdown b small { color: #5c5149; display: block; font-family: var(--ref-serif); font-size: 12px; font-style: italic; letter-spacing: .04em; line-height: 1; margin-top: auto; padding-bottom: 7px; text-transform: uppercase; }
 .reference-invitation--blush-serenade .reference-countdown-section .public-countdown i { display: none; }
 
 .reference-hero {
@@ -139,7 +141,7 @@
 .reference-kicker {
   color: var(--ref-accent);
   font-family: var(--ref-serif);
-  font-size: clamp(10px, 3.1cqw, 13px);
+  font-size: clamp(11px, 3.2cqw, 13px);
   font-weight: 600;
   letter-spacing: .17em;
   line-height: 1.45;
@@ -190,10 +192,11 @@
   display: flex;
   flex-direction: column;
   font-family: var(--ref-serif);
-  font-size: 12px;
+  font-size: 14px;
   gap: 7px;
   left: 0;
-  letter-spacing: .13em;
+  font-weight: 600;
+  letter-spacing: .1em;
   position: absolute;
   right: 0;
   text-decoration: none;
@@ -233,7 +236,7 @@
 .reference-countdown-section .public-countdown > span { display: none; }
 .reference-countdown-section .public-countdown > div { gap: 8px; }
 .reference-countdown-section .public-countdown b { color: var(--ref-accent); font-family: var(--ref-script); font-size: 36px; font-weight: 400; min-width: 38px; }
-.reference-countdown-section .public-countdown b small { color: var(--ref-muted); font-family: var(--ref-serif); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
+.reference-countdown-section .public-countdown b small { color: var(--ref-muted); font-family: var(--ref-serif); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
 .reference-countdown-section .public-countdown i { color: #b49a74; font-size: 22px; font-style: normal; }
 
 .reference-section-inner > p,
@@ -249,14 +252,14 @@
 
 .reference-flourish { color: #b79666; display: block; font-size: 17px; margin: 4px 0 16px; }
 .reference-story-section .invite-family-details { margin-top: 26px; }
-.reference-story-section .invite-family-details > span { color: var(--ref-accent); font-size: 10px; letter-spacing: .15em; }
+.reference-story-section .invite-family-details > span { color: var(--ref-accent); font-size: 12px; letter-spacing: .1em; }
 .reference-story-section .invite-family-details p { font-size: 16px; margin-top: 8px; }
 
 .reference-event-details { display: grid; gap: 16px; margin-top: 26px; }
 .reference-event-details article { align-items: center; background: #fffaf0b5; border: 1px solid #b79a7138; display: flex; flex-direction: column; gap: 8px; padding: 21px 16px; }
 .reference-event-details svg,
 .reference-gift-section > .reference-section-inner > svg { color: #a8875b; }
-.reference-event-details article > span { color: var(--ref-accent); font-size: 10px; letter-spacing: .15em; }
+.reference-event-details article > span { color: var(--ref-accent); font-size: 12px; letter-spacing: .1em; }
 .reference-event-details b { color: var(--ref-ink); font-family: var(--ref-serif); font-size: 20px; font-weight: 600; line-height: 1.2; }
 .reference-event-details small { color: var(--ref-muted); font-family: var(--ref-serif); font-size: 16px; line-height: 1.4; }
 .reference-event-details a { align-items: center; color: var(--ref-accent); display: flex; font-size: 13px; gap: 5px; text-decoration: none; }
@@ -274,7 +277,7 @@
 .reference-footer > span { font-family: var(--ref-script); font-size: 25px; }
 .reference-footer-actions { align-items: center; display: flex; gap: 14px; justify-content: center; }
 .reference-footer-actions a { align-items: center; color: var(--ref-accent); display: inline-flex; font-size: 12px; gap: 5px; text-decoration: none; }
-.reference-footer > small { align-items: center; color: #917f6c; display: flex; font-size: 10px; gap: 4px; letter-spacing: .04em; }
+.reference-footer > small { align-items: center; color: #766552; display: flex; font-size: 12px; gap: 4px; letter-spacing: .04em; }
 .reference-footer > small svg { color: var(--ref-accent); }
 .reference-music { position: absolute; right: 12px; top: 12px; z-index: 3; }
 .reference-music .public-music-toggle { background: #fffaf0dd; border: 1px solid #fff; border-radius: 24px; color: var(--ref-accent); padding: 9px 12px; }
