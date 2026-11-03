@@ -1,4 +1,5 @@
 import { isSafeTemplateFieldKey } from "@/lib/template-sdk";
+import type { InvitationThemeColor } from "@/lib/invitation-theme-colors";
 
 export const EVENT_KINDS = [
   "Pernikahan",
@@ -52,7 +53,7 @@ export type InvitationDraft = {
   story: string;
   templateId: string;
   templateVersion: string;
-  themeColor?: "default" | "rose" | "ocean";
+  themeColor?: InvitationThemeColor;
   themeFont?: "classic" | "modern";
   sectionOrder?: "story-first" | "details-first";
   coverPhoto: string;

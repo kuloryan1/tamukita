@@ -4,6 +4,7 @@ import { parseInvitationDraft } from "@/lib/invitation-server";
 import { getPrismaClient } from "@/lib/prisma";
 import { isEditorCompatibleTemplate, validateTemplateManifest } from "@/lib/template-sdk";
 import { getTemplate } from "@/lib/templates";
+import { getInvitationThemePalette } from "@/lib/invitation-theme-colors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,7 +55,7 @@ export default async function OpenGraphImage({ params }: { params: Promise<{ slu
   const eventDate = draft.eventDate
     ? new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${draft.eventDate}T00:00:00`))
     : "Sebuah hari istimewa";
-  const accent = draft.themeColor === "rose" ? "#b8758a" : draft.themeColor === "ocean" ? "#6d91a8" : "#b8935e";
+  const accent = getInvitationThemePalette(draft.themeColor).accent;
 
   return new ImageResponse(
     (

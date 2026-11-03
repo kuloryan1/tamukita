@@ -2,6 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 import { getTemplate } from "@/lib/templates";
+import { INVITATION_THEME_COLOR_VALUES } from "@/lib/invitation-theme-colors";
 import { EVENT_KINDS, safeHttpsUrl, type InvitationDraft } from "@/lib/invitations";
 import { getPrismaClient } from "@/lib/prisma";
 import { isR2PublicUrl, r2KeyFromPublicUrl } from "@/lib/r2";
@@ -33,7 +34,7 @@ export const invitationDraftSchema = z.object({
   story: z.string().trim().max(3000),
   templateId: z.string().min(1).max(80),
   templateVersion: z.string().min(1).max(32),
-  themeColor: z.enum(["default", "rose", "ocean"]).default("default"),
+  themeColor: z.enum(INVITATION_THEME_COLOR_VALUES).default("default"),
   themeFont: z.enum(["classic", "modern"]).default("classic"),
   sectionOrder: z.enum(["story-first", "details-first"]).default("story-first"),
   coverPhoto: z.string().max(1_800_000).refine((value) => {

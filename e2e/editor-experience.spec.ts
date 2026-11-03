@@ -76,7 +76,7 @@ test("editor supports undo, redo, responsive preview, and saved personalization"
   await expect(page.locator(".preview-phone")).toContainText(familyDetails);
 
   await advanceToStep(page, 3);
-  await page.getByRole("button", { name: "Rose" }).click();
+  await page.getByRole("button", { name: "Mawar" }).click();
   await page.locator(".personalization-control").nth(1).getByRole("button", { name: "Aa Modern" }).click();
   await page.getByRole("button", { name: "Info acara dulu" }).click();
   await page.getByRole("button", { name: "Desktop" }).click();
