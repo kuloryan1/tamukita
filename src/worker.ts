@@ -247,9 +247,9 @@ async function sendRsvpReceivedEmail(payload: RsvpReceivedPayload) {
   const invitationTitle = payload.invitationTitle.replace(/[\r\n]+/g, " ").trim();
   const attendance = payload.attendance === "ATTENDING" ? "akan hadir" : "belum dapat hadir";
   const count = payload.attendance === "ATTENDING" ? ` Jumlah tamu: ${payload.attendeeCount}.` : "";
-  const subject = `RSVP baru · ${invitationTitle} · TamuKita`;
-  const text = `${greeting}\n\n${payload.guestName} mengonfirmasi bahwa mereka ${attendance}.${count}\n\nUndangan: ${invitationTitle}\nLihat daftar tamu dan RSVP: ${link}`;
-  const html = `<div style="font-family:Arial,sans-serif;line-height:1.65;color:#35473b"><p>${escapeHtml(greeting)}</p><p><b>${escapeHtml(payload.guestName)}</b> mengonfirmasi bahwa mereka ${escapeHtml(attendance)}${payload.attendance === "ATTENDING" ? ` (${payload.attendeeCount} tamu)` : ""}.</p><p>Undangan: <b>${escapeHtml(invitationTitle)}</b></p><p><a href="${escapeHtml(link)}" style="display:inline-block;background:#35473b;color:#fff;padding:12px 18px;text-decoration:none">Lihat RSVP</a></p></div>`;
+  const subject = `Konfirmasi kehadiran baru · ${invitationTitle} · TamuKita`;
+  const text = `${greeting}\n\n${payload.guestName} mengonfirmasi bahwa mereka ${attendance}.${count}\n\nUndangan: ${invitationTitle}\nLihat daftar tamu dan konfirmasi kehadiran: ${link}`;
+  const html = `<div style="font-family:Arial,sans-serif;line-height:1.65;color:#35473b"><p>${escapeHtml(greeting)}</p><p><b>${escapeHtml(payload.guestName)}</b> mengonfirmasi bahwa mereka ${escapeHtml(attendance)}${payload.attendance === "ATTENDING" ? ` (${payload.attendeeCount} tamu)` : ""}.</p><p>Undangan: <b>${escapeHtml(invitationTitle)}</b></p><p><a href="${escapeHtml(link)}" style="display:inline-block;background:#35473b;color:#fff;padding:12px 18px;text-decoration:none">Lihat konfirmasi kehadiran</a></p></div>`;
   await sendEmail(payload.to, subject, text, html);
 }
 
@@ -268,8 +268,8 @@ async function sendEventReminderEmail(payload: EventReminderPayload) {
     timeStyle: "short",
   }).format(new Date(payload.startsAt));
   const subject = `Pengingat acara · ${invitationTitle} · TamuKita`;
-  const text = `${greeting}\n\nAcara ${eventTitle} untuk undangan ${invitationTitle} dijadwalkan pada ${eventDate}${venue ? ` di ${venue}` : ""}.\n\nBuka undangan: ${invitationLink}\nKelola daftar tamu dan RSVP: ${guestListLink}`;
-  const html = `<div style="font-family:Arial,sans-serif;line-height:1.65;color:#35473b"><p>${escapeHtml(greeting)}</p><p>Acara <b>${escapeHtml(eventTitle)}</b> untuk undangan <b>${escapeHtml(invitationTitle)}</b> dijadwalkan pada <b>${escapeHtml(eventDate)}</b>${venue ? ` di ${escapeHtml(venue)}` : ""}.</p><p><a href="${escapeHtml(invitationLink)}" style="display:inline-block;background:#35473b;color:#fff;padding:12px 18px;text-decoration:none">Lihat undangan</a> <a href="${escapeHtml(guestListLink)}" style="display:inline-block;border:1px solid #35473b;color:#35473b;padding:12px 18px;text-decoration:none">Kelola tamu dan RSVP</a></p></div>`;
+  const text = `${greeting}\n\nAcara ${eventTitle} untuk undangan ${invitationTitle} dijadwalkan pada ${eventDate}${venue ? ` di ${venue}` : ""}.\n\nBuka undangan: ${invitationLink}\nKelola daftar tamu dan konfirmasi kehadiran: ${guestListLink}`;
+  const html = `<div style="font-family:Arial,sans-serif;line-height:1.65;color:#35473b"><p>${escapeHtml(greeting)}</p><p>Acara <b>${escapeHtml(eventTitle)}</b> untuk undangan <b>${escapeHtml(invitationTitle)}</b> dijadwalkan pada <b>${escapeHtml(eventDate)}</b>${venue ? ` di ${escapeHtml(venue)}` : ""}.</p><p><a href="${escapeHtml(invitationLink)}" style="display:inline-block;background:#35473b;color:#fff;padding:12px 18px;text-decoration:none">Lihat undangan</a> <a href="${escapeHtml(guestListLink)}" style="display:inline-block;border:1px solid #35473b;color:#35473b;padding:12px 18px;text-decoration:none">Kelola tamu dan konfirmasi kehadiran</a></p></div>`;
   await sendEmail(payload.to, subject, text, html);
 }
 
@@ -298,7 +298,7 @@ async function processJob(job: Job<{ notificationJobId: string }>) {
       await sendAdminManagedInvitationEmail(payload);
     } else if (notification.jobType === "RSVP_RECEIVED_EMAIL") {
       const payload = parseRsvpReceivedPayload(notification.payload);
-      if (!payload) throw new Error("Data notifikasi RSVP tidak valid.");
+      if (!payload) throw new Error("Data notifikasi konfirmasi kehadiran tidak valid.");
       await sendRsvpReceivedEmail(payload);
     } else if (notification.jobType === "EVENT_REMINDER_EMAIL") {
       const payload = parseEventReminderPayload(notification.payload);

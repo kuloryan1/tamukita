@@ -119,7 +119,7 @@ export async function GET() {
     scope: "Data akun, workspace, undangan yang dimiliki atau dibuat, pesanan, permintaan refund, dan laporan bantuan.",
     exclusions: [
       "Kata sandi, token autentikasi, sesi, dan token provider tidak disertakan.",
-      "Respons RSVP, buku tamu, dan data tamu orang lain tidak disertakan.",
+      "Respons konfirmasi kehadiran, buku tamu, dan data tamu orang lain tidak disertakan.",
       "Payload pembayaran dan catatan internal admin tidak disertakan.",
     ],
     data: { account: exportedAccount, memberships, invitations, orders, refunds, feedback },

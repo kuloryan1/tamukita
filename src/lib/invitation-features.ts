@@ -53,6 +53,6 @@ export function summarizeInvitationFeatureAccess(access: InvitationFeatureAccess
   const features: string[] = [];
   if (access.galleryLimit > 0) features.push(`Galeri ${access.galleryLimit} foto`);
   if (access.music) features.push("Musik latar");
-  if (access.rsvp) features.push("RSVP");
+  if (access.rsvp) features.push("Konfirmasi kehadiran");
   return features;
 }

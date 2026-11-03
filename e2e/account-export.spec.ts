@@ -51,5 +51,5 @@ test("customer can request a private account data export", async ({ page }, test
   }
   expect(payload.data.account.email).toBe(email);
   expect(payload.data.invitations).toBeInstanceOf(Array);
-  expect(payload.exclusions.join(" ")).toContain("Respons RSVP");
+  expect(payload.exclusions.join(" ")).toContain("Respons konfirmasi kehadiran");
 });

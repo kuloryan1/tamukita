@@ -191,7 +191,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
   await expect(page.locator(".public-hero-names")).toContainText("E2E Mempelai");
   const initialRsvpCountText = await page.locator(".rsvp-count").innerText();
   const initialRsvpCount = Number(initialRsvpCountText.match(/^\d+/)?.[0] ?? 0);
-  const expectedRsvpCountText = `${initialRsvpCount + 1} tamu telah mengirim RSVP`;
+  const expectedRsvpCountText = `${initialRsvpCount + 1} tamu telah memberi kabar kehadiran`;
 
   await page.setExtraHTTPHeaders({ "x-forwarded-for": `198.51.100.${1 + Math.floor(Math.random() * 253)}` });
   const childRsvpWithoutGuardianConsent = await page.request.post(`/api/public/invitations/${invitationSlug}/rsvp`, {
@@ -229,7 +229,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
     childRsvpBrowserRequests += 1;
     await route.continue();
   });
-  await page.getByRole("checkbox", { name: "RSVP ini mencantumkan nama atau informasi anak." }).check();
+  await page.getByRole("checkbox", { name: "Konfirmasi kehadiran ini mencantumkan nama atau informasi anak." }).check();
   await page.getByRole("button", { name: "Kirim konfirmasi" }).click();
   await expect(page.locator('.editor-error[role="alert"]')).toHaveText("Persetujuan orang tua/wali wajib sebelum mengirim data anak.");
   expect(childRsvpBrowserRequests).toBe(0);

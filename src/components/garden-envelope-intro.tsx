@@ -162,7 +162,7 @@ export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram, isExample = fa
           <Image className="garden-envelope-art" src={envelopeCover} width={941} height={1672} alt="" draggable={false} preload unoptimized />
           <GardenEnvelopeMonogram monogram={initials} />
         </span>
-        <span className="garden-envelope-prompt" aria-hidden="true"><span className="garden-envelope-chevron" /><span className="garden-envelope-tap-label">TAP TO OPEN</span></span>
+        <span className="garden-envelope-prompt" aria-hidden="true"><span className="garden-envelope-chevron" /><span className="garden-envelope-tap-label">KETUK UNTUK MEMBUKA</span></span>
       </button>
       {opening && !playing && <span className="garden-envelope-status" role="status">Memuat animasi…</span>}
       <button className="garden-envelope-skip" type="button" onClick={finishOpening}>{opening ? "Lewati animasi" : "Buka langsung"}</button>

@@ -68,7 +68,7 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
               <div className="detail-price-block"><strong>{formatRupiah(template.price)}</strong><span>Lisensi satu kali per undangan · Pembayaran terverifikasi</span></div>
               <div className="detail-features">
                 <span><Check size={15} /> Bisa diakses di ponsel</span>
-                <span><Check size={15} /> RSVP aktif setelah publikasi</span>
+                <span><Check size={15} /> Konfirmasi kehadiran aktif setelah undangan diterbitkan</span>
                 <span><Check size={15} /> Bisa diedit setelah terbit</span>
               </div>
               <Link href={useTemplateHref} className="button button--dark button--wide">Gunakan template ini <ArrowRight size={16} /></Link>
@@ -82,7 +82,7 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
             <div className="detail-demo-heading">
               <span className="eyebrow">DEMO AMAN DICOBA</span>
               <h2 id="template-demo-title">Lihat seperti tamu melihat undangan</h2>
-              <p>Demo memakai nama Ryan Pratam &amp; Dwi Wulan Maulida dan detail acara contoh. RSVP pada demo tidak mengirim atau menyimpan data.</p>
+              <p>Contoh ini memakai nama Ryan Pratam &amp; Dwi Wulan Maulida dan detail acara rekaan. Jawaban konfirmasi kehadiran tidak dikirim atau disimpan.</p>
             </div>
             <div className="detail-demo-preview detail-demo-cta">
               <Link href={demoHref} className="button button--dark">Buka demo {template.name} <ArrowRight size={15} /></Link>

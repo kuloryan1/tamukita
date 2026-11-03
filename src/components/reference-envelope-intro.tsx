@@ -105,7 +105,7 @@ export function ReferenceEnvelopeIntro({ preset, hostOne, hostTwo }: {
         /> : <Image className="reference-envelope-video" src={preset.coverPoster} fill alt="" aria-hidden="true" priority unoptimized />}
         {coverMessage && <div className={`reference-envelope-copy${Array.from(coverMessage.trim()).length > 28 ? " reference-envelope-copy--long" : ""}`} aria-hidden="true">{coverMessage}</div>}
         <button className="reference-envelope-open" type="button" onClick={openInvitation} aria-label={`Putar animasi pembukaan undangan${names ? ` untuk ${names}` : ""}`}>
-          <span className="reference-envelope-open-label">Tap to open</span>
+          <span className="reference-envelope-open-label">Ketuk untuk membuka</span>
         </button>
         {opening && !revealing && <button className="reference-envelope-skip" type="button" onClick={finishOpening}>Lewati animasi</button>}
       </div>

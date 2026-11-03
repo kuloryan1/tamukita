@@ -26,17 +26,17 @@ export function ReferenceDemoSections({ draft, dateString, mapsUrl, preset }: Re
   const isIvoryLike = isIvory || isRoyal;
   const demoPhotos = draft.galleryPhotos;
   const scheduleItems = isIvoryLike ? [
-    { time: "17.30", title: isRoyal ? "Lunch" : "Welcome", label: "Welcome", description: "", image: "ivory-timeline-lunch.png" },
-    { time: draft.eventTime || "18.00", title: isRoyal ? "Ceremony" : "Wedding Ceremony", label: "Wedding Ceremony", description: "", image: "ivory-timeline-ceremony.png" },
-    { time: "20.00", title: isRoyal ? "Party" : "Celebration", label: "Celebration", description: "", image: "ivory-timeline-party.png" },
-    { time: "21.30", title: isRoyal ? "End" : "Farewell", label: "Farewell", description: "", image: "ivory-timeline-party.png" },
+    { time: "17.30", title: isRoyal ? "Jamuan sore" : "Penyambutan", label: "Penyambutan", description: "", image: "ivory-timeline-lunch.png" },
+    { time: draft.eventTime || "18.00", title: "Prosesi pernikahan", label: "Prosesi pernikahan", description: "", image: "ivory-timeline-ceremony.png" },
+    { time: "20.00", title: "Perayaan", label: "Perayaan", description: "", image: "ivory-timeline-party.png" },
+    { time: "21.30", title: isRoyal ? "Penutupan" : "Salam perpisahan", label: "Penutup", description: "", image: "ivory-timeline-party.png" },
   ] : referenceDemoContent.schedule;
   const accommodationSection = !isCream && <section className="reference-demo-section reference-demo-accommodation" id="akomodasi" data-reference-reveal aria-labelledby="reference-demo-accommodation-title">
     <div className="reference-demo-section-inner">
       {isIvoryLike && <Image className="reference-demo-icon" src={`${blushAssets}ivory-icon-accommodation.png`} alt="" aria-hidden="true" width={1024} height={1024} unoptimized />}
       <span className="reference-kicker">INFORMASI PERJALANAN</span>
-      <h2 id="reference-demo-accommodation-title">Accommodation</h2>
-      <p className="reference-demo-accommodation-lead">Recommendations for your stay</p>
+      <h2 id="reference-demo-accommodation-title">Penginapan</h2>
+      <p className="reference-demo-accommodation-lead">Rekomendasi tempat menginap</p>
       <div className="reference-demo-accommodation-list">
         {referenceDemoContent.accommodation.map((item) => <article className="reference-demo-accommodation-card" key={item.title}>
           {isBlush && <Image src={`${blushAssets}${item.image}`} alt="" aria-hidden="true" width={736} height={736} unoptimized />}
@@ -53,7 +53,7 @@ export function ReferenceDemoSections({ draft, dateString, mapsUrl, preset }: Re
       <section className="reference-demo-section reference-demo-venue" id="detail-acara" data-reference-reveal aria-labelledby="reference-demo-venue-title">
         <div className="reference-demo-section-inner">
           {!isBlush && <span className="reference-kicker">HARI ISTIMEWA KAMI</span>}
-          <h2 id="reference-demo-venue-title">{isRoyal ? "Venue" : isIvory ? "Venue" : "The Venue"}</h2>
+          <h2 id="reference-demo-venue-title">Lokasi Acara</h2>
           {isBlush && <Image className="reference-demo-venue-art" src={`${blushAssets}blush-venue.png`} alt="" aria-hidden="true" width={736} height={1104} unoptimized />}
           <article className="reference-demo-venue-card">
             <CalendarDays size={18} aria-hidden="true" />
@@ -75,8 +75,8 @@ export function ReferenceDemoSections({ draft, dateString, mapsUrl, preset }: Re
           {isIvory && <CalendarDays className="reference-demo-icon reference-demo-icon--ivory" aria-hidden="true" size={38} />}
           {isRoyal && <Image className="reference-demo-icon" src={`${blushAssets}blush-icon-schedule.png`} alt="" aria-hidden="true" width={96} height={96} unoptimized />}
           <span className="reference-kicker">WAKTU KEBERSAMAAN</span>
-          <h2 id="reference-demo-schedule-title">{isIvoryLike ? "Schedule" : "What we have planned for you"}</h2>
-          <p className="reference-demo-lead">{isIvoryLike ? "What we have planned for you" : "Contoh susunan untuk membantu tamu membayangkan alur hari istimewa."}</p>
+          <h2 id="reference-demo-schedule-title">Susunan Acara</h2>
+          <p className="reference-demo-lead">Rangkaian momen yang kami siapkan untuk hari istimewa ini.</p>
           <ol className={`reference-demo-timeline${isIvory ? " reference-demo-timeline--ivory" : ""}${isRoyal ? " reference-demo-timeline--royal" : ""}${isWisteria ? " reference-demo-timeline--wisteria" : ""}${isCream ? " reference-demo-timeline--cream" : ""}${isSage ? " reference-demo-timeline--sage" : ""}`}>
             {scheduleItems.map((item, index) => {
               const alternatingSide = isBlush || isIvoryLike || isWisteria || isCream || isSage ? (index % 2 === 0 ? "is-left" : "is-right") : undefined;
@@ -101,19 +101,19 @@ export function ReferenceDemoSections({ draft, dateString, mapsUrl, preset }: Re
           {isBlush && <Image className="reference-demo-icon" src={`${blushAssets}blush-icon-dresscode.png`} alt="" aria-hidden="true" width={110} height={110} unoptimized />}
           <span className="reference-kicker">PANDUAN TAMU</span>
           {isRoyal && <Image className="reference-demo-icon reference-demo-icon--royal-dress" src={`${blushAssets}ivory-icon-dresscode.png`} alt="" aria-hidden="true" width={1024} height={1024} unoptimized />}
-          <h2 id="reference-demo-attire-title">{isIvoryLike ? "Dress Code" : referenceDemoContent.attire}</h2>
+          <h2 id="reference-demo-attire-title">{isIvoryLike ? "Panduan Busana" : referenceDemoContent.attire}</h2>
           <div className={`reference-demo-attire-panel${isBlush ? " reference-demo-attire-panel--blush" : ""}`}>
             {isIvoryLike && <Image className="reference-demo-attire-image--ivory" src={`${blushAssets}ivory-dresscode.png`} alt="" aria-hidden="true" width={1024} height={1024} unoptimized />}
             {isBlush && <Image className="reference-demo-floral-border" src={`${blushAssets}blush-dresscode-border.png`} alt="" aria-hidden="true" width={1920} height={1080} unoptimized />}
             {isBlush && <Image className="reference-demo-attire-art" src={`${blushAssets}blush-dresscode-illustration.png`} alt="" aria-hidden="true" width={1264} height={848} unoptimized />}
-            <h3 className="reference-demo-attire-subtitle">{isIvoryLike ? "Semi-Formal" : isSage ? "Casual wear" : referenceDemoContent.attireSubtitle}</h3>
+            <h3 className="reference-demo-attire-subtitle">{isIvoryLike ? "Busana semi-formal" : isSage ? "Busana kasual" : referenceDemoContent.attireSubtitle}</h3>
             {isIvoryLike && <div className="reference-demo-attire-details--ivory">
-              <article><span>Women</span><b>Cocktail dress</b></article>
-              <article><span>Men</span><b>Suit &amp; tie</b></article>
+              <article><span>Perempuan</span><b>Gaun semi-formal</b></article>
+              <article><span>Laki-laki</span><b>Jas dan dasi</b></article>
             </div>}
             {(isSage || isCream) && <div className={`reference-demo-attire-details--sage${isCream ? " reference-demo-attire-details--cream" : ""}`}>
-              <article><span>Women</span><b>Cocktail dress</b></article>
-              <article><span>Men</span><b>Tuxedo</b></article>
+              <article><span>Perempuan</span><b>Gaun semi-formal</b></article>
+              <article><span>Laki-laki</span><b>Tuksedo</b></article>
             </div>}
             <p className="reference-demo-palette-caption">{referenceDemoContent.paletteCaption}</p>
             <ul className="reference-demo-palette" aria-label="Palet warna contoh">
@@ -126,7 +126,7 @@ export function ReferenceDemoSections({ draft, dateString, mapsUrl, preset }: Re
 
       {isIvoryLike && <section className={`reference-demo-section reference-demo-cake--ivory${isRoyal ? " reference-demo-cake--royal" : ""}`} aria-labelledby="reference-demo-cake-title">
         <div className="reference-demo-section-inner">
-          <h2 id="reference-demo-cake-title">Wedding Cake</h2>
+          <h2 id="reference-demo-cake-title">Kue Pernikahan</h2>
           <Image src={`${blushAssets}ivory-cake.png`} alt="Ilustrasi garis kue pernikahan" width={800} height={512} unoptimized />
         </div>
       </section>}
@@ -135,11 +135,11 @@ export function ReferenceDemoSections({ draft, dateString, mapsUrl, preset }: Re
         <div className="reference-demo-section-inner">
           {isBlush && <Image className="reference-demo-icon" src={`${blushAssets}blush-icon-gift.png`} alt="" aria-hidden="true" width={96} height={96} unoptimized />}
           <span className="reference-kicker">TANDA KASIH</span>
-          <h2 id="reference-demo-gift-title">{isRoyal ? "Gift List" : "Gifts"}</h2>
+          <h2 id="reference-demo-gift-title">{isRoyal ? "Daftar Hadiah" : "Hadiah"}</h2>
           <div className="reference-demo-gift-card">
             <span aria-hidden="true">❧</span>
               <p>{referenceDemoContent.giftNote}</p>
-              <button type="button" disabled>Gift details · demo</button>
+              <button type="button" disabled>Detail hadiah · contoh</button>
               <small>Contoh visual · detail rekening tidak tersedia</small>
           </div>
         </div>
@@ -161,7 +161,7 @@ export function ReferenceDemoSections({ draft, dateString, mapsUrl, preset }: Re
         <div className="reference-demo-section-inner">
           {isIvoryLike && <Image className="reference-demo-icon" src={`${blushAssets}ivory-icon-story.png`} alt="" aria-hidden="true" width={1024} height={1024} unoptimized />}
           <span className="reference-kicker">SEPENGGAL CERITA</span>
-          <h2 id="reference-demo-story-title">{isRoyal ? "Our Story" : "Why This Is Special"}</h2>
+          <h2 id="reference-demo-story-title">{isRoyal ? "Kisah Kami" : "Kisah Istimewa Kami"}</h2>
           {!isBlush && <span className="reference-flourish" aria-hidden="true">✦　❧　✦</span>}
           <p className="reference-demo-story-copy">{isBlush ? referenceDemoContent.story : draft.story || "Dengan penuh syukur, kami mengundang Anda untuk merayakan hari istimewa ini bersama."}</p>
           <InvitationFamilyDetails draft={draft} />
@@ -171,8 +171,8 @@ export function ReferenceDemoSections({ draft, dateString, mapsUrl, preset }: Re
       <section className="reference-demo-section reference-demo-gallery" id="galeri" data-reference-reveal aria-labelledby="reference-demo-gallery-title">
         <div className="reference-demo-section-inner">
           <span className="reference-kicker">POTONGAN CERITA</span>
-          <h2 id="reference-demo-gallery-title">Photo Gallery</h2>
-          <p className="reference-demo-lead">Moments we treasure</p>
+          <h2 id="reference-demo-gallery-title">Galeri Foto</h2>
+          <p className="reference-demo-lead">Momen yang kami kenang</p>
           <div className={`reference-demo-photo-wall${demoPhotos.length ? " has-photos" : ""}`}>
             {demoPhotos.length
               ? demoPhotos.slice(0, 4).map((photo, index) => <figure key={photo}><Image src={photo} alt={`Foto ${index + 1} ${draft.eventKind.toLowerCase()}`} width={440} height={560} unoptimized /></figure>)
@@ -187,7 +187,7 @@ export function ReferenceDemoSections({ draft, dateString, mapsUrl, preset }: Re
       <section className="reference-demo-section reference-demo-faq" id="faq" data-reference-reveal aria-labelledby="reference-demo-faq-title">
         <div className="reference-demo-section-inner">
           <span className="reference-kicker">INFORMASI TAMU</span>
-          <h2 id="reference-demo-faq-title">FAQ</h2>
+          <h2 id="reference-demo-faq-title">Tanya Jawab</h2>
           <div className="reference-demo-faq-list">
             {referenceDemoContent.faq.map((item) => <details key={item.question}><summary>{item.question}</summary><p>{item.answer}</p></details>)}
           </div>

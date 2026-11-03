@@ -10,7 +10,7 @@ import { createDemoDraft, DEMO_COUPLE_NAMES } from "@/lib/invitations";
 const steps = [
   { number: "01", title: "Pilih desain yang kamu suka", text: "Temukan template yang terasa paling kamu. Semuanya dibuat untuk mudah dibaca di layar ponsel." },
   { number: "02", title: "Isi cerita dan detail acaramu", text: "Nama, waktu, lokasi, dan foto. Preview berubah seketika saat kamu mulai mengisi." },
-  { number: "03", title: "Bagikan ke orang tersayang", text: "Satu tautan untuk semua. Kirim undangan, kumpulkan RSVP, dan nantikan hari bahagiamu." },
+  { number: "03", title: "Bagikan ke orang tersayang", text: "Satu tautan untuk semua. Kirim undangan, kumpulkan konfirmasi kehadiran, dan nantikan hari bahagiamu." },
 ];
 
 export default function HomePage() {

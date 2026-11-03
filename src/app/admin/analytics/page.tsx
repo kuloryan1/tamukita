@@ -153,7 +153,7 @@ export default async function AdminAnalyticsPage() {
         { label: "Tampilan katalog template", value: (platformViewsByKey.get("template_catalog_views") ?? BigInt(0)).toLocaleString("id-ID"), detail: "Page view halaman marketplace, bukan pengunjung unik" },
         { label: "Tampilan detail template", value: (platformViewsByKey.get("template_detail_views") ?? BigInt(0)).toLocaleString("id-ID"), detail: "Page view halaman detail, bukan pengunjung unik" },
         { label: "Tampilan halaman undangan", value: (publicViews._sum.metricValue ?? BigInt(0)).toLocaleString("id-ID"), detail: "Page view, bukan pengunjung unik" },
-        { label: "RSVP masuk", value: rsvpCount.toLocaleString("id-ID"), detail: "Respons tamu dalam periode" },
+        { label: "Konfirmasi kehadiran masuk", value: rsvpCount.toLocaleString("id-ID"), detail: "Respons tamu dalam periode" },
         { label: "Laporan konten", value: (contentReportCount + invitationReportCount).toLocaleString("id-ID"), detail: "Laporan ucapan dan halaman undangan dalam periode" },
         { label: "Keluhan editor", value: editorFeedbackCount.toLocaleString("id-ID"), detail: "Laporan kendala yang dikirim dalam periode" },
         { label: "Pembayaran masuk", value: rupiah.format(grossPayments), detail: "Order IDR yang dibayar dalam periode" },
