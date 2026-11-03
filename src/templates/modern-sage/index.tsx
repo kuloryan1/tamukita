@@ -1,6 +1,6 @@
 import { CalendarDays, MapPin, Sprout } from "lucide-react";
 import type { TemplateRenderProps } from "@/lib/template-sdk";
-import { InvitationFamilyDetails, invitationCoverStyle, invitationDate, invitationKicker, invitationTitle } from "@/templates/shared";
+import { InvitationFamilyDetails, invitationCoverStyle, invitationDate, invitationKicker, invitationTitle, isLongInvitationTitle } from "@/templates/shared";
 
 export function ModernSageTemplate({ draft, recipientName, full = false }: TemplateRenderProps) {
   return (
@@ -8,7 +8,7 @@ export function ModernSageTemplate({ draft, recipientName, full = false }: Templ
       <header className="template-sage-heading">
         <Sprout size={18} aria-hidden="true" />
         <span>{invitationKicker(draft)}</span>
-        <h2>{invitationTitle(draft)}</h2>
+        <h2 className={isLongInvitationTitle(draft) ? "invite-title--long" : undefined}>{invitationTitle(draft)}</h2>
       </header>
       <div className="invite-photo template-sage-photo" style={invitationCoverStyle(draft)}>
         {!draft.coverPhoto && <span className="invite-photo-monogram">{[draft.hostOne, draft.hostTwo].filter(Boolean).map((name) => name[0]).join(" & ") || "T&K"}</span>}

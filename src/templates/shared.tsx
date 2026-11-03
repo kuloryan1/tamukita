@@ -8,6 +8,10 @@ export function invitationTitle(draft: InvitationDraft) {
     : draft.eventTitle || draft.eventKind;
 }
 
+export function isLongInvitationTitle(draft: InvitationDraft) {
+  return Array.from(invitationTitle(draft).trim()).length > 28;
+}
+
 export function invitationKicker(draft: InvitationDraft) {
   return draft.eventKind === "Pernikahan" ? "THE WEDDING OF" : draft.eventKind.toUpperCase();
 }

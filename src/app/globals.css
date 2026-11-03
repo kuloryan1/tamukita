@@ -1936,3 +1936,26 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
   font-size: 12px;
   line-height: 1.45;
 }
+
+/* Keep long titles and invitation details readable inside the fixed editor previews. */
+.invite-preview .invite-title--long {
+  font-size: clamp(18px, 6vw, 30px) !important;
+  letter-spacing: -.035em;
+  line-height: 1.08 !important;
+  max-width: min(100%, 320px) !important;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+  width: 100%;
+}
+.invite-preview :is(.invite-copy, .blush-heading, .heritage-copy, .wisteria-copy, .garden-copy) {
+  max-width: 100%;
+  width: 100%;
+}
+.preview-phone .invite-details,
+.phone-frame .invite-details,
+.detail-live-preview .invite-details,
+.invite-preview--full .invite-details {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
