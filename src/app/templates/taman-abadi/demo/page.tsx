@@ -49,7 +49,7 @@ export default async function TamanAbadiDemoPage({ searchParams }: TamanAbadiDem
       mocktailTime: "",
       dinnerTime: "",
       danceTime: "",
-      dressCode: "Busana formal bernuansa taman. Sentuhan warna sage, champagne, atau burgundy akan terasa serasi.",
+      dressCode: "Busana formal bernuansa taman. Sentuhan hijau dedaunan, warna sampanye, atau merah marun akan terasa serasi.",
       giftPreference: "Kehadiran dan doa restu Anda adalah hadiah yang paling berarti bagi kami.",
     },
   };

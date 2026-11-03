@@ -22,9 +22,9 @@ export const referenceDemoContent = {
   story: "Kami ingin perayaan ini terasa dekat dan istimewa. Di dalamnya tersimpan kenangan berharga, kejutan penuh perhatian, dan momen kecil yang ingin kami bagikan kepada Anda.",
   giftNote: "Kehadiran Anda adalah hadiah terindah bagi kami. Terima kasih telah merayakan hari ini bersama.",
   menu: [
-    { label: "Hidangan pembuka", title: "Burrata dengan Paduan Tomat Warisan", description: "Burrata lembut dengan tomat warisan yang matang sempurna di bawah matahari." },
-    { label: "Hidangan utama", title: "Tenderloin Sapi Berlapis Miso", description: "Tenderloin panggang dengan puree parsnip yang lembut." },
-    { label: "Hidangan penutup", title: "Mousse Cokelat Putih dan Raspberry", description: "Mousse cokelat putih dengan raspberry segar." },
+    { label: "Hidangan pembuka", title: "Burrata dengan Paduan Tomat Segar", description: "Keju burrata lembut disajikan dengan tomat matang yang kaya rasa." },
+    { label: "Hidangan utama", title: "Has Dalam Sapi Panggang Berbumbu Miso", description: "Daging sapi panggang disajikan dengan bubur akar putih yang lembut." },
+    { label: "Hidangan penutup", title: "Puding Cokelat Putih dan Raspberi", description: "Puding cokelat putih lembut dengan raspberi segar." },
   ],
   faq: [
     { question: "Bolehkah saya membawa seorang pendamping?", answer: "Silakan ikuti informasi penerima undangan yang diberikan oleh pengundang." },

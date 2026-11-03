@@ -71,7 +71,7 @@ export const templates: Template[] = [
   }),
   defineTemplate({
     slug: "modern-sage",
-    version: "1.0.1",
+    version: "1.0.2",
     schemaVersion: 1,
     activationSku: "BASIC_ACTIVATION",
     name: "Modern Sage",
@@ -81,7 +81,7 @@ export const templates: Template[] = [
     category: "Pernikahan",
     price: 99000,
     style: "sage",
-    tags: ["Modern", "Minimalis", "Hijau sage"],
+    tags: ["Kontemporer", "Minimalis", "Hijau sage"],
     features: ["cover", "gallery", "gift-info", "maps", "music", "rsvp", "whatsapp-share"],
     schema: invitationSchema,
   }),
@@ -102,7 +102,7 @@ export const templates: Template[] = [
   }),
   defineTemplate({
     slug: "ivory-heritage",
-    version: "1.0.1",
+    version: "1.0.2",
     schemaVersion: 1,
     activationSku: "PREMIUM_ACTIVATION",
     name: "Ivory Heritage",
@@ -111,7 +111,7 @@ export const templates: Template[] = [
     category: "Pernikahan",
     price: 149000,
     style: "heritage",
-    tags: ["Klasik", "Gading", "Premium"],
+    tags: ["Klasik", "Gading", "Eksklusif"],
     features: ["cover", "gallery", "gift-info", "maps", "music", "rsvp", "whatsapp-share"],
     schema: invitationSchema,
   }),
@@ -147,7 +147,7 @@ export const templates: Template[] = [
   }),
   defineTemplate({
     slug: "taman-abadi",
-    version: "1.1.1",
+    version: "1.1.2",
     schemaVersion: 1,
     activationSku: "PREMIUM_ACTIVATION",
     name: "Taman Abadi",
@@ -157,7 +157,7 @@ export const templates: Template[] = [
     price: 149000,
     style: "garden",
     featured: true,
-    tags: ["Botani", "Klasik", "Premium"],
+    tags: ["Botani", "Klasik", "Eksklusif"],
     features: ["cover", "gallery", "gift-info", "maps", "music", "rsvp", "whatsapp-share"],
     schema: {
       ...invitationSchema,
