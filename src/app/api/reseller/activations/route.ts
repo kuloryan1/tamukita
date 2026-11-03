@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Manifest template ini tidak valid untuk aktivasi reseller." }, { status: 409 });
   }
   const templateValidation = validateTemplateFields(draft, manifest.data);
-  if (!templateValidation.valid) return NextResponse.json({ error: templateValidation.message ?? "Detail template belum lengkap." }, { status: 400 });
+  if (!templateValidation.valid) return NextResponse.json({ error: templateValidation.message ?? "Detail desain belum lengkap." }, { status: 400 });
   await prisma.invitation.updateMany({
     where: {
       id: invitation.id,

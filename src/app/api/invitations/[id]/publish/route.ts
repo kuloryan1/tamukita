@@ -65,7 +65,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const template = await ensureTemplateVersion(checkedDraft.templateId);
   if (!template) return NextResponse.json({ error: "Template tidak tersedia." }, { status: 400 });
   const templateValidation = validateTemplateFields(checkedDraft, template.templateData);
-  if (!templateValidation.valid) return NextResponse.json({ error: templateValidation.message ?? "Detail template belum lengkap." }, { status: 400 });
+  if (!templateValidation.valid) return NextResponse.json({ error: templateValidation.message ?? "Detail desain belum lengkap." }, { status: 400 });
   const existingLicense = await prisma.templateLicense.findFirst({
     where: { invitationId: invitation.id, templateVersionId: template.version.id },
     select: { id: true },

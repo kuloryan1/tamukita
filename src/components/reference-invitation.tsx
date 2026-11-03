@@ -157,7 +157,7 @@ export function ReferenceInvitation({
             <div className="reference-footer-actions">
               {!isExample && <PublicInvitationReport slug={slug} />}
               {isExample
-                ? <Link href={`/templates/${encodeURIComponent(preset.slug)}`}>Detail template <ArrowUpRight size={13} /></Link>
+                ? <Link href={`/templates/${encodeURIComponent(preset.slug)}`}>Detail desain <ArrowUpRight size={13} /></Link>
                 : <a href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noreferrer"><Send size={13} /> Bagikan undangan</a>}
             </div>
             <small>Dibuat dengan <Heart size={12} fill="currentColor" /> TamuKita</small>
