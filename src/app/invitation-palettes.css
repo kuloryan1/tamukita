@@ -1,0 +1,248 @@
+/* Color tokens are inherited by both the editor preview and published invitation. */
+.invitation-preview-theme[data-theme-color="rose"],
+.public-invitation-page[data-theme-color="rose"],
+.reference-invitation[data-theme-color="rose"] {
+  --invite-accent: #905064;
+  --invite-accent-strong: #663646;
+  --invite-surface: #f6e9ee;
+  --ref-accent: #905064;
+  --ref-accent-strong: #663646;
+  --ref-surface: #f6e9ee;
+  --garden-gold: #905064;
+}
+
+.invitation-preview-theme[data-theme-color="ocean"],
+.public-invitation-page[data-theme-color="ocean"],
+.reference-invitation[data-theme-color="ocean"] {
+  --invite-accent: #426d86;
+  --invite-accent-strong: #2c5065;
+  --invite-surface: #eaf2f6;
+  --ref-accent: #426d86;
+  --ref-accent-strong: #2c5065;
+  --ref-surface: #eaf2f6;
+  --garden-gold: #426d86;
+}
+
+.invitation-preview-theme[data-theme-color="sage"],
+.public-invitation-page[data-theme-color="sage"],
+.reference-invitation[data-theme-color="sage"] {
+  --invite-accent: #63785b;
+  --invite-accent-strong: #43543d;
+  --invite-surface: #edf1e8;
+  --ref-accent: #63785b;
+  --ref-accent-strong: #43543d;
+  --ref-surface: #edf1e8;
+  --garden-gold: #63785b;
+}
+
+.invitation-preview-theme[data-theme-color="terracotta"],
+.public-invitation-page[data-theme-color="terracotta"],
+.reference-invitation[data-theme-color="terracotta"] {
+  --invite-accent: #a4553c;
+  --invite-accent-strong: #723a2c;
+  --invite-surface: #f7ebe5;
+  --ref-accent: #a4553c;
+  --ref-accent-strong: #723a2c;
+  --ref-surface: #f7ebe5;
+  --garden-gold: #a4553c;
+}
+
+/* Shared public invitation sections use the selected palette for emphasis and actions. */
+.public-invitation-page[data-theme-color]:not([data-theme-color="default"]) :is(
+  .public-brand,
+  .public-hero-side h1 em,
+  .public-hero-names,
+  .public-date-icon,
+  .public-countdown > span,
+  .public-countdown b,
+  .public-countdown i,
+  .public-detail-inner h2 em,
+  .public-detail-card a,
+  .public-gallery-inner h2 em,
+  .public-gift-card h2 em,
+  .public-gift-account > b,
+  .public-gift-account > strong,
+  .public-footer > div svg,
+  .public-footer a,
+  .public-invitation-report-trigger,
+  .public-rsvp-demo-status,
+  .rsvp-count,
+  .guestbook-heading h2 em,
+  .guestbook-entry time
+) {
+  color: var(--invite-accent) !important;
+}
+
+.public-invitation-page[data-theme-color]:not([data-theme-color="default"]) :is(
+  .public-hero-rule,
+  .public-rsvp-demo-status::before,
+  .guestbook-form input[type="checkbox"]
+) {
+  accent-color: var(--invite-accent);
+  background-color: var(--invite-accent);
+}
+
+.public-invitation-page[data-theme-color]:not([data-theme-color="default"]) .public-date-icon {
+  background-color: var(--invite-surface);
+}
+
+.public-invitation-page[data-theme-color]:not([data-theme-color="default"]) :is(button[type="submit"], .button--dark) {
+  background-color: var(--invite-accent-strong) !important;
+  border-color: var(--invite-accent-strong) !important;
+  color: #fff !important;
+}
+
+.public-invitation-page[data-theme-color]:not([data-theme-color="default"]) .public-invitation-report-trigger:hover {
+  color: var(--invite-accent-strong) !important;
+}
+
+.public-invitation-page[data-template="taman-abadi"][data-theme-color]:not([data-theme-color="default"]) :is(.garden-envelope-prompt, .garden-envelope-status, .garden-envelope-skip) {
+  color: var(--garden-gold) !important;
+}
+
+.public-invitation-page[data-template="taman-abadi"][data-theme-color]:not([data-theme-color="default"]) .garden-envelope-skip {
+  background-color: var(--invite-surface);
+  border-bottom-color: var(--garden-gold);
+}
+
+/* Curated templates keep their artwork while matching headings, links, and RSVP actions. */
+.reference-invitation[data-theme-color]:not([data-theme-color="default"]) :is(
+  .reference-hero-title,
+  .reference-hero-title i,
+  .reference-hero-intro,
+  .reference-hero-copy time,
+  .reference-hero-divider,
+  .reference-hero-divider i,
+  .reference-scroll-cue,
+  .reference-envelope-open-label,
+  .reference-envelope-copy,
+  .reference-countdown-section h2,
+  .reference-countdown-intro,
+  .reference-countdown-section .public-countdown b,
+  .reference-countdown-section .public-countdown i,
+  .reference-demo-section h2,
+  .reference-demo-section h3,
+  .reference-rsvp-section h2,
+  .reference-boarding-countdown > p,
+  .reference-boarding-countdown h2,
+  .reference-boarding-countdown .public-countdown b,
+  .reference-boarding-countdown .public-countdown i,
+  .reference-footer,
+  .reference-footer-actions a,
+  .reference-demo-venue-card > span,
+  .reference-demo-venue-card a,
+  .reference-demo-venue-card svg,
+  .reference-demo-timeline-index,
+  .reference-demo-timeline li > time,
+  .reference-demo-timeline li h3,
+  .reference-demo-attire-subtitle,
+  .reference-demo-palette-caption,
+  .reference-demo-menu-card article > span,
+  .reference-demo-gift-card > span,
+  .reference-demo-faq-list summary,
+  .reference-demo-accommodation-card h3,
+  .reference-demo-rsvp-choice legend,
+  .reference-demo-rsvp-success > svg,
+  .reference-demo-rsvp-success p,
+  .reference-event-details svg,
+  .reference-gift-section > .reference-section-inner > svg
+) {
+  color: var(--ref-accent) !important;
+}
+
+.reference-invitation[data-theme-color]:not([data-theme-color="default"]) .reference-hero-divider i {
+  background: color-mix(in srgb, var(--ref-accent) 65%, transparent) !important;
+}
+
+.reference-invitation[data-theme-color]:not([data-theme-color="default"]) .reference-demo-timeline::before {
+  background: linear-gradient(var(--ref-accent), color-mix(in srgb, var(--ref-accent) 55%, #fff), var(--ref-accent)) !important;
+}
+
+.reference-invitation[data-theme-color]:not([data-theme-color="default"]) .reference-demo-timeline li::before {
+  border-color: var(--ref-accent) !important;
+}
+
+.reference-invitation[data-theme-color]:not([data-theme-color="default"]) .reference-envelope-skip {
+  background-color: var(--ref-surface) !important;
+  border-color: var(--ref-accent) !important;
+  color: var(--ref-accent-strong) !important;
+}
+
+.reference-invitation[data-theme-color]:not([data-theme-color="default"]) :is(
+  .reference-demo-rsvp-submit,
+  .reference-demo-gift-card button,
+  .reference-envelope-open-button
+) {
+  background-color: var(--ref-accent-strong) !important;
+  border-color: var(--ref-accent-strong) !important;
+  color: #fff !important;
+}
+
+.reference-invitation[data-theme-color]:not([data-theme-color="default"]) :is(
+  .reference-demo-rsvp-form,
+  .reference-demo-faq-list details,
+  .reference-demo-rsvp-choice label:has(input:checked),
+  .reference-demo-venue-card,
+  .reference-demo-gift-card,
+  .reference-demo-attire-panel,
+  .reference-boarding-destination a,
+  .reference-demo-photo-wall figure
+) {
+  border-color: color-mix(in srgb, var(--ref-accent) 38%, transparent);
+}
+
+.reference-invitation[data-theme-color]:not([data-theme-color="default"]) :is(
+  .reference-demo-rsvp-form,
+  .reference-demo-faq-list details,
+  .reference-demo-gift-card,
+  .reference-demo-attire-panel,
+  .reference-boarding-destination a,
+  .reference-demo-photo-wall figure
+) {
+  background-color: var(--ref-surface);
+}
+
+/* The boarding-pass demo is rendered outside the standard curated invitation shell. */
+.reference-invitation[data-template="destinasi-cinta"][data-theme-color]:not([data-theme-color="default"]) :is(
+  .reference-boarding-eyebrow,
+  .reference-boarding-ticket-header span:last-child,
+  .reference-boarding-invited,
+  .reference-boarding-ticket h1,
+  .reference-boarding-tagline,
+  .reference-boarding-date > span,
+  .reference-boarding-travel-meta span,
+  .reference-boarding-code > span,
+  .reference-boarding-destination > span,
+  .reference-boarding-destination > svg,
+  .reference-boarding-destination a,
+  .reference-boarding-countdown > p,
+  .reference-boarding-countdown h2,
+  .reference-boarding-countdown .public-countdown b small
+) {
+  color: var(--ref-accent) !important;
+}
+
+.reference-invitation[data-template="destinasi-cinta"][data-theme-color]:not([data-theme-color="default"]) :is(
+  .reference-boarding-ticket,
+  .reference-boarding-ticket::before,
+  .reference-boarding-ticket::after
+) {
+  border-color: color-mix(in srgb, var(--ref-accent) 55%, #fff);
+}
+
+.reference-invitation[data-template="destinasi-cinta"][data-theme-color]:not([data-theme-color="default"]) .reference-boarding-countdown .public-countdown b {
+  background-color: var(--ref-surface);
+  border-color: color-mix(in srgb, var(--ref-accent) 45%, #fff);
+}
+
+.reference-invitation[data-template="destinasi-cinta"][data-theme-color]:not([data-theme-color="default"]) .reference-boarding-destination {
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ref-accent) 55%, #fff) 0 1px, color-mix(in srgb, var(--ref-accent) 35%, #fff) 1px 3px);
+}
+
+.reference-invitation[data-template="destinasi-cinta"][data-theme-color]:not([data-theme-color="default"]) .reference-boarding-ticket {
+  background-image: linear-gradient(155deg, #fffdf7, var(--ref-surface));
+}
+
+.reference-invitation[data-template="destinasi-cinta"][data-theme-color]:not([data-theme-color="default"]) .reference-boarding-rule {
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--ref-accent) 55%, transparent) 15% 85%, transparent);
+}

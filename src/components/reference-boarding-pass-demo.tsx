@@ -20,7 +20,7 @@ export function ReferenceBoardingPassDemo({ draft, dateString, mapsUrl, preset }
 
   return (
     <ReferenceMotionProvider isExample>
-      <main className="reference-invitation reference-invitation--destinasi-cinta" data-template="destinasi-cinta" data-invitation-publication="demo">
+      <main className="reference-invitation reference-invitation--destinasi-cinta" data-template="destinasi-cinta" data-theme-color={draft.themeColor ?? "default"} data-invitation-publication="demo">
         <div className="reference-invitation-frame reference-boarding-page" data-reference-content data-demo-fixture="static-visual-only">
           <section className="reference-boarding-ticket-section" aria-labelledby="reference-boarding-title">
             <p className="reference-boarding-eyebrow">SIMPAN TANGGAL</p>

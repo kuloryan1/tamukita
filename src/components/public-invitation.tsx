@@ -37,7 +37,7 @@ export function PublicInvitation({ slug, initialDraft, initialRsvpCount, initial
   const shareText = `${draft.eventKind === "Pernikahan" ? `Undangan pernikahan ${hostNames.join(" & ")}` : draft.eventTitle} — ${invitationUrl}`;
 
   return (
-    <main className="public-invitation-page" data-template={activeTemplateSlug} data-invitation-publication={isExample ? "demo" : "published"} data-theme-font={draft.themeFont ?? "classic"}>
+    <main className="public-invitation-page" data-template={activeTemplateSlug} data-invitation-publication={isExample ? "demo" : "published"} data-theme-font={draft.themeFont ?? "classic"} data-theme-color={draft.themeColor ?? "default"}>
       {isGardenTemplate && <GardenEnvelopeIntro hostOne={draft.hostOne} hostTwo={draft.hostTwo} monogram={draft.sealMonogram} isExample={isExample} />}
       <div className="public-topbar">
         <Link href="/" className="public-brand"><Heart size={14} fill="currentColor" /> tamukita</Link>
