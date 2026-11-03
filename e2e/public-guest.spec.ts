@@ -229,7 +229,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
     childRsvpBrowserRequests += 1;
     await route.continue();
   });
-  await page.getByRole("checkbox", { name: "RSVP ini mencantumkan nama atau informasi anak." }).check();
+  await page.getByRole("checkbox", { name: "Konfirmasi kehadiran ini mencantumkan nama atau informasi anak." }).check();
   await page.getByRole("button", { name: "Kirim konfirmasi" }).click();
   await expect(page.locator('.editor-error[role="alert"]')).toHaveText("Persetujuan orang tua/wali wajib sebelum mengirim data anak.");
   expect(childRsvpBrowserRequests).toBe(0);
