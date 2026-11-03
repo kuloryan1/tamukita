@@ -13,7 +13,7 @@ export function isLongInvitationTitle(draft: InvitationDraft) {
 }
 
 export function invitationKicker(draft: InvitationDraft) {
-  return draft.eventKind === "Pernikahan" ? "THE WEDDING OF" : draft.eventKind.toUpperCase();
+  return draft.eventKind === "Pernikahan" ? "UNDANGAN PERNIKAHAN" : draft.eventKind.toUpperCase();
 }
 
 export function InvitationFamilyDetails({ draft }: { draft: InvitationDraft }) {

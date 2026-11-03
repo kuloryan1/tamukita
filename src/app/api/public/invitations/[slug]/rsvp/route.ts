@@ -23,7 +23,7 @@ const rsvpSchema = z.object({
 export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const body = await readJsonBody(request, 16_000);
-  if (!body.ok) return NextResponse.json({ error: "Isi RSVP tidak valid." }, { status: body.status });
+  if (!body.ok) return NextResponse.json({ error: "Isi konfirmasi kehadiran tidak valid." }, { status: body.status });
   const parsed = rsvpSchema.safeParse(body.value);
   if (!parsed.success) return NextResponse.json({ error: `Isi nama dan pilihan kehadiran dengan benar. ${CHILD_DATA_CONSENT_ERROR}` }, { status: 400 });
   const prisma = getPrismaClient();
@@ -33,7 +33,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   });
   if (!invitation) return NextResponse.json({ error: "Undangan tidak ditemukan atau belum diterbitkan." }, { status: 404 });
   const featureAccess = await getInvitationFeatureAccess(invitation.id);
-  if (!featureAccess.rsvp) return NextResponse.json({ error: "Paket undangan ini tidak mengaktifkan RSVP." }, { status: 403 });
+  if (!featureAccess.rsvp) return NextResponse.json({ error: "Paket undangan ini tidak mengaktifkan konfirmasi kehadiran." }, { status: 403 });
 
   let guestId: string | null = null;
   let displayName = parsed.data.name ?? "";
@@ -51,7 +51,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   const ipAllowed = await allowRequest(`rsvp:ip:${address}`, 10, 60 * 60);
   const invitationAllowed = await allowRequest(`rsvp:invitation:${invitation.id}:${address}`, 5, 60 * 60);
   if (!ipAllowed || !invitationAllowed) {
-    return NextResponse.json({ error: "Terlalu banyak RSVP dari perangkat ini. Coba lagi nanti." }, { status: 429 });
+    return NextResponse.json({ error: "Terlalu banyak konfirmasi kehadiran dari perangkat ini. Coba lagi nanti." }, { status: 429 });
   }
 
   const ownerEmail = invitation.owner.email;

@@ -90,9 +90,9 @@ export function DestinasiCintaTemplate({ draft, recipientName, full = false }: T
   return (
     <article className={`invite-preview invite-preview--boarding template-code-renderer template-code-renderer--boarding${full ? " invite-preview--full" : ""}`} data-template="destinasi-cinta">
       <section className="boarding-ticket">
-        <header className="boarding-ticket-heading"><span>TAMUKITA · SAVE THE DATE</span><Plane size={17} aria-hidden="true" /></header>
+        <header className="boarding-ticket-heading"><span>TAMUKITA · CATAT TANGGAL</span><Plane size={17} aria-hidden="true" /></header>
         <div className="boarding-ticket-main" style={invitationCoverStyle(draft)}>
-          <span>DESTINATION WEDDING</span>
+          <span>PERNIKAHAN DI DESTINASI</span>
           <h2 className={isLongInvitationTitle(draft) ? "invite-title--long" : undefined}>{invitationTitle(draft)}</h2>
           <i>Perjalanan menuju hari bahagia</i>
         </div>

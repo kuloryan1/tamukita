@@ -57,7 +57,7 @@ export function PublicInvitation({ slug, initialDraft, initialRsvpCount, initial
           <div className="public-date-card"><span className="public-date-icon"><CalendarDays size={17} /></span><span><small>HARI & TANGGAL</small><b>{dateString}</b><small>{draft.eventTime || "Waktu menyusul"} WIB</small></span></div>
           <a className="public-scroll-link" href="#detail-acara">LIHAT DETAIL ACARA <ArrowDown size={14} /></a>
         </div>
-        <div className="public-preview-side">{preview}<div className="public-side-caption"><span>Made with <Heart size={12} fill="currentColor" /> by TamuKita</span><span>{slug}</span></div></div>
+        <div className="public-preview-side">{preview}<div className="public-side-caption"><span>Dibuat dengan <Heart size={12} fill="currentColor" /> cinta oleh TamuKita</span><span>{slug}</span></div></div>
       </div>
       {!isGardenTemplate && <PublicInvitationCountdown eventDate={draft.eventDate} eventTime={draft.eventTime} />}
       {isGardenTemplate
@@ -70,7 +70,7 @@ export function PublicInvitation({ slug, initialDraft, initialRsvpCount, initial
             <div className="public-detail-card"><span className="detail-card-icon"><MapPin size={18} /></span><small>LOKASI</small><b>{draft.venue || "Lokasi acara"}</b><span>{draft.address}</span>{mapsUrl && <a href={mapsUrl} target="_blank" rel="noreferrer">Buka peta <ArrowUpRight size={13} /></a>}</div>
           </div>
           {isExample
-            ? <span className="public-rsvp-demo-status" role="status">Contoh undangan · RSVP nonaktif</span>
+            ? <span className="public-rsvp-demo-status" role="status">Contoh undangan · konfirmasi kehadiran tidak aktif</span>
             : featureAccess.rsvp && <PublicInvitationRsvp slug={slug} initialCount={initialRsvpCount} recipientName={recipientName} guestToken={guestToken} />}
         </div>
       </section>}

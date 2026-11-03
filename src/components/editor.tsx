@@ -934,7 +934,7 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
                   <p>Pilih satu kali paket untuk masa hosting dan fitur undangan.</p>
                   <div className="editor-package-list">
                     {customerPlans.map((plan) => <button type="button" key={plan.id} className={`editor-package-choice${selectedPlanId === plan.id ? " is-selected" : ""}`} aria-pressed={selectedPlanId === plan.id} onClick={() => setSelectedPlanId(plan.id)}>
-                      <span className="editor-package-choice-copy"><b>{plan.name}</b>{plan.description && <small>{plan.description}</small>}<small>{summarizeInvitationFeatureAccess(resolveInvitationFeatureAccess(plan.entitlements)).join(" · ") || "Tanpa galeri, musik, atau RSVP"}</small><small>Hosting {plan.durationDays} hari</small></span>
+                      <span className="editor-package-choice-copy"><b>{plan.name}</b>{plan.description && <small>{plan.description}</small>}<small>{summarizeInvitationFeatureAccess(resolveInvitationFeatureAccess(plan.entitlements)).join(" · ") || "Tanpa galeri, musik, atau konfirmasi kehadiran"}</small><small>Masa tayang {plan.durationDays} hari</small></span>
                       <strong>{formatRupiah(plan.priceIdr)}</strong>
                     </button>)}
                   </div>

@@ -119,7 +119,7 @@ export function createInitialDraft(): InvitationDraft {
     familyDetails: "",
     eventDate: "2027-05-22",
     eventTime: "10:00",
-    venue: "The Garden House",
+    venue: "Rumah Taman",
     address: "Jl. Kemang Raya No. 12, Jakarta Selatan",
     mapsUrl: "",
     story: "Dengan penuh kebahagiaan, kami mengundang Anda untuk menjadi bagian dari hari istimewa kami.",

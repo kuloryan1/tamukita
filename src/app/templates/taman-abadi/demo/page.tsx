@@ -7,7 +7,7 @@ import { getTemplate } from "@/lib/templates";
 
 export const metadata: Metadata = {
   title: "Taman Abadi — Contoh Undangan",
-  description: "Lihat contoh lengkap undangan Taman Abadi, dari sampul amplop hingga RSVP.",
+  description: "Lihat contoh lengkap undangan Taman Abadi, dari sampul amplop hingga konfirmasi kehadiran.",
 };
 
 type TamanAbadiDemoPageProps = {

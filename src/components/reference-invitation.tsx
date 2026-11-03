@@ -98,22 +98,22 @@ export function ReferenceInvitation({
             <ReferenceHeroMedia preset={preset} />
             <div className="reference-hero-shade" aria-hidden="true" />
             <div className="reference-hero-copy">
-              <span className="reference-hero-kicker">{draft.eventKind === "Pernikahan" ? "THE WEDDING OF" : draft.eventKind.toUpperCase()}</span>
+              <span className="reference-hero-kicker">{draft.eventKind === "Pernikahan" ? "UNDANGAN PERNIKAHAN" : draft.eventKind.toUpperCase()}</span>
               <h1 className="reference-hero-title" tabIndex={-1}>
                 {draft.eventKind === "Pernikahan" && hostNames.length === 2
                   ? <><span>{hostNames[0]}</span><i aria-hidden="true">&amp;</i><span>{hostNames[1]}</span></>
                   : <span>{title}</span>}
               </h1>
-              <p className="reference-hero-intro">{preset.slug === "ivory-heritage" || preset.slug === "royal-gold" ? "We are getting married" : preset.slug === "wisteria-senja" ? "He asked, she said yes" : preset.slug === "elegant-cream" ? "Two hearts, one love" : preset.slug === "modern-sage" ? "Finally, we do" : "Dengan bahagia, kami menanti"}</p>
+              <p className="reference-hero-intro">{preset.slug === "ivory-heritage" || preset.slug === "royal-gold" ? "Kami akan menikah" : preset.slug === "wisteria-senja" ? "Ia melamar, aku menjawab ya" : preset.slug === "elegant-cream" ? "Dua hati, satu cinta" : preset.slug === "modern-sage" ? "Akhirnya, kami menikah" : "Dengan bahagia, kami menanti"}</p>
               <span className="reference-hero-divider" aria-hidden="true"><i />✦<i /></span>
               <time dateTime={draft.eventDate}>{dateString}</time>
-              <a className="reference-scroll-cue" href={preset.slug === "royal-gold" || preset.slug === "wisteria-senja" ? "#rsvp" : "#countdown"}>{preset.slug === "royal-gold" || preset.slug === "wisteria-senja" ? "Scroll to RSVP" : preset.slug === "modern-sage" ? "Scroll for more details" : "Gulir untuk melihat"} <ArrowDown size={15} aria-hidden="true" /></a>
+              <a className="reference-scroll-cue" href={preset.slug === "royal-gold" || preset.slug === "wisteria-senja" ? "#rsvp" : "#countdown"}>{preset.slug === "royal-gold" || preset.slug === "wisteria-senja" ? "Gulir untuk konfirmasi kehadiran" : preset.slug === "modern-sage" ? "Gulir untuk melihat detail lainnya" : "Gulir untuk melihat"} <ArrowDown size={15} aria-hidden="true" /></a>
             </div>
           </section>
           <section className="reference-countdown-section" id="countdown">
             <span className="reference-kicker">HARI YANG KAMI NANTIKAN</span>
-            <h2>Countdown</h2>
-            {(preset.slug === "blush-serenade" || preset.slug === "ivory-heritage" || preset.slug === "royal-gold") && <p className="reference-countdown-intro">{preset.slug === "blush-serenade" ? "We can’t wait for this moment!" : "We can’t wait until this moment!"}</p>}
+            <h2>Hitung Mundur</h2>
+            {(preset.slug === "blush-serenade" || preset.slug === "ivory-heritage" || preset.slug === "royal-gold") && <p className="reference-countdown-intro">Kami tak sabar menyambut hari istimewa ini!</p>}
             <PublicInvitationCountdown eventDate={draft.eventDate} eventTime={draft.eventTime} label="" />
           </section>
           {isExample

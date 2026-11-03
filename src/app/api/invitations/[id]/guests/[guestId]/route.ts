@@ -41,7 +41,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   });
   if (!invitation) return NextResponse.json({ error: "Undangan tidak ditemukan atau aksesnya sudah tidak tersedia." }, { status: 404 });
   const featureAccess = await getInvitationFeatureAccess(invitation.id);
-  if (!featureAccess.rsvp) return NextResponse.json({ error: "Paket undangan ini tidak mengaktifkan RSVP dan pengelolaan tamu." }, { status: 403 });
+  if (!featureAccess.rsvp) return NextResponse.json({ error: "Paket undangan ini tidak mengaktifkan konfirmasi kehadiran dan pengelolaan tamu." }, { status: 403 });
 
   const result = await prisma.$transaction(async (tx) => {
     const link = await tx.guestLink.findFirst({ where: { invitationId: invitation.id, guestId }, select: { id: true, revokedAt: true } });
