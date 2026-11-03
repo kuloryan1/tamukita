@@ -1,7 +1,7 @@
 import { CalendarDays, Flower2, MapPin, Plane, Sparkles } from "lucide-react";
 import type { InvitationDraft } from "@/lib/invitations";
 import type { TemplateRenderProps } from "@/lib/template-sdk";
-import { InvitationFamilyDetails, invitationCoverStyle, invitationDate, invitationKicker, invitationTitle } from "@/templates/shared";
+import { InvitationFamilyDetails, invitationCoverStyle, invitationDate, invitationKicker, invitationTitle, isLongInvitationTitle } from "@/templates/shared";
 
 function InvitationDetailsPanel({
   draft,
@@ -36,7 +36,7 @@ export function BlushSerenadeTemplate({ draft, recipientName, full = false }: Te
         {!draft.coverPhoto && <><span className="blush-bloom blush-bloom--one" aria-hidden="true">✿</span><span className="blush-bloom blush-bloom--two" aria-hidden="true">✿</span></>}
         <div className="blush-heading">
           <span>{invitationKicker(draft)}</span>
-          <h2>{invitationTitle(draft)}</h2>
+          <h2 className={isLongInvitationTitle(draft) ? "invite-title--long" : undefined}>{invitationTitle(draft)}</h2>
           <div className="blush-heading-flower"><Flower2 size={16} aria-hidden="true" /><i>✦</i><Flower2 size={16} aria-hidden="true" /></div>
           <time className="blush-photo-date">{invitationDate(draft.eventDate)}</time>
         </div>
@@ -56,7 +56,7 @@ export function IvoryHeritageTemplate({ draft, recipientName, full = false }: Te
         <div className="heritage-copy">
           <span>{invitationKicker(draft)}</span>
           <Sparkles size={17} aria-hidden="true" />
-          <h2>{invitationTitle(draft)}</h2>
+          <h2 className={isLongInvitationTitle(draft) ? "invite-title--long" : undefined}>{invitationTitle(draft)}</h2>
           <i>{invitationDate(draft.eventDate)}</i>
         </div>
       </div>
@@ -76,7 +76,7 @@ export function WisteriaSenjaTemplate({ draft, recipientName, full = false }: Te
         </>}
         <div className="wisteria-copy">
           <span>{invitationKicker(draft)}</span>
-          <h2>{invitationTitle(draft)}</h2>
+          <h2 className={isLongInvitationTitle(draft) ? "invite-title--long" : undefined}>{invitationTitle(draft)}</h2>
           <i>{invitationDate(draft.eventDate)}</i>
         </div>
       </div>
@@ -93,7 +93,7 @@ export function DestinasiCintaTemplate({ draft, recipientName, full = false }: T
         <header className="boarding-ticket-heading"><span>TAMUKITA · SAVE THE DATE</span><Plane size={17} aria-hidden="true" /></header>
         <div className="boarding-ticket-main" style={invitationCoverStyle(draft)}>
           <span>DESTINATION WEDDING</span>
-          <h2>{invitationTitle(draft)}</h2>
+          <h2 className={isLongInvitationTitle(draft) ? "invite-title--long" : undefined}>{invitationTitle(draft)}</h2>
           <i>Perjalanan menuju hari bahagia</i>
         </div>
         <div className="boarding-ticket-meta">
@@ -126,7 +126,7 @@ export function TamanAbadiTemplate({ draft, recipientName, full = false, mode }:
         <div className="garden-copy">
           <span className="garden-kicker">{coverLabel}</span>
           <time>{shortDate}</time>
-          <Heading className="garden-copy-heading" tabIndex={mode === "public" ? -1 : undefined}>{draft.eventKind === "Pernikahan" && hostNames.length > 0
+          <Heading className={`garden-copy-heading${isLongInvitationTitle(draft) ? " invite-title--long" : ""}`} tabIndex={mode === "public" ? -1 : undefined}>{draft.eventKind === "Pernikahan" && hostNames.length > 0
             ? <><span>{hostNames[0]}</span>{hostNames[1] && <><i aria-hidden="true">&amp;</i><span>{hostNames[1]}</span></>}</>
             : <span>{invitationTitle(draft)}</span>}
           </Heading>

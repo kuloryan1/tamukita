@@ -5,6 +5,7 @@ import { ReferenceEnvelopeIntro } from "@/components/reference-envelope-intro";
 import { ReferenceMotionProvider } from "@/components/reference-motion-provider";
 import type { InvitationDraft } from "@/lib/invitations";
 import type { ReferenceTemplatePreset } from "@/lib/reference-template-presets";
+import { isLongInvitationTitle } from "@/templates/shared";
 
 export function ReferenceBoardingPassDemo({ draft, dateString, mapsUrl, preset }: {
   draft: InvitationDraft;
@@ -29,7 +30,7 @@ export function ReferenceBoardingPassDemo({ draft, dateString, mapsUrl, preset }
                 <span><Plane size={14} aria-hidden="true" /> TAMUKITA AIR</span>
               </header>
               <p className="reference-boarding-invited">YOU’RE INVITED TO</p>
-              <h1 className="reference-hero-title" id="reference-boarding-title" tabIndex={-1}>{names[0]} <i aria-hidden="true">&amp;</i><br />{names[1]}</h1>
+              <h1 className={`reference-hero-title${isLongInvitationTitle(draft) ? " reference-hero-title--long" : ""}`} id="reference-boarding-title" tabIndex={-1}>{names[0]} <i aria-hidden="true">&amp;</i><br />{names[1]}</h1>
               <p className="reference-boarding-tagline">Perjalanan menuju hari bahagia</p>
               <div className="reference-boarding-rule" aria-hidden="true" />
               <div className="reference-boarding-date">

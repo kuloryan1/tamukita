@@ -1,13 +1,13 @@
 import { CalendarDays, Flower2, MapPin } from "lucide-react";
 import type { TemplateRenderProps } from "@/lib/template-sdk";
-import { InvitationFamilyDetails, invitationCoverStyle, invitationDate, invitationKicker, invitationTitle } from "@/templates/shared";
+import { InvitationFamilyDetails, invitationCoverStyle, invitationDate, invitationKicker, invitationTitle, isLongInvitationTitle } from "@/templates/shared";
 
 export function ElegantCreamTemplate({ draft, recipientName, full = false }: TemplateRenderProps) {
   return (
     <article className={`invite-preview invite-preview--cream template-code-renderer template-code-renderer--cream${full ? " invite-preview--full" : ""}`} data-template="elegant-cream">
       <header className="template-cream-heading">
         <span>{invitationKicker(draft)}</span>
-        <h2>{invitationTitle(draft)}</h2>
+        <h2 className={isLongInvitationTitle(draft) ? "invite-title--long" : undefined}>{invitationTitle(draft)}</h2>
         <i aria-hidden="true" />
       </header>
       <div className="invite-photo template-cream-photo" style={invitationCoverStyle(draft)}>

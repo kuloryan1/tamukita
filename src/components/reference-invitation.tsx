@@ -11,7 +11,7 @@ import { ReferenceEnvelopeIntro } from "@/components/reference-envelope-intro";
 import { ReferenceMotionProvider } from "@/components/reference-motion-provider";
 import { ReferenceHeroMedia } from "@/components/reference-hero-media";
 import { ReferenceBackdropMedia } from "@/components/reference-backdrop-media";
-import { InvitationFamilyDetails, invitationKicker, invitationTitle } from "@/templates/shared";
+import { InvitationFamilyDetails, invitationKicker, invitationTitle, isLongInvitationTitle } from "@/templates/shared";
 import { legacyInvitationFeatureAccess, type InvitationFeatureAccess } from "@/lib/invitation-features";
 import { safeHttpsUrl, type InvitationDraft } from "@/lib/invitations";
 import type { ReferenceTemplatePreset } from "@/lib/reference-template-presets";
@@ -43,6 +43,7 @@ export function ReferenceInvitation({
 }) {
   const hostNames = [draft.hostOne, draft.hostTwo].filter(Boolean);
   const title = invitationTitle(draft);
+  const hasLongTitle = isLongInvitationTitle(draft);
   const dateString = draft.eventDate
     ? new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(new Date(`${draft.eventDate}T12:00:00+07:00`))
     : "Tanggal akan diumumkan";
@@ -90,7 +91,7 @@ export function ReferenceInvitation({
 
   return (
     <ReferenceMotionProvider isExample={isExample}>
-      <main className={`reference-invitation reference-invitation--${preset.slug}`} data-template={preset.slug} data-theme-font={draft.themeFont ?? "classic"} data-theme-color={draft.themeColor ?? "default"} data-invitation-publication={isExample ? "demo" : "published"}>
+      <main className={`reference-invitation reference-invitation--${preset.slug}${hasLongTitle ? " reference-invitation--long-title" : ""}`} data-template={preset.slug} data-theme-font={draft.themeFont ?? "classic"} data-theme-color={draft.themeColor ?? "default"} data-invitation-publication={isExample ? "demo" : "published"}>
         <div className="reference-invitation-frame" data-reference-content>
           {draft.musicUrl && featureAccess.music && <div className="reference-music"><PublicInvitationMusic src={draft.musicUrl} title={draft.musicTitle} /></div>}
           <section className="reference-hero" aria-label="Undangan pernikahan">

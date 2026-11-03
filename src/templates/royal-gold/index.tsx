@@ -1,6 +1,6 @@
 import { CalendarDays, MapPin, Sparkles } from "lucide-react";
 import type { TemplateRenderProps } from "@/lib/template-sdk";
-import { InvitationFamilyDetails, invitationCoverStyle, invitationDate, invitationKicker, invitationTitle } from "@/templates/shared";
+import { InvitationFamilyDetails, invitationCoverStyle, invitationDate, invitationKicker, invitationTitle, isLongInvitationTitle } from "@/templates/shared";
 
 export function RoyalGoldTemplate({ draft, recipientName, full = false }: TemplateRenderProps) {
   return (
@@ -11,7 +11,7 @@ export function RoyalGoldTemplate({ draft, recipientName, full = false }: Templa
         {!draft.coverPhoto && <span className="invite-photo-monogram">{[draft.hostOne, draft.hostTwo].filter(Boolean).map((name) => name[0]).join(" & ") || "T&K"}</span>}
         <div className="invite-copy">
           <span className="invite-kicker">{invitationKicker(draft)}</span>
-          <h2>{invitationTitle(draft)}</h2>
+          <h2 className={isLongInvitationTitle(draft) ? "invite-title--long" : undefined}>{invitationTitle(draft)}</h2>
           <span className="invite-divider" />
           <span className="invite-date-short">{invitationDate(draft.eventDate)}</span>
         </div>

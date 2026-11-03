@@ -1,6 +1,6 @@
 import { CalendarDays, MapPin, Sparkles } from "lucide-react";
 import type { TemplateRenderProps } from "@/lib/template-sdk";
-import { InvitationFamilyDetails, invitationCoverStyle, invitationDate, invitationKicker, invitationTitle } from "@/templates/shared";
+import { InvitationFamilyDetails, invitationCoverStyle, invitationDate, invitationKicker, invitationTitle, isLongInvitationTitle } from "@/templates/shared";
 
 export function CuratedManifestTemplate({ draft, recipientName, full = false, template }: TemplateRenderProps) {
   const style = template?.style ?? "royal";
@@ -13,7 +13,7 @@ export function CuratedManifestTemplate({ draft, recipientName, full = false, te
       <div className="invite-decoration invite-decoration--bottom">✳</div>
       <div className="invite-photo" style={invitationCoverStyle(draft)}>
         {!draft.coverPhoto && <span className="invite-photo-monogram">{[draft.hostOne, draft.hostTwo].filter(Boolean).map((name) => name[0]).join(" & ") || "T&K"}</span>}
-        <div className="invite-copy"><span className="invite-kicker">{invitationKicker(draft)}</span><h2>{invitationTitle(draft)}</h2><span className="invite-divider" /><span className="invite-date-short">{invitationDate(draft.eventDate)}</span></div>
+        <div className="invite-copy"><span className="invite-kicker">{invitationKicker(draft)}</span><h2 className={isLongInvitationTitle(draft) ? "invite-title--long" : undefined}>{invitationTitle(draft)}</h2><span className="invite-divider" /><span className="invite-date-short">{invitationDate(draft.eventDate)}</span></div>
       </div>
       <div className="invite-details">
         <p className="invite-greeting">Kepada Yth.{recipientName ? ` ${recipientName}` : ""}</p>
