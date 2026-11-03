@@ -10,13 +10,20 @@ type TemplateRendererRegistration = { component: TemplateRenderer; requiresAdmin
 const renderers = new Map<string, TemplateRendererRegistration>([
   ["royal-gold@1.0.0", { component: RoyalGoldTemplate, requiresAdminReview: false }],
   ["elegant-cream@1.0.0", { component: ElegantCreamTemplate, requiresAdminReview: false }],
+  ["elegant-cream@1.0.1", { component: ElegantCreamTemplate, requiresAdminReview: false }],
   ["modern-sage@1.0.0", { component: ModernSageTemplate, requiresAdminReview: false }],
+  ["modern-sage@1.0.1", { component: ModernSageTemplate, requiresAdminReview: false }],
   ["blush-serenade@1.0.0", { component: BlushSerenadeTemplate, requiresAdminReview: false }],
+  ["blush-serenade@1.0.1", { component: BlushSerenadeTemplate, requiresAdminReview: false }],
   ["ivory-heritage@1.0.0", { component: IvoryHeritageTemplate, requiresAdminReview: false }],
+  ["ivory-heritage@1.0.1", { component: IvoryHeritageTemplate, requiresAdminReview: false }],
   ["wisteria-senja@1.0.0", { component: WisteriaSenjaTemplate, requiresAdminReview: false }],
+  ["wisteria-senja@1.0.1", { component: WisteriaSenjaTemplate, requiresAdminReview: false }],
   ["destinasi-cinta@1.0.0", { component: DestinasiCintaTemplate, requiresAdminReview: false }],
+  ["destinasi-cinta@1.0.1", { component: DestinasiCintaTemplate, requiresAdminReview: false }],
   ["taman-abadi@1.0.0", { component: TamanAbadiTemplate, requiresAdminReview: false }],
   ["taman-abadi@1.1.0", { component: TamanAbadiTemplate, requiresAdminReview: false }],
+  ["taman-abadi@1.1.1", { component: TamanAbadiTemplate, requiresAdminReview: false }],
 ]);
 
 export function hasTemplateRenderer(slug: string, version: string) {
