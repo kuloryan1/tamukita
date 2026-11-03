@@ -55,7 +55,7 @@ export const templates: Template[] = [
   }),
   defineTemplate({
     slug: "elegant-cream",
-    version: "1.0.0",
+    version: "1.0.1",
     schemaVersion: 1,
     activationSku: "BASIC_ACTIVATION",
     name: "Elegant Cream",
@@ -71,7 +71,7 @@ export const templates: Template[] = [
   }),
   defineTemplate({
     slug: "modern-sage",
-    version: "1.0.0",
+    version: "1.0.1",
     schemaVersion: 1,
     activationSku: "BASIC_ACTIVATION",
     name: "Modern Sage",
@@ -87,7 +87,7 @@ export const templates: Template[] = [
   }),
   defineTemplate({
     slug: "blush-serenade",
-    version: "1.0.0",
+    version: "1.0.1",
     schemaVersion: 1,
     activationSku: "BASIC_ACTIVATION",
     name: "Blush Serenade",
@@ -102,7 +102,7 @@ export const templates: Template[] = [
   }),
   defineTemplate({
     slug: "ivory-heritage",
-    version: "1.0.0",
+    version: "1.0.1",
     schemaVersion: 1,
     activationSku: "PREMIUM_ACTIVATION",
     name: "Ivory Heritage",
@@ -117,7 +117,7 @@ export const templates: Template[] = [
   }),
   defineTemplate({
     slug: "wisteria-senja",
-    version: "1.0.0",
+    version: "1.0.1",
     schemaVersion: 1,
     activationSku: "BASIC_ACTIVATION",
     name: "Wisteria Senja",
@@ -132,7 +132,7 @@ export const templates: Template[] = [
   }),
   defineTemplate({
     slug: "destinasi-cinta",
-    version: "1.0.0",
+    version: "1.0.1",
     schemaVersion: 1,
     activationSku: "BASIC_ACTIVATION",
     name: "Destinasi Cinta",
@@ -147,7 +147,7 @@ export const templates: Template[] = [
   }),
   defineTemplate({
     slug: "taman-abadi",
-    version: "1.1.0",
+    version: "1.1.1",
     schemaVersion: 1,
     activationSku: "PREMIUM_ACTIVATION",
     name: "Taman Abadi",
