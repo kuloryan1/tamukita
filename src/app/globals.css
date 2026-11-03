@@ -1947,6 +1947,10 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
   text-wrap: balance;
   width: 100%;
 }
+.invite-preview .garden-copy-heading.invite-title--long {
+  max-width: 86% !important;
+  width: auto !important;
+}
 .invite-preview :is(.invite-copy, .blush-heading, .heritage-copy, .wisteria-copy, .garden-copy) {
   max-width: 100%;
   width: 100%;
