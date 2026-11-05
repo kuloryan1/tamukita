@@ -1,0 +1,503 @@
+/* Invitation-only fonts. SIL Open Font License copies accompany the local WOFF2 assets. */
+@font-face {
+  font-family: "Stationery Cormorant";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/stationery/cormorant-garamond-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Stationery Cormorant";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/stationery/cormorant-garamond-latin-500-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Stationery Cormorant";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/stationery/cormorant-garamond-latin-600-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Stationery Cormorant";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/stationery/cormorant-garamond-latin-400-italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Stationery DM Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/stationery/dm-sans-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Stationery DM Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/stationery/dm-sans-latin-500-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Stationery DM Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/stationery/dm-sans-latin-600-normal.woff2") format("woff2");
+}
+
+/* Scope base typography and resets: this stylesheet is safe to load beside the marketing/admin CSS. */
+.stationery-demo { --serif: var(--font-display); --sans: var(--font-sans); font-style: normal; font-weight: 400; letter-spacing: normal; text-transform: none; }
+.stationery-demo :where(h1, h2, h3, p, ul, ol) { margin: 0; }
+.stationery-demo :where(h1, h2, h3) { font-family: var(--font-display); font-weight: 400; letter-spacing: normal; }
+.stationery-demo :where(h1, h2, h3) em { color: var(--accent); font-weight: 400; }
+.stationery-demo :where(button, input, select, textarea) { font-family: var(--font-sans); }
+.stationery-demo .eyebrow { display: block; }
+.stationery-demo .text-link { font-weight: 400; }
+.stationery-demo .site-header, .stationery-demo .site-footer { background: transparent; }
+.stationery-demo .button:hover { transform: none; }
+
+.stationery-demo {
+  --font-display: "Stationery Cormorant", Georgia, serif;
+  --font-sans: "Stationery DM Sans", Arial, sans-serif;
+  --font-body: var(--font-sans);
+  --paper: #fbf7ed;
+  --ink: #4c4234;
+  --muted: #7a6a53;
+  --accent: #957746;
+  --line: #b6a78e;
+  --scene: #e9e3d8;
+  color-scheme: light;
+  font-synthesis: none;
+}
+
+.stationery-demo, .stationery-demo * { box-sizing: border-box; }
+.stationery-demo { scroll-behavior: smooth; scroll-padding-top: 30px; }
+.stationery-demo { margin: 0; min-width: 280px; background: var(--scene); color: var(--ink); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+.stationery-demo button, .stationery-demo input, .stationery-demo textarea, .stationery-demo select { font: inherit; }
+.stationery-demo button, .stationery-demo a, .stationery-demo input, .stationery-demo select, .stationery-demo textarea { -webkit-tap-highlight-color: transparent; }
+.stationery-demo button, .stationery-demo select { cursor: pointer; }
+.stationery-demo button:disabled { cursor: wait; }
+.stationery-demo button { color: inherit; }
+.stationery-demo a { color: inherit; text-decoration: none; }
+.stationery-demo svg { display: block; flex-shrink: 0; }
+.stationery-demo button svg, .stationery-demo a svg { flex-shrink: 0; }
+.stationery-demo::selection, .stationery-demo ::selection { color: var(--ink); background: #ded2ba; }
+.stationery-demo:focus-visible, .stationery-demo :focus-visible { outline: 2px solid var(--accent); outline-offset: 5px; }
+.stationery-demo [hidden] { display: none !important; }
+
+.stationery-demo { min-height: 100svh; background: var(--scene); color: var(--ink); overflow-x: clip; font-size: 13px; line-height: 1.65; }
+.stationery-demo .skip-link { position: fixed; z-index: 100; left: 16px; top: -80px; padding: 12px 18px; background: var(--ink); color: var(--paper); font-size: 13px; }
+.stationery-demo .skip-link:focus { top: 12px; }
+.stationery-demo .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.stationery-demo .eyebrow { margin: 0; color: var(--muted); font-family: var(--font-sans); font-size: 10px; font-weight: 500; line-height: 1.6; letter-spacing: .17em; text-transform: uppercase; }
+.stationery-demo .button { display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 48px; padding: 12px 21px; border: 1px solid transparent; border-radius: 1px; font-size: 12px; font-weight: 400; line-height: 1.5; letter-spacing: .015em; text-align: center; transition: background .2s ease, border-color .2s ease, transform .2s ease; }
+.stationery-demo .button.primary { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+.stationery-demo .button.primary:hover:not(:disabled) { background: color-mix(in srgb, var(--ink) 88%, var(--accent)); transform: translateY(-1px); }
+.stationery-demo .button.primary:disabled { opacity: .75; }
+.stationery-demo .button.secondary { border-color: color-mix(in srgb, var(--line) 70%, transparent); background: transparent; color: var(--ink); }
+.stationery-demo .button.secondary:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.stationery-demo .text-link { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 44px; padding: 4px 0; border: 0; background: none; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.stationery-demo .text-link:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 5px; }
+.stationery-demo .icon-button { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; padding: 0; border: 1px solid color-mix(in srgb, var(--line) 55%, transparent); border-radius: 50%; background: transparent; color: var(--ink); transition: background .2s ease, border-color .2s ease; }
+.stationery-demo .icon-button:hover { background: color-mix(in srgb, var(--paper) 60%, transparent); border-color: var(--accent); }
+.stationery-demo .spinner { display: inline-block; width: 15px; height: 15px; border: 1.5px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: stationery-spinner-turn .7s linear infinite; }
+
+/* A quiet editorial header lets the invitation remain the central object. */
+.stationery-demo .site-header { min-height: 88px; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 18px 48px; border-bottom: 1px solid color-mix(in srgb, var(--line) 28%, transparent); }
+.stationery-demo .wordmark { display: inline-flex; align-items: center; gap: 17px; min-height: 44px; }
+.stationery-demo .wordmark-initials { display: inline-flex; align-items: baseline; font-family: var(--font-display); font-size: 31px; font-weight: 500; line-height: 1; letter-spacing: -.065em; }
+.stationery-demo .wordmark-initials > span { margin: 0 5px; font-size: 19px; font-style: italic; font-weight: 400; color: var(--accent); }
+.stationery-demo .wordmark-label { display: block; padding-left: 17px; border-left: 1px solid color-mix(in srgb, var(--line) 70%, transparent); font-size: 8px; font-weight: 400; line-height: 1.7; letter-spacing: .15em; color: var(--muted); }
+.stationery-demo .header-actions { display: flex; align-items: center; gap: 28px; }
+.stationery-demo .demo-badge { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 10px; }
+.stationery-demo .demo-badge > span { width: 5px; height: 5px; border-radius: 50%; background: #879073; }
+.stationery-demo .catalog-link { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; font-size: 11px; }
+.stationery-demo .catalog-link svg { color: var(--muted); }
+.stationery-demo .catalog-link:hover span { text-decoration: underline; text-underline-offset: 5px; }
+.stationery-demo .share-trigger { width: 36px; height: 36px; }
+
+/* Paper, ink, and the small irregularities of printed stationery. */
+.stationery-demo .paper { position: relative; isolation: isolate; background-color: var(--paper); background-image: linear-gradient(140deg, #ffffff25, transparent 55%), repeating-linear-gradient(0deg, #70614002 0px, #70614002 1px, transparent 1px, transparent 3px); }
+.stationery-demo .paper-border { position: absolute; z-index: 0; inset: 15px; border: .7px solid var(--line); pointer-events: none; opacity: .8; }
+.stationery-demo .paper-border::after { content: ""; position: absolute; inset: 5px; border: .65px solid var(--line); opacity: .65; }
+.stationery-demo .corner-top { top: 19px; left: 19px; }
+.stationery-demo .corner-bottom { bottom: 19px; right: 19px; transform: rotate(180deg); }
+.stationery-demo .cover-botanical, .stationery-demo .hero-botanical { position: absolute; z-index: 0; width: 180px; height: auto; color: var(--accent); opacity: .65; pointer-events: none; }
+.stationery-demo .monogram { position: relative; display: flex; align-items: center; justify-content: center; width: 125px; height: 125px; flex-shrink: 0; color: var(--accent); }
+.stationery-demo .monogram > svg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .82; }
+.stationery-demo .monogram > span { position: relative; display: flex; align-items: baseline; padding-top: 5px; color: var(--ink); font-family: var(--font-display); font-size: 38px; font-weight: 400; letter-spacing: -.07em; line-height: 1; }
+.stationery-demo .monogram-amp { padding: 0 5px; color: var(--accent); font-size: .6em; font-style: italic; }
+.stationery-demo .monogram-small { width: 92px; height: 92px; }
+.stationery-demo .monogram-small > span { font-size: 29px; }
+
+.stationery-demo .cover-stage { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100svh - 88px); padding: 24px 32px 26px; background-image: radial-gradient(ellipse at 77% 16%, #ffffff38, transparent 60%), linear-gradient(127deg, #ffffff08 15%, transparent 40%, #ffffff16 64%, transparent 82%); }
+.stationery-demo .stage-caption { display: flex; align-items: center; justify-content: space-between; gap: 20px; width: 600px; max-width: 100%; margin-bottom: 18px; }
+.stationery-demo .stage-caption .eyebrow { font-size: 8px; letter-spacing: .16em; }
+.stationery-demo .edition-mark { color: var(--muted); font-size: 9px; line-height: 1.5; letter-spacing: .16em; white-space: nowrap; }
+.stationery-demo .invitation-cover { width: 600px; max-width: 100%; min-height: 698px; display: flex; align-items: center; justify-content: center; padding: 45px 62px 44px; box-shadow: 0 2px 5px #5147350a, 2px 13px 24px #5147350c, 12px 35px 65px #51473513; }
+.stationery-demo .cover-content { position: relative; z-index: 1; width: 100%; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.stationery-demo .cover-content > .monogram { margin-bottom: 8px; }
+.stationery-demo .cover-eyebrow { margin-bottom: 16px; font-size: 9px; }
+.stationery-demo .cover-names { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%; margin: 0; font-family: var(--font-display); font-size: 52px; font-weight: 400; line-height: 1; letter-spacing: -.037em; }
+.stationery-demo .cover-names > span, .stationery-demo .hero-names > span { display: block; max-width: 100%; overflow-wrap: break-word; }
+.stationery-demo .cover-names .name-amp, .stationery-demo .hero-names .name-amp { color: var(--accent); font-size: 31px; font-style: italic; font-weight: 400; line-height: 1; }
+.stationery-demo .cover-date { display: flex; align-items: center; justify-content: center; gap: 13px; width: 100%; margin-top: 18px; }
+.stationery-demo .cover-date p { margin: 0; color: var(--muted); font-size: 11px; line-height: 18px; }
+.stationery-demo .fine-rule { width: 28px; height: 1px; background: var(--line); opacity: .65; }
+.stationery-demo .recipient { width: 100%; margin-top: 22px; }
+.stationery-demo .recipient p { margin: 0 0 4px; color: var(--muted); font-size: 11px; line-height: 18px; }
+.stationery-demo .recipient strong { display: block; color: var(--ink); font-family: var(--font-display); font-size: 23px; font-weight: 500; line-height: 1.25; overflow-wrap: anywhere; }
+.stationery-demo .open-button { width: 224px; max-width: 100%; margin-top: 20px; gap: 11px; }
+.stationery-demo .open-button > svg:last-child { margin-left: auto; }
+.stationery-demo .cover-footnote { display: block; margin-top: 14px; color: var(--muted); font-size: 10px; line-height: 16px; }
+.stationery-demo .cover-bow { position: absolute; z-index: 3; top: -23px; right: -91px; width: 270px; transform: rotate(24deg); pointer-events: none; filter: drop-shadow(0 5px 5px #5f63541c); }
+.stationery-demo .cover-bow > svg { width: 100%; height: auto; }
+.stationery-demo .cover-bottom { display: flex; align-items: center; justify-content: space-between; gap: 20px; width: 600px; max-width: 100%; min-height: 28px; margin-top: 20px; }
+.stationery-demo .template-label { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 10px; }
+.stationery-demo .tiny-diamond { width: 4px; height: 4px; transform: rotate(45deg); background: var(--accent); }
+.stationery-demo.theme-selector { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 9px; }
+.stationery-demo.theme-selector select { width: 144px; min-height: 34px; padding: 4px 22px 4px 8px; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); border-radius: 0; background: transparent; color: var(--ink); font-size: 10px; }
+.stationery-demo.theme-selector select option { color: var(--ink); background: var(--paper); }
+.stationery-demo .cover-stage.is-opening .invitation-cover { animation: stationery-open-paper .65s cubic-bezier(.4, 0, .2, 1) both; }
+.stationery-demo .cover-stage.is-opening .stage-caption, .stationery-demo .cover-stage.is-opening .cover-bottom { opacity: 0; transition: opacity .35s ease; }
+
+/* The opened invitation keeps the same paper language, with room to read. */
+.stationery-demo .opened-invitation { width: 100%; max-width: 1060px; margin: 0 auto; padding: 40px 40px 30px; animation: stationery-reveal-invitation .6s ease both; }
+.stationery-demo .opened-invitation:focus { outline: none; }
+.stationery-demo .invitation-hero { width: 100%; max-width: 780px; margin: 0 auto; padding: 49px 70px 47px; text-align: center; box-shadow: 0 4px 10px #51473506, 5px 18px 42px #5147350b; }
+.stationery-demo .invitation-hero > :not(.paper-border):not(.hero-botanical) { position: relative; z-index: 1; }
+.stationery-demo .invitation-hero > .monogram { margin: 0 auto 18px; }
+.stationery-demo .hero-botanical { width: 215px; opacity: .55; }
+.stationery-demo .invitation-hero h1 { margin: 18px 0 0; font-family: var(--font-display); font-size: 43px; font-weight: 400; line-height: 1.12; letter-spacing: -.025em; }
+.stationery-demo .invitation-hero h1 em, .stationery-demo .section-heading h2 em, .stationery-demo .closing-section h2 em { color: var(--accent); font-weight: 400; }
+.stationery-demo .hero-flourish { width: 80px; height: auto; margin: 20px auto 17px; color: var(--accent); }
+.stationery-demo .hero-names { display: flex; flex-direction: column; align-items: center; gap: 4px; font-family: var(--font-display); font-size: 49px; font-weight: 400; line-height: 1.05; letter-spacing: -.03em; }
+.stationery-demo .hero-names .name-amp { font-size: 29px; }
+.stationery-demo .invitation-message { max-width: 390px; margin: 25px auto 0; color: var(--muted); font-size: 13px; line-height: 1.95; }
+.stationery-demo .hero-date { margin-top: 28px; }
+.stationery-demo .hero-date > .eyebrow { font-size: 9px; }
+.stationery-demo .hero-date p { margin: 6px 0 0; font-family: var(--font-display); font-size: 25px; line-height: 1.3; }
+.stationery-demo .hero-date > span:last-child { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; }
+.stationery-demo .detail-link { display: inline-flex; align-items: center; justify-content: center; gap: 15px; min-height: 44px; margin-top: 25px; border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); color: var(--ink); font-size: 10px; letter-spacing: .09em; }
+.stationery-demo .detail-link:hover { color: var(--accent); border-color: var(--accent); }
+
+.stationery-demo .countdown-section { max-width: 510px; margin: 52px auto 20px; padding: 17px 15px 28px; text-align: center; }
+.stationery-demo .countdown-section > .eyebrow { font-size: 9px; }
+.stationery-demo .countdown { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 23px; }
+.stationery-demo .countdown-unit { position: relative; display: flex; flex-direction: column; gap: 4px; align-items: center; }
+.stationery-demo .countdown-unit + .countdown-unit::before { content: ""; position: absolute; top: 10px; bottom: 10px; left: 0; width: 1px; background: color-mix(in srgb, var(--line) 55%, transparent); }
+.stationery-demo .countdown-number { font-family: var(--font-display); font-size: 49px; font-weight: 400; font-variant-numeric: tabular-nums; line-height: 1; }
+.stationery-demo .countdown-label { color: var(--muted); font-size: 10px; }
+.stationery-demo .countdown-timezone { display: block; margin-top: 20px; color: var(--muted); font-size: 9px; }
+
+.stationery-demo .content-section { width: 100%; max-width: 900px; margin: 0 auto; padding: 56px 0; scroll-margin-top: 30px; }
+.stationery-demo .section-heading { margin-bottom: 34px; text-align: center; }
+.stationery-demo .section-heading h2 { margin: 13px 0 0; font-family: var(--font-display); font-size: 48px; font-weight: 400; line-height: 1.05; letter-spacing: -.025em; }
+.stationery-demo .section-flourish { width: 82px; height: auto; margin: 20px auto 0; color: var(--accent); }
+.stationery-demo .event-section { border-top: 1px solid color-mix(in srgb, var(--line) 40%, transparent); }
+.stationery-demo .event-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.stationery-demo .event-card { display: flex; flex-direction: column; align-items: center; min-width: 0; min-height: 338px; padding: 32px 28px 31px; border: 1px solid color-mix(in srgb, var(--line) 45%, transparent); background: color-mix(in srgb, var(--paper) 75%, transparent); text-align: center; }
+.stationery-demo .event-card > svg { margin-bottom: 16px; color: var(--accent); }
+.stationery-demo .event-card > .eyebrow { font-size: 9px; }
+.stationery-demo .date-composition { display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 17px; }
+.stationery-demo .date-weekday { color: var(--muted); font-size: 9px; letter-spacing: .08em; }
+.stationery-demo .date-composition strong { font-family: var(--font-display); font-size: 76px; font-weight: 400; line-height: .95; letter-spacing: -.04em; }
+.stationery-demo .date-month { padding-left: 13px; border-left: 1px solid var(--line); color: var(--muted); font-size: 9px; line-height: 1.8; letter-spacing: .08em; text-align: left; }
+.stationery-demo .event-time { display: inline-flex; align-items: center; justify-content: center; gap: 7px; margin: 17px 0 22px; color: var(--muted); font-size: 12px; }
+.stationery-demo .event-card > .button { min-width: 195px; max-width: 100%; min-height: 45px; margin-top: auto; font-size: 11px; }
+.stationery-demo .venue-card h3 { max-width: 260px; margin: 19px 0 9px; font-family: var(--font-display); font-size: 35px; font-weight: 400; line-height: 1.06; letter-spacing: -.025em; }
+.stationery-demo .venue-card > p { margin: 0; color: var(--muted); font-size: 12px; }
+.stationery-demo .venue-rule { display: flex; align-items: center; gap: 10px; margin: 17px 0 22px; color: var(--accent); }
+.stationery-demo .venue-rule > span { width: 35px; height: 1px; background: var(--line); opacity: .6; }
+.stationery-demo .rsvp-jump { display: flex; width: fit-content; margin: 20px auto 0; font-size: 11px; }
+
+.stationery-demo .closing-section { width: 100%; max-width: 900px; margin: 47px auto 0; padding: 54px 48px 51px; overflow: hidden; text-align: center; }
+.stationery-demo .closing-section::after { content: ""; position: absolute; z-index: 0; inset: 15px; border: .7px solid color-mix(in srgb, var(--line) 65%, transparent); pointer-events: none; }
+.stationery-demo .closing-section > :not(.closing-botanical) { position: relative; z-index: 1; }
+.stationery-demo .closing-section > .section-flourish { margin: 0 auto 20px; }
+.stationery-demo .closing-section > .eyebrow { display: block; font-size: 9px; }
+.stationery-demo .closing-section h2 { margin: 15px 0 0; font-family: var(--font-display); font-size: 43px; font-weight: 400; line-height: 1.08; letter-spacing: -.025em; }
+.stationery-demo .closing-section > p { max-width: 395px; margin: 20px auto 0; color: var(--muted); font-size: 13px; line-height: 1.85; }
+.stationery-demo .closing-names { margin: 23px auto 2px; font-family: var(--font-display); font-size: 48px; font-weight: 400; line-height: 1.2; letter-spacing: -.035em; }
+.stationery-demo .closing-names em { padding: 0 4px; color: var(--accent); font-size: .8em; }
+.stationery-demo .closing-date { display: block; color: var(--muted); font-size: 9px; letter-spacing: .14em; }
+.stationery-demo .closing-section .text-link { margin: 18px auto 0; font-size: 11px; }
+.stationery-demo .closing-botanical { position: absolute; bottom: 19px; left: 19px; width: 215px; height: auto; transform: rotate(-90deg); color: var(--accent); opacity: .42; }
+.stationery-demo .site-footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; width: 100%; max-width: 1060px; margin: 0 auto; padding: 7px 40px 116px; color: var(--muted); font-size: 10px; }
+.stationery-demo .site-footer > a, .stationery-demo .site-footer > button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0; border: 0; background: transparent; font-size: 10px; }
+.stationery-demo .site-footer > a:hover, .stationery-demo .site-footer > button:hover { color: var(--ink); }
+.stationery-demo .bottom-nav { position: fixed; z-index: 20; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 330px; max-width: calc(100vw - 28px); min-height: 67px; padding: 6px 8px; transform: translateX(-50%); border: 1px solid color-mix(in srgb, var(--line) 65%, transparent); border-radius: 50px; background: color-mix(in srgb, var(--paper) 94%, transparent); box-shadow: 0 4px 25px #332d2012; backdrop-filter: blur(15px); }
+.stationery-demo .bottom-nav > a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 52px; border-radius: 40px; color: var(--muted); font-size: 9px; transition: color .2s ease, background .2s ease; }
+.stationery-demo .bottom-nav > a.active { background: color-mix(in srgb, var(--accent) 11%, transparent); color: var(--ink); }
+.stationery-demo .bottom-nav > a:hover { color: var(--ink); background: color-mix(in srgb, var(--accent) 7%, transparent); }
+
+/* Native dialog preserves focus trapping and Escape-to-close behavior. */
+.stationery-demo .share-dialog { width: 470px; max-width: calc(100vw - 36px); max-height: calc(100svh - 40px); margin: auto; padding: 0; overflow: auto; border: 1px solid var(--line); border-radius: 2px; background: var(--paper); color: var(--ink); box-shadow: 0 24px 90px #29251e29; }
+.stationery-demo .share-dialog::backdrop { background: #29251e66; backdrop-filter: blur(4px); }
+.stationery-demo .share-dialog[open] { animation: stationery-reveal-dialog .22s ease both; }
+.stationery-demo .share-dialog-content { position: relative; padding: 42px 35px 29px; }
+.stationery-demo .dialog-close { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border: 0; color: var(--muted); }
+.stationery-demo .share-dialog .eyebrow { font-size: 9px; }
+.stationery-demo .share-dialog h2 { margin: 15px 0 28px; font-family: var(--font-display); font-size: 40px; font-weight: 400; line-height: 1.06; letter-spacing: -.03em; }
+.stationery-demo .share-dialog h2 em { color: var(--accent); font-weight: 400; }
+.stationery-demo .share-dialog label { display: block; margin-bottom: 7px; font-size: 11px; font-weight: 500; }
+.stationery-demo .share-dialog input { display: block; width: 100%; min-width: 0; height: 47px; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--line) 75%, transparent); border-radius: 1px; background: transparent; color: var(--ink); font-size: 13px; }
+.stationery-demo .share-dialog input::placeholder { color: var(--muted); opacity: .8; }
+.stationery-demo .share-help { margin: 9px 0 24px; color: var(--muted); font-size: 11px; line-height: 1.7; }
+.stationery-demo .share-dialog .share-url { color: var(--muted); font-size: 11px; }
+.stationery-demo .share-dialog .button { width: 100%; margin: 18px 0 7px; }
+.stationery-demo .share-dialog .text-link { display: flex; margin: 0 auto; font-size: 11px; }
+.stationery-demo .share-error { margin: 0 0 7px; color: #964d40; font-size: 11px; line-height: 1.6; }
+
+/* Each collection keeps its own silhouette as well as its own ink color. */
+.stationery-demo.style-minimal .cover-bow, .stationery-demo.style-passport .cover-bow { display: none; }
+.stationery-demo.style-minimal .invitation-cover { border-radius: 290px 290px 3px 3px; padding-top: 60px; }
+.stationery-demo.style-minimal .invitation-cover .paper-border { border-radius: 270px 270px 1px 1px; opacity: .5; }
+.stationery-demo.style-minimal .paper-border::after { display: none; }
+.stationery-demo.style-minimal .corner-top { display: none; }
+.stationery-demo.style-minimal .corner-bottom { right: 13px; bottom: 13px; width: 185px; opacity: .25; }
+.stationery-demo.style-minimal .monogram { width: 96px; height: 100px; margin-bottom: 22px; border-bottom: 1px solid var(--line); }
+.stationery-demo.style-minimal .monogram > svg { display: none; }
+.stationery-demo.style-minimal .monogram > span { font-size: 47px; }
+.stationery-demo.style-minimal .invitation-hero { border-radius: 280px 280px 2px 2px; padding-top: 64px; }
+.stationery-demo.style-minimal .invitation-hero .paper-border { border-radius: 260px 260px 1px 1px; }
+.stationery-demo.style-minimal .monogram-small { width: 77px; height: 76px; }
+.stationery-demo.style-minimal .monogram-small > span { font-size: 37px; }
+.stationery-demo.style-botanical .cover-botanical { width: 210px; opacity: .7; }
+.stationery-demo.style-botanical .hero-botanical { width: 250px; opacity: .55; }
+.stationery-demo.style-artdeco .paper-border { inset: 22px 15px; border-width: 1px; }
+.stationery-demo.style-artdeco .paper-border::after { inset: -8px 8px; opacity: .8; }
+.stationery-demo.style-artdeco .cover-botanical, .stationery-demo.style-artdeco .hero-botanical { display: none; }
+.stationery-demo.style-artdeco .monogram { width: 86px; height: 104px; margin-top: 7px; margin-bottom: 23px; border: 1px solid var(--line); border-radius: 50% 50% 0 0; }
+.stationery-demo.style-artdeco .monogram > svg { display: none; }
+.stationery-demo.style-artdeco .cover-names { font-size: 49px; letter-spacing: -.01em; }
+.stationery-demo.style-artdeco .monogram-small { width: 65px; height: 78px; }
+.stationery-demo.style-artdeco .hero-flourish { opacity: .7; }
+.stationery-demo.style-passport .invitation-cover, .stationery-demo.style-passport .invitation-hero { border-radius: 6px; border: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+.stationery-demo.style-passport .paper-border { inset: 11px; border: 1px dashed var(--line); border-radius: 2px; }
+.stationery-demo.style-passport .paper-border::after { display: none; }
+.stationery-demo.style-passport .cover-botanical, .stationery-demo.style-passport .hero-botanical { width: 135px; opacity: .2; }
+.stationery-demo.style-passport .monogram { width: 100px; height: 100px; margin-top: 12px; margin-bottom: 21px; border: .7px solid var(--line); outline: .7px solid var(--line); outline-offset: -7px; border-radius: 50%; }
+.stationery-demo.style-passport .monogram > svg { display: none; }
+.stationery-demo.style-passport .cover-names, .stationery-demo.style-passport .hero-names { font-size: 43px; letter-spacing: .01em; text-transform: uppercase; }
+.stationery-demo.style-passport .cover-date { gap: 10px; }
+.stationery-demo.style-passport .fine-rule { height: 0; background: none; border-top: 1px dashed var(--line); }
+.stationery-demo.style-passport .monogram-small { width: 80px; height: 80px; }
+.stationery-demo.theme-wisteria-senja .cover-botanical { width: 230px; opacity: .55; }
+.stationery-demo.theme-wisteria-senja .corner-bottom { top: 19px; right: 19px; bottom: auto; transform: scaleX(-1); }
+.stationery-demo.theme-wisteria-senja .cover-bow { transform: rotate(16deg); top: -34px; }
+.stationery-demo.theme-wisteria-senja .paper-border { border-radius: 230px 230px 0 0; }
+.stationery-demo.theme-wisteria-senja .paper-border::after { display: none; }
+.stationery-demo.theme-taman-abadi .cover-botanical { width: 230px; opacity: .82; }
+.stationery-demo.theme-taman-abadi .paper-border::after { opacity: .4; }
+.stationery-demo.theme-blush-serenade .paper-border { border-radius: 225px 225px 0 0; }
+.stationery-demo.theme-blush-serenade .paper-border::after { display: none; }
+.stationery-demo.theme-elegant-cream .cover-bow { transform: rotate(14deg); }
+
+.stationery-demo .not-found-page { min-height: 100svh; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; max-width: 780px; margin: 0 auto; padding: 48px 28px; }
+.stationery-demo .not-found-page h1 { margin: 20px 0 12px; font-family: var(--font-display); font-size: clamp(42px, 6vw, 64px); font-weight: 400; line-height: 1.1; }
+.stationery-demo .not-found-page > p:not(.eyebrow) { margin: 0 0 27px; color: var(--muted); font-size: 14px; line-height: 1.8; }
+
+@keyframes stationery-spinner-turn { to { transform: rotate(360deg); } }
+@keyframes stationery-open-paper { 0% { opacity: 1; transform: translateY(0) scale(1); } 40% { opacity: 1; transform: translateY(-4px) scale(.993); } 100% { opacity: 0; transform: translateY(-22px) scale(.97); } }
+@keyframes stationery-reveal-invitation { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes stationery-reveal-dialog { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 900px) {
+  .stationery-demo .site-header { padding-left: 28px; padding-right: 28px; }
+  .stationery-demo .header-actions { gap: 22px; }
+  .stationery-demo .opened-invitation { padding: 34px 26px 25px; }
+  .stationery-demo .invitation-hero { padding-left: 55px; padding-right: 55px; }
+  .stationery-demo .event-card { padding-left: 22px; padding-right: 22px; }
+  .stationery-demo .site-footer { padding-left: 26px; padding-right: 26px; }
+}
+
+@media (max-width: 640px) {
+  .stationery-demo { scroll-padding-top: 20px; }
+  .stationery-demo .site-header { min-height: 74px; padding: 12px 20px; gap: 16px; }
+  .stationery-demo .wordmark { gap: 12px; }
+  .stationery-demo .wordmark-initials { font-size: 29px; }
+  .stationery-demo .wordmark-initials > span { font-size: 17px; margin: 0 4px; }
+  .stationery-demo .wordmark-label { padding-left: 12px; font-size: 7px; letter-spacing: .1em; }
+  .stationery-demo .header-actions { gap: 15px; }
+  .stationery-demo .demo-badge { display: none; }
+  .stationery-demo .catalog-link { gap: 7px; font-size: 10px; }
+  .stationery-demo .catalog-link > svg { width: 14px; height: 14px; }
+  .stationery-demo .share-trigger { width: 38px; height: 38px; }
+  .stationery-demo .cover-stage { min-height: calc(100svh - 74px); justify-content: flex-start; padding: 24px 20px 27px; }
+  .stationery-demo .stage-caption { gap: 12px; margin-bottom: 19px; }
+  .stationery-demo .stage-caption .eyebrow { font-size: 7.5px; letter-spacing: .11em; }
+  .stationery-demo .edition-mark { font-size: 8px; letter-spacing: .1em; }
+  .stationery-demo .invitation-cover { min-height: 650px; padding: 38px 32px 34px; }
+  .stationery-demo .paper-border { inset: 12px; }
+  .stationery-demo .paper-border::after { inset: 4px; }
+  .stationery-demo .corner-top { top: 16px; left: 16px; }
+  .stationery-demo .corner-bottom { bottom: 16px; right: 16px; }
+  .stationery-demo .cover-botanical { width: 145px; opacity: .6; }
+  .stationery-demo .monogram { width: 108px; height: 108px; }
+  .stationery-demo .monogram > span { font-size: 34px; }
+  .stationery-demo .cover-content > .monogram { margin-bottom: 11px; }
+  .stationery-demo .cover-eyebrow { margin-bottom: 18px; font-size: 8px; letter-spacing: .14em; }
+  .stationery-demo .cover-names { gap: 3px; font-size: 42px; line-height: 1.03; letter-spacing: -.03em; }
+  .stationery-demo .cover-names .name-amp { font-size: 28px; }
+  .stationery-demo .cover-date { gap: 8px; margin-top: 19px; }
+  .stationery-demo .cover-date p { font-size: 11px; }
+  .stationery-demo .fine-rule { width: 15px; }
+  .stationery-demo .recipient { margin-top: 23px; }
+  .stationery-demo .recipient strong { font-size: 24px; }
+  .stationery-demo .open-button { min-height: 48px; margin-top: 22px; font-size: 12px; }
+  .stationery-demo .cover-footnote { max-width: 260px; margin-top: 15px; font-size: 10px; line-height: 1.65; }
+  .stationery-demo .cover-bow { top: -21px; right: -22px; width: 175px; transform: rotate(25deg); }
+  .stationery-demo .cover-bottom { flex-wrap: wrap; gap: 8px 14px; margin-top: 16px; }
+  .stationery-demo .template-label { font-size: 9px; gap: 6px; }
+  .stationery-demo.theme-selector { gap: 7px; font-size: 8px; }
+  .stationery-demo.theme-selector select { width: 119px; min-height: 40px; font-size: 9px; padding-left: 6px; padding-right: 15px; }
+  .stationery-demo .opened-invitation { padding: 26px 18px 25px; }
+  .stationery-demo .invitation-hero { padding: 37px 30px 39px; }
+  .stationery-demo .hero-botanical { width: 150px; }
+  .stationery-demo .monogram-small { width: 83px; height: 83px; }
+  .stationery-demo .monogram-small > span { font-size: 27px; }
+  .stationery-demo .invitation-hero > .monogram { margin-bottom: 16px; }
+  .stationery-demo .invitation-hero > .eyebrow { font-size: 8px; letter-spacing: .13em; }
+  .stationery-demo .invitation-hero h1 { margin-top: 16px; font-size: 35px; line-height: 1.08; letter-spacing: -.03em; }
+  .stationery-demo .hero-flourish { width: 72px; margin: 18px auto 17px; }
+  .stationery-demo .hero-names { font-size: 42px; line-height: 1.02; gap: 4px; }
+  .stationery-demo .hero-names .name-amp { font-size: 27px; }
+  .stationery-demo .invitation-message { margin-top: 23px; font-size: 13px; line-height: 1.85; }
+  .stationery-demo .hero-date { margin-top: 26px; }
+  .stationery-demo .hero-date p { font-size: 24px; }
+  .stationery-demo .hero-date > span:last-child { font-size: 13px; }
+  .stationery-demo .detail-link { margin-top: 23px; font-size: 9px; }
+  .stationery-demo .countdown-section { margin: 28px auto 7px; padding: 22px 3px 30px; }
+  .stationery-demo .countdown-section > .eyebrow { font-size: 8px; letter-spacing: .13em; }
+  .stationery-demo .countdown { margin-top: 21px; }
+  .stationery-demo .countdown-number { font-size: 43px; }
+  .stationery-demo .countdown-label { font-size: 10px; }
+  .stationery-demo .countdown-timezone { font-size: 9px; margin-top: 18px; }
+  .stationery-demo .content-section { padding: 43px 0; scroll-margin-top: 20px; }
+  .stationery-demo .section-heading { margin-bottom: 27px; }
+  .stationery-demo .section-heading .eyebrow { font-size: 9px; }
+  .stationery-demo .section-heading h2 { font-size: 42px; margin-top: 12px; }
+  .stationery-demo .section-flourish { width: 75px; margin-top: 17px; }
+  .stationery-demo .event-grid { grid-template-columns: minmax(0, 1fr); gap: 17px; }
+  .stationery-demo .event-card { min-height: 326px; padding: 29px 25px; }
+  .stationery-demo .event-card > .eyebrow { font-size: 10px; }
+  .stationery-demo .event-card > svg { margin-bottom: 14px; }
+  .stationery-demo .date-composition { margin-top: 18px; }
+  .stationery-demo .date-composition strong { font-size: 78px; }
+  .stationery-demo .date-weekday, .stationery-demo .date-month { font-size: 10px; }
+  .stationery-demo .event-time { font-size: 14px; margin-top: 17px; }
+  .stationery-demo .event-card > .button { min-height: 47px; font-size: 12px; }
+  .stationery-demo .venue-card h3 { font-size: 36px; max-width: 260px; }
+  .stationery-demo .venue-card > p { font-size: 13px; }
+  .stationery-demo .venue-rule { margin-top: 17px; margin-bottom: 22px; }
+  .stationery-demo .rsvp-jump { margin-top: 17px; font-size: 12px; }
+  .stationery-demo .closing-section { margin-top: 30px; padding: 44px 28px 43px; }
+  .stationery-demo .closing-section::after { inset: 12px; }
+  .stationery-demo .closing-section h2 { font-size: 37px; line-height: 1.1; }
+  .stationery-demo .closing-section > p { font-size: 13px; line-height: 1.9; }
+  .stationery-demo .closing-names { font-size: 47px; margin-top: 23px; }
+  .stationery-demo .closing-date { font-size: 9px; }
+  .stationery-demo .closing-section .text-link { font-size: 12px; }
+  .stationery-demo .closing-botanical { width: 165px; bottom: 14px; left: 14px; opacity: .3; }
+  .stationery-demo .site-footer { flex-wrap: wrap; justify-content: space-between; gap: 0 15px; padding: 0 22px 112px; }
+  .stationery-demo .site-footer > span { order: 3; width: 100%; text-align: center; font-size: 9px; }
+  .stationery-demo .site-footer > a, .stationery-demo .site-footer > button { font-size: 10px; }
+  .stationery-demo .bottom-nav { width: 310px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); min-height: 66px; }
+  .stationery-demo .bottom-nav > a { font-size: 10px; min-height: 51px; }
+  .stationery-demo .share-dialog { max-width: calc(100vw - 30px); }
+  .stationery-demo .share-dialog-content { padding: 42px 26px 24px; }
+  .stationery-demo .share-dialog h2 { font-size: 37px; }
+  .stationery-demo .share-dialog input { font-size: 16px; height: 49px; }
+  .stationery-demo .share-dialog label { font-size: 12px; }
+  .stationery-demo .share-help { font-size: 12px; }
+  .stationery-demo .share-dialog .share-url { font-size: 12px; }
+  .stationery-demo .share-dialog .button { font-size: 13px; }
+  .stationery-demo .share-dialog .text-link { font-size: 12px; }
+  .stationery-demo .dialog-close { width: 38px; height: 38px; top: 7px; right: 7px; }
+  .stationery-demo.style-minimal .invitation-cover { padding-top: 47px; border-radius: 180px 180px 3px 3px; }
+  .stationery-demo.style-minimal .invitation-cover .paper-border { border-radius: 165px 165px 1px 1px; }
+  .stationery-demo.style-minimal .monogram { width: 85px; height: 91px; margin-bottom: 23px; }
+  .stationery-demo.style-minimal .monogram > span { font-size: 42px; }
+  .stationery-demo.style-minimal .corner-bottom { width: 150px; }
+  .stationery-demo.style-minimal .invitation-hero { border-radius: 190px 190px 2px 2px; padding-top: 49px; }
+  .stationery-demo.style-minimal .invitation-hero .paper-border { border-radius: 177px 177px 1px 1px; }
+  .stationery-demo.style-minimal .monogram-small { width: 72px; height: 73px; }
+  .stationery-demo.style-minimal .monogram-small > span { font-size: 35px; }
+  .stationery-demo.style-botanical .cover-botanical { width: 162px; }
+  .stationery-demo.style-botanical .hero-botanical { width: 170px; }
+  .stationery-demo.style-artdeco .paper-border { inset: 18px 12px; }
+  .stationery-demo.style-artdeco .paper-border::after { inset: -6px 6px; }
+  .stationery-demo.style-artdeco .cover-names { font-size: 40px; }
+  .stationery-demo.style-artdeco .monogram { width: 74px; height: 92px; margin-bottom: 24px; }
+  .stationery-demo.style-artdeco .monogram-small { width: 64px; height: 76px; }
+  .stationery-demo.style-passport .monogram { width: 91px; height: 91px; margin-bottom: 23px; }
+  .stationery-demo.style-passport .monogram-small { width: 74px; height: 74px; }
+  .stationery-demo.style-passport .cover-names, .stationery-demo.style-passport .hero-names { font-size: 36px; letter-spacing: 0; }
+  .stationery-demo.style-passport .cover-botanical, .stationery-demo.style-passport .hero-botanical { width: 110px; }
+  .stationery-demo.theme-wisteria-senja .cover-botanical { width: 155px; }
+  .stationery-demo.theme-wisteria-senja .corner-bottom { top: 16px; right: 16px; }
+  .stationery-demo.theme-wisteria-senja .cover-bow { top: -28px; }
+  .stationery-demo.theme-wisteria-senja .paper-border { border-radius: 165px 165px 0 0; }
+  .stationery-demo.theme-blush-serenade .paper-border { border-radius: 150px 150px 0 0; }
+  .stationery-demo.theme-taman-abadi .cover-botanical { width: 170px; }
+}
+
+@media (max-width: 360px) {
+  .stationery-demo .site-header { padding-left: 15px; padding-right: 15px; }
+  .stationery-demo .wordmark-label { display: none; }
+  .stationery-demo .header-actions { gap: 13px; }
+  .stationery-demo .cover-stage { padding-left: 14px; padding-right: 14px; padding-top: 21px; }
+  .stationery-demo .stage-caption .eyebrow { font-size: 7px; letter-spacing: .09em; }
+  .stationery-demo .edition-mark { font-size: 7px; }
+  .stationery-demo .invitation-cover { min-height: 624px; padding: 34px 25px 32px; }
+  .stationery-demo .monogram { width: 101px; height: 101px; }
+  .stationery-demo .cover-names { font-size: 37px; }
+  .stationery-demo .cover-names .name-amp { font-size: 26px; }
+  .stationery-demo .cover-eyebrow { font-size: 7.5px; }
+  .stationery-demo .cover-date p { font-size: 10px; }
+  .stationery-demo .cover-date { gap: 7px; }
+  .stationery-demo .fine-rule { width: 13px; }
+  .stationery-demo .cover-bow { width: 158px; right: -16px; }
+  .stationery-demo .cover-botanical { width: 130px; }
+  .stationery-demo .cover-footnote { font-size: 9px; }
+  .stationery-demo .template-label { font-size: 8px; }
+  .stationery-demo.theme-selector { gap: 4px; font-size: 7.5px; }
+  .stationery-demo.theme-selector select { width: 108px; font-size: 8px; }
+  .stationery-demo .opened-invitation { padding: 22px 14px 22px; }
+  .stationery-demo .invitation-hero { padding: 33px 24px 35px; }
+  .stationery-demo .invitation-hero h1 { font-size: 31px; }
+  .stationery-demo .hero-names { font-size: 37px; }
+  .stationery-demo .hero-names .name-amp { font-size: 25px; }
+  .stationery-demo .invitation-message { font-size: 12px; }
+  .stationery-demo .hero-date p { font-size: 22px; }
+  .stationery-demo .hero-botanical { width: 132px; }
+  .stationery-demo .countdown-number { font-size: 39px; }
+  .stationery-demo .countdown-section > .eyebrow { font-size: 7.5px; }
+  .stationery-demo .section-heading h2 { font-size: 39px; }
+  .stationery-demo .closing-section { padding-left: 24px; padding-right: 24px; }
+  .stationery-demo .closing-section h2 { font-size: 33px; }
+  .stationery-demo .closing-names { font-size: 43px; }
+  .stationery-demo.style-artdeco .cover-names { font-size: 36px; }
+  .stationery-demo.style-passport .cover-names, .stationery-demo.style-passport .hero-names { font-size: 33px; }
+  .stationery-demo.style-botanical .cover-botanical { width: 148px; }
+  .stationery-demo.style-botanical .hero-botanical { width: 150px; }
+  .stationery-demo.theme-wisteria-senja .cover-botanical { width: 140px; }
+  .stationery-demo .share-dialog-content { padding-left: 22px; padding-right: 22px; }
+  .stationery-demo .share-dialog h2 { font-size: 34px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stationery-demo { scroll-behavior: auto; }
+  .stationery-demo, .stationery-demo *, .stationery-demo::before, .stationery-demo *::before, .stationery-demo::after, .stationery-demo *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}

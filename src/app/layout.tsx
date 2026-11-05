@@ -7,6 +7,8 @@ import "./reference-demo-sections.css";
 import "./manual-payments.css";
 import "./paparazzi.css";
 import "./invitation-palettes.css";
+import "./stationery-demo.css";
+import "./stationery-demo-rsvp.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://tamukita.io"),
