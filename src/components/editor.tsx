@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, ChevronLeft, ChevronRight, ImagePlus, Info, Monitor, Music2, Pencil, Redo2, RotateCcw, RotateCw, Save, Smartphone, Sparkles, Undo2, Upload, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, ChevronLeft, ChevronRight, Copy, ExternalLink, ImagePlus, Info, Monitor, Music2, Pencil, Redo2, RotateCcw, RotateCw, Save, Smartphone, Sparkles, Undo2, Upload, X } from "lucide-react";
 import Cropper, { type Area } from "react-easy-crop";
 import "react-easy-crop/react-easy-crop.css";
 import { InvitationPreview } from "@/components/invitation-preview";
@@ -55,6 +55,10 @@ function formatShortDate(value: string) {
   if (!value) return "Pilih tanggal acara";
   const date = new Date(`${value}T00:00:00`);
   return new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric" }).format(date);
+}
+
+function formatDemoExpiry(expiresAt: string) {
+  return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Jakarta" }).format(new Date(expiresAt));
 }
 
 function loadImage(source: string) {
@@ -237,6 +241,11 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
   const [saveState, setSaveState] = useState<"saving" | "saved" | "error">("saved");
   const [error, setError] = useState("");
   const [published, setPublished] = useState(false);
+  const [demoLink, setDemoLink] = useState("");
+  const [demoLinkExpiresAt, setDemoLinkExpiresAt] = useState("");
+  const [demoLinkBusy, setDemoLinkBusy] = useState(false);
+  const [demoLinkCopied, setDemoLinkCopied] = useState(false);
+  const [demoLinkError, setDemoLinkError] = useState("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [uploadingMusic, setUploadingMusic] = useState(false);
@@ -262,6 +271,12 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
   }, []);
   const replaceDraft = useCallback((nextDraft: InvitationDraft | ((current: InvitationDraft) => InvitationDraft)) => {
     const next = typeof nextDraft === "function" ? nextDraft(draftRef.current) : nextDraft;
+    if (next !== draftRef.current) {
+      setDemoLink("");
+      setDemoLinkExpiresAt("");
+      setDemoLinkCopied(false);
+      setDemoLinkError("");
+    }
     draftRef.current = next;
     setDraft(next);
   }, []);
@@ -894,6 +909,32 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
     router.push(`/${result?.slug ?? latestDraft.slug}`);
   };
 
+  const handleCreateDemoLink = async () => {
+    if (!draft.id || !/^[0-9a-f-]{36}$/i.test(draft.id)) {
+      setDemoLinkError("Draft belum siap. Muat ulang editor lalu coba lagi.");
+      return;
+    }
+    setDemoLinkBusy(true);
+    setDemoLinkError("");
+    setError("");
+    const savedDraft = await saveDraft(true);
+    if (!savedDraft.ok) {
+      setDemoLinkError(savedDraft.error);
+      setDemoLinkBusy(false);
+      return;
+    }
+    const response = await fetch(`/api/invitations/${encodeURIComponent(savedDraft.draft.id)}/demo-link`, { method: "POST" }).catch(() => null);
+    const result = await response?.json().catch(() => null) as { demoUrl?: string; expiresAt?: string; error?: string } | null;
+    if (!response?.ok || !result?.demoUrl || !result.expiresAt) {
+      setDemoLinkError(result?.error ?? "Tautan demo belum dapat dibuat. Coba lagi sebentar.");
+      setDemoLinkBusy(false);
+      return;
+    }
+    setDemoLink(result.demoUrl);
+    setDemoLinkExpiresAt(result.expiresAt);
+    setDemoLinkBusy(false);
+  };
+
   async function saveAndReturn() {
     const result = await saveDraft(true);
     if (!result.ok) {
@@ -931,7 +972,13 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
             {step === 3 && <div className="form-step-content"><div className="theme-choice-grid">{templateChoices.map((template) => <button className={`theme-choice${draft.templateId === template.slug ? " is-selected" : ""}`} key={template.slug} type="button" onClick={() => updateDraft((current) => ({ ...current, templateId: template.slug, templateVersion: template.version, customFields: applyTemplateFieldDefaults(template, current.customFields) }))}><span className={`theme-swatch theme-swatch--${template.style}`}><i /><i /><i /></span><span className="theme-choice-copy"><b>{template.name}</b><small>{template.subtitle}</small><small className="theme-price">{formatRupiah(template.price)}</small></span><span className="theme-choice-check">{draft.templateId === template.slug && <Check size={13} />}</span></button>)}</div><div className="personalization-controls"><fieldset className="personalization-control"><legend>Palet warna</legend><div className="personalization-choice-list">{themeColorOptions.map((color) => <button key={color.value} type="button" className={(draft.themeColor ?? "default") === color.value ? "is-selected" : ""} onClick={() => update("themeColor", color.value)} aria-pressed={(draft.themeColor ?? "default") === color.value}><span className="personalization-color-swatch" style={{ backgroundColor: color.swatch || templateDefaultSwatches[activeTemplate.style] || "#b8935e" }} /><small>{color.label}</small></button>)}</div></fieldset><fieldset className="personalization-control"><legend>Font</legend><div className="personalization-choice-list">{themeFontOptions.map((font) => <button key={font.value} type="button" className={(draft.themeFont ?? "classic") === font.value ? "is-selected" : ""} onClick={() => update("themeFont", font.value)} aria-pressed={(draft.themeFont ?? "classic") === font.value}><span className={`personalization-font-sample is-${font.value}`}>Aa</span><small>{font.label}</small></button>)}</div></fieldset><fieldset className="personalization-control"><legend>Urutan informasi</legend><div className="personalization-order-list">{sectionOrderOptions.map((order) => <button key={order.value} type="button" className={(draft.sectionOrder ?? "story-first") === order.value ? "is-selected" : ""} onClick={() => update("sectionOrder", order.value)} aria-pressed={(draft.sectionOrder ?? "story-first") === order.value}>{order.label}</button>)}</div></fieldset></div><Field label="Tautan undangan"><div className="slug-input"><span>tamukita.io/</span><input value={draft.slug} disabled={draft.isPublished} onChange={(event) => update("slug", slugify(event.target.value))} aria-label="Nama tautan undangan" aria-invalid={!slugIsAvailable} /><span className={`slug-status${slugIsAvailable ? "" : " is-unavailable"}`}>{draft.isPublished ? "tetap aktif" : slugIsAvailable ? <><Check size={13} /> tersedia</> : <>tidak tersedia</>}</span></div></Field><p className="field-hint slug-hint">{draft.isPublished ? "Tautan yang sudah dibagikan tetap aktif saat kamu memperbarui detail undangan." : "Gunakan 3 karakter atau lebih. Tautan khusus seperti /admin dan /dashboard tidak tersedia."}</p><div className="custom-domain-note"><span className="domain-globe">◎</span><span><b>Ingin pakai domain sendiri?</b><small>Custom domain akan segera hadir.</small></span><span className="coming-soon-pill">SEGERA</span></div></div>}
 
             {step === 4 && <div className="form-step-content final-step-content">
-              <div className="review-summary"><span className="review-check"><CheckCircle2 size={20} /></span><div><b>Undanganmu siap untuk dibagikan</b><small>Periksa lisensi template dan masa hosting sebelum menerbitkan.</small></div></div>
+              <div className="review-summary"><span className="review-check"><CheckCircle2 size={20} /></span><div><b>{draft.isPublished ? "Tinjau perubahan undangan" : "Periksa undangan sebelum diterbitkan"}</b><small>{draft.isPublished ? "Perubahan pada undangan ini mengikuti alur pembaruan yang tersedia." : "Buat tautan demo publik untuk melihat tampilan tanpa memulai pembayaran atau menerbitkan undangan."}</small></div></div>
+              {!draft.isPublished && <section className="editor-demo-panel" aria-labelledby="editor-demo-title">
+                <div className="editor-demo-copy"><span className="editor-demo-icon"><Sparkles size={16} /></span><div><b id="editor-demo-title">Tautan DEMO publik</b><p>Siapa pun yang menerima tautan dapat melihat isi draft selama 7 hari. Demo tidak menerbitkan undangan; RSVP dan ucapan tidak aktif.</p></div></div>
+                {!demoLink && <button type="button" className="button button--outline button--small editor-demo-create" onClick={() => void handleCreateDemoLink()} disabled={demoLinkBusy}><ExternalLink size={14} />{demoLinkBusy ? "Membuat tautan…" : "Buat tautan demo"}</button>}
+                {demoLink && <div className="editor-demo-result"><a href={demoLink} target="_blank" rel="noreferrer" className="editor-demo-url">{demoLink}</a><div className="editor-demo-actions"><a href={demoLink} target="_blank" rel="noreferrer" className="button button--dark button--small">Buka demo <ExternalLink size={13} /></a><button type="button" className="button button--outline button--small" onClick={async () => { try { await navigator.clipboard.writeText(demoLink); setDemoLinkCopied(true); } catch { setDemoLinkError("Tautan belum tersalin. Silakan salin dari alamat yang tampil."); } }}><Copy size={13} />{demoLinkCopied ? "Tersalin" : "Salin tautan"}</button></div><small>Berlaku sampai {formatDemoExpiry(demoLinkExpiresAt)} WIB. Perubahan draft akan membatalkan tautan ini.</small></div>}
+                {demoLinkError && <p className="editor-demo-error" role="alert">{demoLinkError}</p>}
+              </section>}
               <div className="review-line"><span>Jenis acara</span><b>{draft.eventKind}</b></div>
               <div className="review-line"><span>Nama / judul</span><b>{draft.eventKind === "Pernikahan" ? `${draft.hostOne} & ${draft.hostTwo}` : draft.eventTitle}</b></div>
               <div className="review-line"><span>Tanggal</span><b>{formatShortDate(draft.eventDate)}</b></div>

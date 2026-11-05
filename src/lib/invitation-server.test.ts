@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-const prismaMock = vi.hoisted(() => ({ membership: { findFirst: vi.fn() } }));
+const prismaMock = vi.hoisted(() => ({ membership: { findFirst: vi.fn() }, user: { findUnique: vi.fn() } }));
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/prisma", () => ({ getPrismaClient: () => prismaMock }));
@@ -8,7 +8,10 @@ vi.mock("@/lib/prisma", () => ({ getPrismaClient: () => prismaMock }));
 import { createInitialDraft } from "@/lib/invitations";
 import { getWritableOrganizationId, invitationDraftSchema, parseInvitationDraft } from "@/lib/invitation-server";
 
-beforeEach(() => prismaMock.membership.findFirst.mockReset().mockResolvedValue({ organizationId: "customer-workspace" }));
+beforeEach(() => {
+  prismaMock.membership.findFirst.mockReset().mockResolvedValue({ organizationId: "customer-workspace" });
+  prismaMock.user.findUnique.mockReset().mockResolvedValue({ platformRole: "CUSTOMER" });
+});
 afterEach(() => vi.unstubAllEnvs());
 
 test("selects an active personal workspace for a customer's self-service draft", async () => {

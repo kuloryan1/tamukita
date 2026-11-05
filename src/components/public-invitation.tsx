@@ -12,7 +12,7 @@ import { safeHttpsUrl, type InvitationDraft } from "@/lib/invitations";
 
 type GuestbookMessage = { id: string; displayName: string; message: string; createdAt: string };
 
-export function PublicInvitation({ slug, initialDraft, initialRsvpCount, initialGuestbook = [], recipientName, guestToken, isExample = false, preview, templateSlug, sharePath, featureAccess = legacyInvitationFeatureAccess }: {
+export function PublicInvitation({ slug, initialDraft, initialRsvpCount, initialGuestbook = [], recipientName, guestToken, isExample = false, demoLabel, preview, templateSlug, sharePath, featureAccess = legacyInvitationFeatureAccess }: {
   slug: string;
   initialDraft: InvitationDraft;
   initialRsvpCount: number;
@@ -20,6 +20,7 @@ export function PublicInvitation({ slug, initialDraft, initialRsvpCount, initial
   recipientName?: string;
   guestToken?: string;
   isExample?: boolean;
+  demoLabel?: string;
   preview: ReactNode;
   templateSlug?: string;
   sharePath?: string;
@@ -42,7 +43,7 @@ export function PublicInvitation({ slug, initialDraft, initialRsvpCount, initial
       <div className="public-topbar">
         <Link href="/" className="public-brand"><Heart size={14} fill="currentColor" /> tamukita</Link>
         <span>UNDANGAN DIGITAL</span>
-        {isExample && <span className="public-demo-pill">CONTOH</span>}
+        {isExample && <span className="public-demo-pill">{demoLabel ?? "CONTOH"}</span>}
         {draft.musicUrl && featureAccess.music && <PublicInvitationMusic src={draft.musicUrl} title={draft.musicTitle} />}
         <span className="public-top-spacer" />
       </div>

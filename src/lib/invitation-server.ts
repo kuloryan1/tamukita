@@ -139,7 +139,45 @@ export async function getWritableOrganizationId(userId: string) {
     orderBy: { createdAt: "asc" },
     select: { organizationId: true },
   });
-  return membership?.organizationId ?? null;
+  if (membership) return membership.organizationId;
+
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { platformRole: true } });
+  if (user?.platformRole !== "SUPER_ADMIN") return null;
+
+  // Platform admins created outside customer registration may not have the
+  // personal workspace that the editor needs. Keep this fallback scoped to
+  // SUPER_ADMIN accounts; reseller and support accounts remain read-only here.
+  return prisma.$transaction(async (tx) => {
+    const existingMembership = await tx.membership.findFirst({
+      where: {
+        userId,
+        role: { in: ["OWNER", "ADMIN", "EDITOR"] },
+        organization: { type: "PERSONAL", status: "ACTIVE" },
+      },
+      orderBy: { createdAt: "asc" },
+      select: { organizationId: true },
+    });
+    if (existingMembership) return existingMembership.organizationId;
+
+    const user = await tx.user.findUnique({ where: { id: userId }, select: { platformRole: true } });
+    if (user?.platformRole !== "SUPER_ADMIN") return null;
+
+    const organization = await tx.organization.upsert({
+      where: { slug: `super-admin-${userId}` },
+      create: { name: "Ruang pribadi", slug: `super-admin-${userId}`, type: "PERSONAL", status: "ACTIVE" },
+      update: {},
+      select: { id: true, type: true, status: true },
+    });
+    if (organization.type !== "PERSONAL" || organization.status !== "ACTIVE") return null;
+
+    const ownerMembership = await tx.membership.upsert({
+      where: { organizationId_userId: { organizationId: organization.id, userId } },
+      create: { organizationId: organization.id, userId, role: "OWNER" },
+      update: {},
+      select: { organizationId: true },
+    });
+    return ownerMembership.organizationId;
+  });
 }
 
 export async function ensureTemplateVersion(slug: string) {
