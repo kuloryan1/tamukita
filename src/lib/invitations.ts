@@ -97,6 +97,7 @@ export const reservedSlugs = new Set([
   "admin",
   "api",
   "dashboard",
+  "demo",
   "developers",
   "forgot-password",
   "login",

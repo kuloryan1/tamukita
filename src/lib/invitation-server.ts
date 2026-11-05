@@ -141,6 +141,9 @@ export async function getWritableOrganizationId(userId: string) {
   });
   if (membership) return membership.organizationId;
 
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { platformRole: true } });
+  if (user?.platformRole !== "SUPER_ADMIN") return null;
+
   // Platform admins created outside customer registration may not have the
   // personal workspace that the editor needs. Keep this fallback scoped to
   // SUPER_ADMIN accounts; reseller and support accounts remain read-only here.
