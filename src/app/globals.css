@@ -866,6 +866,7 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .preview-phone-camera { background: #26312a; border-radius: 0 0 7px 7px; height: 8px; left: 50%; position: absolute; top: 0; transform: translateX(-50%); width: 62px; z-index: 3; }
 .preview-phone .invite-preview { height: 100%; }
 .preview-phone .invite-photo { min-height: 58%; }
+.preview-phone:not(.is-desktop) :is(.invite-photo-monogram, .heritage-monogram) { font-size: 42px; line-height: 1; top: 7%; }
 .preview-phone .invite-details { min-height: 42%; padding: 15px 13px 11px; }
 .preview-phone .invite-copy h2 { font-size: 26px; }
 .preview-phone .invite-kicker, .preview-phone .invite-date-short { font-size: 12px; }
