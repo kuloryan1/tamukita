@@ -1981,3 +1981,8 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
   overflow: auto;
   overscroll-behavior: contain;
 }
+
+/* Direct, public demo access from each marketplace template. */
+.template-card-demo { align-items: center; border-top: 1px solid var(--line); display: flex; font-size: 11px; gap: 8px; justify-content: space-between; margin: 0 0 16px; min-height: 42px; padding: 12px 2px; color: var(--forest); }
+.template-card-demo:hover { color: var(--forest-dark); text-decoration: underline; text-underline-offset: 4px; }
+.template-card-demo:focus-visible { outline: 2px solid var(--forest); outline-offset: 3px; }

@@ -4,6 +4,9 @@ import { InvitationPreview } from "@/components/invitation-preview";
 import { PublicInvitation } from "@/components/public-invitation";
 import { createDemoDraft, DEMO_COUPLE_NAMES } from "@/lib/invitations";
 import { getTemplate } from "@/lib/templates";
+import { StationeryInvitation } from "@/components/stationery-invitation";
+import { getTemplate as getStationeryTemplate } from "@/lib/stationery-demo";
+import { normalizeRecipient } from "@/lib/stationery-recipient";
 
 export const metadata: Metadata = {
   title: "Taman Abadi — Contoh Undangan",
@@ -14,6 +17,8 @@ type TamanAbadiDemoPageProps = {
   searchParams: Promise<{
     hostOne?: string | string[];
     hostTwo?: string | string[];
+    design?: string | string[];
+    to?: string | string[];
   }>;
 };
 
@@ -26,6 +31,12 @@ export default async function TamanAbadiDemoPage({ searchParams }: TamanAbadiDem
   const query = await searchParams;
   const template = getTemplate("taman-abadi");
   if (!template) notFound();
+
+  const design = Array.isArray(query.design) ? query.design[0] : query.design;
+  const stationeryTemplate = getStationeryTemplate(template.slug);
+  if (stationeryTemplate && (!design || design === "stationery") && !query.hostOne && !query.hostTwo) {
+    return <StationeryInvitation template={stationeryTemplate} recipient={normalizeRecipient(Array.isArray(query.to) ? query.to[0] : query.to)} />;
+  }
 
   const hostOne = demoName(query.hostOne, DEMO_COUPLE_NAMES.hostOne);
   const hostTwo = demoName(query.hostTwo, DEMO_COUPLE_NAMES.hostTwo);

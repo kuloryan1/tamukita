@@ -1,0 +1,3 @@
+export function calendarContent() {
+  return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Ryan and Dwi//Wedding Invitation//ID", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "BEGIN:VEVENT", "UID:ryan-dwi-20261121@tamukita.io", "DTSTAMP:20261105T000000Z", "DTSTART:20261121T110000Z", "SUMMARY:Pernikahan Ryan Pratam & Dwi Wulan Maulida", "LOCATION:Gedung Pariwisata Surabaya\\, Surabaya\\, Jawa Timur", "DESCRIPTION:Dengan penuh syukur\\, kami mengundang Anda untuk merayakan", "  hari istimewa ini bersama. Sabtu\\, 21 November 2026 pukul 18:00 WIB.", "STATUS:CONFIRMED", "END:VEVENT", "END:VCALENDAR", ""].join("\r\n");
+}

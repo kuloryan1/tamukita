@@ -6,10 +6,13 @@ import { ReferenceInvitation } from "@/components/reference-invitation";
 import { createDemoDraft } from "@/lib/invitations";
 import { getReferenceTemplatePreset } from "@/lib/reference-template-presets";
 import { getPublishedTemplateCatalog } from "@/lib/template-catalog";
+import { StationeryInvitation } from "@/components/stationery-invitation";
+import { getTemplate as getStationeryTemplate } from "@/lib/stationery-demo";
+import { normalizeRecipient } from "@/lib/stationery-recipient";
 
 export const dynamic = "force-dynamic";
 
-type TemplateDemoPageProps = { params: Promise<{ slug: string }>; searchParams: Promise<{ design?: string | string[] }> };
+type TemplateDemoPageProps = { params: Promise<{ slug: string }>; searchParams: Promise<{ design?: string | string[]; to?: string | string[] }> };
 
 export async function generateMetadata({ params }: TemplateDemoPageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -25,6 +28,12 @@ export default async function TemplateDemoPage({ params, searchParams }: Templat
   const design = Array.isArray(query.design) ? query.design[0] : query.design;
   const template = (await getPublishedTemplateCatalog()).find((candidate) => candidate.slug === slug);
   if (!template) notFound();
+
+  const stationeryTemplate = getStationeryTemplate(template.slug);
+  if (stationeryTemplate && (!design || design === "stationery")) {
+    const recipient = normalizeRecipient(Array.isArray(query.to) ? query.to[0] : query.to);
+    return <StationeryInvitation template={stationeryTemplate} recipient={recipient} />;
+  }
 
   const demoPath = `/templates/${encodeURIComponent(template.slug)}/demo`;
   const draft = {
