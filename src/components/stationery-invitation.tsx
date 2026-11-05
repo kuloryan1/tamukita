@@ -29,7 +29,7 @@ function Countdown() {
   </section>;
 }
 
-function ShareDialog({ dialogRef, template, recipient }: { dialogRef: RefObject<HTMLDialogElement | null>; template: WeddingTemplate; recipient: string }) {
+function ShareDialog({ dialogRef, recipient, basePath }: { dialogRef: RefObject<HTMLDialogElement | null>; recipient: string; basePath: string }) {
   const normalizedRecipient = normalizeRecipient(recipient);
   const [to, setTo] = useState(normalizedRecipient === "Anda" ? "" : normalizedRecipient);
   const [origin, setOrigin] = useState("");
@@ -37,7 +37,7 @@ function ShareDialog({ dialogRef, template, recipient }: { dialogRef: RefObject<
   const [copyError, setCopyError] = useState(false);
   useEffect(() => setOrigin(window.location.origin), []);
   const sharedRecipient = normalizeRecipient(to, "");
-  const url = `${origin}/templates/${template.slug}/demo${sharedRecipient ? `?to=${encodeURIComponent(sharedRecipient)}` : ""}`;
+  const url = `${origin}${basePath}${sharedRecipient ? `?to=${encodeURIComponent(sharedRecipient)}` : ""}`;
   async function copy() {
     try { await navigator.clipboard.writeText(url); setCopied(true); setCopyError(false); }
     catch { setCopyError(true); }
@@ -57,7 +57,13 @@ function ShareDialog({ dialogRef, template, recipient }: { dialogRef: RefObject<
   </dialog>;
 }
 
-export function StationeryInvitation({ template, recipient }: { template: WeddingTemplate; recipient: string }) {
+export function StationeryInvitation({ template, recipient, isTestableSample = false, slug, guestToken }: {
+  template: WeddingTemplate;
+  recipient: string;
+  isTestableSample?: boolean;
+  slug?: string;
+  guestToken?: string;
+}) {
   const [opened, setOpened] = useState(false);
   const [opening, setOpening] = useState(false);
   const [activeSection, setActiveSection] = useState("undangan");
@@ -65,6 +71,7 @@ export function StationeryInvitation({ template, recipient }: { template: Weddin
   const dialogRef = useRef<HTMLDialogElement>(null);
   const openingTimeout = useRef<number | null>(null);
   const guest = normalizeRecipient(recipient);
+  const shareBasePath = isTestableSample && slug ? `/${encodeURIComponent(slug)}` : `/templates/${template.slug}/demo`;
   const recipientQuery = guest === "Anda" ? "" : `?to=${encodeURIComponent(guest)}`;
   const catalogUrl = `/templates${recipientQuery}`;
   const style = { "--paper": template.paper, "--ink": template.ink, "--muted": template.muted, "--accent": template.accent, "--line": template.line, "--scene": template.background } as CSSProperties;
@@ -111,7 +118,7 @@ export function StationeryInvitation({ template, recipient }: { template: Weddin
     setOpened(false); setActiveSection("undangan"); window.history.replaceState(null, "", window.location.pathname + window.location.search); window.scrollTo({ top: 0, behavior: "instant" });
   }
 
-  return <div className={`stationery-demo theme-${template.slug} style-${template.style} ${opened ? "is-open" : "is-closed"}`} style={style} data-invitation-publication="demo" data-template={template.slug}>
+  return <div className={`stationery-demo theme-${template.slug} style-${template.style} ${opened ? "is-open" : "is-closed"}`} style={style} data-invitation-publication={isTestableSample ? "published" : "demo"} data-template={template.slug}>
     <a className="skip-link" href={opened ? "#detail-acara" : "#open-invitation"}>Lewati ke undangan</a>
     <header className="site-header">
       <a className="wordmark" href={catalogUrl} aria-label="Koleksi undangan Ryan dan Dwi"><span className="wordmark-initials">R<span>&</span>D</span><span className="wordmark-label">UNDANGAN<br />PERNIKAHAN</span></a>
@@ -151,12 +158,12 @@ export function StationeryInvitation({ template, recipient }: { template: Weddin
           </div>
           <a className="text-link rsvp-jump" href="#konfirmasi">Konfirmasi kehadiran <ArrowDown size={15} /></a>
         </section>
-        <RSVP template={template} recipient={guest} />
+        <RSVP template={template} recipient={guest} isTestableSample={isTestableSample} slug={slug} guestToken={guestToken} />
         <section className="closing-section paper"><BotanicalCorner className="closing-botanical" variant={template.ornament} /><TinyFlourish className="section-flourish" /><span className="eyebrow">DENGAN PENUH SUKACITA</span><h2>Hari istimewa ini,<br />lebih indah bersama <em>Anda.</em></h2><p>{WEDDING.intro}</p><div className="closing-names">Ryan <em>&</em> Dwi</div><span className="closing-date">21 NOVEMBER 2026</span><button type="button" className="text-link" onClick={() => dialogRef.current?.showModal()}>Bagikan undangan <Share2 size={14} /></button></section>
       </main>
       <footer className="site-footer"><a href={catalogUrl}><ArrowLeft size={14} />Koleksi template</a><span>{template.name} · Ryan & Dwi</span><button type="button" onClick={reopenCover}><RotateCcw size={13} />Lihat sampul</button></footer>
       <nav className="bottom-nav" aria-label="Navigasi undangan">{[{ id: "undangan", text: "Undangan", Icon: Mail }, { id: "detail-acara", text: "Acara", Icon: CalendarDays }, { id: "konfirmasi", text: "Kehadiran", Icon: Users }].map(({ id, text, Icon }) => <a href={`#${id}`} key={id} aria-current={activeSection === id ? "location" : undefined} className={activeSection === id ? "active" : ""}><Icon size={17} strokeWidth={1.5} /><span>{text}</span></a>)}</nav>
     </>}
-    <ShareDialog dialogRef={dialogRef} template={template} recipient={guest} />
+    <ShareDialog dialogRef={dialogRef} recipient={guest} basePath={shareBasePath} />
   </div>;
 }

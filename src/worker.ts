@@ -71,7 +71,7 @@ type NotificationPayload = {
 type ResellerStaffPayload = { to: string; name: string; resellerName: string; dashboardPath: "/reseller" };
 type ResellerCustomerAccessPayload = { to: string; name: string; resellerName: string; customerName: string; decision: "APPROVED" | "DECLINED" | "REVOKED"; dashboardPath: "/reseller" };
 type AdminManagedInvitationPayload = { to: string; name: string; invitationId: string; invitationTitle: string };
-type RsvpReceivedPayload = { to: string; ownerName: string; invitationId: string; invitationTitle: string; guestName: string; attendance: "ATTENDING" | "DECLINED"; attendeeCount: number };
+type RsvpReceivedPayload = { to: string; ownerName: string; invitationId: string; invitationTitle: string; guestName: string; attendance: "ATTENDING" | "DECLINED" | "MAYBE"; attendeeCount: number };
 type EventReminderPayload = { to: string; ownerName: string; invitationTitle: string; invitationSlug: string; eventTitle: string; startsAt: string; venue: string };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -135,7 +135,7 @@ function parseRsvpReceivedPayload(value: unknown): RsvpReceivedPayload | null {
     || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.invitationId)
     || typeof value.invitationTitle !== "string"
     || typeof value.guestName !== "string"
-    || (value.attendance !== "ATTENDING" && value.attendance !== "DECLINED")
+    || (value.attendance !== "ATTENDING" && value.attendance !== "DECLINED" && value.attendance !== "MAYBE")
     || !Number.isSafeInteger(value.attendeeCount)
     || Number(value.attendeeCount) < 1
     || Number(value.attendeeCount) > 10) return null;
@@ -245,7 +245,7 @@ async function sendRsvpReceivedEmail(payload: RsvpReceivedPayload) {
   const ownerName = payload.ownerName.replace(/[\r\n]+/g, " ").trim();
   const greeting = ownerName ? `Halo ${ownerName},` : "Halo,";
   const invitationTitle = payload.invitationTitle.replace(/[\r\n]+/g, " ").trim();
-  const attendance = payload.attendance === "ATTENDING" ? "akan hadir" : "belum dapat hadir";
+  const attendance = payload.attendance === "ATTENDING" ? "akan hadir" : payload.attendance === "DECLINED" ? "belum dapat hadir" : "belum dapat memastikan kehadiran";
   const count = payload.attendance === "ATTENDING" ? ` Jumlah tamu: ${payload.attendeeCount}.` : "";
   const subject = `Konfirmasi kehadiran baru · ${invitationTitle} · TamuKita`;
   const text = `${greeting}\n\n${payload.guestName} mengonfirmasi bahwa mereka ${attendance}.${count}\n\nUndangan: ${invitationTitle}\nLihat daftar tamu dan konfirmasi kehadiran: ${link}`;

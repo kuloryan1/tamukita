@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from "react";
 import type { WeddingTemplate } from "@/lib/stationery-demo";
-import { RSVP_CHILD_DATA_GUARDIAN_CONSENT_COPY } from "@/lib/consent-copy";
+import { GUESTBOOK_CHILD_DATA_GUARDIAN_CONSENT_COPY, RSVP_CHILD_DATA_GUARDIAN_CONSENT_COPY } from "@/lib/consent-copy";
 
 type Attendance = "yes" | "no" | "maybe";
 type Draft = {
@@ -43,7 +43,7 @@ function draftFromSubmission(value: DemoSubmission): Draft {
   return { name: value.name, attendance: value.attendance, guests: value.guests || 1, message: value.message, includesChildData: value.includesChildData, guardianConsent: value.guardianConsent, website: "" };
 }
 
-function validateDraft(draft: Draft): FieldErrors {
+function validateDraft(draft: Draft, requireGuestbookMessage = false): FieldErrors {
   const fields: FieldErrors = {};
   const name = draft.name.trim();
   if (!name.replace(/[\s\u200b-\u200d\ufeff]/gu, "") || characterCount(name) > 100 || containsControlCharacters(name)) {
@@ -52,6 +52,7 @@ function validateDraft(draft: Draft): FieldErrors {
   if (draft.attendance !== "yes" && draft.attendance !== "no" && draft.attendance !== "maybe") fields.attendance = "Pilih salah satu konfirmasi kehadiran.";
   if (draft.attendance === "yes" && (!Number.isInteger(draft.guests) || draft.guests < 1 || draft.guests > 5)) fields.guests = "Jumlah tamu harus antara 1 dan 5 orang.";
   if (characterCount(draft.message.trim()) > 500 || containsControlCharacters(draft.message, true)) fields.message = "Ucapan maksimal 500 karakter.";
+  if (requireGuestbookMessage && draft.message.trim().length === 1) fields.message = "Ucapan perlu berisi minimal 2 karakter.";
   if (draft.includesChildData !== draft.guardianConsent) fields.guardianConsent = "Persetujuan orang tua/wali diperlukan jika jawaban mencantumkan data anak.";
   if (draft.website.trim()) fields.website = "Formulir tidak valid. Silakan coba kembali.";
   return fields;
@@ -76,7 +77,13 @@ function CheckMark() {
   return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 12 4 4 8-8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
-export function RSVP({ template, recipient }: { template: WeddingTemplate; recipient: string }) {
+export function RSVP({ template, recipient, isTestableSample = false, slug, guestToken }: {
+  template: WeddingTemplate;
+  recipient: string;
+  isTestableSample?: boolean;
+  slug?: string;
+  guestToken?: string;
+}) {
   const id = useId();
   const recipientRef = useRef(recipient);
   recipientRef.current = recipient;
@@ -96,6 +103,8 @@ export function RSVP({ template, recipient }: { template: WeddingTemplate; recip
   const [storageWarning, setStorageWarning] = useState("");
   const [persisted, setPersisted] = useState(false);
   const [hasStoredReply, setHasStoredReply] = useState(false);
+  const [guestbookIncludesChildData, setGuestbookIncludesChildData] = useState(false);
+  const [guestbookGuardianConsent, setGuestbookGuardianConsent] = useState(false);
   const storageKey = `${STORAGE_PREFIX}${template.slug}`;
 
   const loadReply = useCallback(() => {
@@ -110,6 +119,14 @@ export function RSVP({ template, recipient }: { template: WeddingTemplate; recip
     setSubmission(null);
     setDraft(blankDraft(recipientRef.current));
     setEditing(true);
+    setGuestbookIncludesChildData(false);
+    setGuestbookGuardianConsent(false);
+    if (isTestableSample) {
+      setStorageAvailable(true);
+      setStorageWarning("");
+      setLoading(false);
+      return;
+    }
     let raw: string | null;
     try {
       raw = window.sessionStorage.getItem(`${STORAGE_PREFIX}${template.slug}`);
@@ -134,19 +151,22 @@ export function RSVP({ template, recipient }: { template: WeddingTemplate; recip
       }
     }
     setLoading(false);
-  }, [template.slug]);
+  }, [isTestableSample, template.slug]);
 
   useEffect(() => { loadReply(); }, [loadReply]);
 
   function startNewReply() {
     setLoadError("");
     setDraft(blankDraft(recipientRef.current));
+    setGuestbookIncludesChildData(false);
+    setGuestbookGuardianConsent(false);
+    setSubmission(null);
     setEditing(true);
     requestAnimationFrame(() => formRef.current?.querySelector<HTMLInputElement>('input[name="name"]')?.focus({ preventScroll: true }));
   }
 
   function focusFirstError(errors: FieldErrors) {
-    const key = ["name", "attendance", "guests", "message", "guardianConsent"].find((field) => errors[field]);
+    const key = ["name", "attendance", "guests", "message", "guardianConsent", "guestbookGuardianConsent"].find((field) => errors[field]);
     if (key) requestAnimationFrame(() => formRef.current?.querySelector<HTMLElement>(`[name="${key}"]`)?.focus());
   }
 
@@ -161,21 +181,63 @@ export function RSVP({ template, recipient }: { template: WeddingTemplate; recip
     setError("");
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function changeGuestbookChildData(selected: boolean) {
+    setGuestbookIncludesChildData(selected);
+    setGuestbookGuardianConsent(false);
+    setFields((previous) => ({ ...previous, guestbookGuardianConsent: "" }));
+    setError("");
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
     setError("");
     setNotice("");
-    const errors = validateDraft(draft);
+    const errors = validateDraft(draft, isTestableSample);
     if (Object.keys(errors).length !== 0) {
       setFields(errors);
       setError(errors.website || "Periksa kembali kolom yang ditandai.");
       focusFirstError(errors);
       return;
     }
+    if (isTestableSample && draft.message.trim() && guestbookIncludesChildData !== guestbookGuardianConsent) {
+      const guestbookConsentError = "Persetujuan orang tua/wali diperlukan jika ucapan mencantumkan data anak.";
+      setFields((previous) => ({ ...previous, guestbookGuardianConsent: guestbookConsentError }));
+      setError(guestbookConsentError);
+      focusFirstError({ guestbookGuardianConsent: guestbookConsentError });
+      return;
+    }
     setBusy("saving");
     setFields({});
     const saved: DemoSubmission = { version: 1, template: template.slug, name: draft.name.trim(), attendance: draft.attendance as Attendance, guests: draft.attendance === "yes" ? draft.guests : 0, message: draft.message.trim(), includesChildData: draft.includesChildData, guardianConsent: draft.guardianConsent, updatedAt: new Date().toISOString() };
+    if (isTestableSample) {
+      const response = await fetch(`/api/public/invitations/${encodeURIComponent(slug || "")}/rsvp`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: saved.name,
+          ...(guestToken ? { guestToken } : {}),
+          attendance: saved.attendance === "yes" ? "ATTENDING" : saved.attendance === "no" ? "DECLINED" : "MAYBE",
+          attendeeCount: saved.guests || 1,
+          includesChildData: saved.includesChildData,
+          guardianConsent: saved.guardianConsent,
+          ...(saved.message ? { message: saved.message, guestbookIncludesChildData, guestbookGuardianConsent } : {}),
+        }),
+      }).catch(() => null);
+      const result = await response?.json().catch(() => null) as { error?: string } | null;
+      if (!response?.ok) {
+        setError(result?.error ?? "Konfirmasi kehadiran belum dapat dikirim. Periksa koneksi dan coba lagi.");
+        setBusy("");
+        return;
+      }
+      setNotice(saved.message ? "Konfirmasi terkirim. Ucapan Anda menunggu persetujuan pengundang." : "Konfirmasi kehadiran Anda telah terkirim.");
+      setSubmission(saved);
+      setDraft(draftFromSubmission(saved));
+      setEditing(false);
+      setBusy("");
+      requestAnimationFrame(() => savedHeadingRef.current?.focus({ preventScroll: true }));
+      return;
+    }
     // This explicit submit is the only write path. No API or real RSVP model is used.
     try {
       window.sessionStorage.setItem(storageKey, JSON.stringify(saved));
@@ -252,15 +314,16 @@ export function RSVP({ template, recipient }: { template: WeddingTemplate; recip
   const updatedLabel = submission ? new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Jakarta" }).format(new Date(submission.updatedAt)) : "";
 
   return (
-    <section id="konfirmasi" className="rsvp-section content-section" data-demo-rsvp="local-only" aria-labelledby={`${id}-heading`}>
+    <section id="konfirmasi" className="rsvp-section content-section" data-demo-rsvp={isTestableSample ? "live" : "local-only"} aria-labelledby={`${id}-heading`}>
       <div className="rsvp-intro">
         <p className="eyebrow">KONFIRMASI KEHADIRAN</p>
         <h2 id={`${id}-heading`} className="section-heading">Sebuah kabar,<br /><em>berarti bagi kami.</em></h2>
         <p className="rsvp-lead">Isi konfirmasi kehadiran dan titipkan ucapan hangat untuk hari istimewa kami.</p>
         <div className="rsvp-demo-note">
-          <span className="rsvp-note-label">ANDA SEDANG MENCOBA DEMO</span>
-          <p>{storageAvailable ? "Jawaban percobaan disimpan hanya di tab browser ini. Konfirmasi dan ucapan tidak dikirim kepada mempelai." : "Penyimpanan tab tidak tersedia. Jawaban hanya tampil sementara pada halaman ini. Konfirmasi dan ucapan tidak dikirim kepada mempelai."}</p>
-          <p>Anda dapat melihat kembali, mengubah, atau menghapus jawaban selama tab ini tetap terbuka.</p>
+          <span className="rsvp-note-label">{isTestableSample ? "ANDA SEDANG MENCOBA UNDANGAN" : "ANDA SEDANG MENCOBA DEMO"}</span>
+          {isTestableSample
+            ? <><p>Konfirmasi kehadiran dikirim ke pemilik undangan. Ucapan akan tampil setelah disetujui.</p><p>Data ini masuk ke undangan tester untuk pengujian.</p></>
+            : <><p>{storageAvailable ? "Jawaban percobaan disimpan hanya di tab browser ini. Konfirmasi dan ucapan tidak dikirim kepada mempelai." : "Penyimpanan tab tidak tersedia. Jawaban hanya tampil sementara pada halaman ini. Konfirmasi dan ucapan tidak dikirim kepada mempelai."}</p><p>Anda dapat melihat kembali, mengubah, atau menghapus jawaban selama tab ini tetap terbuka.</p></>}
         </div>
       </div>
 
@@ -288,17 +351,19 @@ export function RSVP({ template, recipient }: { template: WeddingTemplate; recip
             {submission && !editing ? (
               <div className="rsvp-saved">
                 <div className="rsvp-saved-mark"><CheckMark /></div>
-                <p className="rsvp-note-label">KONFIRMASI DEMO ANDA</p>
-                <h3 ref={savedHeadingRef} tabIndex={-1}>{persisted ? "Jawaban Anda tersimpan." : "Jawaban sementara Anda."}</h3>
-                <p className="rsvp-saved-time">{persisted ? "Diperbarui" : "Dicoba"} {updatedLabel} WIB</p>
+                <p className="rsvp-note-label">{isTestableSample ? "KONFIRMASI ANDA" : "KONFIRMASI DEMO ANDA"}</p>
+                <h3 ref={savedHeadingRef} tabIndex={-1}>{isTestableSample ? "Jawaban Anda telah terkirim." : persisted ? "Jawaban Anda tersimpan." : "Jawaban sementara Anda."}</h3>
+                <p className="rsvp-saved-time">{isTestableSample ? "Dikirim" : persisted ? "Diperbarui" : "Dicoba"} {updatedLabel} WIB</p>
                 <dl className="rsvp-summary">
                   <div><dt>Nama</dt><dd>{submission.name}</dd></div>
                   <div><dt>Kehadiran</dt><dd>{attendanceLabels[submission.attendance]}</dd></div>
                   {submission.attendance === "yes" && <div><dt>Jumlah tamu</dt><dd>{submission.guests} orang</dd></div>}
                 </dl>
                 {submission.message && <div className="rsvp-saved-message"><span>Ucapan Anda</span><p>{submission.message}</p></div>}
-                {submission.includesChildData && <p className="rsvp-saved-consent">Simulasi persetujuan orang tua/wali: dicentang.</p>}
-                {confirmDelete ? (
+                {submission.includesChildData && <p className="rsvp-saved-consent">{isTestableSample ? "Persetujuan orang tua/wali tercatat." : "Simulasi persetujuan orang tua/wali: dicentang."}</p>}
+                {isTestableSample ? (
+                  <div className="rsvp-actions"><button className="button secondary" type="button" onClick={startNewReply}>Kirim jawaban lain</button></div>
+                ) : confirmDelete ? (
                   <fieldset className="rsvp-delete-confirm" aria-label="Konfirmasi hapus jawaban">
                     <p>Hapus jawaban percobaan untuk template ini?</p>
                     <div className="rsvp-actions">
@@ -321,7 +386,7 @@ export function RSVP({ template, recipient }: { template: WeddingTemplate; recip
 
                 <div className="rsvp-field">
                   <label htmlFor={`${id}-name`}>Nama Anda <span aria-hidden="true">*</span></label>
-                  <input id={`${id}-name`} name="name" type="text" autoComplete="name" placeholder="Nama lengkap Anda" value={draft.name} onChange={(event) => changeField("name", event.target.value)} required maxLength={200} disabled={busy !== ""} aria-invalid={!!fields.name} aria-describedby={fields.name ? `${id}-name-error` : undefined} />
+                  <input id={`${id}-name`} name="name" type="text" autoComplete="name" placeholder="Nama lengkap Anda" value={draft.name} onChange={(event) => changeField("name", event.target.value)} required maxLength={100} readOnly={Boolean(isTestableSample && guestToken)} disabled={busy !== ""} aria-invalid={!!fields.name} aria-describedby={fields.name ? `${id}-name-error` : undefined} />
                   {fields.name && <span id={`${id}-name-error`} className="form-error">{fields.name}</span>}
                 </div>
 
@@ -345,15 +410,16 @@ export function RSVP({ template, recipient }: { template: WeddingTemplate; recip
                 <div className="rsvp-consent-group">
                   <label className="rsvp-consent-row"><input type="checkbox" name="includesChildData" checked={draft.includesChildData} onChange={(event) => changeChildData(event.target.checked)} disabled={busy !== ""} /><span>Konfirmasi kehadiran ini mencantumkan nama atau informasi anak.</span></label>
                   {draft.includesChildData && <><label className="rsvp-consent-row rsvp-consent-row-nested"><input type="checkbox" name="guardianConsent" checked={draft.guardianConsent} onChange={(event) => changeField("guardianConsent", event.target.checked)} required disabled={busy !== ""} aria-invalid={!!fields.guardianConsent} aria-describedby={fields.guardianConsent ? `${id}-guardian-error` : `${id}-guardian-note`} /><span>{RSVP_CHILD_DATA_GUARDIAN_CONSENT_COPY}</span></label><p id={`${id}-guardian-note`} className="rsvp-consent-demo-note">Persetujuan ini hanya disimulasikan di demo. Tidak ada data yang dikirim kepada mempelai.</p>{fields.guardianConsent && <span id={`${id}-guardian-error`} className="form-error">{fields.guardianConsent}</span>}</>}
+                  {isTestableSample && draft.message.trim() && <><label className="rsvp-consent-row"><input type="checkbox" name="guestbookIncludesChildData" checked={guestbookIncludesChildData} onChange={(event) => changeGuestbookChildData(event.target.checked)} disabled={busy !== ""} /><span>Ucapan ini mencantumkan nama atau informasi anak.</span></label>{guestbookIncludesChildData && <><label className="rsvp-consent-row rsvp-consent-row-nested"><input type="checkbox" name="guestbookGuardianConsent" checked={guestbookGuardianConsent} onChange={(event) => { setGuestbookGuardianConsent(event.target.checked); setFields((previous) => ({ ...previous, guestbookGuardianConsent: "" })); }} required disabled={busy !== ""} aria-invalid={!!fields.guestbookGuardianConsent} /><span>{GUESTBOOK_CHILD_DATA_GUARDIAN_CONSENT_COPY}</span></label>{fields.guestbookGuardianConsent && <span className="form-error">{fields.guestbookGuardianConsent}</span>}</>}</>}
                 </div>
 
                 <div className="rsvp-honeypot" aria-hidden="true"><label htmlFor={`${id}-website`}>Website<input id={`${id}-website`} type="text" name="website" autoComplete="off" tabIndex={-1} value={draft.website} onChange={(event) => changeField("website", event.target.value)} /></label></div>
 
                 <div className="rsvp-submit-actions">
-                  <button className="button primary rsvp-submit" type="submit" disabled={busy !== ""}>{busy === "saving" ? <><span className="spinner" aria-hidden="true" />Menyimpan…</> : storageAvailable ? submission ? "Simpan perubahan di tab ini" : "Simpan jawaban di tab ini" : "Coba jawaban sementara"}<span aria-hidden="true">↗</span></button>
+                  <button className="button primary rsvp-submit" type="submit" disabled={busy !== ""}>{busy === "saving" ? <><span className="spinner" aria-hidden="true" />{isTestableSample ? "Mengirim…" : "Menyimpan…"}</> : isTestableSample ? "Kirim konfirmasi" : storageAvailable ? submission ? "Simpan perubahan di tab ini" : "Simpan jawaban di tab ini" : "Coba jawaban sementara"}<span aria-hidden="true">↗</span></button>
                   {submission && <button className="text-link" type="button" onClick={cancelEditing} disabled={busy !== ""}>Batal mengubah</button>}
                 </div>
-                <p className="rsvp-form-footnote">{storageAvailable ? "Dengan menekan simpan, Anda memilih menyimpan jawaban percobaan hanya di tab ini." : "Jawaban sementara akan hilang ketika halaman dimuat ulang."}</p>
+                <p className="rsvp-form-footnote">{isTestableSample ? "Konfirmasi kehadiran dikirim kepada pemilik undangan. Ucapan akan menunggu persetujuan." : storageAvailable ? "Dengan menekan simpan, Anda memilih menyimpan jawaban percobaan hanya di tab ini." : "Jawaban sementara akan hilang ketika halaman dimuat ulang."}</p>
               </form>
             )}
           </>
