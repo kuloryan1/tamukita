@@ -6,19 +6,24 @@ import { getPrismaClient } from "@/lib/prisma";
 import { readJsonBody } from "@/lib/request-json";
 import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
 import { childDataConsentRecord, CHILD_DATA_CONSENT_ERROR, guardianConsentMatchesChildData } from "@/lib/child-data-consent";
-import { RSVP_CHILD_DATA_GUARDIAN_CONSENT_VERSION } from "@/lib/consent-versions";
+import { GUESTBOOK_CHILD_DATA_GUARDIAN_CONSENT_VERSION, RSVP_CHILD_DATA_GUARDIAN_CONSENT_VERSION } from "@/lib/consent-versions";
 
 export const runtime = "nodejs";
 
 const rsvpSchema = z.object({
   name: z.string().trim().min(2).max(100).optional(),
   guestToken: z.string().regex(/^[A-Za-z0-9_-]{43}$/).optional(),
-  attendance: z.enum(["ATTENDING", "DECLINED"]),
+  attendance: z.enum(["ATTENDING", "DECLINED", "MAYBE"]),
   attendeeCount: z.number().int().min(1).max(10).default(1),
   includesChildData: z.boolean().default(false),
   guardianConsent: z.boolean().default(false),
+  message: z.string().trim().min(2).max(1000).optional(),
+  guestbookIncludesChildData: z.boolean().default(false),
+  guestbookGuardianConsent: z.boolean().default(false),
 }).refine((value) => value.guestToken || value.name, { message: "Nama tamu diperlukan." })
-  .refine((value) => guardianConsentMatchesChildData(value.includesChildData, value.guardianConsent), { message: CHILD_DATA_CONSENT_ERROR });
+  .refine((value) => guardianConsentMatchesChildData(value.includesChildData, value.guardianConsent), { message: CHILD_DATA_CONSENT_ERROR })
+  .refine((value) => !value.message || guardianConsentMatchesChildData(value.guestbookIncludesChildData, value.guestbookGuardianConsent), { message: CHILD_DATA_CONSENT_ERROR })
+  .refine((value) => value.message || (!value.guestbookIncludesChildData && !value.guestbookGuardianConsent), { message: "Ucapan diperlukan sebelum mengirim persetujuan data anak." });
 
 export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -82,6 +87,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
       });
       rsvpId = createdRsvp.id;
       created = true;
+    }
+
+    if (parsed.data.message) {
+      await tx.guestbookEntry.create({
+        data: {
+          invitationId: invitation.id,
+          guestId,
+          displayName,
+          message: parsed.data.message,
+          ...childDataConsentRecord(parsed.data.guestbookIncludesChildData, GUESTBOOK_CHILD_DATA_GUARDIAN_CONSENT_VERSION, respondedAt),
+        },
+      });
     }
 
     if (ownerEmail) {

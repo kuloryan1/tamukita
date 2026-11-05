@@ -11,6 +11,10 @@ import { getPrismaClient } from "@/lib/prisma";
 import { getTemplate } from "@/lib/templates";
 import { isEditorCompatibleTemplate, validateTemplateManifest } from "@/lib/template-sdk";
 import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
+import { isAdminSampleSnapshot } from "@/lib/invitation-publication";
+import { StationeryInvitation } from "@/components/stationery-invitation";
+import { getTemplate as getStationeryTemplate } from "@/lib/stationery-demo";
+import { normalizeRecipient } from "@/lib/stationery-recipient";
 
 type PageProps = { params: Promise<{ slug: string }> };
 type InvitationPageProps = PageProps & { searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -107,5 +111,17 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
     take: 30,
     select: { id: true, displayName: true, message: true, createdAt: true },
   });
+  const isTestableSample = isAdminSampleSnapshot(record.publishedSnapshot);
+  const stationeryTemplate = isTestableSample ? getStationeryTemplate(record.template.slug) : undefined;
+  if (stationeryTemplate) {
+    const recipient = guestLink?.guest.name ?? normalizeRecipient(Array.isArray(query.to) ? query.to[0] : query.to);
+    return <StationeryInvitation
+      template={stationeryTemplate}
+      recipient={recipient}
+      isTestableSample
+      slug={slug}
+      guestToken={guestLink ? candidateToken ?? undefined : undefined}
+    />;
+  }
   return <PublicInvitation slug={slug} initialDraft={record.draft} initialRsvpCount={record._count.rsvps} initialGuestbook={guestbook.map((entry) => ({ ...entry, createdAt: entry.createdAt.toISOString() }))} recipientName={guestLink?.guest.name} guestToken={guestLink ? candidateToken ?? undefined : undefined} featureAccess={record.featureAccess} templateSlug={record.template.slug} preview={<InvitationPreview draft={record.draft} full recipientName={guestLink?.guest.name} template={record.template} mode="public" />} />;
 }
