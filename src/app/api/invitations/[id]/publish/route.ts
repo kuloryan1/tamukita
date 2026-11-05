@@ -15,15 +15,18 @@ import { getPaymentSettings, isReusableCheckout, paymentSessionInput } from "@/l
 import { readJsonBody } from "@/lib/request-json";
 import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
 import { resolveInvitationFeatureAccess, validateDraftFeatureAccess } from "@/lib/invitation-features";
+import { ADMIN_SAMPLE_PUBLICATION_MODE, isAdminSampleSnapshot } from "@/lib/invitation-publication";
 
 export const runtime = "nodejs";
 
 class PublishConflict extends Error {}
+class PendingPaymentConflict extends Error {}
 
 const publishRequestSchema = z.object({
   planId: z.string().uuid().optional(),
   planUpdatedAt: z.string().datetime().optional(),
-}).strict().refine((value) => Boolean(value.planId) === Boolean(value.planUpdatedAt));
+  adminSample: z.literal(true).optional(),
+}).strict().refine((value) => value.adminSample ? !value.planId && !value.planUpdatedAt : Boolean(value.planId) === Boolean(value.planUpdatedAt));
 
 function isXenditUrl(value: string) {
   try {
@@ -45,6 +48,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({ error: "ID undangan tidak valid." }, { status: 400 });
   const prisma = getPrismaClient();
+  const adminSampleRequested = parsedRequest.data.adminSample === true;
+  if (adminSampleRequested) {
+    const actor = await prisma.user.findUnique({ where: { id: userId }, select: { platformRole: true } });
+    if (actor?.platformRole !== "SUPER_ADMIN") return NextResponse.json({ error: "Mode terbitkan contoh hanya tersedia untuk Super Admin." }, { status: 403 });
+  }
   const invitation = await prisma.invitation.findFirst({
     where: {
       id,
@@ -56,6 +64,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     include: { owner: { select: { name: true, email: true } } },
   });
   if (!invitation) return NextResponse.json({ error: "Draft tidak ditemukan." }, { status: 404 });
+  const isAdminSamplePublication = isAdminSampleSnapshot(invitation.publishedSnapshot);
+  if (adminSampleRequested && invitation.status !== "DRAFT") return NextResponse.json({ error: "Mode contoh hanya dapat digunakan untuk draft yang belum diterbitkan." }, { status: 409 });
   const draft = parseInvitationDraft({ ...invitation.draftData as object, id: invitation.id, slug: invitation.slug });
   if (!draft) return NextResponse.json({ error: "Data draft perlu diperiksa ulang sebelum diterbitkan." }, { status: 400 });
   const checkedDraft = { ...draft, slug: invitation.slug };
@@ -70,7 +80,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     where: { invitationId: invitation.id, templateVersionId: template.version.id },
     select: { id: true },
   });
-  if (existingLicense) {
+  if (existingLicense && !adminSampleRequested) {
     const featureError = validateDraftFeatureAccess(checkedDraft, await getInvitationFeatureAccess(invitation.id));
     if (featureError) return NextResponse.json({ error: featureError }, { status: 400 });
   }
@@ -87,16 +97,71 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     data: { formCompletedAt: new Date() },
   });
   const publishedAt = new Date();
+  if (adminSampleRequested) {
+    const hostingTermDays = await getHostingTermDays();
+    const expiresAt = new Date(publishedAt.getTime() + hostingTermDays * 86_400_000);
+    try {
+      await prisma.$transaction(async (tx) => {
+        await tx.$queryRaw<Array<{ id: string }>>`SELECT id FROM "invitations" WHERE id = ${invitation.id}::uuid FOR UPDATE`;
+        const current = await tx.invitation.findFirst({
+          where: { id: invitation.id, ownerId: userId, deletedAt: null, status: "DRAFT", organization: { status: "ACTIVE", memberships: { some: { userId, role: { in: ["OWNER", "ADMIN", "EDITOR"] } } } } },
+          select: { id: true },
+        });
+        if (!current) throw new PublishConflict();
+        const pendingOrder = await tx.order.findFirst({ where: { invitationId: invitation.id, status: "PENDING" }, select: { id: true } });
+        if (pendingOrder) throw new PendingPaymentConflict();
+
+        const sampleLicense = await tx.templateLicense.findFirst({ where: { invitationId: invitation.id, templateVersionId: template.version.id }, select: { id: true } });
+        if (!sampleLicense) {
+          await tx.templateLicense.create({
+            data: {
+              organizationId: invitation.organizationId,
+              invitationId: invitation.id,
+              templateId: template.template.id,
+              templateVersionId: template.version.id,
+              licenseSnapshot: { licenseType: template.template.licenseType, templateSlug: template.template.slug, templateVersion: template.version.version, amountIdr: 0, source: "SUPER_ADMIN_SAMPLE" },
+            },
+          });
+        }
+
+        const snapshot = { ...checkedDraft, publishedAt: publishedAt.toISOString(), publicationMode: ADMIN_SAMPLE_PUBLICATION_MODE };
+        const claimed = await tx.invitation.updateMany({
+          where: { id: invitation.id, ownerId: userId, status: "DRAFT", deletedAt: null, organization: { status: "ACTIVE", memberships: { some: { userId, role: { in: ["OWNER", "ADMIN", "EDITOR"] } } } } },
+          data: { status: "PUBLISHED", title: invitationTitle(checkedDraft), publishedAt, publishedSnapshot: JSON.parse(JSON.stringify(snapshot)), templateVersionId: template.version.id, startsAt: eventStartsAt(checkedDraft), expiresAt },
+        });
+        if (claimed.count !== 1) throw new PublishConflict();
+
+        const activeHosting = await tx.entitlement.findFirst({ where: { invitationId: invitation.id, featureKey: "hosting", status: "ACTIVE", startsAt: { lte: publishedAt }, OR: [{ expiresAt: null }, { expiresAt: { gt: publishedAt } }] }, select: { id: true } });
+        if (!activeHosting) {
+          await tx.entitlement.create({ data: { organizationId: invitation.organizationId, invitationId: invitation.id, featureKey: "hosting", value: { periodDays: hostingTermDays, source: "SUPER_ADMIN_SAMPLE" }, startsAt: publishedAt, expiresAt } });
+        }
+
+        const latest = await tx.invitationVersion.aggregate({ where: { invitationId: invitation.id }, _max: { version: true } });
+        await tx.invitationVersion.create({ data: { invitationId: invitation.id, version: (latest._max.version ?? 0) + 1, type: "PUBLISHED", snapshot: JSON.parse(JSON.stringify(snapshot)), createdById: userId } });
+        const eventData = { title: invitationTitle(checkedDraft), startsAt: eventStartsAt(checkedDraft), venue: checkedDraft.venue, address: checkedDraft.address, mapsUrl: checkedDraft.mapsUrl || null };
+        const events = await tx.event.updateMany({ where: { invitationId: invitation.id }, data: eventData });
+        if (events.count === 0) await tx.event.create({ data: { invitationId: invitation.id, ...eventData } });
+        await tx.auditLog.create({ data: { organizationId: invitation.organizationId, actorId: userId, action: "invitation.published_admin_sample", targetType: "Invitation", targetId: invitation.id, metadata: { templateId: template.template.id, templateVersionId: template.version.id, licenseGrantedWithoutPayment: !sampleLicense, hostingTermDays } } });
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    } catch (error) {
+      if (error instanceof PublishConflict) return NextResponse.json({ error: "Status undangan berubah. Muat ulang halaman dan periksa kembali." }, { status: 409 });
+      if (error instanceof PendingPaymentConflict) return NextResponse.json({ error: "Ada pembayaran yang masih menunggu. Selesaikan atau batalkan order itu sebelum menerbitkan contoh." }, { status: 409 });
+      if (typeof error === "object" && error !== null && "code" in error && error.code === "P2002") return NextResponse.json({ error: "Lisensi template sedang diproses. Muat ulang halaman lalu coba lagi." }, { status: 409 });
+      throw error;
+    }
+    return NextResponse.json({ published: true, slug: invitation.slug, adminSample: true });
+  }
+
   if (existingLicense) {
     try {
       await prisma.$transaction(async (tx) => {
+        const snapshot = { ...checkedDraft, publishedAt: publishedAt.toISOString(), ...(isAdminSamplePublication ? { publicationMode: ADMIN_SAMPLE_PUBLICATION_MODE } : {}) };
         const claimed = await tx.invitation.updateMany({
           where: { id, ownerId: userId, status: invitation.status, deletedAt: null, organization: { status: "ACTIVE", memberships: { some: { userId, role: { in: ["OWNER", "ADMIN", "EDITOR"] } } } } },
-          data: { status: "PUBLISHED", slug: checkedDraft.slug, title: invitationTitle(checkedDraft), publishedAt, publishedSnapshot: JSON.parse(JSON.stringify({ ...checkedDraft, publishedAt: publishedAt.toISOString() })), templateVersionId: template.version.id, startsAt: eventStartsAt(checkedDraft) },
+          data: { status: "PUBLISHED", slug: checkedDraft.slug, title: invitationTitle(checkedDraft), publishedAt, publishedSnapshot: JSON.parse(JSON.stringify(snapshot)), templateVersionId: template.version.id, startsAt: eventStartsAt(checkedDraft) },
         });
         if (claimed.count !== 1) throw new PublishConflict();
         const latest = await tx.invitationVersion.aggregate({ where: { invitationId: id }, _max: { version: true } });
-        const snapshot = { ...checkedDraft, publishedAt: publishedAt.toISOString() };
         await tx.invitationVersion.create({
           data: { invitationId: id, version: (latest._max.version ?? 0) + 1, type: "PUBLISHED", snapshot: JSON.parse(JSON.stringify(snapshot)), createdById: userId },
         });
@@ -107,7 +172,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           data: {
             organizationId: invitation.organizationId,
             actorId: userId,
-            action: invitation.status === "DRAFT" ? "invitation.published_with_existing_license" : "invitation.published",
+            action: isAdminSamplePublication ? "invitation.updated_admin_sample" : invitation.status === "DRAFT" ? "invitation.published_with_existing_license" : "invitation.published",
             targetType: "Invitation",
             targetId: id,
           },
@@ -117,7 +182,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       if (error instanceof PublishConflict) return NextResponse.json({ error: "Status undangan berubah. Muat ulang halaman dan periksa kembali." }, { status: 409 });
       throw error;
     }
-    return NextResponse.json({ published: true, slug: invitation.slug });
+    return NextResponse.json({ published: true, slug: invitation.slug, ...(isAdminSamplePublication ? { adminSample: true } : {}) });
   }
 
   const paymentSettings = await getPaymentSettings();

@@ -227,7 +227,7 @@ function SchemaFieldControl({ field, value, onChange }: { field: TemplateSchemaF
   return <input className="text-input" type={type} value={value} onChange={(event) => onChange(event.target.value)} maxLength={templateFieldMaximumLength(field)} required={field.required} placeholder={field.placeholder ?? field.label} />;
 }
 
-export function InvitationEditor({ invitationId, templateCatalog }: { invitationId?: string; templateCatalog?: Template[] } = {}) {
+export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin = false }: { invitationId?: string; templateCatalog?: Template[]; isSuperAdmin?: boolean } = {}) {
   const router = useRouter();
   const [draft, setDraft] = useState<InvitationDraft>(createInitialDraft);
   const [previewDevice, setPreviewDevice] = useState<"mobile" | "desktop">("mobile");
@@ -833,8 +833,8 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
     if (step < steps.length - 1) setStep((current) => current + 1);
   };
 
-  const handlePublish = async () => {
-    if (!customerPlansLoaded || customerPlansError) {
+  const handlePublish = async (adminSample = false) => {
+    if (!adminSample && (!customerPlansLoaded || customerPlansError)) {
       setError(customerPlansError || "Paket undangan masih dimuat. Coba lagi sebentar.");
       return;
     }
@@ -854,7 +854,7 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
     }
     const currentFeatureAccess = featureAccess.planManaged ? featureAccess : selectedPlan ? resolveInvitationFeatureAccess(selectedPlan.entitlements) : null;
     const currentFeatureError = currentFeatureAccess ? validateDraftFeatureAccess(currentDraft, currentFeatureAccess) : null;
-    if (currentFeatureError) {
+    if (!adminSample && currentFeatureError) {
       setError(currentFeatureError);
       setStep(2);
       return;
@@ -885,7 +885,7 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
     }
     const latestFeatureAccess = featureAccess.planManaged ? featureAccess : selectedPlan ? resolveInvitationFeatureAccess(selectedPlan.entitlements) : null;
     const latestFeatureError = latestFeatureAccess ? validateDraftFeatureAccess(latestDraft, latestFeatureAccess) : null;
-    if (latestFeatureError) {
+    if (!adminSample && latestFeatureError) {
       setError(latestFeatureError);
       setStep(2);
       setPublished(false);
@@ -894,7 +894,7 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
     const response = await fetch(`/api/invitations/${encodeURIComponent(latestDraft.id)}/publish`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(selectedPlan ? { planId: selectedPlan.id, planUpdatedAt: selectedPlan.updatedAt } : {}),
+      body: JSON.stringify(adminSample ? { adminSample: true } : selectedPlan ? { planId: selectedPlan.id, planUpdatedAt: selectedPlan.updatedAt } : {}),
     }).catch(() => null);
     const result = await response?.json().catch(() => null) as { error?: string; checkoutUrl?: string; published?: boolean; slug?: string } | null;
     if (!response?.ok) {
@@ -947,6 +947,8 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
 
   if (!hydrated) return <div className="dashboard-empty-state"><h2>Menyiapkan undanganmu...</h2><p>Menghubungkan editor ke ruang penyimpanan akun.</p></div>;
 
+  const canPublishAdminSample = isSuperAdmin && !draft.isPublished;
+
   return (
       <div className="editor-page">
         <div className="editor-heading"><div><Link className="back-link" href="/dashboard"><ArrowLeft size={15} /> Kembali ke dashboard</Link><h1>Buat undanganmu</h1><p>Isi detail kecilnya. Cerita besarnya akan terlihat dengan sendirinya.</p></div><span className="editor-save-state"><span className={saveState === "saved" ? "saved-dot" : saveState === "error" ? "saved-dot is-error" : "saved-dot is-saving"} />{saveState === "saved" ? "Tersimpan otomatis" : saveState === "error" ? "Gagal menyimpan" : "Menyimpan..."}</span></div>
@@ -983,7 +985,11 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
               <div className="review-line"><span>Nama / judul</span><b>{draft.eventKind === "Pernikahan" ? `${draft.hostOne} & ${draft.hostTwo}` : draft.eventTitle}</b></div>
               <div className="review-line"><span>Tanggal</span><b>{formatShortDate(draft.eventDate)}</b></div>
               <div className="review-line"><span>Template</span><b>{templateChoices.find((template) => template.slug === draft.templateId)?.name}</b></div>
-              <section className="editor-package-options" aria-labelledby="editor-package-title">
+              {canPublishAdminSample && <section className="editor-admin-sample" aria-labelledby="editor-admin-sample-title">
+                <span className="editor-demo-icon"><Sparkles size={16} /></span>
+                <div><b id="editor-admin-sample-title">Terbitkan contoh sebagai Super Admin</b><p>Undangan tayang gratis selama {fallbackPricing.hostingTermDays} hari. Label contoh hanya terlihat di editor admin; RSVP dan ucapan tetap aktif untuk pengujian.</p></div>
+              </section>}
+              {!canPublishAdminSample && <section className="editor-package-options" aria-labelledby="editor-package-title">
                 <span className="eyebrow" id="editor-package-title">PAKET AKTIVASI & HOSTING</span>
                 {customerPlansLoaded && customerPlans.length > 0 ? <>
                   <p>Pilih satu kali paket untuk masa hosting dan fitur undangan.</p>
@@ -996,15 +1002,15 @@ export function InvitationEditor({ invitationId, templateCatalog }: { invitation
                 </> : customerPlansLoaded ? <p>Hosting {fallbackPricing.hostingTermDays} hari · biaya aktivasi {formatRupiah(fallbackPricing.activationPriceIdr)}.</p> : <p>Memuat pilihan paket…</p>}
                 {selectedPlanFeatureError && <p className="field-hint" role="alert">{selectedPlanFeatureError}</p>}
                 {customerPlansError && <p className="field-hint" role="alert">{customerPlansError}</p>}
-              </section>
-              <div className="demo-payment-notice"><span className="demo-notice-icon"><Info size={15} /></span><span><b>Lisensi template · {formatRupiah(activeTemplate.price)}</b><small>{draft.isPublished ? "Perubahan isi pada template yang sudah berlisensi tidak ditagih ulang. Biaya berlaku jika undangan ini memerlukan lisensi baru." : activeTemplate.price === 0 ? "Template ini tidak memerlukan biaya lisensi." : "Pembayaran satu kali untuk lisensi template undangan ini."}</small></span></div>
+              </section>}
+              {!canPublishAdminSample && <><div className="demo-payment-notice"><span className="demo-notice-icon"><Info size={15} /></span><span><b>Lisensi template · {formatRupiah(activeTemplate.price)}</b><small>{draft.isPublished ? "Perubahan isi pada template yang sudah berlisensi tidak ditagih ulang. Biaya berlaku jika undangan ini memerlukan lisensi baru." : activeTemplate.price === 0 ? "Template ini tidak memerlukan biaya lisensi." : "Pembayaran satu kali untuk lisensi template undangan ini."}</small></span></div>
               <div className="review-line review-line--total"><span>{draft.isPublished ? "Biaya jika perlu lisensi baru" : "Total saat ini"}</span><b>{formatRupiah(activeTemplate.price + (customerPlans.length > 0 ? selectedPlan?.priceIdr ?? 0 : fallbackPricing.activationPriceIdr))}</b></div>
-              {customerPlans.length > 0 && !selectedPlan && <p className="field-hint">Pilih paket untuk melihat total dan melanjutkan.</p>}
+              {customerPlans.length > 0 && !selectedPlan && <p className="field-hint">Pilih paket untuk melihat total dan melanjutkan.</p>}</>}
               {published && <div className="publish-success"><CheckCircle2 size={16} /> Membuka halaman undangan...</div>}
             </div>}
 
             {error && <div className="editor-error" role="alert"><Info size={15} />{error}</div>}
-            <div className="editor-card-footer"><button type="button" className="draft-later" onClick={saveAndReturn}><Save size={15} /> Simpan & lanjutkan nanti</button><div className="step-navigation">{step > 0 && <button type="button" className="button button--outline button--small" onClick={() => { setStep((current) => current - 1); setError(""); }}><ChevronLeft size={15} /> Kembali</button>}{step < 4 ? <button type="button" className="button button--dark button--small" onClick={goNext}>{step === 3 ? "Lihat preview" : "Lanjutkan"} <ChevronRight size={15} /></button> : <button type="button" className="button button--dark button--small" onClick={handlePublish} disabled={published}>{published ? "Menghubungkan..." : draft.isPublished ? "Terbitkan perubahan" : "Bayar & terbitkan"} <ArrowRight size={15} /></button>}</div></div>
+            <div className="editor-card-footer"><button type="button" className="draft-later" onClick={saveAndReturn}><Save size={15} /> Simpan & lanjutkan nanti</button><div className="step-navigation">{step > 0 && <button type="button" className="button button--outline button--small" onClick={() => { setStep((current) => current - 1); setError(""); }}><ChevronLeft size={15} /> Kembali</button>}{step < 4 ? <button type="button" className="button button--dark button--small" onClick={goNext}>{step === 3 ? "Lihat preview" : "Lanjutkan"} <ChevronRight size={15} /></button> : <button type="button" className="button button--dark button--small" onClick={() => void handlePublish(canPublishAdminSample)} disabled={published}>{published ? "Menghubungkan..." : canPublishAdminSample ? "Terbitkan contoh gratis" : draft.isPublished ? "Terbitkan perubahan" : "Bayar & terbitkan"} <ArrowRight size={15} /></button>}</div></div>
           </section>
 
           <aside className="editor-preview-panel"><div className="editor-preview-heading"><div><span className="eyebrow">LIVE PREVIEW</span><h3>Pratinjau undangan</h3></div><fieldset className="preview-device-switch" aria-label="Tampilan pratinjau"><button type="button" className={previewDevice === "mobile" ? "is-selected" : ""} onClick={() => setPreviewDevice("mobile")} aria-pressed={previewDevice === "mobile"}><Smartphone size={12} /> Ponsel</button><button type="button" className={previewDevice === "desktop" ? "is-selected" : ""} onClick={() => setPreviewDevice("desktop")} aria-pressed={previewDevice === "desktop"}><Monitor size={12} /> Desktop</button></fieldset></div><div className={`preview-phone-stage${previewDevice === "desktop" ? " is-desktop" : ""}`}><div className={`preview-phone${previewDevice === "desktop" ? " is-desktop" : ""}`}>{previewDevice === "mobile" && <div className="preview-phone-camera" />}<InvitationPreview draft={draft} template={activeTemplate} /></div></div><div className="preview-link-row"><span className="preview-link-icon">↗</span><span><small>Tautan undangan</small><b>tamukita.io/{draft.slug || "namaundangan"}</b></span><button type="button" onClick={() => navigator.clipboard?.writeText(`https://tamukita.io/${draft.slug}`)} aria-label="Salin tautan"><Check size={15} /></button></div><div className="preview-reminder"><Sparkles size={15} /><span>Perubahanmu tersimpan otomatis. Kamu bisa kembali dan melanjutkan kapan saja.</span></div></aside>

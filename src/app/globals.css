@@ -849,6 +849,10 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .demo-payment-notice b { color: #746649; font-size: 8px; }
 .demo-payment-notice small { color: #8f897b; font-size: 8px; line-height: 1.55; margin-top: 4px; }
 .editor-demo-panel { background: #f6f8f3; border: 1px solid #e3e9df; border-radius: 12px; display: grid; gap: 11px; margin: 0 0 17px; padding: 13px; }
+.editor-admin-sample { align-items: flex-start; background: #f6f8f3; border: 1px solid #dce7d9; border-radius: 12px; display: flex; gap: 10px; margin: 16px 0; padding: 13px; }
+.editor-admin-sample > div { min-width: 0; }
+.editor-admin-sample b { color: #425747; display: block; font-size: 11px; }
+.editor-admin-sample p { color: #707b70; font-size: 10px; line-height: 1.55; margin: 4px 0 0; }
 .editor-demo-copy { align-items: flex-start; display: flex; gap: 9px; }
 .editor-demo-icon { align-items: center; background: #e7eee4; border-radius: 50%; color: #6c876b; display: flex; flex: none; height: 28px; justify-content: center; width: 28px; }
 .editor-demo-copy > div { min-width: 0; }
