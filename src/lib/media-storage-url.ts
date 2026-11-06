@@ -21,7 +21,9 @@ export function mediaKeyFromPublicUrl(value: string) {
     const base = new URL(appUrl);
     const url = new URL(value);
     const prefix = "/api/media/files/";
-    if ((!base.protocol.includes("https") && !(process.env.NODE_ENV !== "production" && ["localhost", "127.0.0.1", "::1"].includes(base.hostname)))
+    const isSecureOrigin = base.protocol === "https:";
+    const isLocalLoopbackOrigin = base.protocol === "http:" && ["localhost", "127.0.0.1", "::1"].includes(base.hostname);
+    if ((!isSecureOrigin && !isLocalLoopbackOrigin)
       || url.origin !== base.origin || !url.pathname.startsWith(prefix) || url.search || url.hash || url.username || url.password) return null;
     const segments = url.pathname.slice(prefix.length).split("/");
     const decoded = segments.map((segment) => decodeURIComponent(segment));
