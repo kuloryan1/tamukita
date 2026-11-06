@@ -175,7 +175,33 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
           <div className="hero-date"><span className="eyebrow">HARI & TANGGAL</span><p>{dateLabel}</p><span>{eventTimeLabel}</span></div>
           <a className="detail-link" href="#detail-acara">LIHAT DETAIL ACARA <ArrowDown size={15} /></a>
         </section>
-        {draft?.coverPhoto && <section className="cover-photo-section" aria-label={`Foto ${hostOne} dan ${hostTwo}`}><figure className="cover-photo-frame"><Image src={draft.coverPhoto} alt={`Momen ${hostOne} dan ${hostTwo}`} width={1600} height={1000} sizes="(max-width: 860px) calc(100vw - 36px), 780px" unoptimized style={{ objectPosition: coverPhotoPosition }} /></figure></section>}
+        {draft?.coverPhoto && (
+          <section className="cover-photo-section" aria-label={`Foto ${hostOne} dan ${hostTwo}`}>
+            <div className="cover-photo-stage">
+              <div className="cover-photo-window">
+                <Image
+                  className="cover-photo-image"
+                  src={draft.coverPhoto}
+                  alt={`Momen ${hostOne} dan ${hostTwo}`}
+                  width={1600}
+                  height={1000}
+                  sizes="(max-width: 720px) 50vw, 336px"
+                  unoptimized
+                  style={{ objectPosition: coverPhotoPosition }}
+                />
+              </div>
+              <Image
+                className="cover-photo-ornament"
+                src="/images/frames/rococo-silver-oval.png"
+                alt=""
+                aria-hidden="true"
+                width={1254}
+                height={1254}
+                sizes="(max-width: 720px) 100vw, 680px"
+              />
+            </div>
+          </section>
+        )}
         <Countdown targetDate={eventStartsAt} accessibleDate={`${dateLabel} pukul ${eventTime} WIB`} />
         <section className="event-section content-section" id="detail-acara" aria-labelledby="event-title">
           <div className="section-heading"><span className="eyebrow">SIMPAN TANGGALNYA</span><h2 id="event-title">Sampai jumpa di<br />hari <em>bahagia.</em></h2><TinyFlourish className="section-flourish" /></div>
