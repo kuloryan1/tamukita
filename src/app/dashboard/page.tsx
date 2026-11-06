@@ -10,9 +10,33 @@ import { getPrismaClient } from "@/lib/prisma";
 import { getTemplate, templates } from "@/lib/templates";
 import { validateTemplateManifest } from "@/lib/template-sdk";
 import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
+import { ADMIN_SAMPLE_PUBLICATION_MODE } from "@/lib/invitation-publication";
 
 function dateLabel(date: Date) {
   return new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(date);
+}
+
+async function getWorkspaceInvitations(userId: string) {
+  const prisma = getPrismaClient();
+  const invitationScope = { ownerId: userId, deletedAt: null, organization: { status: "ACTIVE" as const } };
+  const adminSamples = await prisma.invitation.findMany({
+    where: {
+      ...invitationScope,
+      publishedSnapshot: { path: ["publicationMode"], equals: ADMIN_SAMPLE_PUBLICATION_MODE },
+    },
+    select: { id: true },
+  });
+
+  return prisma.invitation.findMany({
+    where: { ...invitationScope, id: { notIn: adminSamples.map(({ id }) => id) } },
+    orderBy: { updatedAt: "desc" },
+    take: 6,
+    include: {
+      templateVersion: { include: { template: true } },
+      events: { orderBy: { startsAt: "asc" }, take: 1, select: { startsAt: true } },
+      _count: { select: { rsvps: true } },
+    },
+  });
 }
 
 export default async function DashboardPage() {
@@ -28,16 +52,7 @@ export default async function DashboardPage() {
   const organizationIds = memberships.map((membership) => membership.organizationId);
   const personalOrganizationIds = memberships.filter((membership) => membership.organization.type === "PERSONAL").map((membership) => membership.organizationId);
   const [invitations, analytics, resellerRequests] = await Promise.all([
-    prisma.invitation.findMany({
-      where: { ownerId: userId, deletedAt: null, organization: { status: "ACTIVE" } },
-      orderBy: { updatedAt: "desc" },
-      take: 6,
-      include: {
-        templateVersion: { include: { template: true } },
-        events: { orderBy: { startsAt: "asc" }, take: 1, select: { startsAt: true } },
-        _count: { select: { rsvps: true } },
-      },
-    }),
+    getWorkspaceInvitations(userId),
     organizationIds.length
       ? prisma.analyticsDaily.aggregate({ where: { organizationId: { in: organizationIds }, metricKey: "invitation_views" }, _sum: { metricValue: true } })
       : Promise.resolve({ _sum: { metricValue: null } }),
