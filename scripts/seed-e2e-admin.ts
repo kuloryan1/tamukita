@@ -6,6 +6,7 @@ import { hashPassword } from "@/lib/password";
 import { ADULT_ATTESTATION_VERSION } from "@/lib/consent-versions";
 import { templates } from "@/lib/templates";
 import { TEMPLATE_SDK_VERSION } from "@/lib/template-sdk";
+import { dashboardFixture, getDashboardFixtureCredentials } from "../e2e/dashboard-fixture";
 
 const connectionString = process.env.DATABASE_URL;
 const authSecret = process.env.AUTH_SECRET ?? "";
@@ -19,6 +20,9 @@ const paparazziCustomerEmail = process.env.E2E_PAPARAZZI_CUSTOMER_EMAIL?.trim().
 const paparazziCustomerPassword = process.env.E2E_PAPARAZZI_CUSTOMER_PASSWORD;
 const customerEmail = process.env.E2E_CUSTOMER_EMAIL?.trim().toLowerCase();
 const customerPassword = process.env.E2E_CUSTOMER_PASSWORD;
+const dashboardCustomerCredentials = getDashboardFixtureCredentials();
+const dashboardCustomerEmail = dashboardCustomerCredentials.email;
+const dashboardCustomerPassword = dashboardCustomerCredentials.password;
 const otherCustomerEmail = process.env.E2E_OTHER_CUSTOMER_EMAIL?.trim().toLowerCase();
 const otherCustomerPassword = process.env.E2E_OTHER_CUSTOMER_PASSWORD;
 const mobileCustomerEmail = process.env.E2E_MOBILE_CUSTOMER_EMAIL?.trim().toLowerCase();
@@ -48,6 +52,8 @@ if (
   || !customerEmail
   || !customerPassword
   || customerPassword.length < 12
+  || !dashboardCustomerEmail
+  || !dashboardCustomerPassword
   || !otherCustomerEmail
   || !otherCustomerPassword
   || otherCustomerPassword.length < 12
@@ -83,6 +89,7 @@ const e2eAccounts = {
   admin: { email: adminEmail, password: adminPassword },
   finance: { email: financeEmail, password: financePassword },
   customer: { email: customerEmail, password: customerPassword },
+  dashboardCustomer: { email: dashboardCustomerEmail, password: dashboardCustomerPassword },
   ...(manualCustomerEmail && manualCustomerPassword ? { manualCustomer: { email: manualCustomerEmail, password: manualCustomerPassword } } : {}),
   ...(paparazziCustomerEmail && paparazziCustomerPassword ? { paparazziCustomer: { email: paparazziCustomerEmail, password: paparazziCustomerPassword } } : {}),
   otherCustomer: { email: otherCustomerEmail, password: otherCustomerPassword },
@@ -143,6 +150,7 @@ try {
   await prisma.rateLimitBucket.deleteMany({ where: { key: { in: adminBucketKeys } } });
   await seedAccount({ ...e2eAccounts.finance, name: "E2E Finance", platformRole: "FINANCE" });
   const customer = await seedAccount({ ...e2eAccounts.customer, name: "E2E Customer", platformRole: "CUSTOMER" });
+  const dashboardCustomer = await seedAccount({ ...e2eAccounts.dashboardCustomer, name: "E2E Dashboard Customer", platformRole: "CUSTOMER" });
   const otherCustomer = await seedAccount({ ...e2eAccounts.otherCustomer, name: "E2E Other Customer", platformRole: "CUSTOMER" });
   const mobileCustomer = await seedAccount({ ...e2eAccounts.mobileCustomer, name: "E2E Mobile Customer", platformRole: "CUSTOMER" });
   const webkitCustomer = await seedAccount({ ...e2eAccounts.webkitCustomer, name: "E2E WebKit Customer", platformRole: "CUSTOMER" });
@@ -334,6 +342,57 @@ try {
       where: { invitationId_templateVersionId: { invitationId: fixtureInvitationId, templateVersionId: templateVersion.id } },
       update: { organizationId: customer.organizationId, templateId: template.id, licenseSnapshot: { licenseType: "PAID_PER_INVITATION", activationSource: "E2E_FIXTURE" } },
       create: { organizationId: customer.organizationId, invitationId: fixtureInvitationId, templateId: template.id, templateVersionId: templateVersion.id, licenseSnapshot: { licenseType: "PAID_PER_INVITATION", activationSource: "E2E_FIXTURE" } },
+    });
+  });
+
+  // Dashboard checks have their own licensed publication and real owner. Keep
+  // the shared public/payment fixtures and their login budget independent.
+  const dashboardDraft = {
+    ...draft,
+    id: dashboardFixture.invitationId,
+    slug: dashboardFixture.slug,
+    hostOne: "E2E Dashboard",
+    hostTwo: "Pasangan",
+    story: "Undangan fixture untuk menguji tata letak dan tautan pengelolaan dashboard.",
+  };
+  const dashboardSnapshot = JSON.parse(JSON.stringify(dashboardDraft));
+  const dashboardInvitationData = {
+    organizationId: dashboardCustomer.organizationId,
+    ownerId: dashboardCustomer.userId,
+    createdById: dashboardCustomer.userId,
+    resellerOrgId: null,
+    templateVersionId: templateVersion.id,
+    title: `${dashboardDraft.hostOne} & ${dashboardDraft.hostTwo}`,
+    status: "PUBLISHED" as const,
+    draftData: dashboardSnapshot,
+    publishedSnapshot: dashboardSnapshot,
+    publishedAt: now,
+    startsAt,
+    expiresAt,
+    deletedAt: null,
+  };
+  await prisma.$transaction(async (tx) => {
+    await tx.invitation.upsert({
+      where: { slug: dashboardFixture.slug },
+      update: dashboardInvitationData,
+      create: { id: dashboardFixture.invitationId, slug: dashboardFixture.slug, ...dashboardInvitationData },
+    });
+    await tx.invitationVersion.upsert({
+      where: { invitationId_version: { invitationId: dashboardFixture.invitationId, version: 1 } },
+      update: { type: "PUBLISHED", snapshot: dashboardSnapshot, createdById: dashboardCustomer.userId },
+      create: { invitationId: dashboardFixture.invitationId, version: 1, type: "PUBLISHED", snapshot: dashboardSnapshot, createdById: dashboardCustomer.userId },
+    });
+    const eventData = { title: dashboardInvitationData.title, startsAt, venue: dashboardDraft.venue, address: dashboardDraft.address, mapsUrl: null };
+    const existingEvent = await tx.event.findFirst({ where: { invitationId: dashboardFixture.invitationId }, select: { id: true } });
+    if (existingEvent) await tx.event.update({ where: { id: existingEvent.id }, data: eventData });
+    else await tx.event.create({ data: { invitationId: dashboardFixture.invitationId, ...eventData } });
+    // As with the original public fixture, this legacy template license grants
+    // RSVP access without introducing a checkout plan or payment analytics.
+    const licenseData = { organizationId: dashboardCustomer.organizationId, templateId: template.id, licenseSnapshot: { licenseType: "PAID_PER_INVITATION", activationSource: "E2E_FIXTURE" } };
+    await tx.templateLicense.upsert({
+      where: { invitationId_templateVersionId: { invitationId: dashboardFixture.invitationId, templateVersionId: templateVersion.id } },
+      update: licenseData,
+      create: { invitationId: dashboardFixture.invitationId, templateVersionId: templateVersion.id, ...licenseData },
     });
   });
 
