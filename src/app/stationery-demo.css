@@ -188,6 +188,16 @@
 .stationery-demo .hero-date > span:last-child { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; }
 .stationery-demo .detail-link { display: inline-flex; align-items: center; justify-content: center; gap: 15px; min-height: 44px; margin-top: 25px; border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); color: var(--ink); font-size: 10px; letter-spacing: .09em; }
 .stationery-demo .detail-link:hover { color: var(--accent); border-color: var(--accent); }
+.stationery-demo .cover-photo-section { width: 100%; max-width: 780px; margin: 28px auto 0; }
+.stationery-demo .cover-photo-frame { aspect-ratio: 16 / 10; background: var(--paper); border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); box-shadow: 0 8px 24px #51473512; margin: 0; overflow: hidden; padding: 8px; }
+.stationery-demo .cover-photo-frame img { display: block; height: 100%; object-fit: cover; width: 100%; }
+.stationery-demo .event-gallery-section { width: 100%; max-width: 900px; margin: 48px auto 4px; }
+.stationery-demo .event-gallery-heading { margin-bottom: 22px; text-align: center; }
+.stationery-demo .event-gallery-heading h2 { color: var(--ink); font-family: var(--font-display); font-size: 36px; font-weight: 400; line-height: 1.15; margin: 8px 0 0; }
+.stationery-demo .event-gallery-heading h2 em { color: var(--accent); font-weight: 400; }
+.stationery-demo .event-gallery-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.stationery-demo .event-gallery-grid figure { aspect-ratio: 4 / 3; background: var(--paper); border: 1px solid color-mix(in srgb, var(--line) 55%, transparent); margin: 0; overflow: hidden; padding: 6px; }
+.stationery-demo .event-gallery-grid img { display: block; height: 100%; object-fit: cover; width: 100%; }
 
 .stationery-demo .countdown-section { max-width: 510px; margin: 52px auto 20px; padding: 17px 15px 28px; text-align: center; }
 .stationery-demo .countdown-section > .eyebrow { font-size: 9px; }
@@ -383,6 +393,11 @@
   .stationery-demo.theme-selector select { width: 119px; min-height: 40px; font-size: 9px; padding-left: 6px; padding-right: 15px; }
   .stationery-demo .opened-invitation { padding: 26px 18px 25px; }
   .stationery-demo .invitation-hero { padding: 37px 30px 39px; }
+  .stationery-demo .cover-photo-section { margin-top: 20px; }
+  .stationery-demo .cover-photo-frame { padding: 5px; }
+  .stationery-demo .event-gallery-section { margin-top: 36px; }
+  .stationery-demo .event-gallery-heading h2 { font-size: 30px; }
+  .stationery-demo .event-gallery-grid { gap: 8px; }
   .stationery-demo .hero-botanical { width: 150px; }
   .stationery-demo .monogram-small { width: 83px; height: 83px; }
   .stationery-demo .monogram-small > span { font-size: 27px; }

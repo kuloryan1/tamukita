@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
+import Image from "next/image";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, Check, Clock3, Copy, Gift, Heart, LayoutGrid, Mail, MapPin, RotateCcw, Share2, Users, X } from "lucide-react";
 import { BotanicalCorner, BotanicalWreath, SatinBow, TinyFlourish } from "@/components/stationery-ornaments";
 import { RSVP } from "@/components/stationery-demo-rsvp";
@@ -89,6 +90,8 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   const city = draft?.address || WEDDING.city;
   const intro = draft?.story || WEDDING.intro;
   const eventSchedule = draft?.eventSchedule ?? WEDDING.eventSchedule;
+  const galleryPhotos = draft?.galleryPhotos ?? [];
+  const coverPhotoPosition = `${draft?.coverPositionX ?? 50}% ${draft?.coverPosition ?? 50}%`;
   const giftAccounts = draft ? invitationGiftAccounts(draft) : [];
   const giftMessage = draft?.giftMessage || "Jika berkenan, Anda dapat mengirimkan tanda kasih melalui rekening berikut.";
   const mapQuery = [venue, city].filter(Boolean).join(", ");
@@ -172,6 +175,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
           <div className="hero-date"><span className="eyebrow">HARI & TANGGAL</span><p>{dateLabel}</p><span>{eventTimeLabel}</span></div>
           <a className="detail-link" href="#detail-acara">LIHAT DETAIL ACARA <ArrowDown size={15} /></a>
         </section>
+        {draft?.coverPhoto && <section className="cover-photo-section" aria-label={`Foto ${hostOne} dan ${hostTwo}`}><figure className="cover-photo-frame"><Image src={draft.coverPhoto} alt={`Momen ${hostOne} dan ${hostTwo}`} width={1600} height={1000} sizes="(max-width: 860px) calc(100vw - 36px), 780px" unoptimized style={{ objectPosition: coverPhotoPosition }} /></figure></section>}
         <Countdown targetDate={eventStartsAt} accessibleDate={`${dateLabel} pukul ${eventTime} WIB`} />
         <section className="event-section content-section" id="detail-acara" aria-labelledby="event-title">
           <div className="section-heading"><span className="eyebrow">SIMPAN TANGGALNYA</span><h2 id="event-title">Sampai jumpa di<br />hari <em>bahagia.</em></h2><TinyFlourish className="section-flourish" /></div>
@@ -182,6 +186,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
           {eventSchedule.length > 0 && <section className="event-rundown" aria-labelledby="event-rundown-title"><span className="eyebrow">RANGKAIAN ACARA</span><h3 id="event-rundown-title">Rundown acara</h3><ol>{eventSchedule.filter((item) => item.time.trim() && item.title.trim()).map((item) => <li key={item.id}><time dateTime={item.time}>{item.time}<small>WIB</small></time><div><b>{item.title}</b>{item.description && <p>{item.description}</p>}</div></li>)}</ol></section>}
           <a className="text-link rsvp-jump" href="#konfirmasi">Konfirmasi kehadiran <ArrowDown size={15} /></a>
         </section>
+        {galleryPhotos.length > 0 && <section className="event-gallery-section" aria-label={`Galeri foto ${hostOne} dan ${hostTwo}`}><div className="event-gallery-heading"><span className="eyebrow">POTONGAN CERITA</span><h2>Momen yang ingin <em>kami kenang.</em></h2></div><div className="event-gallery-grid">{galleryPhotos.slice(0, 6).map((photo, index) => <figure key={photo}><Image src={photo} alt={`Foto ${index + 1} ${hostOne} dan ${hostTwo}`} width={640} height={480} sizes="(max-width: 720px) 50vw, 33vw" unoptimized /></figure>)}</div></section>}
         <RSVP template={template} recipient={guest} isTestableSample={isTestableSample} slug={slug} guestToken={guestToken} />
         {giftAccounts.length > 0 && <section className="gift-section content-section" id="hadiah" aria-labelledby="gift-title"><div className="section-heading"><Gift size={20} strokeWidth={1.2} /><span className="eyebrow">TANDA KASIH</span><h2 id="gift-title">Kehadiranmu adalah<br /><em>hadiah terindah.</em></h2></div><p className="gift-message">{giftMessage}</p><div className="gift-account-grid">{giftAccounts.map((account) => <article className="gift-account-card" key={account.id}><span className="eyebrow">{account.bankName}</span><b>{account.accountName}</b><strong>{account.accountNumber}</strong><PublicInvitationGiftCopy accountNumber={account.accountNumber} /></article>)}</div></section>}
         <section className="closing-section paper"><BotanicalCorner className="closing-botanical" variant={template.ornament} /><TinyFlourish className="section-flourish" /><span className="eyebrow">DENGAN PENUH SUKACITA</span><h2>Hari istimewa ini,<br />lebih indah bersama <em>Anda.</em></h2><p>{intro}</p><div className="closing-names">{hostOne.split(" ")[0]} <em>&</em> {hostTwo.split(" ")[0]}</div><span className="closing-date">{dateLabel.toLocaleUpperCase("id-ID")}</span><button type="button" className="text-link" onClick={() => dialogRef.current?.showModal()}>Bagikan undangan <Share2 size={14} /></button></section>
