@@ -56,7 +56,7 @@ describe("stationery calendar and countdown", () => {
     const content = calendarContent();
     expect(content.startsWith("BEGIN:VCALENDAR\r\nVERSION:2.0\r\n")).toBe(true);
     expect(content.endsWith("END:VCALENDAR\r\n")).toBe(true);
-    expect(content.replace(/\r\n/g, "")).not.toMatch(/[\r\n]/);
+    expect(/[\r\n]/.test(content.replace(/\r\n/g, ""))).toBe(false);
     for (const line of content.split("\r\n")) {
       expect(Buffer.byteLength(line, "utf8"), `ICS physical line exceeds 75 octets: ${line}`).toBeLessThanOrEqual(75);
     }
@@ -64,7 +64,7 @@ describe("stationery calendar and countdown", () => {
     const event = eventProperties();
     expect(decodeCalendarText(event.get("SUMMARY"))).toBe(`Pernikahan ${WEDDING.groom} & ${WEDDING.bride}`);
     expect(decodeCalendarText(event.get("LOCATION"))).toBe(`${WEDDING.venue}, ${WEDDING.city}`);
-    expect(event.get("LOCATION")).not.toMatch(/(?<!\\),/);
+    expect(/(?<!\\),/.test(event.get("LOCATION") ?? "")).toBe(false);
     expect(decodeCalendarText(event.get("DESCRIPTION"))).toBe(
       `${WEDDING.intro} ${WEDDING.dateLabel} pukul ${WEDDING.timeLabel}.`,
     );
@@ -78,7 +78,7 @@ describe("recipient names in share and template URLs", () => {
 
     expect(result).toBe(recipient);
     expect(Array.from(result)).toHaveLength(100);
-    expect(() => encodeURIComponent(result)).not.toThrow();
+    encodeURIComponent(result);
     expect(new URLSearchParams(`to=${encodeURIComponent(result)}`).get("to")).toBe(recipient);
   });
 

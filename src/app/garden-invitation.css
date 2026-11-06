@@ -119,6 +119,8 @@
 .garden-event-marker > span { background: #a08c6b; height: 7px; transform: rotate(45deg); width: 7px; }
 .garden-event-marker .garden-rose { height: 46px; margin: 0; width: 46px; }
 .garden-event-label { color: #665b47; font-size: 21px; line-height: 1.2; min-width: 0; overflow-wrap: break-word; }
+.garden-event-label b { font: inherit; }
+.garden-event-label small { color: #817563; display: block; font-size: 14px; line-height: 1.45; margin-top: 5px; }
 .garden-location-section { padding: 55px 20px 30px; }
 .garden-location-section h2 { font-size: 44px; margin-bottom: -4px; }
 .garden-location-card h3 { color: var(--garden-text); font-family: var(--garden-serif); font-size: 25px; font-weight: 400; letter-spacing: 0; line-height: 1.25; margin: 17px 0 9px; }

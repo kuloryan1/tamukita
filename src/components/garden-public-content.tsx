@@ -28,13 +28,16 @@ export function GardenPublicContent({ draft, dateString, mapsUrl, slug, recipien
     { name: "champagne", color: "#d9c5a1" },
     { name: "burgundy", color: "#73303b" },
   ].filter(({ name }) => fields.dressCode?.toLowerCase().includes(name));
-  const schedule = [
-    { label: "Kedatangan tamu", time: fields.guestArrivalTime },
-    { label: draft.eventKind === "Pernikahan" ? "Prosesi pernikahan" : "Acara utama", time: fields.ceremonyTime || draft.eventTime },
-    { label: "Jamuan pembuka", time: fields.mocktailTime },
-    { label: "Makan malam", time: fields.dinnerTime },
-    { label: "Tarian", time: fields.danceTime },
-  ].filter((item) => item.time);
+  const eventSchedule = (draft.eventSchedule ?? []).filter((item) => item.time.trim() && item.title.trim());
+  const schedule = eventSchedule.length > 0
+    ? eventSchedule.map((item) => ({ id: item.id, label: item.title, time: item.time, description: item.description }))
+    : [
+        { id: "guest-arrival", label: "Kedatangan tamu", time: fields.guestArrivalTime, description: "" },
+        { id: "main-event", label: draft.eventKind === "Pernikahan" ? "Prosesi pernikahan" : "Acara utama", time: fields.ceremonyTime || draft.eventTime, description: "" },
+        { id: "opening-refreshments", label: "Jamuan pembuka", time: fields.mocktailTime, description: "" },
+        { id: "dinner", label: "Makan malam", time: fields.dinnerTime, description: "" },
+        { id: "dance", label: "Tarian", time: fields.danceTime, description: "" },
+      ].filter((item) => item.time);
   const mapQuery = [draft.venue, draft.address].filter(Boolean).join(", ");
 
   return <div className="garden-story">
@@ -58,10 +61,10 @@ export function GardenPublicContent({ draft, dateString, mapsUrl, slug, recipien
         <h2 id="garden-events-title">Rangkaian Acara</h2>
         <p className="garden-section-date">{dateString}</p>
         <ol className="garden-event-list">
-          {schedule.map((item, index) => <li className="garden-event-row" key={item.label}>
+          {schedule.map((item, index) => <li className="garden-event-row" key={item.id}>
             <time dateTime={item.time}>{item.time?.replace(":", ".")}<small>WIB</small></time>
             <span className="garden-event-marker" aria-hidden="true">{index === 1 ? <GardenRose /> : <span />}</span>
-            <span className="garden-event-label">{item.label}</span>
+            <span className="garden-event-label"><b>{item.label}</b>{item.description && <small>{item.description}</small>}</span>
           </li>)}
         </ol>
       </div>

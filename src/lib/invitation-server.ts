@@ -1,4 +1,5 @@
 import "server-only";
+import { randomUUID } from "node:crypto";
 
 import { z } from "zod";
 import { getTemplate } from "@/lib/templates";
@@ -51,10 +52,19 @@ export const invitationDraftSchema = z.object({
   coverPosition: z.number().int().min(0).max(100),
   coverPositionX: z.number().int().min(0).max(100).default(50),
   galleryPhotos: z.array(z.string().trim().max(2048)).max(6).default([]).refine((photos) => new Set(photos).size === photos.length && photos.every(isMediaPublicUrl)),
+  eventSchedule: z.array(z.object({
+    id: z.string().trim().min(1).max(64).default(() => randomUUID()),
+    time: z.string().regex(/^(?:(?:[01]\d|2[0-3]):[0-5]\d)?$/),
+    title: z.string().trim().max(100),
+    description: z.string().trim().max(280).default(""),
+  })).max(12).default([]),
   giftMessage: z.string().trim().max(300).default(""),
   giftBankName: z.string().trim().max(80).default(""),
   giftAccountName: z.string().trim().max(100).default(""),
   giftAccountNumber: z.string().trim().max(60).default(""),
+  giftBankName2: z.string().trim().max(80).default(""),
+  giftAccountName2: z.string().trim().max(100).default(""),
+  giftAccountNumber2: z.string().trim().max(60).default(""),
   musicUrl: z.string().trim().max(2048).default("").refine((value) => !value || isMediaPublicUrl(value)),
   musicTitle: z.string().trim().max(80).default(""),
   customFields: z.record(z.string().refine(isSafeTemplateFieldKey), z.string().max(1_000)).default({}).superRefine((fields, context) => {

@@ -15,6 +15,8 @@ export type WeddingTemplate = {
 export const WEDDING = {
   groom: "Ryan Pratam",
   bride: "Dwi Wulan Maulida",
+  eventDate: "2026-11-21",
+  eventTime: "18:00",
   dateLabel: "Sabtu, 21 November 2026",
   timeLabel: "18:00 WIB",
   startAt: "2026-11-21T18:00:00+07:00",
@@ -22,6 +24,11 @@ export const WEDDING = {
   city: "Surabaya, Jawa Timur",
   intro:
     "Dengan penuh syukur, kami mengundang Anda untuk merayakan hari istimewa ini bersama.",
+  eventSchedule: [
+    { id: "wedding-arrival", time: "17:30", title: "Kedatangan tamu", description: "Silakan hadir lebih awal untuk menyapa keluarga." },
+    { id: "wedding-ceremony", time: "18:00", title: "Prosesi pernikahan", description: "Prosesi utama dimulai tepat waktu." },
+    { id: "wedding-reception", time: "19:30", title: "Ramah tamah", description: "Mari berbagi doa dan kebahagiaan bersama." },
+  ],
 } as const;
 
 export const templates: WeddingTemplate[] = [

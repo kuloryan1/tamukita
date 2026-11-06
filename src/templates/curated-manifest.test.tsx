@@ -27,6 +27,6 @@ test("renders only populated fields declared by the manifest and escapes their v
 
   expect(markup).toContain("Pesan pembuka");
   expect(markup).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
-  expect(markup).not.toContain("<script>");
-  expect(markup).not.toContain("Field yang tidak ada di manifest");
+  expect(markup.includes("<script>")).toBe(false);
+  expect(markup.includes("Field yang tidak ada di manifest")).toBe(false);
 });
