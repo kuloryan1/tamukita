@@ -23,7 +23,7 @@ RUN mkdir -p public && npm run db:generate && npm run build
 FROM base AS runner
 ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
-RUN mkdir -p /data/paparazzi && chown nextjs:nodejs /data/paparazzi && chmod 700 /data/paparazzi
+RUN mkdir -p /data/paparazzi /data/media && chown nextjs:nodejs /data/paparazzi /data/media && chmod 700 /data/paparazzi /data/media
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
@@ -36,7 +36,7 @@ CMD ["node", "server.js"]
 FROM base AS worker
 ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
-RUN mkdir -p /data/paparazzi && chown nextjs:nodejs /data/paparazzi && chmod 700 /data/paparazzi
+RUN mkdir -p /data/paparazzi /data/media && chown nextjs:nodejs /data/paparazzi /data/media && chmod 700 /data/paparazzi /data/media
 COPY --from=production-dependencies /app/node_modules ./node_modules
 COPY --from=builder /app/src/generated/prisma ./src/generated/prisma
 COPY --from=builder /app/src/worker.ts ./src/worker.ts
@@ -46,6 +46,7 @@ COPY --from=builder /app/src/lib/integration-status.ts ./src/lib/integration-sta
 COPY --from=builder /app/src/lib/r2-buckets.ts ./src/lib/r2-buckets.ts
 COPY --from=builder /app/src/lib/xendit-config.ts ./src/lib/xendit-config.ts
 COPY --from=builder /app/src/lib/media-processing.ts ./src/lib/media-processing.ts
+COPY --from=builder /app/src/lib/media-server-storage.ts ./src/lib/media-server-storage.ts
 COPY --from=builder /app/src/lib/paparazzi.ts ./src/lib/paparazzi.ts
 COPY --from=builder /app/src/lib/paparazzi-processing.ts ./src/lib/paparazzi-processing.ts
 COPY --from=builder /app/src/lib/paparazzi-storage.ts ./src/lib/paparazzi-storage.ts

@@ -319,12 +319,11 @@ export function RSVP({ template, recipient, isTestableSample = false, slug, gues
         <p className="eyebrow">KONFIRMASI KEHADIRAN</p>
         <h2 id={`${id}-heading`} className="section-heading">Sebuah kabar,<br /><em>berarti bagi kami.</em></h2>
         <p className="rsvp-lead">Isi konfirmasi kehadiran dan titipkan ucapan hangat untuk hari istimewa kami.</p>
-        <div className="rsvp-demo-note">
-          <span className="rsvp-note-label">{isTestableSample ? "ANDA SEDANG MENCOBA UNDANGAN" : "ANDA SEDANG MENCOBA DEMO"}</span>
-          {isTestableSample
-            ? <><p>Konfirmasi kehadiran dikirim ke pemilik undangan. Ucapan akan tampil setelah disetujui.</p><p>Data ini masuk ke undangan tester untuk pengujian.</p></>
-            : <><p>{storageAvailable ? "Jawaban percobaan disimpan hanya di tab browser ini. Konfirmasi dan ucapan tidak dikirim kepada mempelai." : "Penyimpanan tab tidak tersedia. Jawaban hanya tampil sementara pada halaman ini. Konfirmasi dan ucapan tidak dikirim kepada mempelai."}</p><p>Anda dapat melihat kembali, mengubah, atau menghapus jawaban selama tab ini tetap terbuka.</p></>}
-        </div>
+        {!isTestableSample && <div className="rsvp-demo-note">
+          <span className="rsvp-note-label">ANDA SEDANG MENCOBA DEMO</span>
+          <p>{storageAvailable ? "Jawaban percobaan disimpan hanya di tab browser ini. Konfirmasi dan ucapan tidak dikirim kepada mempelai." : "Penyimpanan tab tidak tersedia. Jawaban hanya tampil sementara pada halaman ini. Konfirmasi dan ucapan tidak dikirim kepada mempelai."}</p>
+          <p>Anda dapat melihat kembali, mengubah, atau menghapus jawaban selama tab ini tetap terbuka.</p>
+        </div>}
       </div>
 
       <div className="rsvp-card" aria-busy={loading || busy !== ""}>

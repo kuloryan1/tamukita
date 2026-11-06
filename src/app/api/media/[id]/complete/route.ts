@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getPrismaClient } from "@/lib/prisma";
 import { allowRequest } from "@/lib/rate-limit";
-import { getR2Config, r2PublicUrl } from "@/lib/r2";
+import { getR2Config } from "@/lib/r2";
+import { mediaPublicUrl } from "@/lib/media-storage-url";
+import { mediaServerStore } from "@/lib/media-server-storage";
 
 export const runtime = "nodejs";
 
@@ -25,7 +27,6 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   if (!userId) return NextResponse.json({ error: "Silakan masuk terlebih dahulu." }, { status: 401 });
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({ error: "ID media tidak valid." }, { status: 400 });
-  if (!getR2Config()) return NextResponse.json({ error: "Cloudflare R2 belum dikonfigurasi di server." }, { status: 503 });
   if (!await allowRequest(`media:complete:user:${userId}`, 30, 60 * 60)) return NextResponse.json({ error: "Batas pemrosesan media tercapai. Coba lagi nanti." }, { status: 429 });
 
   const prisma = getPrismaClient();
@@ -43,12 +44,13 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     },
   });
   if (!asset) return NextResponse.json({ error: "Media tidak ditemukan." }, { status: 404 });
+  if (asset.storageProvider === "R2" && !getR2Config()) return NextResponse.json({ error: "Penyimpanan foto lama belum tersedia." }, { status: 503 });
   const assetMetadata = isRecord(asset.metadata) ? asset.metadata : {};
   const mediaKind = assetMetadata.mediaKind === "gallery" || assetMetadata.mediaKind === "music" ? assetMetadata.mediaKind : "cover";
   const variantKey = mediaKind;
   if (asset.status === "READY") {
     const ready = await prisma.mediaVariant.findUnique({ where: { mediaAssetId_variantKey: { mediaAssetId: asset.id, variantKey } }, select: { storageKey: true } });
-    if (ready) return statusResponse("READY", r2PublicUrl(ready.storageKey));
+    if (ready) return statusResponse("READY", mediaPublicUrl(asset.storageProvider, ready.storageKey));
   }
   const maximumSize = mediaKind === "music" ? maxMusicBytes : maxSourceBytes;
   if (asset.status === "FAILED" || asset.status === "DELETED" || asset.sizeBytes > BigInt(maximumSize)) {
@@ -67,6 +69,16 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     || cropSizeBytes > maxSourceBytes
     || (cropMimeType !== "image/png" && cropMimeType !== "image/webp"))) {
     return NextResponse.json({ error: "Foto ini tidak memiliki data crop yang valid." }, { status: 409 });
+  }
+  if (asset.storageProvider === "SERVER") {
+    try {
+      const store = mediaServerStore();
+      const source = await store.head(asset.storageKey);
+      if (source.size !== Number(asset.sizeBytes)) return NextResponse.json({ error: "Foto asli belum selesai diunggah. Coba lagi." }, { status: 400 });
+      if (mediaKind === "cover" && (await store.head(cropKey)).size !== cropSizeBytes) return NextResponse.json({ error: "Hasil crop foto belum selesai diunggah. Coba lagi." }, { status: 400 });
+    } catch {
+      return NextResponse.json({ error: "File belum tersimpan lengkap. Pilih ulang foto lalu coba lagi." }, { status: 400 });
+    }
   }
 
   const startedAt = new Date();
@@ -93,7 +105,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   const current = await prisma.mediaAsset.findUnique({ where: { id: asset.id }, select: { status: true } });
   if (current?.status === "READY") {
     const ready = await prisma.mediaVariant.findUnique({ where: { mediaAssetId_variantKey: { mediaAssetId: asset.id, variantKey } }, select: { storageKey: true } });
-    if (ready) return statusResponse("READY", r2PublicUrl(ready.storageKey));
+    if (ready) return statusResponse("READY", mediaPublicUrl(asset.storageProvider, ready.storageKey));
   }
   if (current?.status === "FAILED") return statusResponse("FAILED");
   return statusResponse("PROCESSING");

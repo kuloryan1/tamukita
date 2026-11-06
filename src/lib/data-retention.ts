@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient } from "@/generated/prisma/client";
+import type { Prisma, PrismaClient } from "../generated/prisma/client";
 
 export const DATA_RETENTION_BATCH_SIZE = 100;
 export const GUEST_DATA_AFTER_EVENT_DAYS = 90;
@@ -40,6 +40,7 @@ export type DataRetentionOptions = {
   privateBucket?: string;
   publicBucket?: string;
   deleteObject?: (bucket: string, key: string) => Promise<void>;
+  deleteServerObject?: (key: string) => Promise<void>;
 };
 
 function addUtcDays(value: Date, days: number) {
@@ -194,19 +195,32 @@ async function purgeExpiredMedia(
       },
     ],
   };
-  if (!deleteObject || !privateBucket || !publicBucket) {
+  const r2Available = Boolean(deleteObject && privateBucket && publicBucket);
+  const serverAvailable = Boolean(options.deleteServerObject);
+  const eligibleProviders = [
+    ...(r2Available ? ["R2" as const] : []),
+    ...(serverAvailable ? ["SERVER" as const] : []),
+  ];
+  if (!eligibleProviders.length) {
     report.mediaAssetsDeferred = await prisma.mediaAsset.count({ where });
     return;
+  }
+  const unavailableProviders = [
+    ...(!r2Available ? ["R2" as const] : []),
+    ...(!serverAvailable ? ["SERVER" as const] : []),
+  ];
+  if (unavailableProviders.length) {
+    report.mediaAssetsDeferred = await prisma.mediaAsset.count({ where: { AND: [where, { storageProvider: { in: unavailableProviders } }] } });
   }
 
   let lastId: string | null = null;
   while (true) {
     const cursor: Prisma.MediaAssetWhereInput = lastId ? { id: { gt: lastId } } : {};
     const assets = await prisma.mediaAsset.findMany({
-      where: { AND: [where, cursor] },
+      where: { AND: [where, cursor, { storageProvider: { in: eligibleProviders } }] },
       orderBy: { id: "asc" },
       take: DATA_RETENTION_BATCH_SIZE,
-      select: { id: true, invitationId: true, storageKey: true, variants: { select: { storageKey: true } } },
+      select: { id: true, invitationId: true, storageProvider: true, storageKey: true, variants: { select: { storageKey: true } } },
     });
     if (assets.length === 0) break;
     lastId = assets[assets.length - 1].id;
@@ -224,8 +238,14 @@ async function purgeExpiredMedia(
 
           const keys = [...new Set([asset.storageKey, ...asset.variants.map((variant) => variant.storageKey)])];
           for (const key of keys) {
-            await deleteObject(privateBucket, key);
-            await deleteObject(publicBucket, key);
+            if (asset.storageProvider === "SERVER") {
+              await options.deleteServerObject?.(key);
+            } else if (deleteObject && privateBucket && publicBucket) {
+              await deleteObject(privateBucket, key);
+              await deleteObject(publicBucket, key);
+            } else {
+              throw new Error("Penyimpanan R2 media belum tersedia.");
+            }
           }
           const result = await tx.mediaAsset.deleteMany({ where: { id: asset.id } });
           return result.count > 0;

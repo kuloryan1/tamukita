@@ -5,7 +5,7 @@ import { getTemplate } from "@/lib/templates";
 import { INVITATION_THEME_COLOR_VALUES } from "@/lib/invitation-theme-colors";
 import { EVENT_KINDS, safeHttpsUrl, type InvitationDraft } from "@/lib/invitations";
 import { getPrismaClient } from "@/lib/prisma";
-import { isR2PublicUrl, r2KeyFromPublicUrl } from "@/lib/r2";
+import { mediaKeyFromPublicUrl, isMediaPublicUrl } from "@/lib/media-storage-url";
 import { isEditorCompatibleTemplate, isSafeTemplateFieldKey, TEMPLATE_SDK_VERSION, validateTemplateManifest } from "@/lib/template-sdk";
 import { templateVersionRequiresAdminReview } from "@/templates/registry";
 import { SEAL_MONOGRAM_PATTERN } from "@/lib/seal-monogram";
@@ -39,7 +39,7 @@ export const invitationDraftSchema = z.object({
   sectionOrder: z.enum(["story-first", "details-first"]).default("story-first"),
   coverPhoto: z.string().max(1_800_000).refine((value) => {
     if (!value) return true;
-    if (isR2PublicUrl(value)) return true;
+    if (isMediaPublicUrl(value)) return true;
     if (value === stagingQaFixtureCoverPhoto) return process.env.NEXT_PUBLIC_APP_URL === stagingQaOrigin;
     const match = /^data:image\/(jpeg|png|webp);base64,([a-z\d+/]+={0,2})$/i.exec(value);
     if (!match) return false;
@@ -50,12 +50,12 @@ export const invitationDraftSchema = z.object({
   }),
   coverPosition: z.number().int().min(0).max(100),
   coverPositionX: z.number().int().min(0).max(100).default(50),
-  galleryPhotos: z.array(z.string().trim().max(2048)).max(6).default([]).refine((photos) => new Set(photos).size === photos.length && photos.every(isR2PublicUrl)),
+  galleryPhotos: z.array(z.string().trim().max(2048)).max(6).default([]).refine((photos) => new Set(photos).size === photos.length && photos.every(isMediaPublicUrl)),
   giftMessage: z.string().trim().max(300).default(""),
   giftBankName: z.string().trim().max(80).default(""),
   giftAccountName: z.string().trim().max(100).default(""),
   giftAccountNumber: z.string().trim().max(60).default(""),
-  musicUrl: z.string().trim().max(2048).default("").refine((value) => !value || isR2PublicUrl(value)),
+  musicUrl: z.string().trim().max(2048).default("").refine((value) => !value || isMediaPublicUrl(value)),
   musicTitle: z.string().trim().max(80).default(""),
   customFields: z.record(z.string().refine(isSafeTemplateFieldKey), z.string().max(1_000)).default({}).superRefine((fields, context) => {
     if (Object.keys(fields).length > 32) context.addIssue({ code: "custom", message: "Terlalu banyak field template." });
@@ -79,7 +79,7 @@ export function parseInvitationDraft(value: unknown): InvitationDraft | null {
 }
 
 export async function ownsInvitationCoverPhoto(userId: string, invitationId: string, coverPhoto: string) {
-  const key = r2KeyFromPublicUrl(coverPhoto);
+  const key = mediaKeyFromPublicUrl(coverPhoto);
   if (!key) return false;
   const asset = await getPrismaClient().mediaVariant.findFirst({
     where: {
@@ -94,7 +94,7 @@ export async function ownsInvitationCoverPhoto(userId: string, invitationId: str
 
 export async function ownsInvitationGalleryPhotos(userId: string, invitationId: string, photos: string[]) {
   if (!photos.length) return true;
-  const keys = photos.map(r2KeyFromPublicUrl);
+  const keys = photos.map(mediaKeyFromPublicUrl);
   if (keys.some((key) => !key) || new Set(keys).size !== keys.length) return false;
   const owned = await getPrismaClient().mediaVariant.findMany({
     where: {
@@ -109,7 +109,7 @@ export async function ownsInvitationGalleryPhotos(userId: string, invitationId: 
 
 export async function ownsInvitationMusic(userId: string, invitationId: string, musicUrl: string) {
   if (!musicUrl) return true;
-  const key = r2KeyFromPublicUrl(musicUrl);
+  const key = mediaKeyFromPublicUrl(musicUrl);
   if (!key) return false;
   const asset = await getPrismaClient().mediaVariant.findFirst({
     where: { storageKey: key, variantKey: "music", mediaAsset: { invitationId, uploadedById: userId, status: "READY", deletedAt: null } },
