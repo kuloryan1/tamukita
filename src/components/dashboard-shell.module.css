@@ -3,6 +3,9 @@
   --dashboard-topbar-height: 72px;
   background: #f6f7f4;
   min-width: 0;
+  /* Older mobile WebKit may include the off-screen animated dashboard artwork
+     in the document scroll width even when each invitation card fits. */
+  overflow-x: clip;
 }
 
 .shell .sidebar {
