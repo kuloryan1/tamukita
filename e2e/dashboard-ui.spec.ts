@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { getCustomerCredentials } from "./customer-credentials";
+import { dashboardFixture, getDashboardFixtureCredentials } from "./dashboard-fixture";
 
 async function signIn(page: Page, email: string, password: string) {
   await page.goto("/login");
@@ -28,9 +28,9 @@ async function expectActionFits(page: Page, action: Locator) {
   await action.click({ trial: true });
 }
 
-test("dashboard searches and paginates owned invitations without clipping long mobile cards", async ({ page }, testInfo) => {
+test("dashboard searches and paginates owned invitations without clipping long mobile cards", async ({ page }) => {
   test.setTimeout(90_000);
-  const customer = getCustomerCredentials(testInfo);
+  const customer = getDashboardFixtureCredentials();
   if (!customer.email || !customer.password || !process.env.DATABASE_URL || process.env.PLAYWRIGHT_TEST_BASE_URL) {
     test.skip(true, "Creates fixtures only against the local disposable E2E server.");
     return;
@@ -76,6 +76,7 @@ test("dashboard searches and paginates owned invitations without clipping long m
   const status = invitations.getByLabel("Status undangan", { exact: true });
   const apply = invitations.getByRole("button", { name: "Terapkan filter", exact: true });
   await search.fill(marker);
+  await expect(status).toBeVisible();
   await status.selectOption("draft");
   await apply.click();
   await expect(invitations.locator(".invitation-row")).toHaveCount(12);
@@ -129,22 +130,21 @@ test("dashboard searches and paginates owned invitations without clipping long m
 });
 
 test("published invitation actions remain reachable at narrow phone widths", async ({ page }) => {
-  const email = process.env.E2E_CUSTOMER_EMAIL;
-  const password = process.env.E2E_CUSTOMER_PASSWORD;
+  const { email, password } = getDashboardFixtureCredentials();
   if (!email || !password) {
-    test.skip(true, "Requires the seeded published invitation owned by E2E_CUSTOMER.");
+    test.skip(true, "Requires the dedicated dashboard customer and published invitation fixture.");
     return;
   }
 
   await signIn(page, email, password);
-  await page.goto("/dashboard?q=e2e-public-invite&status=published#invitations");
-  const card = page.locator("#invitations .invitation-row").filter({ hasText: "e2e-public-invite" });
+  await page.goto(`/dashboard?q=${dashboardFixture.slug}&status=published#invitations`);
+  const card = page.locator("#invitations .invitation-row").filter({ hasText: dashboardFixture.slug });
   await expect(card).toHaveCount(1);
   await expect(card.locator(".status-pill")).toHaveText("Aktif");
-  const invitationId = "10000000-0000-4000-8000-000000000001";
+  const invitationId = dashboardFixture.invitationId;
   const actions = [
     { label: "Edit", href: `/dashboard/invitations/${invitationId}/edit` },
-    { label: "Lihat undangan", href: "/e2e-public-invite" },
+    { label: "Lihat undangan", href: `/${dashboardFixture.slug}` },
     { label: "Tamu", href: `/dashboard/invitations/${invitationId}/guests` },
     { label: "Ucapan", href: `/dashboard/invitations/${invitationId}/guestbook` },
     { label: "Paparazi", href: `/dashboard/invitations/${invitationId}/paparazi` },

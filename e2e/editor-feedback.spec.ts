@@ -56,7 +56,7 @@ test("customer editor feedback is queued for Support and can be resolved", async
       const rejectedUpdate = supportPage.waitForResponse((response) => response.url().includes("/api/admin/editor-feedback/") && response.request().method() === "PATCH");
       await feedbackCard.getByRole("button", { name: "Tandai ditinjau" }).click();
       expect((await rejectedUpdate).status()).toBe(503);
-      await expect(supportPage.getByRole("alert")).toContainText("Perubahan uji belum dapat disimpan.");
+      await expect(supportPage.getByRole("region", { name: "Laporan aktif", exact: true }).getByRole("alert")).toContainText("Perubahan uji belum dapat disimpan.");
       await expect(feedbackCard.locator(".status-pill")).toHaveText("Baru");
       await expect(feedbackCard.getByRole("button", { name: "Tandai ditinjau" })).toBeEnabled();
     } finally {
@@ -219,7 +219,7 @@ test("feedback filters fit on phones and queue changes ignore stale or failed re
 
     resolvedMode = "fail";
     await resolvedTab.click();
-    await expect(page.getByRole("alert")).toContainText("Antrean uji sementara tidak tersedia.");
+    await expect(page.getByRole("region", { name: "Riwayat selesai", exact: true }).getByRole("alert")).toContainText("Antrean uji sementara tidak tersedia.");
     await expect(cards).toHaveCount(0);
     await expect(resolvedTab).toHaveAttribute("aria-pressed", "true");
     resolvedMode = "success";

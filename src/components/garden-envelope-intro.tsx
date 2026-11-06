@@ -122,6 +122,8 @@ export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram, autoStart = fa
   function revealInvitation() {
     if (finished.current || revealStarted.current) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return finishOpening();
+    // Begin the normal crossfade only after the native ended event. An early
+    // fade can pause/unmount a buffering clip before its final frames play.
     revealStarted.current = true;
     if (timer.current !== null) window.clearTimeout(timer.current);
     document.querySelector<HTMLElement>('.public-invitation-page[data-template="taman-abadi"]')?.classList.add("garden-invitation-opened");
@@ -133,13 +135,6 @@ export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram, autoStart = fa
     if (finished.current || revealStarted.current) return;
     // Keep the absolute deadline active if a clip stalls after it starts.
     setPlaying(true);
-  }
-
-  function handleTimeUpdate() {
-    const video = videoRef.current;
-    if (video && Number.isFinite(video.duration) && video.duration > 0 && video.currentTime >= video.duration - 0.8) {
-      revealInvitation();
-    }
   }
 
   function openInvitation() {
@@ -172,7 +167,6 @@ export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram, autoStart = fa
           disablePictureInPicture
           tabIndex={-1}
           onPlaying={handlePlaying}
-          onTimeUpdate={handleTimeUpdate}
           onEnded={revealInvitation}
           onError={finishOpening}
         />

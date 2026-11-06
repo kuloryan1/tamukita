@@ -115,7 +115,7 @@ export function DashboardInvitations({ invitations, query, status, page, pageSiz
 
       {totalCount > 0 && <search aria-label="Cari dan filter undangan"><form key={`${status}:${query}`} className={styles.toolbar} action="/dashboard#invitations" method="get">
         <label className={styles.searchField}><span className="sr-only">Cari undangan</span><Search size={17} aria-hidden="true" /><input type="search" name="q" defaultValue={query} maxLength={100} placeholder="Cari nama, tautan, atau template…" /></label>
-        <label className={styles.statusField}><span className="sr-only">Status undangan</span><SlidersHorizontal size={15} aria-hidden="true" /><select name="status" defaultValue={status}><option value="all">Semua status</option><option value="draft">Draft</option><option value="published">Aktif</option><option value="expired">Hosting berakhir</option><option value="suspended">Ditangguhkan</option><option value="archived">Diarsipkan</option></select></label>
+        <label className={styles.statusField}><span className="sr-only">Status undangan</span><SlidersHorizontal size={15} aria-hidden="true" /><select name="status" aria-label="Status undangan" defaultValue={status}><option value="all">Semua status</option><option value="draft">Draft</option><option value="published">Aktif</option><option value="expired">Hosting berakhir</option><option value="suspended">Ditangguhkan</option><option value="archived">Diarsipkan</option></select></label>
         <button type="submit" className={styles.filterButton}>Terapkan filter<ArrowRight size={14} aria-hidden="true" /></button>
         {hasFilters && <Link className={styles.resetLink} href="/dashboard#invitations"><X size={14} aria-hidden="true" />Reset filter</Link>}
       </form></search>}
