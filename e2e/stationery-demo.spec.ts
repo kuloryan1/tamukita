@@ -4,6 +4,17 @@ const templateSlugs = [
   "royal-gold", "elegant-cream", "modern-sage", "blush-serenade",
   "ivory-heritage", "wisteria-senja", "destinasi-cinta", "taman-abadi",
 ] as const;
+const openingAssets: Record<typeof templateSlugs[number], { video: string; poster: string }> = {
+  "royal-gold": { video: "/templates/reference-prototypes/ivory-envelope.mp4", poster: "/templates/reference-prototypes/royal-envelope-frame.png" },
+  "elegant-cream": { video: "/templates/reference-prototypes/cream-envelope.mp4", poster: "/templates/reference-prototypes/cream-envelope-poster.jpg" },
+  "modern-sage": { video: "/templates/reference-prototypes/cream-envelope.mp4", poster: "/templates/reference-prototypes/cream-envelope-poster.jpg" },
+  "blush-serenade": { video: "/templates/reference-prototypes/blush-envelope.mp4", poster: "/templates/reference-prototypes/blush-envelope-poster.jpg" },
+  "ivory-heritage": { video: "/templates/reference-prototypes/ivory-envelope.mp4", poster: "/templates/reference-prototypes/ivory-poster.jpg" },
+  "wisteria-senja": { video: "/templates/reference-prototypes/wisteria-envelope.mp4", poster: "/templates/reference-prototypes/wisteria-envelope-poster.jpg" },
+  "destinasi-cinta": { video: "/templates/reference-prototypes/boarding-envelope.mp4", poster: "/templates/reference-prototypes/boarding-passport-cover-id.png" },
+  "taman-abadi": { video: "/templates/taman-abadi-envelope-opening.mp4", poster: "/templates/taman-abadi-envelope-cover.png" },
+};
+const introVariants = ["royal-gold", "taman-abadi"] as const;
 const invitationMessage = "Dengan penuh syukur, kami mengundang Anda untuk merayakan hari istimewa ini bersama.";
 const storageKey = "tamukita:stationery-demo:rsvp:v1:royal-gold";
 
@@ -15,6 +26,24 @@ async function expectNoHorizontalScrolling(page: Page) {
   await expect.poll(() => page.evaluate(() => (
     document.documentElement.scrollWidth - document.documentElement.clientWidth
   ))).toBeLessThanOrEqual(1);
+}
+
+async function controlOpeningPlayback(page: Page) {
+  // Record the real intro's play request without advancing the clip. Tests
+  // deliver its terminal event so assertions do not race the video duration.
+  await page.addInitScript(() => {
+    const playback = Object.assign(window, { __stationeryPlayRequests: [] as string[], __stationeryRejectPlayback: false });
+    HTMLMediaElement.prototype.play = function (this: HTMLMediaElement) {
+      playback.__stationeryPlayRequests.push(this.getAttribute("src") ?? "");
+      if (playback.__stationeryRejectPlayback) return Promise.reject(new DOMException("Playback blocked for this regression test.", "NotAllowedError"));
+      this.dispatchEvent(new Event("playing"));
+      return Promise.resolve();
+    };
+  });
+}
+
+async function openingPlayRequests(page: Page) {
+  return page.evaluate(() => Reflect.get(window, "__stationeryPlayRequests") as string[]);
 }
 
 async function blockAndRecordWrites(page: Page) {
@@ -41,7 +70,9 @@ test.beforeEach(async ({ page }) => {
 });
 
 for (const slug of templateSlugs) {
-  test(`${slug} opens the complete stationery demo with the supplied wedding details`, async ({ page }) => {
+  test(`${slug} keeps its original opening animation and the supplied wedding details`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await controlOpeningPlayback(page);
     const response = await page.goto(`/templates/${slug}/demo`);
     expect(response?.status()).toBe(200);
     const demo = stationery(page);
@@ -52,6 +83,13 @@ for (const slug of templateSlugs) {
     await expect(demo.locator(".recipient strong")).toHaveText("Anda");
 
     await demo.getByRole("button", { name: "Buka undangan", exact: true }).click();
+    const intro = page.getByRole("dialog", { name: "Sampul undangan", exact: true });
+    await expect(intro).toBeVisible();
+    await expect(intro.locator("video")).toHaveAttribute("src", openingAssets[slug].video);
+    await expect(intro.locator("video")).toHaveAttribute("poster", openingAssets[slug].poster);
+    await expect.poll(() => openingPlayRequests(page)).toEqual([openingAssets[slug].video]);
+    await intro.getByRole("button", { name: "Lewati animasi", exact: true }).click();
+    await expect(intro).toHaveCount(0);
     await expect(demo.getByRole("heading", {
       level: 1, name: /Dengan penuh sukacita,\s*kami mengundang Anda\./,
     })).toBeVisible();
@@ -73,11 +111,119 @@ for (const slug of templateSlugs) {
   });
 }
 
+test("Royal and Garden opening videos really play and reveal the invitation within twelve seconds", async ({ page }) => {
+  test.setTimeout(40_000);
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  // Observe native media events only: no play override, synthetic event,
+  // response interception, or fake clock is used by this delivery smoke test.
+  await page.addInitScript(() => {
+    const playback = { src: "", currentTime: 0, readyState: 0, advanced: false, ended: false, error: null as { code: number; message: string } | null };
+    Object.assign(window, { __stationeryRealPlayback: playback });
+    const observe = (event: Event) => {
+      const video = event.target;
+      if (!event.isTrusted || !(video instanceof HTMLVideoElement)) return;
+      playback.src = video.getAttribute("src") ?? "";
+      playback.currentTime = Math.max(playback.currentTime, video.currentTime);
+      playback.readyState = video.readyState;
+      if (event.type === "timeupdate" && !video.ended && video.currentTime > 0.1) playback.advanced = true;
+      if (video.error) playback.error = { code: video.error.code, message: video.error.message };
+      if (event.type === "ended") playback.ended = true;
+    };
+    for (const event of ["playing", "timeupdate", "ended", "error"]) document.addEventListener(event, observe, true);
+  });
+
+  for (const slug of introVariants) {
+    await test.step(`${slug}: native playback completes before the fallback deadline`, async () => {
+      await page.goto(`/templates/${slug}/demo`);
+      const demo = stationery(page);
+      const startedAt = Date.now();
+      const remaining = () => Math.max(1, 12_000 - (Date.now() - startedAt));
+      await demo.getByRole("button", { name: "Buka undangan", exact: true }).click();
+      await expect.poll(() => page.evaluate(() => {
+        return Reflect.get(window, "__stationeryRealPlayback") as { src: string; currentTime: number; readyState: number; advanced: boolean; ended: boolean; error: { code: number; message: string } | null };
+      }), { timeout: remaining(), message: `${slug} must deliver and naturally finish its opening video` }).toMatchObject({
+        src: openingAssets[slug].video, advanced: true, ended: true, error: null,
+      });
+      await expect(page.getByRole("dialog", { name: "Sampul undangan", exact: true })).toHaveCount(0, { timeout: remaining() });
+      await expect(demo.locator(".opened-invitation")).toBeFocused({ timeout: remaining() });
+      expect(Date.now() - startedAt, "Opening must finish before the 14–15 second safety fallback").toBeLessThanOrEqual(12_000);
+    });
+  }
+});
+
+test("both opening variants complete, replay, and recover from media errors or stalled playback", async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await controlOpeningPlayback(page);
+  await page.clock.install();
+
+  for (const slug of introVariants) {
+    for (const completion of ["ended", "error", "timeout", "reduced-motion", "rejected"] as const) {
+      await page.emulateMedia({ reducedMotion: "no-preference" });
+      await page.goto(`/templates/${slug}/demo`);
+      const demo = stationery(page);
+      const initialOverflow = await page.evaluate(() => document.documentElement.style.overflow);
+      if (completion === "rejected") {
+        await page.evaluate(() => Reflect.set(window, "__stationeryRejectPlayback", true));
+      }
+      await demo.getByRole("button", { name: "Buka undangan", exact: true }).click();
+      const intro = page.getByRole("dialog", { name: "Sampul undangan", exact: true });
+      await expect.poll(() => openingPlayRequests(page)).toEqual([openingAssets[slug].video]);
+      if (completion !== "rejected") {
+        const skip = intro.getByRole("button", { name: "Lewati animasi", exact: true });
+        await expect(skip).toBeVisible();
+        await expect(skip).toBeFocused();
+        await page.keyboard.press("Tab");
+        await expect(skip).toBeFocused();
+      }
+
+      if (completion === "timeout") {
+        // The video has emitted playing, but never ends: its deadline must
+        // remain active so a stalled network cannot trap guests on the cover.
+        await page.clock.fastForward(20_000);
+      } else if (completion === "reduced-motion") {
+        await page.emulateMedia({ reducedMotion: "reduce" });
+      } else if (completion !== "rejected") {
+        await intro.locator("video").dispatchEvent(completion);
+      }
+      await expect(intro).toHaveCount(0);
+      await expect(demo.locator(".opened-invitation")).toBeFocused();
+      await expect(demo.locator(".hero-names")).toContainText("Ryan Pratam");
+      await expect.poll(() => page.evaluate(() => document.documentElement.style.overflow)).toBe(initialOverflow);
+
+      if (completion === "ended") {
+        await demo.getByRole("button", { name: "Lihat sampul", exact: true }).click();
+        await demo.getByRole("button", { name: "Buka undangan", exact: true }).click();
+        await expect(intro).toBeVisible();
+        await expect.poll(() => openingPlayRequests(page)).toEqual([openingAssets[slug].video, openingAssets[slug].video]);
+        await page.keyboard.press("Escape");
+        await expect(intro).toHaveCount(0);
+        await expect(demo.locator(".opened-invitation")).toBeFocused();
+        await expect.poll(() => page.evaluate(() => document.documentElement.style.overflow)).toBe(initialOverflow);
+      }
+    }
+  }
+});
+
+test("reduced motion opens both default intro variants without starting media", async ({ page }) => {
+  await controlOpeningPlayback(page);
+  for (const slug of introVariants) {
+    await page.goto(`/templates/${slug}/demo`);
+    const demo = stationery(page);
+    await demo.getByRole("button", { name: "Buka undangan", exact: true }).click();
+    await expect(demo.locator(".opened-invitation")).toBeFocused();
+    await expect(page.getByRole("dialog", { name: "Sampul undangan", exact: true })).toHaveCount(0);
+    expect(await openingPlayRequests(page)).toEqual([]);
+  }
+});
+
 test("direct section links and browser Back reveal their targets after reopening the cover", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/templates/modern-sage/demo#detail-acara");
   const demo = stationery(page);
   await expect(demo.locator("#detail-acara")).toBeInViewport({ ratio: 0.1 });
   await expect(demo.getByRole("button", { name: "Buka undangan", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("dialog", { name: "Sampul undangan", exact: true })).toHaveCount(0);
 
   const navigation = demo.getByRole("navigation", { name: "Navigasi undangan" });
   await navigation.getByRole("link", { name: "Undangan", exact: true }).click();
@@ -91,6 +237,7 @@ test("direct section links and browser Back reveal their targets after reopening
   await expect(page).toHaveURL(/#detail-acara$/);
   await expect(demo.locator("#detail-acara")).toBeInViewport({ ratio: 0.1 });
   await expect(demo.getByRole("button", { name: "Buka undangan", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("dialog", { name: "Sampul undangan", exact: true })).toHaveCount(0);
 });
 
 test("recipient text stays literal and survives sharing and switching templates with Unicode", async ({ page }) => {

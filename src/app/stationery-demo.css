@@ -171,6 +171,14 @@
 .stationery-demo .cover-stage.is-opening .invitation-cover { animation: stationery-open-paper .65s cubic-bezier(.4, 0, .2, 1) both; }
 .stationery-demo .cover-stage.is-opening .stage-caption, .stationery-demo .cover-stage.is-opening .cover-bottom { opacity: 0; transition: opacity .35s ease; }
 
+/* Preserve each template's original opening film over the ivory invitation. */
+.stationery-demo .stationery-opening { --ref-serif: var(--font-display); --ref-script: var(--font-display); }
+.stationery-demo .stationery-opening .reference-envelope-overlay { background: var(--scene); z-index: 10000; }
+.stationery-demo .stationery-opening .reference-envelope-card { align-self: center; }
+.stationery-demo .stationery-opening .reference-envelope-loading-poster { pointer-events: none; z-index: 2; }
+.stationery-demo .stationery-opening .reference-envelope-skip { border-color: var(--line); background: var(--paper); color: var(--ink); font-family: var(--font-sans); font-size: 12px; min-height: 44px; z-index: 4; }
+.stationery-demo .stationery-opening .reference-envelope-status { bottom: 28px; color: var(--ink); font-family: var(--font-sans); font-size: 12px; left: 16px; position: absolute; right: 16px; text-align: center; text-shadow: 0 1px 4px var(--paper); z-index: 3; }
+
 /* The opened invitation keeps the same paper language, with room to read. */
 .stationery-demo .opened-invitation { width: 100%; max-width: 1060px; margin: 0 auto; padding: 40px 40px 30px; animation: stationery-reveal-invitation .6s ease both; }
 .stationery-demo .opened-invitation:focus { outline: none; }

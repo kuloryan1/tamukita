@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, Check, Clock3, Copy, Heart, LayoutGrid, Mail, MapPin, RotateCcw, Share2, Users, X } from "lucide-react";
 import { BotanicalCorner, BotanicalWreath, SatinBow, TinyFlourish } from "@/components/stationery-ornaments";
 import { RSVP } from "@/components/stationery-demo-rsvp";
+import { GardenEnvelopeIntro } from "@/components/garden-envelope-intro";
+import { ReferenceEnvelopeIntro } from "@/components/reference-envelope-intro";
+import { getReferenceTemplatePreset } from "@/lib/reference-template-presets";
 import { templates, WEDDING, type WeddingTemplate } from "@/lib/stationery-demo";
 import { MAX_RECIPIENT_LENGTH, normalizeRecipient } from "@/lib/stationery-recipient";
 
@@ -68,8 +71,10 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   const [opening, setOpening] = useState(false);
   const [activeSection, setActiveSection] = useState("undangan");
   const mainRef = useRef<HTMLElement>(null);
+  const openButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const openingTimeout = useRef<number | null>(null);
+  const focusTarget = useRef<"cover" | "invitation" | null>(null);
+  const openingPreset = getReferenceTemplatePreset(template.slug);
   const guest = normalizeRecipient(recipient);
   const shareBasePath = isTestableSample && slug ? `/${encodeURIComponent(slug)}` : `/templates/${template.slug}/demo`;
   const recipientQuery = guest === "Anda" ? "" : `?to=${encodeURIComponent(guest)}`;
@@ -82,10 +87,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
       const hash = window.location.hash.slice(1);
       if (!["undangan", "detail-acara", "konfirmasi"].includes(hash)) return;
       if (scrollTimer !== null) window.clearTimeout(scrollTimer);
-      if (openingTimeout.current !== null) {
-        window.clearTimeout(openingTimeout.current);
-        openingTimeout.current = null;
-      }
+      focusTarget.current = null;
       setOpening(false); setOpened(true); setActiveSection(hash);
       // Existing sections already receive native anchor navigation. Wait only
       // when the cover must be replaced before the target exists in the DOM.
@@ -100,7 +102,12 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
       if (scrollTimer !== null) window.clearTimeout(scrollTimer);
     };
   }, []);
-  useEffect(() => () => { if (openingTimeout.current !== null) window.clearTimeout(openingTimeout.current); }, []);
+  useEffect(() => {
+    if (opening || !focusTarget.current) return;
+    const target = opened ? mainRef.current : openButtonRef.current;
+    focusTarget.current = null;
+    target?.focus({ preventScroll: true });
+  }, [opened, opening]);
   useEffect(() => {
     if (!opened) return;
     const observer = new IntersectionObserver((entries) => { for (const entry of entries) if (entry.isIntersecting) setActiveSection(entry.target.id); }, { rootMargin: "-15% 0px -60% 0px", threshold: 0 });
@@ -108,14 +115,22 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
     return () => observer.disconnect();
   }, [opened]);
 
+  const completeOpening = useCallback(() => {
+    setOpened(true);
+    setOpening(false);
+  }, []);
+
   function openInvitation() {
     if (opening) return;
-    setOpening(true);
+    focusTarget.current = "invitation";
+    window.scrollTo({ top: 0, behavior: "instant" });
+    setOpened(true);
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    openingTimeout.current = window.setTimeout(() => { setOpened(true); setOpening(false); window.scrollTo({ top: 0, behavior: "instant" }); window.setTimeout(() => mainRef.current?.focus({ preventScroll: true }), 0); }, reduced ? 0 : 650);
+    setOpening(!reduced && (template.slug === "taman-abadi" || Boolean(openingPreset)));
   }
   function reopenCover() {
-    setOpened(false); setActiveSection("undangan"); window.history.replaceState(null, "", window.location.pathname + window.location.search); window.scrollTo({ top: 0, behavior: "instant" });
+    focusTarget.current = "cover";
+    setOpening(false); setOpened(false); setActiveSection("undangan"); window.history.replaceState(null, "", window.location.pathname + window.location.search); window.scrollTo({ top: 0, behavior: "instant" });
   }
 
   return <div className={`stationery-demo theme-${template.slug} style-${template.style} ${opened ? "is-open" : "is-closed"}`} style={style} data-invitation-publication={isTestableSample ? "published" : "demo"} data-template={template.slug}>
@@ -133,7 +148,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
           <h1 className="cover-names"><span>{WEDDING.groom}</span><span className="name-amp">&</span><span>{WEDDING.bride}</span></h1>
           <div className="cover-date"><span className="fine-rule" /><p>{WEDDING.dateLabel}</p><span className="fine-rule" /></div>
           <div className="recipient"><p>Kepada Yth.</p><strong>{guest}</strong></div>
-          <button type="button" id="open-invitation" className="button primary open-button" onClick={openInvitation} disabled={opening}><Mail size={16} strokeWidth={1.5} /><span>{opening ? "Membuka undangan…" : "Buka undangan"}</span><ArrowRight size={15} /></button>
+          <button ref={openButtonRef} type="button" id="open-invitation" className="button primary open-button" onClick={openInvitation} disabled={opening}><Mail size={16} strokeWidth={1.5} /><span>{opening ? "Membuka undangan…" : "Buka undangan"}</span><ArrowRight size={15} /></button>
           <span className="cover-footnote">Dengan penuh sukacita, kami mengundang Anda.</span>
         </div>
       </div>
@@ -165,5 +180,10 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
       <nav className="bottom-nav" aria-label="Navigasi undangan">{[{ id: "undangan", text: "Undangan", Icon: Mail }, { id: "detail-acara", text: "Acara", Icon: CalendarDays }, { id: "konfirmasi", text: "Kehadiran", Icon: Users }].map(({ id, text, Icon }) => <a href={`#${id}`} key={id} aria-current={activeSection === id ? "location" : undefined} className={activeSection === id ? "active" : ""}><Icon size={17} strokeWidth={1.5} /><span>{text}</span></a>)}</nav>
     </>}
     <ShareDialog dialogRef={dialogRef} recipient={guest} basePath={shareBasePath} />
+    {opening && <div className="stationery-opening">
+      {template.slug === "taman-abadi"
+        ? <GardenEnvelopeIntro hostOne={WEDDING.groom} hostTwo={WEDDING.bride} autoStart onComplete={completeOpening} />
+        : openingPreset && <ReferenceEnvelopeIntro preset={openingPreset} hostOne={WEDDING.groom} hostTwo={WEDDING.bride} autoStart onComplete={completeOpening} />}
+    </div>}
   </div>;
 }

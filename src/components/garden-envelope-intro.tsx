@@ -1,24 +1,45 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState, type TransitionEvent } from "react";
+import { useEffect, useEffectEvent, useRef, useState, type TransitionEvent } from "react";
 import { GardenEnvelopeMonogram } from "@/components/garden-envelope-monogram";
+import { useInvitationIntroDialog } from "@/components/use-invitation-intro-dialog";
 import { resolveSealMonogram } from "@/lib/seal-monogram";
 
 const envelopeCover = "/templates/taman-abadi-envelope-cover.png";
 const envelopeVideo = "/templates/taman-abadi-envelope-opening.mp4";
 
-export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram, isExample = false }: { hostOne: string; hostTwo: string; monogram?: string; isExample?: boolean }) {
-  const [opening, setOpening] = useState(false);
+export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram, autoStart = false, onComplete }: { hostOne: string; hostTwo: string; monogram?: string; isExample?: boolean; autoStart?: boolean; onComplete?: () => void }) {
+  const [opening, setOpening] = useState(autoStart);
   const [playing, setPlaying] = useState(false);
   const [revealing, setRevealing] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const timer = useRef<number | null>(null);
+  const playbackAttempt = useRef(0);
+  const started = useRef(false);
   const revealStarted = useRef(false);
   const finished = useRef(false);
   const names = [hostOne, hostTwo].filter(Boolean).join(" dan ");
   const initials = resolveSealMonogram(monogram, [hostOne, hostTwo]);
+
+  useInvitationIntroDialog(dialogRef, !dismissed, finishOpening);
+
+  const startAutomatically = useEffectEvent(openInvitation);
+  useEffect(() => {
+    const video = videoRef.current;
+    finished.current = false;
+    if (autoStart) startAutomatically();
+    return () => {
+      finished.current = true;
+      started.current = false;
+      playbackAttempt.current += 1;
+      revealStarted.current = false;
+      if (timer.current !== null) window.clearTimeout(timer.current);
+      video?.pause();
+    };
+  }, [autoStart]);
 
   useEffect(() => {
     const page = document.querySelector<HTMLElement>('.public-invitation-page[data-template="taman-abadi"]');
@@ -51,31 +72,35 @@ export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram, isExample = fa
     }
 
     return () => {
-      if (timer.current !== null) window.clearTimeout(timer.current);
       observer?.disconnect();
       page.classList.remove("garden-motion-ready", "garden-invitation-opened");
     };
   }, []);
 
+  const finishForReducedMotion = useEffectEvent(() => {
+    if (started.current && !finished.current) finishOpening();
+  });
   useEffect(() => {
-    if (dismissed) return;
-    const page = document.querySelector<HTMLElement>('.public-invitation-page[data-template="taman-abadi"]');
-    const previousOverflow = document.documentElement.style.overflow;
-    const siblings = Array.from(page?.children ?? []).filter((element): element is HTMLElement => element instanceof HTMLElement && !element.classList.contains("garden-envelope-overlay"));
-    const previousInert = siblings.map((element) => element.inert);
-    document.documentElement.style.overflow = "hidden";
-    siblings.forEach((element) => { element.inert = true; });
-    return () => {
-      document.documentElement.style.overflow = previousOverflow;
-      siblings.forEach((element, index) => { element.inert = previousInert[index]; });
-    };
-  }, [dismissed]);
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const handleChange = () => { if (preference.matches) finishForReducedMotion(); };
+    preference.addEventListener("change", handleChange);
+    return () => preference.removeEventListener("change", handleChange);
+  }, []);
 
-  useEffect(() => {
-    if (!dismissed) return;
+  const handleDismissed = useEffectEvent(() => {
+    if (onComplete) {
+      onComplete();
+      return;
+    }
     window.scrollTo({ top: 0, behavior: "instant" });
     document.querySelector<HTMLElement>(".garden-copy-heading")?.focus({ preventScroll: true });
+  });
+  useEffect(() => {
+    if (dismissed) handleDismissed();
   }, [dismissed]);
+  useEffect(() => {
+    if (opening) dialogRef.current?.querySelector<HTMLButtonElement>(".garden-envelope-skip")?.focus({ preventScroll: true });
+  }, [opening]);
 
   if (dismissed) return null;
 
@@ -96,6 +121,7 @@ export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram, isExample = fa
 
   function revealInvitation() {
     if (finished.current || revealStarted.current) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return finishOpening();
     revealStarted.current = true;
     if (timer.current !== null) window.clearTimeout(timer.current);
     document.querySelector<HTMLElement>('.public-invitation-page[data-template="taman-abadi"]')?.classList.add("garden-invitation-opened");
@@ -105,7 +131,7 @@ export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram, isExample = fa
 
   function handlePlaying() {
     if (finished.current || revealStarted.current) return;
-    if (timer.current !== null) window.clearTimeout(timer.current);
+    // Keep the absolute deadline active if a clip stalls after it starts.
     setPlaying(true);
   }
 
@@ -117,18 +143,20 @@ export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram, isExample = fa
   }
 
   function openInvitation() {
-    if (opening || finished.current) return;
+    if (started.current || finished.current) return;
+    started.current = true;
     window.scrollTo({ top: 0, behavior: "instant" });
-    if (isExample && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return finishOpening();
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return finishOpening();
     setOpening(true);
     const video = videoRef.current;
     if (!video) return finishOpening();
     timer.current = window.setTimeout(finishOpening, 15_000);
-    void video.play().catch(finishOpening);
+    const attempt = ++playbackAttempt.current;
+    void video.play().catch(() => { if (attempt === playbackAttempt.current) finishOpening(); });
   }
 
   return (
-    <div className={`garden-envelope-overlay${playing ? " is-playing" : ""}${revealing ? " is-revealing" : ""}`} role="dialog" aria-modal="true" aria-label="Sampul undangan" onTransitionEnd={handleTransitionEnd}>
+    <div ref={dialogRef} className={`garden-envelope-overlay${playing ? " is-playing" : ""}${revealing ? " is-revealing" : ""}`} role="dialog" aria-modal="true" aria-label="Sampul undangan" tabIndex={-1} onTransitionEnd={handleTransitionEnd}>
       <div className="garden-envelope-video-layer" aria-hidden="true">
         <span className="garden-envelope-media">
         <video
@@ -156,13 +184,14 @@ export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram, isExample = fa
         type="button"
         onClick={openInvitation}
         disabled={opening}
+        aria-hidden={opening || undefined}
         aria-label={`Putar animasi dan buka undangan${names ? ` ${names}` : ""}`}
       >
         <span className="garden-envelope-still">
           <Image className="garden-envelope-art" src={envelopeCover} width={941} height={1672} alt="" draggable={false} preload unoptimized />
           <GardenEnvelopeMonogram monogram={initials} />
         </span>
-        <span className="garden-envelope-prompt" aria-hidden="true"><span className="garden-envelope-chevron" /><span className="garden-envelope-tap-label">KETUK UNTUK MEMBUKA</span></span>
+        {!opening && <span className="garden-envelope-prompt" aria-hidden="true"><span className="garden-envelope-chevron" /><span className="garden-envelope-tap-label">KETUK UNTUK MEMBUKA</span></span>}
       </button>
       {opening && !playing && <span className="garden-envelope-status" role="status">Memuat animasi…</span>}
       <button className="garden-envelope-skip" type="button" onClick={finishOpening}>{opening ? "Lewati animasi" : "Buka langsung"}</button>
