@@ -111,7 +111,7 @@ for (const slug of templateSlugs) {
   });
 }
 
-test("Royal and Garden opening videos really play and reveal the invitation within twelve seconds", async ({ page, browserName }) => {
+test("Royal and Garden opening videos start and reveal the invitation within twelve seconds", async ({ page, browserName }) => {
   test.setTimeout(40_000);
   await page.emulateMedia({ reducedMotion: "no-preference" });
   // Observe native media events only: no play override, synthetic event,
@@ -133,7 +133,7 @@ test("Royal and Garden opening videos really play and reveal the invitation with
   });
 
   for (const slug of introVariants) {
-    await test.step(`${slug}: native playback completes before the fallback deadline`, async () => {
+    await test.step(`${slug}: native playback or stall recovery completes before the fallback deadline`, async () => {
       await page.goto(`/templates/${slug}/demo`);
       const demo = stationery(page);
       const startedAt = Date.now();
