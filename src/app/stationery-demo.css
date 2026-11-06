@@ -204,6 +204,18 @@
 .stationery-demo .section-flourish { width: 82px; height: auto; margin: 20px auto 0; color: var(--accent); }
 .stationery-demo .event-section { border-top: 1px solid color-mix(in srgb, var(--line) 40%, transparent); }
 .stationery-demo .event-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.stationery-demo .event-rundown { margin: 42px auto 0; max-width: 620px; text-align: center; }
+.stationery-demo .event-rundown > .eyebrow { color: var(--muted); font-size: 9px; }
+.stationery-demo .event-rundown > h3 { color: var(--ink); font-family: var(--font-display); font-size: 36px; font-weight: 400; line-height: 1.1; margin: 8px 0 17px; }
+.stationery-demo .event-rundown > ol { list-style: none; margin: 0; padding: 0; position: relative; text-align: left; }
+.stationery-demo .event-rundown > ol::before { background: color-mix(in srgb, var(--line) 70%, transparent); bottom: 23px; content: ""; left: 93px; position: absolute; top: 23px; width: 1px; }
+.stationery-demo .event-rundown li { align-items: start; display: grid; gap: 26px; grid-template-columns: 68px minmax(0,1fr); padding: 13px 0; position: relative; }
+.stationery-demo .event-rundown li::before { background: var(--paper); border: 1px solid var(--accent); border-radius: 50%; content: ""; height: 8px; left: 89px; position: absolute; top: 21px; width: 8px; }
+.stationery-demo .event-rundown time { color: var(--accent); font-family: var(--font-display); font-size: 17px; line-height: 1.2; text-align: right; }
+.stationery-demo .event-rundown time small { color: var(--muted); display: block; font-family: var(--font-sans); font-size: 8px; letter-spacing: .1em; margin-top: 3px; }
+.stationery-demo .event-rundown li > div { padding-left: 20px; }
+.stationery-demo .event-rundown li b { color: var(--ink); font-family: var(--font-display); font-size: 20px; font-weight: 500; line-height: 1.25; }
+.stationery-demo .event-rundown li p { color: var(--muted); font-size: 11px; line-height: 1.6; margin-top: 4px; }
 .stationery-demo .event-card { display: flex; flex-direction: column; align-items: center; min-width: 0; min-height: 338px; padding: 32px 28px 31px; border: 1px solid color-mix(in srgb, var(--line) 45%, transparent); background: color-mix(in srgb, var(--paper) 75%, transparent); text-align: center; }
 .stationery-demo .event-card > svg { margin-bottom: 16px; color: var(--accent); }
 .stationery-demo .event-card > .eyebrow { font-size: 9px; }
@@ -218,6 +230,16 @@
 .stationery-demo .venue-rule { display: flex; align-items: center; gap: 10px; margin: 17px 0 22px; color: var(--accent); }
 .stationery-demo .venue-rule > span { width: 35px; height: 1px; background: var(--line); opacity: .6; }
 .stationery-demo .rsvp-jump { display: flex; width: fit-content; margin: 20px auto 0; font-size: 11px; }
+.stationery-demo .gift-section { border-top: 1px solid color-mix(in srgb, var(--line) 40%, transparent); text-align: center; }
+.stationery-demo .gift-section .section-heading > svg { color: var(--accent); margin: 0 auto 13px; }
+.stationery-demo .gift-section .section-heading h2 { font-size: 39px; }
+.stationery-demo .gift-message { color: var(--muted); font-size: 12px; line-height: 1.75; margin: -14px auto 22px; max-width: 430px; }
+.stationery-demo .gift-account-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0 auto; max-width: 700px; }
+.stationery-demo .gift-account-card { align-items: center; background: color-mix(in srgb, var(--paper) 78%, transparent); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 22px 16px; }
+.stationery-demo .gift-account-card > .eyebrow { overflow-wrap: anywhere; }
+.stationery-demo .gift-account-card > b { color: var(--ink); font-family: var(--font-display); font-size: 19px; font-weight: 500; line-height: 1.2; overflow-wrap: anywhere; }
+.stationery-demo .gift-account-card > strong { color: var(--accent); font-size: 16px; letter-spacing: .07em; overflow-wrap: anywhere; }
+.stationery-demo .gift-account-card .button { margin-top: 3px; }
 
 .stationery-demo .closing-section { width: 100%; max-width: 900px; margin: 47px auto 0; padding: 54px 48px 51px; overflow: hidden; text-align: center; }
 .stationery-demo .closing-section::after { content: ""; position: absolute; z-index: 0; inset: 15px; border: .7px solid color-mix(in srgb, var(--line) 65%, transparent); pointer-events: none; }
@@ -387,6 +409,13 @@
   .stationery-demo .section-heading h2 { font-size: 42px; margin-top: 12px; }
   .stationery-demo .section-flourish { width: 75px; margin-top: 17px; }
   .stationery-demo .event-grid { grid-template-columns: minmax(0, 1fr); gap: 17px; }
+  .stationery-demo .event-rundown { margin-top: 36px; }
+  .stationery-demo .event-rundown > h3 { font-size: 33px; }
+  .stationery-demo .event-rundown > ol::before { left: 77px; }
+  .stationery-demo .event-rundown li { gap: 22px; grid-template-columns: 53px minmax(0,1fr); }
+  .stationery-demo .event-rundown li::before { left: 73px; }
+  .stationery-demo .event-rundown li > div { padding-left: 12px; }
+  .stationery-demo .event-rundown li b { font-size: 19px; }
   .stationery-demo .event-card { min-height: 326px; padding: 29px 25px; }
   .stationery-demo .event-card > .eyebrow { font-size: 10px; }
   .stationery-demo .event-card > svg { margin-bottom: 14px; }
@@ -399,6 +428,8 @@
   .stationery-demo .venue-card > p { font-size: 13px; }
   .stationery-demo .venue-rule { margin-top: 17px; margin-bottom: 22px; }
   .stationery-demo .rsvp-jump { margin-top: 17px; font-size: 12px; }
+  .stationery-demo .gift-account-grid { grid-template-columns: minmax(0, 1fr); }
+  .stationery-demo .gift-section .section-heading h2 { font-size: 35px; }
   .stationery-demo .closing-section { margin-top: 30px; padding: 44px 28px 43px; }
   .stationery-demo .closing-section::after { inset: 12px; }
   .stationery-demo .closing-section h2 { font-size: 37px; line-height: 1.1; }

@@ -61,7 +61,7 @@ test("parses the synthetic cover only for the marked staging QA invitation", () 
   };
   vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://staging.tamukita.io");
 
-  expect(parseInvitationDraft(fixture)).not.toBeNull();
+  expect(parseInvitationDraft(fixture) !== null).toBe(true);
   expect(parseInvitationDraft({ ...fixture, slug: "another-invitation" })).toBeNull();
   expect(parseInvitationDraft({ ...fixture, qaFixture: false })).toBeNull();
 });

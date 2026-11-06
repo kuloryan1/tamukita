@@ -40,7 +40,7 @@ test("does not sync a template when the user does not own the invitation", async
   });
 
   expect(response.status).toBe(404);
-  expect(mocks.ensureTemplateVersion).not.toHaveBeenCalled();
+  expect(mocks.ensureTemplateVersion).toHaveBeenCalledTimes(0);
 });
 
 test("does not read invitation or sync a template for unauthenticated requests", async () => {
@@ -51,6 +51,6 @@ test("does not read invitation or sync a template for unauthenticated requests",
   });
 
   expect(response.status).toBe(401);
-  expect(mocks.findFirst).not.toHaveBeenCalled();
-  expect(mocks.ensureTemplateVersion).not.toHaveBeenCalled();
+  expect(mocks.findFirst).toHaveBeenCalledTimes(0);
+  expect(mocks.ensureTemplateVersion).toHaveBeenCalledTimes(0);
 });

@@ -206,6 +206,7 @@
 .reference-countdown-section,
 .reference-story-section,
 .reference-event-section,
+.reference-schedule-section,
 .reference-gallery-section,
 .reference-gift-section,
 .reference-rsvp-section {
@@ -264,12 +265,22 @@
 .reference-event-details small { color: var(--ref-muted); font-family: var(--ref-serif); font-size: 16px; line-height: 1.4; }
 .reference-event-details a { align-items: center; color: var(--ref-accent); display: flex; font-size: 13px; gap: 5px; text-decoration: none; }
 
+.reference-schedule-section .reference-section-inner > ol { list-style: none; margin: 23px auto 0; max-width: 360px; padding: 0; text-align: left; }
+.reference-schedule-section li { align-items: start; border-bottom: 1px solid #b79a7138; display: grid; gap: 15px; grid-template-columns: 64px minmax(0, 1fr); padding: 15px 0; }
+.reference-schedule-section li time { color: var(--ref-accent); font-family: var(--ref-serif); font-size: 16px; text-align: right; }
+.reference-schedule-section li time small { color: var(--ref-muted); display: block; font-family: var(--ref-serif); font-size: 10px; margin-top: 2px; }
+.reference-schedule-section li h3 { color: var(--ref-ink); font-family: var(--ref-serif); font-size: 17px; font-weight: 600; line-height: 1.25; }
+.reference-schedule-section li p { color: var(--ref-muted); font-family: var(--ref-serif); font-size: 13px; line-height: 1.5; margin-top: 4px; }
+
 .reference-gallery-grid { display: grid; gap: 8px; grid-template-columns: repeat(2,minmax(0,1fr)); margin-top: 24px; }
 .reference-gallery-grid figure { aspect-ratio: 4/5; margin: 0; overflow: hidden; }
 .reference-gallery-grid img { height: 100%; object-fit: cover; width: 100%; }
-.reference-gift-account { background: #fffaf0ba; border: 1px solid #b79a7140; display: grid; gap: 8px; justify-items: center; margin: 22px auto 0; max-width: 290px; padding: 22px 16px; }
+.reference-gift-accounts { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); margin-top: 22px; }
+.reference-gift-account { background: #fffaf0ba; border: 1px solid #b79a7140; display: grid; gap: 8px; justify-items: center; min-width: 0; padding: 22px 16px; }
 .reference-gift-account span { color: var(--ref-muted); font-size: 12px; letter-spacing: .1em; }
 .reference-gift-account strong { color: var(--ref-accent); font-size: 19px; letter-spacing: .08em; }
+.reference-gift-account .button { margin-top: 4px; }
+.reference-gift-accounts .public-gift-copy-button { max-width: 100%; }
 .reference-rsvp-section { padding-top: 56px; padding-bottom: 62px; }
 .reference-rsvp-section .public-rsvp-demo-status { background: #fffaf0c9; border-color: #ae936b66; color: var(--ref-accent); }
 

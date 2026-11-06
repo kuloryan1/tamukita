@@ -39,8 +39,22 @@ export function validateInvitationDraft(draft: InvitationDraft): DraftValidation
   if (draft.mapsUrl.trim() && !safeHttpsUrl(draft.mapsUrl)) {
     return { valid: false, message: "Tautan peta harus menggunakan alamat HTTPS yang valid.", step: 1 };
   }
-  const giftDetails = [draft.giftBankName, draft.giftAccountName, draft.giftAccountNumber];
-  if (giftDetails.some((value) => value.trim()) && giftDetails.some((value) => !value.trim())) {
+  const schedule = draft.eventSchedule ?? [];
+  if (schedule.length > 12) return { valid: false, message: "Rundown acara maksimal berisi 12 kegiatan.", step: 1 };
+  if (schedule.some((item) => {
+    const hasAnyValue = Boolean(item.time.trim() || item.title.trim() || item.description.trim());
+    return hasAnyValue && (!item.time.trim() || !item.title.trim());
+  })) {
+    return { valid: false, message: "Lengkapi waktu dan nama kegiatan pada rundown, atau hapus baris yang belum digunakan.", step: 1 };
+  }
+  if (schedule.some((item) => item.time.trim() && !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(item.time))) {
+    return { valid: false, message: "Waktu pada rundown harus menggunakan format yang valid.", step: 1 };
+  }
+  const giftAccounts = [
+    [draft.giftBankName, draft.giftAccountName, draft.giftAccountNumber],
+    [draft.giftBankName2, draft.giftAccountName2, draft.giftAccountNumber2],
+  ];
+  if (giftAccounts.some((details) => details.some((value) => value.trim()) && details.some((value) => !value.trim()))) {
     return { valid: false, message: "Lengkapi nama bank, nama pemilik rekening, dan nomor rekening hadiah.", step: 1 };
   }
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(draft.templateId)) return { valid: false, message: "Pilih template yang valid.", step: 3 };

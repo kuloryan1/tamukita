@@ -1,29 +1,30 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, Check, Clock3, Copy, Heart, LayoutGrid, Mail, MapPin, RotateCcw, Share2, Users, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, Check, Clock3, Copy, Gift, Heart, LayoutGrid, Mail, MapPin, RotateCcw, Share2, Users, X } from "lucide-react";
 import { BotanicalCorner, BotanicalWreath, SatinBow, TinyFlourish } from "@/components/stationery-ornaments";
 import { RSVP } from "@/components/stationery-demo-rsvp";
+import { PublicInvitationGiftCopy } from "@/components/public-invitation-actions";
+import { invitationGiftAccounts, safeHttpsUrl, type InvitationDraft } from "@/lib/invitations";
 import { templates, WEDDING, type WeddingTemplate } from "@/lib/stationery-demo";
 import { MAX_RECIPIENT_LENGTH, normalizeRecipient } from "@/lib/stationery-recipient";
 
-const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${WEDDING.venue}, ${WEDDING.city}`)}`;
-
-function Monogram({ small = false }: { small?: boolean }) {
-  return <div className={`monogram${small ? " monogram-small" : ""}`} role="img" aria-label="Ryan dan Dwi"><BotanicalWreath /><span>R<span className="monogram-amp">&</span>D</span></div>;
+function Monogram({ small = false, hostOne = WEDDING.groom, hostTwo = WEDDING.bride }: { small?: boolean; hostOne?: string; hostTwo?: string }) {
+  const firstInitial = (name: string) => Array.from(name.trim())[0]?.toLocaleUpperCase("id-ID") ?? "?";
+  return <div className={`monogram${small ? " monogram-small" : ""}`} role="img" aria-label={`${hostOne} dan ${hostTwo}`}><BotanicalWreath /><span>{firstInitial(hostOne)}<span className="monogram-amp">&</span>{firstInitial(hostTwo)}</span></div>;
 }
 
-function Countdown() {
+function Countdown({ targetDate, accessibleDate }: { targetDate: string; accessibleDate: string }) {
   const [remaining, setRemaining] = useState<number | null>(null);
   useEffect(() => {
-    const update = () => setRemaining(Math.max(0, new Date(WEDDING.startAt).getTime() - Date.now()));
+    const update = () => setRemaining(Math.max(0, new Date(targetDate).getTime() - Date.now()));
     update(); const interval = window.setInterval(update, 1000);
     return () => window.clearInterval(interval);
-  }, []);
+  }, [targetDate]);
   const values = remaining === null ? [null, null, null, null] : [Math.floor(remaining / 86400000), Math.floor(remaining / 3600000) % 24, Math.floor(remaining / 60000) % 60, Math.floor(remaining / 1000) % 60];
   return <section className="countdown-section" aria-label="Hitung mundur menuju acara">
     <p className="eyebrow">{remaining === 0 ? "HARI BAHAGIA TELAH TIBA" : "MENGHITUNG HARI MENUJU BAHAGIA"}</p>
-    <div className="countdown" role="timer" aria-label="Waktu tersisa hingga 21 November 2026 pukul 18.00 WIB">
+    <div className="countdown" role="timer" aria-label={`Waktu tersisa hingga ${accessibleDate}`}>
       {values.map((value, i) => <div className="countdown-unit" key={["Hari", "Jam", "Menit", "Detik"][i]}><span className="countdown-number">{value === null ? "—" : String(value).padStart(2, "0")}</span><span className="countdown-label">{["Hari", "Jam", "Menit", "Detik"][i]}</span></div>)}
     </div><span className="countdown-timezone">Waktu Indonesia Barat</span>
   </section>;
@@ -57,12 +58,13 @@ function ShareDialog({ dialogRef, recipient, basePath }: { dialogRef: RefObject<
   </dialog>;
 }
 
-export function StationeryInvitation({ template, recipient, isTestableSample = false, slug, guestToken }: {
+export function StationeryInvitation({ template, recipient, isTestableSample = false, slug, guestToken, draft }: {
   template: WeddingTemplate;
   recipient: string;
   isTestableSample?: boolean;
   slug?: string;
   guestToken?: string;
+  draft?: InvitationDraft;
 }) {
   const [opened, setOpened] = useState(false);
   const [opening, setOpening] = useState(false);
@@ -71,6 +73,27 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   const dialogRef = useRef<HTMLDialogElement>(null);
   const openingTimeout = useRef<number | null>(null);
   const guest = normalizeRecipient(recipient);
+  const hostOne = draft?.hostOne || WEDDING.groom;
+  const hostTwo = draft?.hostTwo || WEDDING.bride;
+  const firstInitial = (name: string) => Array.from(name.trim())[0]?.toLocaleUpperCase("id-ID") ?? "?";
+  const eventDate = draft?.eventDate || WEDDING.eventDate;
+  const eventTime = draft?.eventTime || WEDDING.eventTime;
+  const eventDateTime = new Date(`${eventDate}T${eventTime}:00+07:00`);
+  const dateLabel = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(eventDateTime);
+  const dateParts = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "2-digit", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).formatToParts(eventDateTime);
+  const datePart = (type: Intl.DateTimeFormatPartTypes) => dateParts.find((part) => part.type === type)?.value ?? "";
+  const dateHeading = { weekday: datePart("weekday").toLocaleUpperCase("id-ID"), day: datePart("day"), month: datePart("month").toLocaleUpperCase("id-ID"), year: datePart("year"), monthNumber: eventDate.slice(5, 7) };
+  const eventTimeLabel = `${eventTime} WIB`;
+  const eventTitle = draft?.eventTitle || "Undangan Pernikahan";
+  const venue = draft?.venue || WEDDING.venue;
+  const city = draft?.address || WEDDING.city;
+  const intro = draft?.story || WEDDING.intro;
+  const eventSchedule = draft?.eventSchedule ?? WEDDING.eventSchedule;
+  const giftAccounts = draft ? invitationGiftAccounts(draft) : [];
+  const giftMessage = draft?.giftMessage || "Jika berkenan, Anda dapat mengirimkan tanda kasih melalui rekening berikut.";
+  const mapQuery = [venue, city].filter(Boolean).join(", ");
+  const mapUrl = safeHttpsUrl(draft?.mapsUrl ?? "") || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
+  const eventStartsAt = `${eventDate}T${eventTime}:00+07:00`;
   const shareBasePath = isTestableSample && slug ? `/${encodeURIComponent(slug)}` : `/templates/${template.slug}/demo`;
   const recipientQuery = guest === "Anda" ? "" : `?to=${encodeURIComponent(guest)}`;
   const catalogUrl = `/templates${recipientQuery}`;
@@ -80,7 +103,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
     let scrollTimer: number | null = null;
     const revealHashTarget = () => {
       const hash = window.location.hash.slice(1);
-      if (!["undangan", "detail-acara", "konfirmasi"].includes(hash)) return;
+      if (!["undangan", "detail-acara", "konfirmasi", "hadiah"].includes(hash)) return;
       if (scrollTimer !== null) window.clearTimeout(scrollTimer);
       if (openingTimeout.current !== null) {
         window.clearTimeout(openingTimeout.current);
@@ -104,7 +127,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   useEffect(() => {
     if (!opened) return;
     const observer = new IntersectionObserver((entries) => { for (const entry of entries) if (entry.isIntersecting) setActiveSection(entry.target.id); }, { rootMargin: "-15% 0px -60% 0px", threshold: 0 });
-    ["undangan", "detail-acara", "konfirmasi"].forEach((id) => { const element = document.getElementById(id); if (element) observer.observe(element); });
+    ["undangan", "detail-acara", "konfirmasi", "hadiah"].forEach((id) => { const element = document.getElementById(id); if (element) observer.observe(element); });
     return () => observer.disconnect();
   }, [opened]);
 
@@ -121,48 +144,50 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   return <div className={`stationery-demo theme-${template.slug} style-${template.style} ${opened ? "is-open" : "is-closed"}`} style={style} data-invitation-publication={isTestableSample ? "published" : "demo"} data-template={template.slug}>
     <a className="skip-link" href={opened ? "#detail-acara" : "#open-invitation"}>Lewati ke undangan</a>
     <header className="site-header">
-      <a className="wordmark" href={catalogUrl} aria-label="Koleksi undangan Ryan dan Dwi"><span className="wordmark-initials">R<span>&</span>D</span><span className="wordmark-label">UNDANGAN<br />PERNIKAHAN</span></a>
+      <a className="wordmark" href={catalogUrl} aria-label={`Undangan ${hostOne} dan ${hostTwo}`}><span className="wordmark-initials">{firstInitial(hostOne)}<span>&</span>{firstInitial(hostTwo)}</span><span className="wordmark-label">UNDANGAN<br />{draft?.eventKind && draft.eventKind !== "Pernikahan" ? eventTitle.toLocaleUpperCase("id-ID") : "PERNIKAHAN"}</span></a>
       <div className="header-actions"><a className="catalog-link" href={catalogUrl}><LayoutGrid size={15} /><span>Semua template</span></a><button type="button" className="icon-button share-trigger" aria-label="Bagikan undangan" onClick={() => dialogRef.current?.showModal()}><Share2 size={16} /></button></div>
     </header>
 
     {!opened ? <main className={`cover-stage${opening ? " is-opening" : ""}`}>
-      <div className="stage-caption"><span className="eyebrow">SEBUAH UNDANGAN DARI HATI</span><span className="edition-mark">21 · 11 · 2026</span></div>
+      <div className="stage-caption"><span className="eyebrow">SEBUAH UNDANGAN DARI HATI</span><span className="edition-mark">{dateHeading.day} · {dateHeading.monthNumber} · {dateHeading.year}</span></div>
       <div className="invitation-cover paper">
         <div className="paper-border" /><BotanicalCorner className="cover-botanical corner-top" variant={template.ornament} /><BotanicalCorner className="cover-botanical corner-bottom" variant={template.ornament} /><div className="cover-bow"><SatinBow /></div>
-        <div className="cover-content"><Monogram /><p className="eyebrow cover-eyebrow">HARI YANG KAMI NANTIKAN</p>
-          <h1 className="cover-names"><span>{WEDDING.groom}</span><span className="name-amp">&</span><span>{WEDDING.bride}</span></h1>
-          <div className="cover-date"><span className="fine-rule" /><p>{WEDDING.dateLabel}</p><span className="fine-rule" /></div>
+        <div className="cover-content"><Monogram hostOne={hostOne} hostTwo={hostTwo} /><p className="eyebrow cover-eyebrow">{draft?.eventKind && draft.eventKind !== "Pernikahan" ? eventTitle.toLocaleUpperCase("id-ID") : "HARI YANG KAMI NANTIKAN"}</p>
+          <h1 className="cover-names"><span>{hostOne}</span><span className="name-amp">&</span><span>{hostTwo}</span></h1>
+          <div className="cover-date"><span className="fine-rule" /><p>{dateLabel}</p><span className="fine-rule" /></div>
           <div className="recipient"><p>Kepada Yth.</p><strong>{guest}</strong></div>
           <button type="button" id="open-invitation" className="button primary open-button" onClick={openInvitation} disabled={opening}><Mail size={16} strokeWidth={1.5} /><span>{opening ? "Membuka undangan…" : "Buka undangan"}</span><ArrowRight size={15} /></button>
           <span className="cover-footnote">Dengan penuh sukacita, kami mengundang Anda.</span>
         </div>
       </div>
       <div className="cover-bottom"><span className="template-label"><span className="tiny-diamond" />{template.name}</span><label className="theme-selector">Pilih desain<select aria-label="Pilih template undangan" value={template.slug} onChange={(e) => window.location.assign(`/templates/${e.target.value}/demo${recipientQuery}`)}>{templates.map((item) => <option value={item.slug} key={item.slug}>{item.name}</option>)}</select></label></div>
-      <noscript>Aktifkan JavaScript untuk membuka undangan interaktif. Acara: Sabtu, 21 November 2026, 18:00 WIB, Gedung Pariwisata Surabaya.</noscript>
+      <noscript>Aktifkan JavaScript untuk membuka undangan. Acara: {dateLabel}, {eventTimeLabel}, {venue}.</noscript>
     </main> : <>
       <main className="opened-invitation" ref={mainRef} tabIndex={-1}>
         <section className="invitation-hero paper" id="undangan" aria-labelledby="invitation-heading">
-          <div className="paper-border" /><BotanicalCorner className="hero-botanical corner-top" variant={template.ornament} /><BotanicalCorner className="hero-botanical corner-bottom" variant={template.ornament} /><Monogram small />
+          <div className="paper-border" /><BotanicalCorner className="hero-botanical corner-top" variant={template.ornament} /><BotanicalCorner className="hero-botanical corner-bottom" variant={template.ornament} /><Monogram small hostOne={hostOne} hostTwo={hostTwo} />
           <p className="eyebrow">HARI YANG KAMI NANTIKAN</p><h1 id="invitation-heading">Dengan penuh sukacita,<br />kami mengundang <em>Anda.</em></h1><TinyFlourish className="hero-flourish" />
-          <div className="hero-names"><span>{WEDDING.groom}</span><span className="name-amp">&</span><span>{WEDDING.bride}</span></div>
-          <p className="invitation-message">{WEDDING.intro}</p>
-          <div className="hero-date"><span className="eyebrow">HARI & TANGGAL</span><p>{WEDDING.dateLabel}</p><span>{WEDDING.timeLabel}</span></div>
+          <div className="hero-names"><span>{hostOne}</span><span className="name-amp">&</span><span>{hostTwo}</span></div>
+          <p className="invitation-message">{intro}</p>
+          <div className="hero-date"><span className="eyebrow">HARI & TANGGAL</span><p>{dateLabel}</p><span>{eventTimeLabel}</span></div>
           <a className="detail-link" href="#detail-acara">LIHAT DETAIL ACARA <ArrowDown size={15} /></a>
         </section>
-        <Countdown />
+        <Countdown targetDate={eventStartsAt} accessibleDate={`${dateLabel} pukul ${eventTime} WIB`} />
         <section className="event-section content-section" id="detail-acara" aria-labelledby="event-title">
           <div className="section-heading"><span className="eyebrow">SIMPAN TANGGALNYA</span><h2 id="event-title">Sampai jumpa di<br />hari <em>bahagia.</em></h2><TinyFlourish className="section-flourish" /></div>
           <div className="event-grid">
-            <article className="event-card"><CalendarDays size={25} strokeWidth={1.1} /><span className="eyebrow">HARI & TANGGAL</span><div className="date-composition"><span className="date-weekday">SABTU</span><strong>21</strong><span className="date-month">NOVEMBER<br />2026</span></div><p className="event-time"><Clock3 size={15} />{WEDDING.timeLabel}</p><a className="button secondary" href="/api/templates/demo/calendar" download="Ryan-Dwi-21-November-2026.ics">Simpan ke kalender <ArrowDown size={15} /></a></article>
-            <article className="event-card venue-card"><MapPin size={25} strokeWidth={1.1} /><span className="eyebrow">LOKASI ACARA</span><h3>{WEDDING.venue}</h3><p>{WEDDING.city}</p><div className="venue-rule"><span /><Heart size={14} strokeWidth={1} /><span /></div><a className="button secondary" href={mapUrl} target="_blank" rel="noopener noreferrer">Buka peta <ArrowUpRight size={16} /></a></article>
+            <article className="event-card"><CalendarDays size={25} strokeWidth={1.1} /><span className="eyebrow">HARI & TANGGAL</span><div className="date-composition"><span className="date-weekday">{dateHeading.weekday}</span><strong>{dateHeading.day}</strong><span className="date-month">{dateHeading.month}<br />{dateHeading.year}</span></div><p className="event-time"><Clock3 size={15} />{eventTimeLabel}</p><a className="button secondary" href="/api/templates/demo/calendar" download="Ryan-Dwi-21-November-2026.ics">Simpan ke kalender <ArrowDown size={15} /></a></article>
+            <article className="event-card venue-card"><MapPin size={25} strokeWidth={1.1} /><span className="eyebrow">LOKASI ACARA</span><h3>{venue}</h3><p>{city}</p><div className="venue-rule"><span /><Heart size={14} strokeWidth={1} /><span /></div><a className="button secondary" href={mapUrl} target="_blank" rel="noopener noreferrer">Buka peta <ArrowUpRight size={16} /></a></article>
           </div>
+          {eventSchedule.length > 0 && <section className="event-rundown" aria-labelledby="event-rundown-title"><span className="eyebrow">RANGKAIAN ACARA</span><h3 id="event-rundown-title">Rundown acara</h3><ol>{eventSchedule.filter((item) => item.time.trim() && item.title.trim()).map((item) => <li key={item.id}><time dateTime={item.time}>{item.time}<small>WIB</small></time><div><b>{item.title}</b>{item.description && <p>{item.description}</p>}</div></li>)}</ol></section>}
           <a className="text-link rsvp-jump" href="#konfirmasi">Konfirmasi kehadiran <ArrowDown size={15} /></a>
         </section>
         <RSVP template={template} recipient={guest} isTestableSample={isTestableSample} slug={slug} guestToken={guestToken} />
-        <section className="closing-section paper"><BotanicalCorner className="closing-botanical" variant={template.ornament} /><TinyFlourish className="section-flourish" /><span className="eyebrow">DENGAN PENUH SUKACITA</span><h2>Hari istimewa ini,<br />lebih indah bersama <em>Anda.</em></h2><p>{WEDDING.intro}</p><div className="closing-names">Ryan <em>&</em> Dwi</div><span className="closing-date">21 NOVEMBER 2026</span><button type="button" className="text-link" onClick={() => dialogRef.current?.showModal()}>Bagikan undangan <Share2 size={14} /></button></section>
+        {giftAccounts.length > 0 && <section className="gift-section content-section" id="hadiah" aria-labelledby="gift-title"><div className="section-heading"><Gift size={20} strokeWidth={1.2} /><span className="eyebrow">TANDA KASIH</span><h2 id="gift-title">Kehadiranmu adalah<br /><em>hadiah terindah.</em></h2></div><p className="gift-message">{giftMessage}</p><div className="gift-account-grid">{giftAccounts.map((account) => <article className="gift-account-card" key={account.id}><span className="eyebrow">{account.bankName}</span><b>{account.accountName}</b><strong>{account.accountNumber}</strong><PublicInvitationGiftCopy accountNumber={account.accountNumber} /></article>)}</div></section>}
+        <section className="closing-section paper"><BotanicalCorner className="closing-botanical" variant={template.ornament} /><TinyFlourish className="section-flourish" /><span className="eyebrow">DENGAN PENUH SUKACITA</span><h2>Hari istimewa ini,<br />lebih indah bersama <em>Anda.</em></h2><p>{intro}</p><div className="closing-names">{hostOne.split(" ")[0]} <em>&</em> {hostTwo.split(" ")[0]}</div><span className="closing-date">{dateLabel.toLocaleUpperCase("id-ID")}</span><button type="button" className="text-link" onClick={() => dialogRef.current?.showModal()}>Bagikan undangan <Share2 size={14} /></button></section>
       </main>
-      <footer className="site-footer"><a href={catalogUrl}><ArrowLeft size={14} />Koleksi template</a><span>{template.name} · Ryan & Dwi</span><button type="button" onClick={reopenCover}><RotateCcw size={13} />Lihat sampul</button></footer>
-      <nav className="bottom-nav" aria-label="Navigasi undangan">{[{ id: "undangan", text: "Undangan", Icon: Mail }, { id: "detail-acara", text: "Acara", Icon: CalendarDays }, { id: "konfirmasi", text: "Kehadiran", Icon: Users }].map(({ id, text, Icon }) => <a href={`#${id}`} key={id} aria-current={activeSection === id ? "location" : undefined} className={activeSection === id ? "active" : ""}><Icon size={17} strokeWidth={1.5} /><span>{text}</span></a>)}</nav>
+      <footer className="site-footer"><a href={catalogUrl}><ArrowLeft size={14} />Koleksi template</a><span>{template.name} · {hostOne} & {hostTwo}</span><button type="button" onClick={reopenCover}><RotateCcw size={13} />Lihat sampul</button></footer>
+      <nav className="bottom-nav" aria-label="Navigasi undangan" style={{ gridTemplateColumns: `repeat(${giftAccounts.length > 0 ? 4 : 3}, minmax(0, 1fr))` }}>{[{ id: "undangan", text: "Undangan", Icon: Mail }, { id: "detail-acara", text: "Acara", Icon: CalendarDays }, { id: "konfirmasi", text: "Kehadiran", Icon: Users }, ...(giftAccounts.length > 0 ? [{ id: "hadiah", text: "Hadiah", Icon: Gift }] : [])].map(({ id, text, Icon }) => <a href={`#${id}`} key={id} aria-current={activeSection === id ? "location" : undefined} className={activeSection === id ? "active" : ""}><Icon size={17} strokeWidth={1.5} /><span>{text}</span></a>)}</nav>
     </>}
     <ShareDialog dialogRef={dialogRef} recipient={guest} basePath={shareBasePath} />
   </div>;

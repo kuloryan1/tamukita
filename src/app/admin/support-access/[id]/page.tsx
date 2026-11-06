@@ -25,7 +25,8 @@ const fieldLabels: Record<string, string> = {
   story: "Cerita", slug: "Slug", templateId: "Template", templateVersion: "Versi template",
   coverPhoto: "Foto sampul", coverPosition: "Posisi foto vertikal", coverPositionX: "Posisi foto horizontal", galleryPhotos: "Foto galeri",
   giftMessage: "Pesan hadiah", giftBankName: "Bank", giftAccountName: "Nama pemilik rekening",
-  giftAccountNumber: "Nomor rekening", musicTitle: "Judul musik",
+  giftAccountNumber: "Nomor rekening", giftBankName2: "Bank rekening kedua", giftAccountName2: "Pemilik rekening kedua",
+  giftAccountNumber2: "Nomor rekening kedua", eventSchedule: "Rundown acara", musicTitle: "Judul musik",
 };
 
 export default async function AdminSupportAccessPage({ params }: { params: Promise<{ id: string }> }) {
@@ -67,7 +68,7 @@ export default async function AdminSupportAccessPage({ params }: { params: Promi
         if (key === "coverPhoto" && typeof value === "string" && isR2PublicUrl(value)) return <div className="support-access-field support-access-field--wide" key={key}><b>{label}</b><a href={value} target="_blank" rel="noreferrer">Buka foto sampul</a></div>;
         if (key === "galleryPhotos" && Array.isArray(value)) return <div className="support-access-field support-access-field--wide" key={key}><b>{label}</b><span>{value.filter((item): item is string => typeof item === "string" && isR2PublicUrl(item)).map((url, index) => <a href={url} target="_blank" rel="noreferrer" key={url}>Foto {index + 1}</a>)}</span></div>;
         const mapsUrl = typeof value === "string" ? (() => { try { const parsed = new URL(value); return parsed.protocol === "https:" ? parsed.toString() : ""; } catch { return ""; } })() : "";
-        return <div className={`support-access-field${["story", "address", "giftMessage", "giftAccountNumber"].includes(key) ? " support-access-field--wide" : ""}`} key={key}><b>{label}</b>{key === "mapsUrl" && mapsUrl ? <a href={mapsUrl} target="_blank" rel="noreferrer">Buka tautan peta</a> : <span>{displayValue(value)}</span>}</div>;
+        return <div className={`support-access-field${["story", "address", "giftMessage", "giftAccountNumber", "giftAccountNumber2", "eventSchedule"].includes(key) ? " support-access-field--wide" : ""}`} key={key}><b>{label}</b>{key === "mapsUrl" && mapsUrl ? <a href={mapsUrl} target="_blank" rel="noreferrer">Buka tautan peta</a> : <span>{displayValue(value)}</span>}</div>;
       })}</div>
       <div className="support-access-actions"><span>Terakhir diperbarui: {new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Jakarta" }).format(grant.invitation.updatedAt)}</span><AdminSupportAccessRevoke grantId={grant.id} /></div>
     </section>

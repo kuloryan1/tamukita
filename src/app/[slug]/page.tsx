@@ -51,7 +51,15 @@ const findPublished = cache(async (slug: string) => {
     },
   });
   if (!invitation) return null;
-  const draft = parseInvitationDraft(invitation.publishedSnapshot);
+  const isTestableSample = isAdminSampleSnapshot(invitation.publishedSnapshot);
+  // Admin sample invitations are editable test links. Render their latest
+  // autosaved draft so the editor preview and public tester link stay in sync.
+  const currentSampleDraft = isTestableSample
+    ? await getPrismaClient().invitation.findUnique({ where: { id: invitation.id }, select: { draftData: true } })
+    : null;
+  const draft = isTestableSample
+    ? parseInvitationDraft(currentSampleDraft?.draftData) ?? parseInvitationDraft(invitation.publishedSnapshot)
+    : parseInvitationDraft(invitation.publishedSnapshot);
   const manifest = validateTemplateManifest(invitation.templateVersion.manifest);
   const template = manifest.success
     && manifest.data.slug === invitation.templateVersion.template.slug
@@ -117,6 +125,7 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
     const recipient = guestLink?.guest.name ?? normalizeRecipient(Array.isArray(query.to) ? query.to[0] : query.to);
     return <StationeryInvitation
       template={stationeryTemplate}
+      draft={record.draft}
       recipient={recipient}
       isTestableSample
       slug={slug}

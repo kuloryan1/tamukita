@@ -12,6 +12,20 @@ export const EVENT_KINDS = [
 
 export type EventKind = (typeof EVENT_KINDS)[number];
 
+export type InvitationEventScheduleItem = {
+  id: string;
+  time: string;
+  title: string;
+  description: string;
+};
+
+export type InvitationGiftAccount = {
+  id: "first" | "second";
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
+};
+
 export const EVENT_KIND_TITLE_SUGGESTIONS: Record<EventKind, string> = {
   Pernikahan: "Undangan Pernikahan",
   "Ulang Tahun": "Perayaan Ulang Tahun",
@@ -60,10 +74,14 @@ export type InvitationDraft = {
   coverPosition: number;
   coverPositionX: number;
   galleryPhotos: string[];
+  eventSchedule: InvitationEventScheduleItem[];
   giftMessage: string;
   giftBankName: string;
   giftAccountName: string;
   giftAccountNumber: string;
+  giftBankName2: string;
+  giftAccountName2: string;
+  giftAccountNumber2: string;
   musicUrl: string;
   musicTitle: string;
   customFields: Record<string, string>;
@@ -134,15 +152,27 @@ export function createInitialDraft(): InvitationDraft {
     coverPosition: 50,
     coverPositionX: 50,
     galleryPhotos: [],
+    eventSchedule: [],
     giftMessage: "",
     giftBankName: "",
     giftAccountName: "",
     giftAccountNumber: "",
+    giftBankName2: "",
+    giftAccountName2: "",
+    giftAccountNumber2: "",
     musicUrl: "",
     musicTitle: "",
     customFields: {},
     updatedAt: new Date().toISOString(),
   };
+}
+
+export function invitationGiftAccounts(draft: Pick<InvitationDraft, "giftBankName" | "giftAccountName" | "giftAccountNumber" | "giftBankName2" | "giftAccountName2" | "giftAccountNumber2">): InvitationGiftAccount[] {
+  const accounts: InvitationGiftAccount[] = [
+    { id: "first", bankName: draft.giftBankName, accountName: draft.giftAccountName, accountNumber: draft.giftAccountNumber },
+    { id: "second", bankName: draft.giftBankName2, accountName: draft.giftAccountName2, accountNumber: draft.giftAccountNumber2 },
+  ];
+  return accounts.filter((account) => account.bankName.trim() && account.accountName.trim() && account.accountNumber.trim());
 }
 
 export function createDemoDraft(): InvitationDraft {

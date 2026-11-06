@@ -13,7 +13,7 @@ import { ReferenceHeroMedia } from "@/components/reference-hero-media";
 import { ReferenceBackdropMedia } from "@/components/reference-backdrop-media";
 import { InvitationFamilyDetails, invitationKicker, invitationTitle, isLongInvitationTitle } from "@/templates/shared";
 import { legacyInvitationFeatureAccess, type InvitationFeatureAccess } from "@/lib/invitation-features";
-import { safeHttpsUrl, type InvitationDraft } from "@/lib/invitations";
+import { invitationGiftAccounts, safeHttpsUrl, type InvitationDraft } from "@/lib/invitations";
 import type { ReferenceTemplatePreset } from "@/lib/reference-template-presets";
 
 type GuestbookEntry = { id: string; displayName: string; message: string; createdAt: string };
@@ -48,6 +48,8 @@ export function ReferenceInvitation({
     ? new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(new Date(`${draft.eventDate}T12:00:00+07:00`))
     : "Tanggal akan diumumkan";
   const mapsUrl = safeHttpsUrl(draft.mapsUrl);
+  const eventSchedule = (draft.eventSchedule ?? []).filter((item) => item.time.trim() && item.title.trim());
+  const giftAccounts = invitationGiftAccounts(draft);
   if (isExample && preset.slug === "destinasi-cinta") {
     return <ReferenceBoardingPassDemo draft={draft} dateString={dateString} mapsUrl={mapsUrl} preset={preset} />;
   }
@@ -120,6 +122,7 @@ export function ReferenceInvitation({
             ? <ReferenceDemoSections draft={draft} dateString={dateString} mapsUrl={mapsUrl} preset={preset} />
             : <>
                 {orderedStoryAndEvent}
+                {eventSchedule.length > 0 && <section className="reference-schedule-section" id="susunan-acara"><div className="reference-section-inner"><span className="reference-kicker">RANGKAIAN ACARA</span><h2>Susunan acara</h2><ol>{eventSchedule.map((item) => <li key={item.id}><time dateTime={item.time}>{item.time}<small>WIB</small></time><div><h3>{item.title}</h3>{item.description && <p>{item.description}</p>}</div></li>)}</ol></div></section>}
                 {featureAccess.galleryLimit > 0 && draft.galleryPhotos.slice(0, featureAccess.galleryLimit).length > 0 && (
                   <section className="reference-gallery-section" id="galeri">
                     <div className="reference-section-inner">
@@ -129,14 +132,14 @@ export function ReferenceInvitation({
                     </div>
                   </section>
                 )}
-                {draft.giftBankName && draft.giftAccountName && draft.giftAccountNumber && (
+                {giftAccounts.length > 0 && (
                   <section className="reference-gift-section" id="hadiah">
                     <div className="reference-section-inner">
                       <Gift size={20} aria-hidden="true" />
                       <span className="reference-kicker">TANDA KASIH</span>
                       <h2>Kehadiranmu adalah hadiah terindah</h2>
                       <p>{draft.giftMessage || "Jika berkenan, Anda dapat mengirimkan tanda kasih melalui rekening berikut."}</p>
-                      <div className="reference-gift-account"><span>{draft.giftBankName}</span><b>{draft.giftAccountName}</b><strong>{draft.giftAccountNumber}</strong><PublicInvitationGiftCopy accountNumber={draft.giftAccountNumber} /></div>
+                      <div className="reference-gift-accounts">{giftAccounts.map((account) => <div className="reference-gift-account" key={account.id}><span>{account.bankName}</span><b>{account.accountName}</b><strong>{account.accountNumber}</strong><PublicInvitationGiftCopy accountNumber={account.accountNumber} /></div>)}</div>
                     </div>
                   </section>
                 )}
