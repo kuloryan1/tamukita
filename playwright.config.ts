@@ -6,6 +6,7 @@ const configuredBaseURL = process.env.PLAYWRIGHT_TEST_BASE_URL?.trim();
 const baseURL = configuredBaseURL || `http://127.0.0.1:${localAppPort}`;
 const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
 const e2eMediaEnvironment = {
+  MEDIA_STORAGE_DIR: path.resolve(process.env.MEDIA_STORAGE_DIR || ".local-storage/media"),
   PAPARAZZI_STORAGE_DRIVER: "server",
   PAPARAZZI_STORAGE_DIR: path.resolve(process.env.PAPARAZZI_STORAGE_DIR || ".local-storage/paparazzi-e2e"),
   E2E_R2_MOCK: "true",

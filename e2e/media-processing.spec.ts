@@ -17,6 +17,9 @@ async function advanceToStep(page: Page, targetStep: number) {
 }
 
 async function expectWebp(page: Page, url: string) {
+  const mediaUrl = new URL(url);
+  expect(mediaUrl.origin).toBe(new URL(page.url()).origin);
+  expect(mediaUrl.pathname).toMatch(/^\/api\/media\/files\/invitations\//);
   const response = await page.request.get(url);
   expect(response.status()).toBe(200);
   expect(response.headers()["content-type"]).toContain("image/webp");
@@ -97,7 +100,7 @@ test("customer crops and processes a cover photo without losing draft details", 
     if (!response.ok()) return null;
     const result = await response.json() as { draft?: { coverPhoto?: string } };
     return result.draft?.coverPhoto ?? null;
-  }, { timeout: 30_000 }).toMatch(/^http:\/\/127\.0\.0\.1:3138\/public\/invitations\//);
+  }, { timeout: 30_000 }).toMatch(/\/api\/media\/files\/invitations\//);
   await expect(page.locator(".editor-save-state")).toHaveText("Tersimpan otomatis", { timeout: 15_000 });
   await page.locator(".editor-stepper button").nth(0).click();
   await expect(page.getByLabel("Nama pertama")).toHaveValue(firstName);
@@ -107,7 +110,7 @@ test("customer crops and processes a cover photo without losing draft details", 
   expect(storedResponse.status()).toBe(200);
   const stored = await storedResponse.json() as { draft?: { coverPhoto?: string; hostOne?: string; hostTwo?: string } };
   expect(stored.draft).toMatchObject({ hostOne: firstName, hostTwo: secondName });
-  expect(stored.draft?.coverPhoto).toMatch(/^http:\/\/127\.0\.0\.1:3138\/public\/invitations\//);
+  expect(stored.draft?.coverPhoto).toMatch(/\/api\/media\/files\/invitations\//);
 
   const originalCoverUrl = stored.draft?.coverPhoto;
   if (!originalCoverUrl) throw new Error("The processed cover photo was not saved to the draft.");
