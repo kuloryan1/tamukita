@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useEffectEvent, useRef, useState, type TransitionEvent } from "react";
+import { useEffect, useEffectEvent, useRef, useState, type TransitionEvent, type SyntheticEvent } from "react";
 import { GardenEnvelopeMonogram } from "@/components/garden-envelope-monogram";
 import { useInvitationIntroDialog } from "@/components/use-invitation-intro-dialog";
 import { resolveSealMonogram } from "@/lib/seal-monogram";
@@ -143,7 +143,7 @@ export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram, autoStart = fa
     stallTimer.current = window.setTimeout(revealInvitation, 6_000);
   }
 
-  function handleProgress(event: React.SyntheticEvent<HTMLVideoElement>) {
+  function handleProgress(event: SyntheticEvent<HTMLVideoElement>) {
     if (!started.current || finished.current || revealStarted.current) return;
     const position = event.currentTarget.currentTime;
     if (position > lastVideoTime.current + 0.025) {
