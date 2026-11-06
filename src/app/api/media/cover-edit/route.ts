@@ -4,7 +4,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getPrismaClient } from "@/lib/prisma";
 import { allowRequest } from "@/lib/rate-limit";
-import { getR2Client, getR2Config, r2KeyFromPublicUrl } from "@/lib/r2";
+import { getR2Client, getR2Config } from "@/lib/r2";
+import { mediaKeyFromPublicUrl } from "@/lib/media-storage-url";
 
 export const runtime = "nodejs";
 
@@ -19,9 +20,6 @@ export async function GET(request: Request) {
   const invitationId = new URL(request.url).searchParams.get("invitationId") ?? "";
   if (!/^[0-9a-f-]{36}$/i.test(invitationId)) return NextResponse.json({ error: "ID undangan tidak valid." }, { status: 400 });
   if (!await allowRequest(`media:cover-edit:read:user:${userId}`, 30, 60 * 60)) return NextResponse.json({ error: "Batas akses foto tercapai. Coba lagi nanti." }, { status: 429 });
-  const config = getR2Config();
-  if (!config) return NextResponse.json({ error: "Cloudflare R2 belum dikonfigurasi di server." }, { status: 503 });
-
   const prisma = getPrismaClient();
   const invitation = await prisma.invitation.findFirst({
     where: {
@@ -35,7 +33,7 @@ export async function GET(request: Request) {
   });
   const draftData = isRecord(invitation?.draftData) ? invitation.draftData : null;
   const coverPhoto = typeof draftData?.coverPhoto === "string" ? draftData.coverPhoto : "";
-  const coverKey = r2KeyFromPublicUrl(coverPhoto);
+  const coverKey = mediaKeyFromPublicUrl(coverPhoto);
   if (!invitation || !coverKey) return NextResponse.json({ error: "Foto sampul tidak dapat diedit." }, { status: 404 });
 
   const variant = await prisma.mediaVariant.findFirst({
@@ -48,6 +46,7 @@ export async function GET(request: Request) {
       mediaAsset: {
         select: {
           id: true,
+          storageProvider: true,
           storageKey: true,
           originalName: true,
           mimeType: true,
@@ -58,11 +57,18 @@ export async function GET(request: Request) {
   });
   if (!variant) return NextResponse.json({ error: "File sumber privat foto ini tidak tersedia untuk diedit." }, { status: 404 });
 
-  const sourceUrl = await getSignedUrl(
-    getR2Client(),
-    new GetObjectCommand({ Bucket: config.privateBucket, Key: variant.mediaAsset.storageKey }),
-    { expiresIn: 300 },
-  );
+  let sourceUrl: string;
+  if (variant.mediaAsset.storageProvider === "SERVER") {
+    sourceUrl = `/api/media/${variant.mediaAsset.id}/source`;
+  } else {
+    const config = getR2Config();
+    if (!config) return NextResponse.json({ error: "Penyimpanan foto lama belum tersedia." }, { status: 503 });
+    sourceUrl = await getSignedUrl(
+      getR2Client(),
+      new GetObjectCommand({ Bucket: config.privateBucket, Key: variant.mediaAsset.storageKey }),
+      { expiresIn: 300 },
+    );
+  }
   const latestEdit = variant.mediaAsset.edits[0];
   return NextResponse.json({
     assetId: variant.mediaAsset.id,

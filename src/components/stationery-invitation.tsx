@@ -122,7 +122,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
     <a className="skip-link" href={opened ? "#detail-acara" : "#open-invitation"}>Lewati ke undangan</a>
     <header className="site-header">
       <a className="wordmark" href={catalogUrl} aria-label="Koleksi undangan Ryan dan Dwi"><span className="wordmark-initials">R<span>&</span>D</span><span className="wordmark-label">UNDANGAN<br />PERNIKAHAN</span></a>
-      <div className="header-actions"><span className="demo-badge"><span />Demo interaktif</span><a className="catalog-link" href={catalogUrl}><LayoutGrid size={15} /><span>Semua template</span></a><button type="button" className="icon-button share-trigger" aria-label="Bagikan undangan" onClick={() => dialogRef.current?.showModal()}><Share2 size={16} /></button></div>
+      <div className="header-actions"><a className="catalog-link" href={catalogUrl}><LayoutGrid size={15} /><span>Semua template</span></a><button type="button" className="icon-button share-trigger" aria-label="Bagikan undangan" onClick={() => dialogRef.current?.showModal()}><Share2 size={16} /></button></div>
     </header>
 
     {!opened ? <main className={`cover-stage${opening ? " is-opening" : ""}`}>

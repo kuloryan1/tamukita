@@ -13,6 +13,7 @@ import { getWorkerIntegrationConfigurations } from "./lib/integration-status";
 import { runDataRetentionSweep } from "./lib/data-retention";
 import { deletePaparazziPhotoObjects, failPaparazziPhoto, InvalidPaparazziPhotoError, processPaparazziPhoto } from "./lib/paparazzi-processing";
 import { startPaparazziMaintenance } from "./lib/paparazzi-maintenance";
+import { mediaServerStore } from "./lib/media-server-storage";
 import {
   createWorkerIntegrationSnapshot,
   WORKER_CONFIGURATION_KEY,
@@ -306,11 +307,9 @@ async function processJob(job: Job<{ notificationJobId: string }>) {
       await sendEventReminderEmail(payload);
     } else if (notification.jobType === "MEDIA_PROCESSING") {
       if (!mediaPayload) throw new Error("Data pemrosesan media tidak valid.");
-      if (!mediaS3 || !mediaConfig) throw new Error("Cloudflare R2 belum dikonfigurasi pada worker.");
       await processMediaAsset(prisma, mediaS3, mediaConfig, mediaPayload);
     } else if (notification.jobType === "MEDIA_EDIT_PROCESSING") {
       if (!mediaEditPayload) throw new Error("Data edit media tidak valid.");
-      if (!mediaS3 || !mediaConfig) throw new Error("Cloudflare R2 belum dikonfigurasi pada worker.");
       const result = await processMediaEdit(prisma, mediaS3, mediaConfig, mediaEditPayload);
       await prisma.notificationJob.update({
         where: { id: notification.id },
@@ -497,6 +496,7 @@ async function scheduleDataRetentionSweep() {
     }, 60_000);
     const report = await runDataRetentionSweep(prisma, {
       now: new Date(),
+      deleteServerObject: async (key: string) => mediaServerStore().delete(key),
       ...(mediaBuckets && mediaS3 ? {
         privateBucket: mediaBuckets.privateBucket,
         publicBucket: mediaBuckets.publicBucket,

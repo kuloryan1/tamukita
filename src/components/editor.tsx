@@ -693,7 +693,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
         fetch(upload.originalUploadUrl, { method: "PUT", headers: { "Content-Type": photoToCrop.file.type }, body: photoToCrop.file }),
         fetch(upload.croppedUploadUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file }),
       ]);
-      if (!originalPut.ok || !croppedPut.ok) throw new Error("Foto gagal diunggah ke penyimpanan. Periksa koneksi dan konfigurasi bucket.");
+      if (!originalPut.ok || !croppedPut.ok) throw new Error("Foto gagal disimpan. Periksa koneksi lalu coba lagi.");
 
       const completeResponse = await fetch(`/api/media/${encodeURIComponent(upload.assetId)}/complete`, { method: "POST" });
       const completed = await completeResponse.json().catch(() => null) as { publicUrl?: string; error?: string } | null;
@@ -745,7 +745,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
         const upload = await createResponse.json().catch(() => null) as { assetId?: string; uploadUrl?: string; error?: string } | null;
         if (!createResponse.ok || !upload?.assetId || !upload.uploadUrl) throw new Error(upload?.error ?? "Unggahan foto galeri belum dapat dimulai.");
         const putResponse = await fetch(upload.uploadUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
-        if (!putResponse.ok) throw new Error("Foto galeri gagal diunggah. Periksa koneksi dan konfigurasi bucket.");
+        if (!putResponse.ok) throw new Error("Foto galeri gagal disimpan. Periksa koneksi lalu coba lagi.");
         const completeResponse = await fetch(`/api/media/${encodeURIComponent(upload.assetId)}/complete`, { method: "POST" });
         const completed = await completeResponse.json().catch(() => null) as { publicUrl?: string; error?: string } | null;
         if (!completeResponse.ok) throw new Error(completed?.error ?? "Foto galeri gagal diproses.");
@@ -782,7 +782,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
       const upload = await createResponse.json().catch(() => null) as { assetId?: string; uploadUrl?: string; error?: string } | null;
       if (!createResponse.ok || !upload?.assetId || !upload.uploadUrl) throw new Error(upload?.error ?? "Unggahan MP3 belum dapat dimulai.");
       const putResponse = await fetch(upload.uploadUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
-      if (!putResponse.ok) throw new Error("Musik gagal diunggah. Periksa koneksi dan konfigurasi bucket.");
+      if (!putResponse.ok) throw new Error("Musik gagal disimpan. Periksa koneksi lalu coba lagi.");
       const completeResponse = await fetch(`/api/media/${encodeURIComponent(upload.assetId)}/complete`, { method: "POST" });
       const completed = await completeResponse.json().catch(() => null) as { publicUrl?: string; error?: string } | null;
       if (!completeResponse.ok) throw new Error(completed?.error ?? "Musik gagal diproses.");

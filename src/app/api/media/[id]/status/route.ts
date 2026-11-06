@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getPrismaClient } from "@/lib/prisma";
 import { allowRequest } from "@/lib/rate-limit";
-import { r2PublicUrl } from "@/lib/r2";
+import { mediaPublicUrl } from "@/lib/media-storage-url";
 
 export const runtime = "nodejs";
 
@@ -31,7 +31,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         organization: { status: "ACTIVE", memberships: { some: { userId, role: { in: ["OWNER", "ADMIN", "EDITOR"] } } } },
       },
     },
-    select: { status: true, metadata: true },
+    select: { status: true, metadata: true, storageProvider: true },
   });
   if (!asset) return NextResponse.json({ error: "Media tidak ditemukan." }, { status: 404 });
   if (asset.status === "FAILED") return NextResponse.json({ status: "FAILED", error: "Media gagal diproses. Pilih file yang valid dan coba lagi." }, { status: 200, headers: { "Cache-Control": "private, no-store" } });
@@ -44,5 +44,5 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     select: { storageKey: true },
   });
   if (!variant) return NextResponse.json({ error: "Hasil media belum tersedia." }, { status: 503 });
-  return NextResponse.json({ status: "READY", publicUrl: r2PublicUrl(variant.storageKey) }, { headers: { "Cache-Control": "private, no-store" } });
+  return NextResponse.json({ status: "READY", publicUrl: mediaPublicUrl(asset.storageProvider, variant.storageKey) }, { headers: { "Cache-Control": "private, no-store" } });
 }

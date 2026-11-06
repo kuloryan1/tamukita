@@ -1,12 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { getPrismaClient } from "@/lib/prisma";
 import { allowRequest } from "@/lib/rate-limit";
-import { getR2Client, getR2Config } from "@/lib/r2";
 import { stripControlCharacters } from "@/lib/text";
 import { readJsonBody } from "@/lib/request-json";
 import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
@@ -26,8 +23,6 @@ export async function POST(request: Request) {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) return NextResponse.json({ error: "Silakan masuk terlebih dahulu." }, { status: 401 });
-  const config = getR2Config();
-  if (!config) return NextResponse.json({ error: "Cloudflare R2 belum dikonfigurasi di server." }, { status: 503 });
   const body = await readJsonBody(request, 8_000);
   if (!body.ok) return NextResponse.json({ error: "Detail unggahan tidak valid." }, { status: body.status });
   const parsed = schema.safeParse(body.value);
@@ -55,13 +50,13 @@ export async function POST(request: Request) {
   const assetId = randomUUID();
   const safeName = stripControlCharacters(parsed.data.originalName.split(/[\\/]/).pop() ?? "").slice(0, 255) || "foto-galeri";
   const storageKey = `originals/${invitation.organizationId}/${invitation.id}/${assetId}/gallery-source.${extensions[parsed.data.contentType]}`;
-  const uploadUrl = await getSignedUrl(getR2Client(), new PutObjectCommand({ Bucket: config.privateBucket, Key: storageKey, ContentType: parsed.data.contentType, ContentLength: parsed.data.sizeBytes }), { expiresIn: 300 });
   await prisma.mediaAsset.create({
     data: {
       id: assetId,
       organizationId: invitation.organizationId,
       invitationId: invitation.id,
       uploadedById: userId,
+      storageProvider: "SERVER",
       storageKey,
       originalName: safeName,
       mimeType: parsed.data.contentType,
@@ -71,5 +66,5 @@ export async function POST(request: Request) {
       metadata: { mediaKind: "gallery" },
     },
   });
-  return NextResponse.json({ assetId, uploadUrl, expiresIn: 300 }, { status: 201 });
+  return NextResponse.json({ assetId, uploadUrl: `/api/media/${assetId}/upload?part=original`, expiresIn: 300 }, { status: 201 });
 }

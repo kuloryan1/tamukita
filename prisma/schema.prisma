@@ -493,6 +493,11 @@ enum PaparazziStorageProvider {
   SERVER
 }
 
+enum MediaStorageProvider {
+  R2
+  SERVER
+}
+
 model PaparazziPhoto {
   id                     String         @id @default(uuid()) @db.Uuid
   albumId                String         @db.Uuid
@@ -531,6 +536,7 @@ model MediaAsset {
   organizationId      String          @db.Uuid
   invitationId        String?         @db.Uuid
   uploadedById        String          @db.Uuid
+  storageProvider     MediaStorageProvider @default(R2)
   storageKey          String          @unique
   originalName        String
   mimeType            String

@@ -7,6 +7,7 @@ import {
 } from "@aws-sdk/client-s3";
 import sharp from "sharp";
 import type { PrismaClient } from "../generated/prisma/client";
+import { mediaServerFilePath, mediaServerStore } from "./media-server-storage";
 
 export type MediaProcessingConfig = {
   privateBucket: string;
@@ -45,9 +46,84 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function publicUrl(config: MediaProcessingConfig, key: string) {
-  const base = config.publicBaseUrl.endsWith("/") ? config.publicBaseUrl : `${config.publicBaseUrl}/`;
-  return new URL(key.split("/").map(encodeURIComponent).join("/"), base).toString();
+type MediaObjectStore = {
+  headPrivate(key: string): Promise<{ size?: number; contentType?: string }>;
+  readPrivate(key: string): Promise<Buffer>;
+  writePublic(key: string, bytes: Buffer, contentType: string): Promise<void>;
+  deletePrivate(key: string): Promise<void>;
+  deletePublic(key: string): Promise<void>;
+};
+
+function getMediaObjectStore(storageProvider: string, s3: S3Client | null, config: MediaProcessingConfig | null): MediaObjectStore {
+  if (storageProvider === "SERVER") {
+    const store = mediaServerStore();
+    return {
+      async headPrivate(key) { return { size: (await store.head(key)).size }; },
+      readPrivate: store.read,
+      async writePublic(key, bytes) { await store.write(key, bytes); },
+      deletePrivate: store.delete,
+      deletePublic: store.delete,
+    };
+  }
+  if (storageProvider !== "R2" || !s3 || !config) throw new Error("Penyimpanan foto lama belum tersedia.");
+  return {
+    async headPrivate(key) {
+      const head = await s3.send(new HeadObjectCommand({ Bucket: config.privateBucket, Key: key }));
+      return { size: head.ContentLength, contentType: head.ContentType };
+    },
+    async readPrivate(key) { return bufferFromBody((await s3.send(new GetObjectCommand({ Bucket: config.privateBucket, Key: key }))).Body); },
+    async writePublic(key, bytes, contentType) {
+      await s3.send(new PutObjectCommand({ Bucket: config.publicBucket, Key: key, Body: bytes, ContentType: contentType, CacheControl: "public, max-age=31536000, immutable" }));
+    },
+    async deletePrivate(key) { await s3.send(new DeleteObjectCommand({ Bucket: config.privateBucket, Key: key })); },
+    async deletePublic(key) { await s3.send(new DeleteObjectCommand({ Bucket: config.publicBucket, Key: key })); },
+  };
+}
+
+function mediaPublicUrlForWorker(storageProvider: string, key: string, config: MediaProcessingConfig | null) {
+  const baseUrl = storageProvider === "SERVER" ? process.env.NEXT_PUBLIC_APP_URL : config?.publicBaseUrl;
+  if (!baseUrl) throw new Error("Alamat publik media belum dikonfigurasi.");
+  const prefix = storageProvider === "SERVER" ? "/api/media/files/" : "";
+  const encodedKey = key.split("/").map(encodeURIComponent).join("/");
+  if (storageProvider === "SERVER") return new URL(`${prefix}${encodedKey}`, baseUrl).toString();
+  const base = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+  return new URL(encodedKey, base).toString();
+}
+
+function mediaKeyFromUrlForWorker(storageProvider: string, config: MediaProcessingConfig | null, value: string) {
+  const baseUrl = storageProvider === "SERVER" ? process.env.NEXT_PUBLIC_APP_URL : config?.publicBaseUrl;
+  if (!baseUrl) return null;
+  try {
+    const base = new URL(baseUrl);
+    const url = new URL(value);
+    if (url.origin !== base.origin || url.search || url.hash || url.username || url.password) return null;
+    if (storageProvider === "SERVER") {
+      const prefix = "/api/media/files/";
+      const localHttp = process.env.NODE_ENV !== "production"
+        && base.protocol === "http:"
+        && url.protocol === "http:"
+        && ["127.0.0.1", "localhost", "::1"].includes(base.hostname)
+        && ["127.0.0.1", "localhost", "::1"].includes(url.hostname);
+      if ((url.protocol !== "https:" && !localHttp) || !url.pathname.startsWith(prefix)) return null;
+      const segments = url.pathname.slice(prefix.length).split("/").map((segment) => decodeURIComponent(segment));
+      if (!segments.length || segments.some((segment) => !segment || segment === "." || segment === ".." || segment.includes("/") || segment.includes("\\"))) return null;
+      const key = segments.join("/");
+      mediaServerFilePath(key);
+      return key;
+    }
+    const basePath = base.pathname.endsWith("/") ? base.pathname : `${base.pathname}/`;
+    const localMockUrl = config?.allowLocalHttpPublicBaseUrl === true
+      && base.protocol === "http:"
+      && url.protocol === "http:"
+      && ["127.0.0.1", "localhost", "::1"].includes(base.hostname)
+      && ["127.0.0.1", "localhost", "::1"].includes(url.hostname);
+    if ((!localMockUrl && (base.protocol !== "https:" || url.protocol !== "https:")) || !url.pathname.startsWith(basePath)) return null;
+    const segments = url.pathname.slice(basePath.length).split("/").map((segment) => decodeURIComponent(segment));
+    if (!segments.length || segments.some((segment) => !segment || segment === "." || segment === ".." || segment.includes("/") || segment.includes("\\"))) return null;
+    return segments.join("/");
+  } catch {
+    return null;
+  }
 }
 
 function parseCropKey(value: unknown, asset: { organizationId: string; invitationId: string | null; id: string }) {
@@ -61,27 +137,6 @@ function expectedImageFormat(mimeType: string) {
   if (mimeType === "image/png") return "png";
   if (mimeType === "image/webp") return "webp";
   return null;
-}
-
-function publicKeyFromUrl(config: MediaProcessingConfig, value: string) {
-  try {
-    const base = new URL(config.publicBaseUrl);
-    const url = new URL(value);
-    const basePath = base.pathname.endsWith("/") ? base.pathname : `${base.pathname}/`;
-    const localMockUrl = config.allowLocalHttpPublicBaseUrl === true
-      && base.protocol === "http:"
-      && url.protocol === "http:"
-      && ["127.0.0.1", "localhost", "::1"].includes(base.hostname)
-      && ["127.0.0.1", "localhost", "::1"].includes(url.hostname);
-    if ((!localMockUrl && (base.protocol !== "https:" || url.protocol !== "https:")) || url.origin !== base.origin || !url.pathname.startsWith(basePath)
-      || url.search || url.hash || url.username || url.password) return null;
-    const segments = url.pathname.slice(basePath.length).split("/");
-    const decoded = segments.map((segment) => decodeURIComponent(segment));
-    if (!decoded.length || decoded.some((segment) => !segment || segment === "." || segment === ".." || segment.includes("/") || segment.includes("\\"))) return null;
-    return decoded.join("/");
-  } catch {
-    return null;
-  }
 }
 
 async function bufferFromBody(body: { transformToByteArray(): Promise<Uint8Array> } | undefined) {
@@ -131,8 +186,8 @@ export function parseMediaEditProcessingPayload(value: unknown): MediaEditProces
 
 export async function processMediaAsset(
   prisma: PrismaClient,
-  s3: S3Client,
-  config: MediaProcessingConfig,
+  s3: S3Client | null,
+  config: MediaProcessingConfig | null,
   payload: MediaProcessingPayload,
 ) {
   const processingStartedAt = new Date(payload.processingStartedAt);
@@ -140,6 +195,7 @@ export async function processMediaAsset(
     where: { id: payload.mediaAssetId },
     select: {
       id: true,
+      storageProvider: true,
       organizationId: true,
       invitationId: true,
       storageKey: true,
@@ -154,6 +210,7 @@ export async function processMediaAsset(
     || asset.processingStartedAt?.getTime() !== processingStartedAt.getTime()) return;
 
   const assetMetadata = isRecord(asset.metadata) ? asset.metadata : {};
+  const storage = getMediaObjectStore(asset.storageProvider, s3, config);
   const mediaKind = assetMetadata.mediaKind === "gallery" || assetMetadata.mediaKind === "music" ? assetMetadata.mediaKind : "cover";
   const variantKey = mediaKind;
   const maxBytes = mediaKind === "music" ? 10_000_000 : 5_000_000;
@@ -162,12 +219,11 @@ export async function processMediaAsset(
   }
 
   if (mediaKind === "music") {
-    const head = await s3.send(new HeadObjectCommand({ Bucket: config.privateBucket, Key: asset.storageKey }));
-    if (head.ContentLength !== Number(asset.sizeBytes) || head.ContentLength > maxBytes || head.ContentType !== "audio/mpeg") {
+    const head = await storage.headPrivate(asset.storageKey);
+    if (head.size !== Number(asset.sizeBytes) || head.size > maxBytes || (head.contentType && head.contentType !== "audio/mpeg")) {
       throw new InvalidMediaAssetError("Ukuran atau format audio tidak sesuai dengan file yang didaftarkan.");
     }
-    const response = await s3.send(new GetObjectCommand({ Bucket: config.privateBucket, Key: asset.storageKey }));
-    const bytes = await bufferFromBody(response.Body);
+    const bytes = await storage.readPrivate(asset.storageKey);
     const hasId3Header = bytes.subarray(0, 3).toString("ascii") === "ID3";
     const hasMpegFrame = bytes.length > 1 && bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0;
     if (!bytes.length || bytes.length > maxBytes || BigInt(bytes.length) !== asset.sizeBytes || (!hasId3Header && !hasMpegFrame)) {
@@ -175,13 +231,7 @@ export async function processMediaAsset(
     }
 
     const outputKey = `invitations/${asset.invitationId}/${asset.id}/music.mp3`;
-    await s3.send(new PutObjectCommand({
-      Bucket: config.publicBucket,
-      Key: outputKey,
-      Body: bytes,
-      ContentType: "audio/mpeg",
-      CacheControl: "public, max-age=31536000, immutable",
-    }));
+    await storage.writePublic(outputKey, bytes, "audio/mpeg");
     await prisma.$transaction(async (tx) => {
       const changed = await tx.mediaAsset.updateMany({
         where: { id: asset.id, status: "PROCESSING", processingStartedAt },
@@ -217,20 +267,19 @@ export async function processMediaAsset(
   }
 
   const [originalHead, cropHead] = await Promise.all([
-    s3.send(new HeadObjectCommand({ Bucket: config.privateBucket, Key: asset.storageKey })),
-    cropKey ? s3.send(new HeadObjectCommand({ Bucket: config.privateBucket, Key: cropKey })) : Promise.resolve(null),
+    storage.headPrivate(asset.storageKey),
+    cropKey ? storage.headPrivate(cropKey) : Promise.resolve(null),
   ]);
-  if (originalHead.ContentLength !== Number(asset.sizeBytes)
-    || originalHead.ContentLength > maxBytes
-    || (cropKey && (cropHead?.ContentLength !== cropSizeBytes || (cropHead?.ContentLength ?? 0) > maxBytes))) {
+  if (originalHead.size !== Number(asset.sizeBytes)
+    || (originalHead.size ?? 0) > maxBytes
+    || (cropKey && (cropHead?.size !== cropSizeBytes || (cropHead?.size ?? 0) > maxBytes))) {
     throw new InvalidMediaAssetError("Ukuran file tidak sesuai dengan unggahan yang didaftarkan.");
   }
-  const [originalResponse, cropResponse] = await Promise.all([
-    s3.send(new GetObjectCommand({ Bucket: config.privateBucket, Key: asset.storageKey })),
-    cropKey ? s3.send(new GetObjectCommand({ Bucket: config.privateBucket, Key: cropKey })) : Promise.resolve(null),
+  const [originalBuffer, cropBuffer] = await Promise.all([
+    storage.readPrivate(asset.storageKey),
+    cropKey ? storage.readPrivate(cropKey) : Promise.resolve(null),
   ]);
-  const originalBuffer = await bufferFromBody(originalResponse.Body);
-  const sourceBuffer = cropKey ? await bufferFromBody(cropResponse?.Body) : originalBuffer;
+  const sourceBuffer = cropBuffer ?? originalBuffer;
   if (!originalBuffer.length || originalBuffer.length > maxBytes || BigInt(originalBuffer.length) !== asset.sizeBytes
     || !sourceBuffer.length || sourceBuffer.length > maxBytes
     || (cropKey && sourceBuffer.length !== cropSizeBytes)) {
@@ -270,20 +319,8 @@ export async function processMediaAsset(
     throw new InvalidMediaAssetError("Thumbnail foto tidak dapat dibuat.");
   }
   const thumbnailKey = `invitations/${asset.invitationId}/${asset.id}/${variantKey}-thumbnail.webp`;
-  await s3.send(new PutObjectCommand({
-    Bucket: config.publicBucket,
-    Key: outputKey,
-    Body: output.data,
-    ContentType: "image/webp",
-    CacheControl: "public, max-age=31536000, immutable",
-  }));
-  await s3.send(new PutObjectCommand({
-    Bucket: config.publicBucket,
-    Key: thumbnailKey,
-    Body: thumbnail.data,
-    ContentType: "image/webp",
-    CacheControl: "public, max-age=31536000, immutable",
-  }));
+  await storage.writePublic(outputKey, output.data, "image/webp");
+  await storage.writePublic(thumbnailKey, thumbnail.data, "image/webp");
   const { cropKey: _cropKey, ...persistentMetadata } = assetMetadata;
   const published = await prisma.$transaction(async (tx) => {
     const changed = await tx.mediaAsset.updateMany({
@@ -317,13 +354,13 @@ export async function processMediaAsset(
     });
     return true;
   });
-  if (published && cropKey) await s3.send(new DeleteObjectCommand({ Bucket: config.privateBucket, Key: cropKey })).catch(() => undefined);
+  if (published && cropKey) await storage.deletePrivate(cropKey).catch(() => undefined);
 }
 
 export async function processMediaEdit(
   prisma: PrismaClient,
-  s3: S3Client,
-  config: MediaProcessingConfig,
+  s3: S3Client | null,
+  config: MediaProcessingConfig | null,
   payload: MediaEditProcessingPayload,
 ) {
   const asset = await prisma.mediaAsset.findFirst({
@@ -336,6 +373,7 @@ export async function processMediaEdit(
     },
     select: {
       id: true,
+      storageProvider: true,
       organizationId: true,
       invitationId: true,
       uploadedById: true,
@@ -346,17 +384,18 @@ export async function processMediaEdit(
     },
   });
   if (!asset?.invitationId) throw new InvalidMediaAssetError("Foto sampul tidak lagi dapat diedit.");
+  const storage = getMediaObjectStore(asset.storageProvider, s3, config);
 
   const outputKey = `invitations/${payload.invitationId}/${asset.id}/cover-${payload.revisionKey}.webp`;
   const invitationData = isRecord(asset.invitation?.draftData) ? asset.invitation.draftData : null;
-  const currentCoverKey = publicKeyFromUrl(config, typeof invitationData?.coverPhoto === "string" ? invitationData.coverPhoto : "");
+  const currentCoverKey = mediaKeyFromUrlForWorker(asset.storageProvider, config, typeof invitationData?.coverPhoto === "string" ? invitationData.coverPhoto : "");
   const existingRevision = await prisma.mediaEdit.findUnique({
     where: { mediaAssetId_revision: { mediaAssetId: asset.id, revision: payload.baseRevision + 1 } },
     select: { revision: true },
   });
   if (existingRevision) {
     if (currentCoverKey === outputKey && asset.variants.some((variant) => variant.storageKey === outputKey)) {
-      return { publicUrl: publicUrl(config, outputKey), revision: existingRevision.revision };
+      return { publicUrl: mediaPublicUrlForWorker(asset.storageProvider, outputKey, config), revision: existingRevision.revision };
     }
     throw new InvalidMediaAssetError("Foto berubah di sesi lain. Muat ulang editor lalu coba lagi.");
   }
@@ -367,12 +406,11 @@ export async function processMediaEdit(
   }
 
   const cropKey = `private/pending/${asset.organizationId}/${payload.invitationId}/${asset.id}/edits/${payload.revisionKey}.webp`;
-  const head = await s3.send(new HeadObjectCommand({ Bucket: config.privateBucket, Key: cropKey }));
-  if (head.ContentLength !== payload.cropSizeBytes || head.ContentType !== "image/webp") {
+  const head = await storage.headPrivate(cropKey);
+  if (head.size !== payload.cropSizeBytes || (head.contentType && head.contentType !== "image/webp")) {
     throw new InvalidMediaAssetError("Ukuran atau format foto tidak sesuai.");
   }
-  const response = await s3.send(new GetObjectCommand({ Bucket: config.privateBucket, Key: cropKey }));
-  const bytes = await bufferFromBody(response.Body);
+  const bytes = await storage.readPrivate(cropKey);
   if (!bytes.length || bytes.length !== payload.cropSizeBytes || bytes.length > 5_000_000) {
     throw new InvalidMediaAssetError("Ukuran file foto tidak sesuai.");
   }
@@ -395,13 +433,7 @@ export async function processMediaEdit(
     throw new InvalidMediaAssetError("Foto tidak dapat dibaca atau diproses.");
   }
 
-  await s3.send(new PutObjectCommand({
-    Bucket: config.publicBucket,
-    Key: outputKey,
-    Body: output.data,
-    ContentType: "image/webp",
-    CacheControl: "public, max-age=31536000, immutable",
-  }));
+  await storage.writePublic(outputKey, output.data, "image/webp");
   let thumbnail: OptimizedImage;
   try {
     thumbnail = await sharp(bytes, { limitInputPixels: 40_000_000, animated: false })
@@ -413,22 +445,16 @@ export async function processMediaEdit(
     throw new InvalidMediaAssetError("Thumbnail foto tidak dapat dibuat.");
   }
   const thumbnailKey = `invitations/${payload.invitationId}/${asset.id}/cover-thumbnail-${payload.revisionKey}.webp`;
-  await s3.send(new PutObjectCommand({
-    Bucket: config.publicBucket,
-    Key: thumbnailKey,
-    Body: thumbnail.data,
-    ContentType: "image/webp",
-    CacheControl: "public, max-age=31536000, immutable",
-  }));
+  await storage.writePublic(thumbnailKey, thumbnail.data, "image/webp");
   const metadataRecord = isRecord(asset.metadata) ? asset.metadata : {};
-  const publicUrlValue = publicUrl(config, outputKey);
+  const publicUrlValue = mediaPublicUrlForWorker(asset.storageProvider, outputKey, config);
   await prisma.$transaction(async (tx) => {
     const currentInvitation = await tx.invitation.findFirst({
       where: { id: payload.invitationId, ownerId: payload.requestedById, deletedAt: null, status: { in: ["DRAFT", "PUBLISHED"] } },
       select: { draftData: true, updatedAt: true },
     });
     const currentDraftData = isRecord(currentInvitation?.draftData) ? currentInvitation.draftData : null;
-    const transactionCoverKey = publicKeyFromUrl(config, typeof currentDraftData?.coverPhoto === "string" ? currentDraftData.coverPhoto : "");
+    const transactionCoverKey = mediaKeyFromUrlForWorker(asset.storageProvider, config, typeof currentDraftData?.coverPhoto === "string" ? currentDraftData.coverPhoto : "");
     const latestEdit = await tx.mediaEdit.findFirst({
       where: { mediaAssetId: asset.id },
       orderBy: { revision: "desc" },
@@ -466,7 +492,7 @@ export async function processMediaEdit(
     });
     if (invitationUpdate.count !== 1) throw new InvalidMediaAssetError("Undangan berubah saat edit foto diproses. Muat ulang editor lalu coba lagi.");
   });
-  await s3.send(new DeleteObjectCommand({ Bucket: config.privateBucket, Key: cropKey })).catch(() => undefined);
+  await storage.deletePrivate(cropKey).catch(() => undefined);
   return { publicUrl: publicUrlValue, revision: payload.baseRevision + 1 };
 }
 
@@ -479,7 +505,7 @@ export async function failMediaProcessing(
   const processingStartedAt = new Date(payload.processingStartedAt);
   const asset = await prisma.mediaAsset.findUnique({
     where: { id: payload.mediaAssetId },
-    select: { id: true, organizationId: true, invitationId: true, status: true, metadata: true, processingStartedAt: true },
+    select: { id: true, organizationId: true, invitationId: true, storageProvider: true, status: true, metadata: true, processingStartedAt: true },
   });
   if (asset?.status !== "PROCESSING"
     || asset.processingStartedAt?.getTime() !== processingStartedAt.getTime()) return;
@@ -490,16 +516,22 @@ export async function failMediaProcessing(
     where: { id: asset.id, status: "PROCESSING", processingStartedAt },
     data: { status: "FAILED", processingStartedAt: null },
   });
-  if (!failed.count || !s3 || !config || !asset.invitationId) return;
+  if (!failed.count || !asset.invitationId) return;
+  let storage: MediaObjectStore;
+  try {
+    storage = getMediaObjectStore(asset.storageProvider, s3, config);
+  } catch {
+    return;
+  }
   const pendingCropKey = parseCropKey(assetMetadata.cropKey, asset);
   const publicKey = mediaKind === "music"
     ? `invitations/${asset.invitationId}/${asset.id}/music.mp3`
     : `invitations/${asset.invitationId}/${asset.id}/${variantKey}.webp`;
   const thumbnailKey = mediaKind === "music" ? null : `invitations/${asset.invitationId}/${asset.id}/${variantKey}-thumbnail.webp`;
   await Promise.all([
-    s3.send(new DeleteObjectCommand({ Bucket: config.publicBucket, Key: publicKey })).catch(() => undefined),
-    thumbnailKey ? s3.send(new DeleteObjectCommand({ Bucket: config.publicBucket, Key: thumbnailKey })).catch(() => undefined) : Promise.resolve(),
-    pendingCropKey ? s3.send(new DeleteObjectCommand({ Bucket: config.privateBucket, Key: pendingCropKey })).catch(() => undefined) : Promise.resolve(),
+    storage.deletePublic(publicKey).catch(() => undefined),
+    thumbnailKey ? storage.deletePublic(thumbnailKey).catch(() => undefined) : Promise.resolve(),
+    pendingCropKey ? storage.deletePrivate(pendingCropKey).catch(() => undefined) : Promise.resolve(),
   ]);
 }
 
@@ -509,12 +541,17 @@ export async function failMediaEdit(
   config: MediaProcessingConfig | null,
   payload: MediaEditProcessingPayload,
 ) {
-  if (!s3 || !config) return;
   const asset = await prisma.mediaAsset.findFirst({
     where: { id: payload.mediaAssetId, invitationId: payload.invitationId, uploadedById: payload.requestedById },
-    select: { id: true, organizationId: true },
+    select: { id: true, organizationId: true, storageProvider: true },
   });
   if (!asset) return;
+  let storage: MediaObjectStore;
+  try {
+    storage = getMediaObjectStore(asset.storageProvider, s3, config);
+  } catch {
+    return;
+  }
   const cropKey = `private/pending/${asset.organizationId}/${payload.invitationId}/${asset.id}/edits/${payload.revisionKey}.webp`;
   const outputKey = `invitations/${payload.invitationId}/${asset.id}/cover-${payload.revisionKey}.webp`;
   const committed = await prisma.mediaEdit.findUnique({
@@ -522,13 +559,13 @@ export async function failMediaEdit(
     select: { id: true },
   });
   if (committed) {
-    await s3.send(new DeleteObjectCommand({ Bucket: config.privateBucket, Key: cropKey })).catch(() => undefined);
+    await storage.deletePrivate(cropKey).catch(() => undefined);
     return;
   }
   const thumbnailKey = `invitations/${payload.invitationId}/${asset.id}/cover-thumbnail-${payload.revisionKey}.webp`;
   await Promise.all([
-    s3.send(new DeleteObjectCommand({ Bucket: config.privateBucket, Key: cropKey })).catch(() => undefined),
-    s3.send(new DeleteObjectCommand({ Bucket: config.publicBucket, Key: outputKey })).catch(() => undefined),
-    s3.send(new DeleteObjectCommand({ Bucket: config.publicBucket, Key: thumbnailKey })).catch(() => undefined),
+    storage.deletePrivate(cropKey).catch(() => undefined),
+    storage.deletePublic(outputKey).catch(() => undefined),
+    storage.deletePublic(thumbnailKey).catch(() => undefined),
   ]);
 }

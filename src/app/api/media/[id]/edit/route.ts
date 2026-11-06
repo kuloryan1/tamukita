@@ -6,7 +6,8 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { getPrismaClient } from "@/lib/prisma";
 import { allowRequest } from "@/lib/rate-limit";
-import { getR2Client, getR2Config, r2KeyFromPublicUrl } from "@/lib/r2";
+import { getR2Client, getR2Config } from "@/lib/r2";
+import { mediaKeyFromPublicUrl } from "@/lib/media-storage-url";
 import { readJsonBody } from "@/lib/request-json";
 
 export const runtime = "nodejs";
@@ -36,8 +37,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!userId) return NextResponse.json({ error: "Silakan masuk terlebih dahulu." }, { status: 401 });
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({ error: "ID media tidak valid." }, { status: 400 });
-  const config = getR2Config();
-  if (!config) return NextResponse.json({ error: "Cloudflare R2 belum dikonfigurasi di server." }, { status: 503 });
   const body = await readJsonBody(request, 12_000);
   if (!body.ok) return NextResponse.json({ error: "Detail edit foto tidak valid." }, { status: body.status });
   const parsed = editSchema.safeParse(body.value);
@@ -60,6 +59,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     },
     select: {
       id: true,
+      storageProvider: true,
       organizationId: true,
       invitationId: true,
       invitation: { select: { draftData: true } },
@@ -68,7 +68,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     },
   });
   const draftData = isRecord(asset?.invitation?.draftData) ? asset.invitation.draftData : null;
-  const activeCoverKey = r2KeyFromPublicUrl(typeof draftData?.coverPhoto === "string" ? draftData.coverPhoto : "");
+  const activeCoverKey = mediaKeyFromPublicUrl(typeof draftData?.coverPhoto === "string" ? draftData.coverPhoto : "");
   if (!asset || !activeCoverKey || !asset.variants.some((variant) => variant.storageKey === activeCoverKey)) {
     return NextResponse.json({ error: "Foto sampul tidak ditemukan atau sudah diganti." }, { status: 404 });
   }
@@ -78,6 +78,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const revisionKey = randomUUID();
   const cropKey = `private/pending/${asset.organizationId}/${asset.invitationId}/${asset.id}/edits/${revisionKey}.webp`;
+  if (asset.storageProvider === "SERVER") {
+    return NextResponse.json({ uploadUrl: `/api/media/${asset.id}/upload?part=edit&revisionKey=${revisionKey}&sizeBytes=${parsed.data.cropSizeBytes}`, revisionKey, baseRevision: parsed.data.baseRevision, cropData: parsed.data.cropData, cropSizeBytes: parsed.data.cropSizeBytes }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
+  }
+  const config = getR2Config();
+  if (!config) return NextResponse.json({ error: "Penyimpanan foto lama belum tersedia." }, { status: 503 });
   const uploadUrl = await getSignedUrl(
     getR2Client(),
     new PutObjectCommand({ Bucket: config.privateBucket, Key: cropKey, ContentType: parsed.data.cropContentType, ContentLength: parsed.data.cropSizeBytes }),
