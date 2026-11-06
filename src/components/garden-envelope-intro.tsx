@@ -17,6 +17,8 @@ export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram, autoStart = fa
   const dialogRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const timer = useRef<number | null>(null);
+  const stallTimer = useRef<number | null>(null);
+  const lastVideoTime = useRef(0);
   const playbackAttempt = useRef(0);
   const started = useRef(false);
   const revealStarted = useRef(false);
@@ -37,6 +39,7 @@ export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram, autoStart = fa
       playbackAttempt.current += 1;
       revealStarted.current = false;
       if (timer.current !== null) window.clearTimeout(timer.current);
+      if (stallTimer.current !== null) window.clearTimeout(stallTimer.current);
       video?.pause();
     };
   }, [autoStart]);
@@ -108,6 +111,7 @@ export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram, autoStart = fa
     if (finished.current) return;
     finished.current = true;
     if (timer.current !== null) window.clearTimeout(timer.current);
+    if (stallTimer.current !== null) window.clearTimeout(stallTimer.current);
     videoRef.current?.pause();
     document.querySelector<HTMLElement>('.public-invitation-page[data-template="taman-abadi"]')?.classList.add("garden-invitation-opened");
     setDismissed(true);
@@ -121,6 +125,7 @@ export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram, autoStart = fa
 
   function revealInvitation() {
     if (finished.current || revealStarted.current) return;
+    if (stallTimer.current !== null) window.clearTimeout(stallTimer.current);
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return finishOpening();
     // Begin the normal crossfade only after the native ended event. An early
     // fade can pause/unmount a buffering clip before its final frames play.
@@ -131,10 +136,27 @@ export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram, autoStart = fa
     timer.current = window.setTimeout(finishOpening, 1_500);
   }
 
+  function armStallRecovery() {
+    if (stallTimer.current !== null) window.clearTimeout(stallTimer.current);
+    // Some Safari/WebKit decoders deliver the first frame and then stop advancing
+    // without firing a media error. Recover with the original garden crossfade.
+    stallTimer.current = window.setTimeout(revealInvitation, 6_000);
+  }
+
+  function handleProgress(event: React.SyntheticEvent<HTMLVideoElement>) {
+    if (!started.current || finished.current || revealStarted.current) return;
+    const position = event.currentTarget.currentTime;
+    if (position > lastVideoTime.current + 0.025) {
+      lastVideoTime.current = position;
+      armStallRecovery();
+    }
+  }
+
   function handlePlaying() {
     if (finished.current || revealStarted.current) return;
     // Keep the absolute deadline active if a clip stalls after it starts.
     setPlaying(true);
+    armStallRecovery();
   }
 
   function openInvitation() {
@@ -146,6 +168,8 @@ export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram, autoStart = fa
     const video = videoRef.current;
     if (!video) return finishOpening();
     timer.current = window.setTimeout(finishOpening, 15_000);
+    lastVideoTime.current = 0;
+    armStallRecovery();
     const attempt = ++playbackAttempt.current;
     void video.play().catch(() => { if (attempt === playbackAttempt.current) finishOpening(); });
   }
@@ -167,6 +191,7 @@ export function GardenEnvelopeIntro({ hostOne, hostTwo, monogram, autoStart = fa
           disablePictureInPicture
           tabIndex={-1}
           onPlaying={handlePlaying}
+          onTimeUpdate={handleProgress}
           onEnded={revealInvitation}
           onError={finishOpening}
         />
