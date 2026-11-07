@@ -33,7 +33,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     select: { storageKey: true, mimeType: true, metadata: true },
   });
   const metadata = isRecord(asset?.metadata) ? asset.metadata : {};
-  if (!asset || metadata.mediaKind === "gallery" || metadata.mediaKind === "music") return NextResponse.json({ error: "File sumber tidak ditemukan." }, { status: 404 });
+  if (!asset || metadata.mediaKind === "gallery" || metadata.mediaKind === "music" || metadata.mediaKind === "portrait") return NextResponse.json({ error: "File sumber tidak ditemukan." }, { status: 404 });
   try {
     const body = await mediaServerStore().stream(asset.storageKey);
     return new Response(body, { headers: { "Content-Type": asset.mimeType, "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" } });

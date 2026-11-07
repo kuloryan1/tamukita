@@ -7,8 +7,8 @@ import { Readable } from "node:stream";
 const uuid = "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}";
 const storageKeyPattern = new RegExp(
   `^(?:originals/${uuid}/${uuid}/${uuid}/(?:source\\.(?:jpg|png|webp)|gallery-source\\.(?:jpg|png|webp)|music-source\\.mp3)`
-  + `|private/pending/${uuid}/${uuid}/${uuid}/(?:cover\\.(?:png|webp)|edits/${uuid}\\.webp)`
-  + `|invitations/${uuid}/${uuid}/(?:cover\\.webp|gallery\\.webp|music\\.mp3|cover-thumbnail\\.webp|gallery-thumbnail\\.webp|cover-${uuid}\\.webp|cover-thumbnail-${uuid}\\.webp))$`,
+  + `|private/pending/${uuid}/${uuid}/${uuid}/(?:cover|hostOnePhoto|hostTwoPhoto)\\.(?:png|webp)|private/pending/${uuid}/${uuid}/${uuid}/edits/${uuid}\\.webp`
+  + `|invitations/${uuid}/${uuid}/(?:cover\\.webp|gallery\\.webp|portrait\\.webp|music\\.mp3|cover-thumbnail\\.webp|gallery-thumbnail\\.webp|portrait-thumbnail\\.webp|cover-${uuid}\\.webp|cover-thumbnail-${uuid}\\.webp))$`,
   "i",
 );
 

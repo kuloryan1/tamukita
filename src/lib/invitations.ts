@@ -74,6 +74,8 @@ export type InvitationDraft = {
   themeFont?: "classic" | "modern";
   sectionOrder?: "story-first" | "details-first";
   coverPhoto: string;
+  hostOnePhoto?: string;
+  hostTwoPhoto?: string;
   coverPosition: number;
   coverPositionX: number;
   galleryPhotos: string[];
@@ -154,6 +156,8 @@ export function createInitialDraft(): InvitationDraft {
     themeFont: "classic",
     sectionOrder: "story-first",
     coverPhoto: "",
+    hostOnePhoto: "",
+    hostTwoPhoto: "",
     coverPosition: 50,
     coverPositionX: 50,
     galleryPhotos: [],

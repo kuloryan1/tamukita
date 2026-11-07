@@ -46,7 +46,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   if (!asset) return NextResponse.json({ error: "Media tidak ditemukan." }, { status: 404 });
   if (asset.storageProvider === "R2" && !getR2Config()) return NextResponse.json({ error: "Penyimpanan foto lama belum tersedia." }, { status: 503 });
   const assetMetadata = isRecord(asset.metadata) ? asset.metadata : {};
-  const mediaKind = assetMetadata.mediaKind === "gallery" || assetMetadata.mediaKind === "music" ? assetMetadata.mediaKind : "cover";
+  const mediaKind = assetMetadata.mediaKind === "gallery" || assetMetadata.mediaKind === "music" || assetMetadata.mediaKind === "portrait" ? assetMetadata.mediaKind : "cover";
   const variantKey = mediaKind;
   if (asset.status === "READY") {
     const ready = await prisma.mediaVariant.findUnique({ where: { mediaAssetId_variantKey: { mediaAssetId: asset.id, variantKey } }, select: { storageKey: true } });
@@ -63,7 +63,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   const cropKey = typeof assetMetadata.cropKey === "string" ? assetMetadata.cropKey : "";
   const cropSizeBytes = Number(assetMetadata.cropSizeBytes);
   const cropMimeType = assetMetadata.cropMimeType;
-  if (mediaKind === "cover" && (!cropKey.startsWith(`private/pending/${asset.organizationId}/${asset.invitationId}/${asset.id}/`)
+  if (mediaKind !== "gallery" && mediaKind !== "music" && (!cropKey.startsWith(`private/pending/${asset.organizationId}/${asset.invitationId}/${asset.id}/`)
     || !Number.isSafeInteger(cropSizeBytes)
     || cropSizeBytes < 1
     || cropSizeBytes > maxSourceBytes
@@ -75,7 +75,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       const store = mediaServerStore();
       const source = await store.head(asset.storageKey);
       if (source.size !== Number(asset.sizeBytes)) return NextResponse.json({ error: "Foto asli belum selesai diunggah. Coba lagi." }, { status: 400 });
-      if (mediaKind === "cover" && (await store.head(cropKey)).size !== cropSizeBytes) return NextResponse.json({ error: "Hasil crop foto belum selesai diunggah. Coba lagi." }, { status: 400 });
+      if (mediaKind !== "gallery" && mediaKind !== "music" && (await store.head(cropKey)).size !== cropSizeBytes) return NextResponse.json({ error: "Hasil crop foto belum selesai diunggah. Coba lagi." }, { status: 400 });
     } catch {
       return NextResponse.json({ error: "File belum tersimpan lengkap. Pilih ulang foto lalu coba lagi." }, { status: 400 });
     }

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { ComponentType } from "react";
 import type { InvitationDraft } from "@/lib/invitations";
+import { isInvitationCopyField } from "@/lib/invitation-copy";
 
 export const TEMPLATE_SDK_VERSION = "1.1.0";
 
@@ -53,7 +54,7 @@ const templateSchemaSchema = z.object({
       fieldKeys.add(field.key);
     });
   });
-  if (fieldCount > 64) context.addIssue({ code: "custom", path: ["sections"], message: "Schema template maksimal memuat 64 field." });
+  if (fieldCount > 112) context.addIssue({ code: "custom", path: ["sections"], message: "Schema template maksimal memuat 112 field." });
 });
 
 const templateManifestSchema = z.object({
@@ -124,7 +125,7 @@ export function isEditorCompatibleTemplate(template: Template) {
   }
 
   const allFields = template.schema.sections.flatMap((section) => section.fields.map((field) => ({ ...field, sectionKey: section.key })));
-  const extraFields = allFields.filter((field) => !standardFieldKeysForSchema.has(field.key));
+  const extraFields = allFields.filter((field) => !standardFieldKeysForSchema.has(field.key) && !isInvitationCopyField(field.key));
   if (extraFields.length > 32) return false;
   return allFields.every((field) => {
     if (field.type === "image" && (field.sectionKey !== "media" || field.key !== "coverPhoto")) return false;

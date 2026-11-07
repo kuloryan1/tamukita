@@ -8,6 +8,7 @@ import { readJsonBody } from "@/lib/request-json";
 import { isTemplateSelectable } from "@/lib/template-sdk";
 import { normalizeSealMonogram } from "@/lib/seal-monogram";
 import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
+import { isAdminSampleSnapshot } from "@/lib/invitation-publication";
 
 export const runtime = "nodejs";
 
@@ -28,14 +29,14 @@ export async function GET(request: Request) {
       organization: { status: "ACTIVE", memberships: { some: { userId, role: { in: ["OWNER", "ADMIN", "EDITOR"] } }, } },
     },
     orderBy: { updatedAt: "desc" },
-    select: { id: true, slug: true, draftData: true, updatedAt: true, status: true },
+    select: { id: true, slug: true, draftData: true, updatedAt: true, status: true, publishedSnapshot: true },
   });
   if (!invitation) return NextResponse.json({ draft: null });
   const featureAccess = await getInvitationFeatureAccess(invitation.id);
   const draftData = typeof invitation.draftData === "object" && invitation.draftData !== null && !Array.isArray(invitation.draftData)
-    ? { ...invitation.draftData, sealMonogram: normalizeSealMonogram(invitation.draftData.sealMonogram), familyDetails: typeof invitation.draftData.familyDetails === "string" ? invitation.draftData.familyDetails : "", hostOneParents: typeof invitation.draftData.hostOneParents === "string" ? invitation.draftData.hostOneParents : "", hostTwoParents: typeof invitation.draftData.hostTwoParents === "string" ? invitation.draftData.hostTwoParents : "", coverPositionX: typeof invitation.draftData.coverPositionX === "number" ? invitation.draftData.coverPositionX : 50, galleryPhotos: Array.isArray(invitation.draftData.galleryPhotos) ? invitation.draftData.galleryPhotos : [], eventSchedule: Array.isArray(invitation.draftData.eventSchedule) ? invitation.draftData.eventSchedule : [], giftMessage: typeof invitation.draftData.giftMessage === "string" ? invitation.draftData.giftMessage : "", giftBankName: typeof invitation.draftData.giftBankName === "string" ? invitation.draftData.giftBankName : "", giftAccountName: typeof invitation.draftData.giftAccountName === "string" ? invitation.draftData.giftAccountName : "", giftAccountNumber: typeof invitation.draftData.giftAccountNumber === "string" ? invitation.draftData.giftAccountNumber : "", giftBankName2: typeof invitation.draftData.giftBankName2 === "string" ? invitation.draftData.giftBankName2 : "", giftAccountName2: typeof invitation.draftData.giftAccountName2 === "string" ? invitation.draftData.giftAccountName2 : "", giftAccountNumber2: typeof invitation.draftData.giftAccountNumber2 === "string" ? invitation.draftData.giftAccountNumber2 : "", musicUrl: typeof invitation.draftData.musicUrl === "string" ? invitation.draftData.musicUrl : "", musicTitle: typeof invitation.draftData.musicTitle === "string" ? invitation.draftData.musicTitle : "", customFields: normalizeInvitationCustomFields(invitation.draftData.customFields), id: invitation.id, slug: invitation.slug, updatedAt: invitation.updatedAt.toISOString(), isPublished: invitation.status === "PUBLISHED" }
+    ? { ...invitation.draftData, sealMonogram: normalizeSealMonogram(invitation.draftData.sealMonogram), familyDetails: typeof invitation.draftData.familyDetails === "string" ? invitation.draftData.familyDetails : "", hostOneParents: typeof invitation.draftData.hostOneParents === "string" ? invitation.draftData.hostOneParents : "", hostTwoParents: typeof invitation.draftData.hostTwoParents === "string" ? invitation.draftData.hostTwoParents : "", hostOnePhoto: typeof invitation.draftData.hostOnePhoto === "string" ? invitation.draftData.hostOnePhoto : "", hostTwoPhoto: typeof invitation.draftData.hostTwoPhoto === "string" ? invitation.draftData.hostTwoPhoto : "", coverPositionX: typeof invitation.draftData.coverPositionX === "number" ? invitation.draftData.coverPositionX : 50, galleryPhotos: Array.isArray(invitation.draftData.galleryPhotos) ? invitation.draftData.galleryPhotos : [], eventSchedule: Array.isArray(invitation.draftData.eventSchedule) ? invitation.draftData.eventSchedule : [], giftMessage: typeof invitation.draftData.giftMessage === "string" ? invitation.draftData.giftMessage : "", giftBankName: typeof invitation.draftData.giftBankName === "string" ? invitation.draftData.giftBankName : "", giftAccountName: typeof invitation.draftData.giftAccountName === "string" ? invitation.draftData.giftAccountName : "", giftAccountNumber: typeof invitation.draftData.giftAccountNumber === "string" ? invitation.draftData.giftAccountNumber : "", giftBankName2: typeof invitation.draftData.giftBankName2 === "string" ? invitation.draftData.giftBankName2 : "", giftAccountName2: typeof invitation.draftData.giftAccountName2 === "string" ? invitation.draftData.giftAccountName2 : "", giftAccountNumber2: typeof invitation.draftData.giftAccountNumber2 === "string" ? invitation.draftData.giftAccountNumber2 : "", musicUrl: typeof invitation.draftData.musicUrl === "string" ? invitation.draftData.musicUrl : "", musicTitle: typeof invitation.draftData.musicTitle === "string" ? invitation.draftData.musicTitle : "", customFields: normalizeInvitationCustomFields(invitation.draftData.customFields), id: invitation.id, slug: invitation.slug, updatedAt: invitation.updatedAt.toISOString(), isPublished: invitation.status === "PUBLISHED" }
     : null;
-  return NextResponse.json({ draft: draftData, featureAccess });
+  return NextResponse.json({ draft: draftData, featureAccess, adminSample: isAdminSampleSnapshot(invitation.publishedSnapshot) });
 }
 
 export async function POST(request: Request) {
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
   if (!body.ok) return NextResponse.json({ error: "Isi draft tidak valid atau terlalu besar." }, { status: body.status });
   const parsed = invitationDraftSchema.omit({ id: true, updatedAt: true, publishedAt: true, isPublished: true, qaFixture: true }).safeParse(body.value);
   if (!parsed.success) return NextResponse.json({ error: "Detail draft undangan tidak valid." }, { status: 400 });
-  if (parsed.data.coverPhoto || parsed.data.galleryPhotos.length || parsed.data.musicUrl) return NextResponse.json({ error: "Foto dan musik ditambahkan setelah draft dibuat." }, { status: 400 });
+  if (parsed.data.coverPhoto || parsed.data.hostOnePhoto || parsed.data.hostTwoPhoto || parsed.data.galleryPhotos.length || parsed.data.musicUrl) return NextResponse.json({ error: "Foto dan musik ditambahkan setelah draft dibuat." }, { status: 400 });
   const organizationId = await getWritableOrganizationId(userId);
   if (!organizationId) return NextResponse.json({ error: "Workspace aktif tidak ditemukan." }, { status: 403 });
   const template = await ensureTemplateVersion(parsed.data.templateId);

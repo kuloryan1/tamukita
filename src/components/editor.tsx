@@ -12,6 +12,8 @@ import { INVITATION_THEME_PALETTES } from "@/lib/invitation-theme-colors";
 import { EditorFeedbackDialog } from "@/components/editor-feedback-dialog";
 import { GardenMonogramControl } from "@/components/garden-monogram-control";
 import { formatRupiah, getTemplate, templates as builtInTemplates, type TemplateSchemaField } from "@/lib/templates";
+import { getTemplate as getStationeryTemplate } from "@/lib/stationery-demo";
+import { ensureInvitationCopySection, getInvitationCopySections, isInvitationCopyField } from "@/lib/invitation-copy";
 import { applyTemplateFieldDefaults, templateFieldMaximumLength, templateImageAspectRatio, type Template } from "@/lib/template-sdk";
 import { createInitialDraft, EVENT_KINDS, EVENT_KIND_TITLE_SUGGESTIONS, familyDetailsPrompt, isSlugAllowed, slugify, type EventKind, type InvitationDraft } from "@/lib/invitations";
 import { validateInvitationDraft, validateTemplateFields } from "@/lib/validation";
@@ -140,10 +142,13 @@ async function waitForMediaEdit(assetId: string, revisionKey: string) {
   throw new Error("Edit foto masih diproses di latar belakang. Tunggu sebentar lalu coba lagi.");
 }
 
+type PortraitPhotoField = "hostOnePhoto" | "hostTwoPhoto";
+
 type PendingMediaTask = {
   assetId: string;
-  kind: "cover" | "cover-edit" | "gallery" | "music";
+  kind: "cover" | "cover-edit" | "portrait" | "gallery" | "music";
   previousUrl?: string;
+  portraitSlot?: PortraitPhotoField;
   title?: string;
   revisionKey?: string;
 };
@@ -187,7 +192,8 @@ function isPendingMediaTask(value: unknown): value is PendingMediaTask {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
   const record = value as Record<string, unknown>;
   return typeof record.assetId === "string"
-    && ["cover", "cover-edit", "gallery", "music"].includes(String(record.kind))
+    && ["cover", "cover-edit", "portrait", "gallery", "music"].includes(String(record.kind))
+    && (record.kind !== "portrait" || record.portraitSlot === "hostOnePhoto" || record.portraitSlot === "hostTwoPhoto")
     && (record.kind !== "cover-edit" || typeof record.revisionKey === "string");
 }
 
@@ -248,8 +254,10 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
   const [demoLinkCopied, setDemoLinkCopied] = useState(false);
   const [demoLinkError, setDemoLinkError] = useState("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingPortraitSlot, setUploadingPortraitSlot] = useState<PortraitPhotoField | null>(null);
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [uploadingMusic, setUploadingMusic] = useState(false);
+  const [adminSamplePublication, setAdminSamplePublication] = useState(false);
   const [musicRightsConfirmed, setMusicRightsConfirmed] = useState(false);
   const [customerPlans, setCustomerPlans] = useState<CustomerPlanOption[]>([]);
   const [customerPlansLoaded, setCustomerPlansLoaded] = useState(false);
@@ -257,7 +265,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
   const [fallbackPricing, setFallbackPricing] = useState({ activationPriceIdr: 0, hostingTermDays: 365 });
   const [selectedPlanId, setSelectedPlanId] = useState("");
   const [featureAccess, setFeatureAccess] = useState<InvitationFeatureAccess>(legacyInvitationFeatureAccess);
-  const [photoToCrop, setPhotoToCrop] = useState<{ file: File; previewUrl: string; assetId?: string; baseRevision?: number; initialArea?: Area } | null>(null);
+  const [photoToCrop, setPhotoToCrop] = useState<{ file: File; previewUrl: string; targetField: "coverPhoto" | PortraitPhotoField; assetId?: string; baseRevision?: number; initialArea?: Area } | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
@@ -372,19 +380,28 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
   }, [replaceDraft]);
   const canUndo = historyRef.current.past.length > 0;
   const canRedo = historyRef.current.future.length > 0;
-  const templates = templateCatalog?.length ? templateCatalog : builtInTemplates;
-  const selectedLegacyTemplate = getTemplate(draft.templateId);
+  const templates = (templateCatalog?.length ? templateCatalog : builtInTemplates).map(ensureInvitationCopySection);
+  const rawSelectedLegacyTemplate = getTemplate(draft.templateId);
+  const selectedLegacyTemplate = rawSelectedLegacyTemplate ? ensureInvitationCopySection(rawSelectedLegacyTemplate) : undefined;
   const templateChoices = templates.some((template) => template.slug === draft.templateId) || !selectedLegacyTemplate ? templates : [...templates, selectedLegacyTemplate];
   const activeTemplate = templateChoices.find((template) => template.slug === draft.templateId) ?? templateChoices[0] ?? builtInTemplates[0];
+  const showFramedPortraitUploads = draft.eventKind === "Pernikahan"
+    && Boolean(getStationeryTemplate(draft.templateId))
+    && isSuperAdmin
+    && (!draft.isPublished || adminSamplePublication);
   const selectedPlan = customerPlans.find((plan) => plan.id === selectedPlanId) ?? null;
   const selectedPlanFeatureAccess = selectedPlan ? resolveInvitationFeatureAccess(selectedPlan.entitlements) : null;
   const selectedPlanFeatureError = selectedPlanFeatureAccess ? validateDraftFeatureAccess(draft, selectedPlanFeatureAccess) : null;
   const identityFields = activeTemplate.schema.sections.find((section) => section.key === "identity")?.fields ?? [];
-  const scheduleFields = activeTemplate.schema.sections.find((section) => section.key === "schedule")?.fields ?? [];
-  const mediaFields = activeTemplate.schema.sections.find((section) => section.key === "media")?.fields ?? [];
-  const identityCustomFields = identityFields.filter((field) => !["eventTitle", "hostOne", "hostTwo", "story"].includes(field.key));
+  const scheduleFields = activeTemplate.schema.sections.find((section) => section.key === "schedule")?.fields.filter((field) => !isInvitationCopyField(field.key)) ?? [];
+  const mediaFields = activeTemplate.schema.sections.find((section) => section.key === "media")?.fields.filter((field) => !isInvitationCopyField(field.key)) ?? [];
+  const copySections = getInvitationCopySections(activeTemplate);
+  const identityCustomFields = identityFields.filter((field) => !["eventTitle", "hostOne", "hostTwo", "story"].includes(field.key) && !isInvitationCopyField(field.key));
   const additionalMediaFields = mediaFields.filter((field) => field.key !== "coverPhoto");
-  const detailSections = activeTemplate.schema.sections.filter((section) => !["identity", "schedule", "media"].includes(section.key));
+  const detailSections = activeTemplate.schema.sections
+    .filter((section) => !["identity", "schedule", "media"].includes(section.key))
+    .map((section) => ({ ...section, fields: section.fields.filter((field) => !isInvitationCopyField(field.key)) }))
+    .filter((section) => section.fields.length > 0);
   const familyPrompt = familyDetailsPrompt(draft.eventKind);
   const coverField = mediaFields.find((field) => field.key === "coverPhoto");
   const coverAspectRatio = templateImageAspectRatio(coverField?.aspectRatio);
@@ -416,9 +433,10 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
   useEffect(() => {
     let cancelled = false;
     async function initialize() {
+      const availableTemplates = (templateCatalog?.length ? templateCatalog : builtInTemplates).map(ensureInvitationCopySection);
       const params = new URLSearchParams(window.location.search);
       const requestedId = invitationId ?? params.get("id");
-      const selectedTemplate = templates.find((template) => template.slug === params.get("template"));
+      const selectedTemplate = availableTemplates.find((template) => template.slug === params.get("template"));
       if (params.get("new") !== "1" && requestedId) {
         const query = `?id=${encodeURIComponent(requestedId)}`;
         const response = await fetch(`/api/invitations/drafts${query}`, { cache: "no-store" }).catch(() => null);
@@ -426,10 +444,13 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
           window.location.assign("/login");
           return;
         }
-        const result = await response?.json().catch(() => null) as { draft?: InvitationDraft | null; featureAccess?: InvitationFeatureAccess } | null;
+        const result = await response?.json().catch(() => null) as { draft?: InvitationDraft | null; featureAccess?: InvitationFeatureAccess; adminSample?: boolean } | null;
         if (!cancelled && response?.ok && result?.draft) {
           setFeatureAccess(result.featureAccess ?? legacyInvitationFeatureAccess);
-          setLoadedDraft({ ...result.draft, coverPositionX: result.draft.coverPositionX ?? 50, ...(selectedTemplate ? { templateId: selectedTemplate.slug, templateVersion: selectedTemplate.version, customFields: applyTemplateFieldDefaults(selectedTemplate, result.draft.customFields) } : {}) });
+          setAdminSamplePublication(result.adminSample === true);
+          const rawLoadedTemplate = selectedTemplate ?? availableTemplates.find((template) => template.slug === result.draft?.templateId) ?? getTemplate(result.draft.templateId);
+          const loadedTemplate = rawLoadedTemplate ? ensureInvitationCopySection(rawLoadedTemplate) : undefined;
+          setLoadedDraft({ ...result.draft, coverPositionX: result.draft.coverPositionX ?? 50, ...(loadedTemplate ? { ...(selectedTemplate ? { templateId: loadedTemplate.slug, templateVersion: loadedTemplate.version } : {}), customFields: applyTemplateFieldDefaults(loadedTemplate, result.draft.customFields) } : {}) });
           setHydrated(true);
           return;
         }
@@ -443,10 +464,12 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
         }
       }
       const initial = createInitialDraft();
+      const initialTemplate = selectedTemplate ?? availableTemplates.find((template) => template.slug === initial.templateId) ?? getTemplate(initial.templateId);
+      const initialDraft = initialTemplate ? { ...initial, templateId: initialTemplate.slug, templateVersion: initialTemplate.version, customFields: applyTemplateFieldDefaults(initialTemplate, initial.customFields) } : initial;
       const response = await fetch("/api/invitations/drafts", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...initial, ...(selectedTemplate ? { templateId: selectedTemplate.slug, templateVersion: selectedTemplate.version, customFields: applyTemplateFieldDefaults(selectedTemplate, initial.customFields) } : {}) }),
+        body: JSON.stringify(initialDraft),
       }).catch(() => null);
       if (response?.status === 401) {
         window.location.assign("/login");
@@ -465,7 +488,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
     }
     void initialize();
     return () => { cancelled = true; };
-  }, [invitationId, setLoadedDraft, templates]);
+  }, [invitationId, setLoadedDraft, templateCatalog]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -496,6 +519,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
     if (!pending.length) return;
     let cancelled = false;
     setUploadingPhoto(pending.some((task) => task.kind === "cover" || task.kind === "cover-edit"));
+    setUploadingPortraitSlot(pending.find((task) => task.kind === "portrait")?.portraitSlot ?? null);
     setUploadingGallery(pending.some((task) => task.kind === "gallery"));
     setUploadingMusic(pending.some((task) => task.kind === "music"));
     void Promise.all(pending.map(async (task) => {
@@ -506,6 +530,13 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
         if (cancelled) return;
         if (task.kind === "cover" || task.kind === "cover-edit") {
           replaceDraft(current => current.coverPhoto === (task.previousUrl ?? "") ? { ...current, coverPhoto: publicUrl } : current);
+        } else if (task.kind === "portrait") {
+          const portraitSlot = task.portraitSlot;
+          if (portraitSlot) {
+            replaceDraft((current) => current[portraitSlot] === (task.previousUrl ?? "")
+              ? { ...current, [portraitSlot]: publicUrl }
+              : current);
+          }
         } else if (task.kind === "gallery") {
           replaceDraft((current) => {
             const photos = current.galleryPhotos ?? [];
@@ -530,6 +561,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
     })).finally(() => {
       if (!cancelled) {
         setUploadingPhoto(false);
+        setUploadingPortraitSlot(null);
         setUploadingGallery(false);
         setUploadingMusic(false);
       }
@@ -584,7 +616,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
     return <Field key={field.key} label={field.label} hint={hint}><SchemaFieldControl field={field} value={value} onChange={(nextValue) => updateSchemaField(field.key, nextValue)} /></Field>;
   };
 
-  const handlePhoto = (event: ChangeEvent<HTMLInputElement>) => {
+  const handlePhoto = (event: ChangeEvent<HTMLInputElement>, targetField: "coverPhoto" | PortraitPhotoField = "coverPhoto") => {
     const file = event.target.files?.[0];
     if (!file) return;
     if (!("image/jpeg image/png image/webp").split(" ").includes(file.type)) {
@@ -607,7 +639,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
     setZoom(1);
     setRotation(0);
     setCroppedAreaPixels(null);
-    setPhotoToCrop({ file, previewUrl: URL.createObjectURL(file) });
+    setPhotoToCrop({ file, previewUrl: URL.createObjectURL(file), targetField });
     event.target.value = "";
   };
 
@@ -636,7 +668,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
       setZoom(typeof cropData.zoom === "number" ? Math.min(3, Math.max(1, cropData.zoom)) : 1);
       setRotation(typeof cropData.rotation === "number" ? cropData.rotation : 0);
       setCroppedAreaPixels(null);
-      setPhotoToCrop({ file, previewUrl: URL.createObjectURL(file), assetId: source.assetId, baseRevision: source.baseRevision, initialArea });
+    setPhotoToCrop({ file, previewUrl: URL.createObjectURL(file), targetField: "coverPhoto", assetId: source.assetId, baseRevision: source.baseRevision, initialArea });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Foto asli belum dapat dibuka. Coba lagi.");
     } finally {
@@ -649,7 +681,10 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
       setError("Atur area foto yang ingin digunakan.");
       return;
     }
-    setUploadingPhoto(true);
+    const targetField = photoToCrop.targetField;
+    const isPortrait = targetField !== "coverPhoto";
+    if (isPortrait) setUploadingPortraitSlot(targetField);
+    else setUploadingPhoto(true);
     setError("");
     try {
       const blob = await createCroppedPhoto(photoToCrop.previewUrl, croppedAreaPixels, rotation);
@@ -685,7 +720,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
       const createResponse = await fetch("/api/media/uploads", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ invitationId: draft.id, originalName: photoToCrop.file.name, contentType: photoToCrop.file.type, sizeBytes: photoToCrop.file.size, cropContentType: file.type, cropSizeBytes: file.size, cropData }),
+        body: JSON.stringify({ invitationId: draft.id, originalName: photoToCrop.file.name, contentType: photoToCrop.file.type, sizeBytes: photoToCrop.file.size, cropContentType: file.type, cropSizeBytes: file.size, cropData, ...(isPortrait ? { portraitSlot: targetField } : {}) }),
       });
       const upload = await createResponse.json().catch(() => null) as { assetId?: string; originalUploadUrl?: string; croppedUploadUrl?: string; error?: string } | null;
       if (!createResponse.ok || !upload?.assetId || !upload.originalUploadUrl || !upload.croppedUploadUrl) throw new Error(upload?.error ?? "Unggahan belum dapat dimulai.");
@@ -699,16 +734,20 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
       const completeResponse = await fetch(`/api/media/${encodeURIComponent(upload.assetId)}/complete`, { method: "POST" });
       const completed = await completeResponse.json().catch(() => null) as { publicUrl?: string; error?: string } | null;
       if (!completeResponse.ok) throw new Error(completed?.error ?? "Foto gagal diproses. Coba unggah kembali.");
-      const pendingTask: PendingMediaTask = { assetId: upload.assetId, kind: "cover", previousUrl: draft.coverPhoto };
+      const previousUrl = draft[targetField] ?? "";
+      const pendingTask: PendingMediaTask = isPortrait
+        ? { assetId: upload.assetId, kind: "portrait", portraitSlot: targetField, previousUrl }
+        : { assetId: upload.assetId, kind: "cover", previousUrl };
       rememberPendingMedia(draft.id, pendingTask);
       const publicUrl = completed?.publicUrl ?? await waitForMediaAsset(upload.assetId);
       forgetPendingMedia(draft.id, pendingTask);
-      update("coverPhoto", publicUrl);
+      update(targetField, publicUrl);
       setPhotoToCrop(null);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Foto gagal diunggah. Coba lagi.");
     } finally {
-      setUploadingPhoto(false);
+      if (isPortrait) setUploadingPortraitSlot(null);
+      else setUploadingPhoto(false);
     }
   };
 
@@ -966,6 +1005,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
               {activeTemplate.slug === "taman-abadi" && <Field label="Huruf pada segel amplop"><GardenMonogramControl value={draft.sealMonogram ?? ""} hostOne={draft.hostOne} hostTwo={draft.hostTwo} onChange={(value) => update("sealMonogram", value)} /></Field>}
               <Field label={familyPrompt.label} hint="Informasi ini akan ditampilkan di undangan publik."><textarea className="text-input text-area" maxLength={600} rows={2} value={draft.familyDetails} onChange={(event) => update("familyDetails", event.target.value)} placeholder={familyPrompt.placeholder} /></Field>
               {identityFields.filter((field) => field.key === "story").map(renderSchemaField)}
+              {copySections.length > 0 && <details className="editor-copy-details"><summary>Ubah teks di undangan</summary><p>Ubah copy pada sampul, acara, tombol, rundown, galeri, konfirmasi, dan penutup. Perubahan tersimpan otomatis.</p>{copySections.map((section) => <details className="editor-copy-group" key={section.key} open={section.key === "copy"}><summary>{section.label}</summary><div className="schema-fields-grid">{section.fields.map((field) => <div className={field.type === "textarea" || field.type === "url" ? "schema-grid-item schema-grid-item--full" : "schema-grid-item"} key={field.key}>{renderSchemaField(field)}</div>)}</div></details>)}</details>}
               <div className="schema-fields-grid">{identityCustomFields.map((field) => <div className={field.type === "textarea" || field.type === "url" ? "schema-grid-item schema-grid-item--full" : "schema-grid-item"} key={field.key}>{renderSchemaField(field)}</div>)}</div><div className="private-note"><Info size={15} /><span>Informasi ini ditampilkan di undanganmu. Form dasar ini dibuat dari schema template.</span></div>
             </div>}
 
@@ -999,7 +1039,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
               </div>
             </div>}
 
-            {step === 2 && <div className="form-step-content"><div className={`photo-dropzone${draft.coverPhoto ? " has-photo" : ""}`} style={draft.coverPhoto ? { backgroundImage: `linear-gradient(180deg, transparent 35%, rgba(16, 25, 39, .5)), url(${draft.coverPhoto})`, backgroundPosition: `${draft.coverPositionX ?? 50}% ${draft.coverPosition}%` } : undefined}>{draft.coverPhoto ? <><span className="photo-uploaded-label"><Check size={13} /> {uploadingPhoto ? (photoToCrop ? "Menyimpan foto…" : "Menyiapkan foto…") : `${coverField?.label ?? "Foto sampul"} terpilih`}</span><div className="photo-change-actions"><button type="button" className="button button--cream button--small" disabled={uploadingPhoto} onClick={() => void editExistingPhoto()}><Pencil size={13} /> Edit foto</button><label className="button button--outline button--small">Ganti<input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingPhoto} onChange={handlePhoto} /></label></div></> : <label className="photo-upload-prompt"><span className="upload-icon">{uploadingPhoto ? <Upload size={22} /> : <ImagePlus size={22} />}</span><b>{uploadingPhoto ? "Mengunggah foto…" : "Unggah foto favoritmu"}</b><small>JPG, PNG atau WebP · Maks. 5 MB</small><span className="button button--outline button--small"><Upload size={14} /> Pilih foto<input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingPhoto} onChange={handlePhoto} /></span></label>}</div>{draft.coverPhoto && <><Field label="Atur posisi foto" hint="Geser kedua pengaturan agar wajah tetap terlihat di pratinjau ponsel dan undangan."><div className="range-row"><span>Kiri - kanan</span><input aria-label="Posisi foto kiri ke kanan" type="range" min="0" max="100" value={draft.coverPositionX ?? 50} onChange={(event) => update("coverPositionX", Number(event.target.value))} /></div><div className="range-row"><span>Atas - bawah</span><input aria-label="Posisi foto atas ke bawah" type="range" min="0" max="100" value={draft.coverPosition} onChange={(event) => update("coverPosition", Number(event.target.value))} /></div></Field><button type="button" className="remove-photo" disabled={uploadingPhoto} onClick={() => update("coverPhoto", "")}><X size={14} /> Hapus foto</button></>}{additionalMediaFields.length > 0 && <div className="schema-fields-grid editor-media-extra-fields">{additionalMediaFields.map((field) => <div className={field.type === "textarea" || field.type === "url" ? "schema-grid-item schema-grid-item--full" : "schema-grid-item"} key={field.key}>{renderSchemaField(field)}</div>)}</div>}<div className="private-note"><Info size={15} /><span>Foto asli dan pengaturan crop tersimpan privat. Versi WebP dan nilai field template ditampilkan di undangan.</span></div><div className="gallery-editor-section"><div className="gallery-editor-heading"><span><b>Galeri foto</b><small>{featureAccess.galleryLimit > 0 ? `Tambahkan hingga ${featureAccess.galleryLimit} foto, maksimal 5 MB per foto.` : "Galeri foto belum termasuk paket ini."}</small></span>{featureAccess.galleryLimit > 0 && <label className="button button--outline button--small">{uploadingGallery ? "Mengunggah..." : "Tambah foto"}<input type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={uploadingGallery || (draft.galleryPhotos?.length ?? 0) >= featureAccess.galleryLimit} onChange={(event) => void uploadGalleryFiles(event)} /></label>}</div>{draft.galleryPhotos?.length ? <div className="gallery-editor-grid">{draft.galleryPhotos.map((photo, index) => <div className="gallery-editor-photo" key={photo} style={{ backgroundImage: `url(${photo})` }}><span>Foto {index + 1}</span><button type="button" onClick={() => update("galleryPhotos", draft.galleryPhotos.filter((_, photoIndex) => photoIndex !== index))} aria-label={`Hapus foto galeri ${index + 1}`}><X size={13} /></button></div>)}</div> : <p className="gallery-editor-empty">Belum ada foto tambahan.</p>}</div><div className="music-editor-section"><div className="gallery-editor-heading"><span><b>Musik latar</b><small>File MP3 maksimal 10 MB · kontrol putar/jeda tampil di undangan.</small></span>{draft.musicUrl ? <button className="button button--outline button--small" type="button" disabled={uploadingMusic} onClick={() => { update("musicUrl", ""); update("musicTitle", ""); }}><X size={13} /> Hapus musik</button> : featureAccess.music ? <label className="button button--outline button--small">{uploadingMusic ? "Mengunggah..." : "Pilih MP3"}<input type="file" accept="audio/mpeg,.mp3" disabled={uploadingMusic} onChange={(event) => void uploadMusicFile(event)} /></label> : null}</div>{draft.musicUrl ? <p className="music-selected"><Music2 size={14} /> {draft.musicTitle || "Musik latar terpilih"}</p> : featureAccess.music ? <><label className="music-rights-check"><input type="checkbox" checked={musicRightsConfirmed} onChange={(event) => setMusicRightsConfirmed(event.target.checked)} /><span>Saya memiliki hak atau izin untuk memakai audio ini pada undangan publik.</span></label><p className="gallery-editor-empty">Gunakan musik yang kamu buat sendiri atau yang lisensinya mengizinkan penggunaan publik.</p></> : <p className="gallery-editor-empty">Musik latar belum termasuk paket ini.</p>}</div></div>}
+            {step === 2 && <div className="form-step-content"><div className={`photo-dropzone${draft.coverPhoto ? " has-photo" : ""}`} style={draft.coverPhoto ? { backgroundImage: `linear-gradient(180deg, transparent 35%, rgba(16, 25, 39, .5)), url(${draft.coverPhoto})`, backgroundPosition: `${draft.coverPositionX ?? 50}% ${draft.coverPosition}%` } : undefined}>{draft.coverPhoto ? <><span className="photo-uploaded-label"><Check size={13} /> {uploadingPhoto ? (photoToCrop ? "Menyimpan foto…" : "Menyiapkan foto…") : `${coverField?.label ?? "Foto sampul"} terpilih`}</span><div className="photo-change-actions"><button type="button" className="button button--cream button--small" disabled={uploadingPhoto} onClick={() => void editExistingPhoto()}><Pencil size={13} /> Edit foto</button><label className="button button--outline button--small">Ganti<input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingPhoto} onChange={handlePhoto} /></label></div></> : <label className="photo-upload-prompt"><span className="upload-icon">{uploadingPhoto ? <Upload size={22} /> : <ImagePlus size={22} />}</span><b>{uploadingPhoto ? "Mengunggah foto…" : "Unggah foto favoritmu"}</b><small>JPG, PNG atau WebP · Maks. 5 MB</small><span className="button button--outline button--small"><Upload size={14} /> Pilih foto<input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingPhoto} onChange={handlePhoto} /></span></label>}</div>{draft.coverPhoto && <><Field label="Atur posisi foto" hint="Geser kedua pengaturan agar wajah tetap terlihat di pratinjau ponsel dan undangan."><div className="range-row"><span>Kiri - kanan</span><input aria-label="Posisi foto kiri ke kanan" type="range" min="0" max="100" value={draft.coverPositionX ?? 50} onChange={(event) => update("coverPositionX", Number(event.target.value))} /></div><div className="range-row"><span>Atas - bawah</span><input aria-label="Posisi foto atas ke bawah" type="range" min="0" max="100" value={draft.coverPosition} onChange={(event) => update("coverPosition", Number(event.target.value))} /></div></Field><button type="button" className="remove-photo" disabled={uploadingPhoto} onClick={() => update("coverPhoto", "")}><X size={14} /> Hapus foto</button></>}{showFramedPortraitUploads && <section className="portrait-upload-section" aria-label="Foto mempelai di dalam bingkai"><div className="gallery-editor-heading"><span><b>Foto di dalam bingkai</b><small>Unggah foto mempelai pria dan wanita secara terpisah. Foto sampul dipakai sementara jika slot belum diisi.</small></span></div><div className="portrait-upload-grid">{([{ field: "hostTwoPhoto", title: "Foto mempelai wanita" }, { field: "hostOnePhoto", title: "Foto mempelai pria" }] as const).map(({ field, title }) => <div className="portrait-upload-card" key={field}><div className="portrait-upload-preview" role="img" aria-label={title} style={draft[field] ? { backgroundImage: `url(${draft[field]})` } : undefined}><span>{uploadingPortraitSlot === field ? "Menyimpan foto…" : draft[field] ? "Foto terpilih" : draft.coverPhoto ? "Memakai foto sampul" : "Belum ada foto"}</span></div><label className="button button--outline button--small">{draft[field] ? "Ganti foto" : "Unggah foto"}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingPhoto || uploadingPortraitSlot !== null} onChange={(event) => handlePhoto(event, field)} /></label>{draft[field] && <button type="button" className="remove-photo" disabled={uploadingPhoto || uploadingPortraitSlot !== null} onClick={() => update(field, "")}><X size={13} /> Hapus foto khusus</button>}</div>)}</div></section>}{additionalMediaFields.length > 0 && <div className="schema-fields-grid editor-media-extra-fields">{additionalMediaFields.map((field) => <div className={field.type === "textarea" || field.type === "url" ? "schema-grid-item schema-grid-item--full" : "schema-grid-item"} key={field.key}>{renderSchemaField(field)}</div>)}</div>}<div className="private-note"><Info size={15} /><span>Foto asli dan pengaturan crop tersimpan privat. Versi WebP dan nilai field template ditampilkan di undangan.</span></div><div className="gallery-editor-section"><div className="gallery-editor-heading"><span><b>Galeri foto</b><small>{featureAccess.galleryLimit > 0 ? `Tambahkan hingga ${featureAccess.galleryLimit} foto, maksimal 5 MB per foto.` : "Galeri foto belum termasuk paket ini."}</small></span>{featureAccess.galleryLimit > 0 && <label className="button button--outline button--small">{uploadingGallery ? "Mengunggah..." : "Tambah foto"}<input type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={uploadingGallery || (draft.galleryPhotos?.length ?? 0) >= featureAccess.galleryLimit} onChange={(event) => void uploadGalleryFiles(event)} /></label>}</div>{draft.galleryPhotos?.length ? <div className="gallery-editor-grid">{draft.galleryPhotos.map((photo, index) => <div className="gallery-editor-photo" key={photo} style={{ backgroundImage: `url(${photo})` }}><span>Foto {index + 1}</span><button type="button" onClick={() => update("galleryPhotos", draft.galleryPhotos.filter((_, photoIndex) => photoIndex !== index))} aria-label={`Hapus foto galeri ${index + 1}`}><X size={13} /></button></div>)}</div> : <p className="gallery-editor-empty">Belum ada foto tambahan.</p>}</div><div className="music-editor-section"><div className="gallery-editor-heading"><span><b>Musik latar</b><small>File MP3 maksimal 10 MB · kontrol putar/jeda tampil di undangan.</small></span>{draft.musicUrl ? <button className="button button--outline button--small" type="button" disabled={uploadingMusic} onClick={() => { update("musicUrl", ""); update("musicTitle", ""); }}><X size={13} /> Hapus musik</button> : featureAccess.music ? <label className="button button--outline button--small">{uploadingMusic ? "Mengunggah..." : "Pilih MP3"}<input type="file" accept="audio/mpeg,.mp3" disabled={uploadingMusic} onChange={(event) => void uploadMusicFile(event)} /></label> : null}</div>{draft.musicUrl ? <p className="music-selected"><Music2 size={14} /> {draft.musicTitle || "Musik latar terpilih"}</p> : featureAccess.music ? <><label className="music-rights-check"><input type="checkbox" checked={musicRightsConfirmed} onChange={(event) => setMusicRightsConfirmed(event.target.checked)} /><span>Saya memiliki hak atau izin untuk memakai audio ini pada undangan publik.</span></label><p className="gallery-editor-empty">Gunakan musik yang kamu buat sendiri atau yang lisensinya mengizinkan penggunaan publik.</p></> : <p className="gallery-editor-empty">Musik latar belum termasuk paket ini.</p>}</div></div>}
 
             {step === 3 && <div className="form-step-content"><div className="theme-choice-grid">{templateChoices.map((template) => <button className={`theme-choice${draft.templateId === template.slug ? " is-selected" : ""}`} key={template.slug} type="button" onClick={() => updateDraft((current) => ({ ...current, templateId: template.slug, templateVersion: template.version, customFields: applyTemplateFieldDefaults(template, current.customFields) }))}><span className={`theme-swatch theme-swatch--${template.style}`}><i /><i /><i /></span><span className="theme-choice-copy"><b>{template.name}</b><small>{template.subtitle}</small><small className="theme-price">{formatRupiah(template.price)}</small></span><span className="theme-choice-check">{draft.templateId === template.slug && <Check size={13} />}</span></button>)}</div><div className="personalization-controls"><fieldset className="personalization-control"><legend>Palet warna</legend><div className="personalization-choice-list">{themeColorOptions.map((color) => <button key={color.value} type="button" className={(draft.themeColor ?? "default") === color.value ? "is-selected" : ""} onClick={() => update("themeColor", color.value)} aria-pressed={(draft.themeColor ?? "default") === color.value}><span className="personalization-color-swatch" style={{ backgroundColor: color.swatch || templateDefaultSwatches[activeTemplate.style] || "#b8935e" }} /><small>{color.label}</small></button>)}</div></fieldset><fieldset className="personalization-control"><legend>Font</legend><div className="personalization-choice-list">{themeFontOptions.map((font) => <button key={font.value} type="button" className={(draft.themeFont ?? "classic") === font.value ? "is-selected" : ""} onClick={() => update("themeFont", font.value)} aria-pressed={(draft.themeFont ?? "classic") === font.value}><span className={`personalization-font-sample is-${font.value}`}>Aa</span><small>{font.label}</small></button>)}</div></fieldset><fieldset className="personalization-control"><legend>Urutan informasi</legend><div className="personalization-order-list">{sectionOrderOptions.map((order) => <button key={order.value} type="button" className={(draft.sectionOrder ?? "story-first") === order.value ? "is-selected" : ""} onClick={() => update("sectionOrder", order.value)} aria-pressed={(draft.sectionOrder ?? "story-first") === order.value}>{order.label}</button>)}</div></fieldset></div><Field label="Tautan undangan"><div className="slug-input"><span>tamukita.io/</span><input value={draft.slug} disabled={draft.isPublished} onChange={(event) => update("slug", slugify(event.target.value))} aria-label="Nama tautan undangan" aria-invalid={!slugIsAvailable} /><span className={`slug-status${slugIsAvailable ? "" : " is-unavailable"}`}>{draft.isPublished ? "tetap aktif" : slugIsAvailable ? <><Check size={13} /> tersedia</> : <>tidak tersedia</>}</span></div></Field><p className="field-hint slug-hint">{draft.isPublished ? "Tautan yang sudah dibagikan tetap aktif saat kamu memperbarui detail undangan." : "Gunakan 3 karakter atau lebih. Tautan khusus seperti /admin dan /dashboard tidak tersedia."}</p><div className="custom-domain-note"><span className="domain-globe">◎</span><span><b>Ingin pakai domain sendiri?</b><small>Custom domain akan segera hadir.</small></span><span className="coming-soon-pill">SEGERA</span></div></div>}
 
@@ -1046,7 +1086,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
           <aside className="editor-preview-panel"><div className="editor-preview-heading"><div><span className="eyebrow">LIVE PREVIEW</span><h3>Pratinjau undangan</h3></div><fieldset className="preview-device-switch" aria-label="Tampilan pratinjau"><button type="button" className={previewDevice === "mobile" ? "is-selected" : ""} onClick={() => setPreviewDevice("mobile")} aria-pressed={previewDevice === "mobile"}><Smartphone size={12} /> Ponsel</button><button type="button" className={previewDevice === "desktop" ? "is-selected" : ""} onClick={() => setPreviewDevice("desktop")} aria-pressed={previewDevice === "desktop"}><Monitor size={12} /> Desktop</button></fieldset></div><div className={`preview-phone-stage${previewDevice === "desktop" ? " is-desktop" : ""}`}><div className={`preview-phone${previewDevice === "desktop" ? " is-desktop" : ""}`}>{previewDevice === "mobile" && <div className="preview-phone-camera" />}<InvitationPreview draft={draft} template={activeTemplate} /></div></div><div className="preview-link-row"><span className="preview-link-icon">↗</span><span><small>Tautan undangan</small><b>tamukita.io/{draft.slug || "namaundangan"}</b></span><button type="button" onClick={() => navigator.clipboard?.writeText(`https://tamukita.io/${draft.slug}`)} aria-label="Salin tautan"><Check size={15} /></button></div><div className="preview-reminder"><Sparkles size={15} /><span>Perubahanmu tersimpan otomatis. Kamu bisa kembali dan melanjutkan kapan saja.</span></div></aside>
         </div>
         <div className="editor-bottom-tip"><span><RotateCcw size={14} /> Kamu bisa mengedit undangan setelah diterbitkan.</span><Link href="/templates">Butuh inspirasi template? <ArrowRight size={14} /></Link></div>
-        {photoToCrop && <div className="modal-backdrop photo-crop-backdrop" role="presentation"><section className="photo-crop-dialog" role="dialog" aria-modal="true" aria-labelledby="photo-crop-title"><div className="photo-crop-heading"><div><span className="eyebrow">EDIT FOTO SAMPUL</span><h2 id="photo-crop-title">Sesuaikan fotomu</h2><p>Geser foto di dalam bingkai, atur zoom, atau putar sebelum disimpan.</p></div><button type="button" className="modal-close" onClick={() => setPhotoToCrop(null)} disabled={uploadingPhoto} aria-label="Tutup"><X size={18} /></button></div><div className="photo-crop-stage"><Cropper image={photoToCrop.previewUrl} crop={crop} zoom={zoom} rotation={rotation} initialCroppedAreaPixels={photoToCrop.initialArea} aspect={coverAspectRatio} minZoom={1} maxZoom={3} onCropChange={setCrop} onZoomChange={setZoom} onRotationChange={setRotation} onCropComplete={(_, areaPixels) => setCroppedAreaPixels(areaPixels)} /></div><div className="photo-crop-controls"><label className="photo-crop-zoom"><span>Perbesar foto</span><input aria-label="Perbesar foto" type="range" min="1" max="3" step="0.01" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} /></label><div className="photo-crop-rotate"><span>Putar</span><button type="button" className="button button--outline button--small" disabled={uploadingPhoto} onClick={() => setRotation((value) => (value + 270) % 360)}><RotateCcw size={14} /> 90°</button><button type="button" className="button button--outline button--small" disabled={uploadingPhoto} onClick={() => setRotation((value) => (value + 90) % 360)}><RotateCw size={14} /> 90°</button></div></div>{error && <div className="editor-error" role="alert">{error}</div>}<div className="photo-crop-footer"><button type="button" className="button button--outline button--small" disabled={uploadingPhoto} onClick={() => setPhotoToCrop(null)}>Batal</button><button type="button" className="button button--outline button--small" disabled={uploadingPhoto} onClick={resetPhotoCrop}><RotateCcw size={14} /> Atur ulang</button><button type="button" className="button button--dark button--small" disabled={uploadingPhoto || !croppedAreaPixels} onClick={() => void uploadCroppedPhoto()}>{uploadingPhoto ? "Menyimpan foto…" : "Gunakan foto"} <Check size={14} /></button></div></section></div>}
+        {photoToCrop && <div className="modal-backdrop photo-crop-backdrop" role="presentation"><section className="photo-crop-dialog" role="dialog" aria-modal="true" aria-labelledby="photo-crop-title"><div className="photo-crop-heading"><div><span className="eyebrow">{photoToCrop.targetField === "coverPhoto" ? "EDIT FOTO SAMPUL" : "FOTO MEMPELAI"}</span><h2 id="photo-crop-title">Sesuaikan fotomu</h2><p>Geser foto di dalam bingkai, atur zoom, atau putar sebelum disimpan.</p></div><button type="button" className="modal-close" onClick={() => setPhotoToCrop(null)} disabled={uploadingPhoto || uploadingPortraitSlot !== null} aria-label="Tutup"><X size={18} /></button></div><div className="photo-crop-stage"><Cropper image={photoToCrop.previewUrl} crop={crop} zoom={zoom} rotation={rotation} initialCroppedAreaPixels={photoToCrop.initialArea} aspect={photoToCrop.targetField === "coverPhoto" ? coverAspectRatio : 0.82} minZoom={1} maxZoom={3} onCropChange={setCrop} onZoomChange={setZoom} onRotationChange={setRotation} onCropComplete={(_, areaPixels) => setCroppedAreaPixels(areaPixels)} /></div><div className="photo-crop-controls"><label className="photo-crop-zoom"><span>Perbesar foto</span><input aria-label="Perbesar foto" type="range" min="1" max="3" step="0.01" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} /></label><div className="photo-crop-rotate"><span>Putar</span><button type="button" className="button button--outline button--small" disabled={uploadingPhoto || uploadingPortraitSlot !== null} onClick={() => setRotation((value) => (value + 270) % 360)}><RotateCcw size={14} /> 90°</button><button type="button" className="button button--outline button--small" disabled={uploadingPhoto || uploadingPortraitSlot !== null} onClick={() => setRotation((value) => (value + 90) % 360)}><RotateCw size={14} /> 90°</button></div></div>{error && <div className="editor-error" role="alert">{error}</div>}<div className="photo-crop-footer"><button type="button" className="button button--outline button--small" disabled={uploadingPhoto || uploadingPortraitSlot !== null} onClick={() => setPhotoToCrop(null)}>Batal</button><button type="button" className="button button--outline button--small" disabled={uploadingPhoto || uploadingPortraitSlot !== null} onClick={resetPhotoCrop}><RotateCcw size={14} /> Atur ulang</button><button type="button" className="button button--dark button--small" disabled={uploadingPhoto || uploadingPortraitSlot !== null || !croppedAreaPixels} onClick={() => void uploadCroppedPhoto()}>{uploadingPhoto || uploadingPortraitSlot ? "Menyimpan foto…" : "Gunakan foto"} <Check size={14} /></button></div></section></div>}
       </div>
   );
 }

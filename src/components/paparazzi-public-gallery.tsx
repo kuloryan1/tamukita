@@ -2,10 +2,10 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Download, Images, Loader2, RefreshCw } from "lucide-react";
+import { Camera, Download, Images, Loader2, RefreshCw } from "lucide-react";
 import type { PaparazziGallery } from "@/lib/paparazzi";
 
-export function PaparazziPublicGallery({ token, available, refreshKey }: { token: string; available: boolean; refreshKey: string }) {
+export function PaparazziPublicGallery({ token, available, refreshKey, onAddPhoto }: { token: string; available: boolean; refreshKey: string; onAddPhoto?: () => void }) {
   const [data, setData] = useState<PaparazziGallery>({ photos: [], nextCursor: null });
   const [loading, setLoading] = useState(true); const [error, setError] = useState(""); const [expanded, setExpanded] = useState(false);
   const requestNumber = useRef(0);
@@ -29,11 +29,11 @@ export function PaparazziPublicGallery({ token, available, refreshKey }: { token
   }, [expanded, load]);
   if (!available) return null;
   return <section className="paparazzi-public-gallery" id="galeri-acara">
-    <div className="paparazzi-gallery-heading"><div><p className="eyebrow">KENANGAN BERSAMA</p><h2>Galeri acara</h2><p>Foto dari para tamu langsung tampil setelah selesai diproses.</p></div><button className="button button--outline button--small" type="button" aria-label="Muat ulang galeri acara" onClick={() => { setExpanded(false); void load(); }}><RefreshCw size={16} /></button></div>
+    <div className="paparazzi-gallery-heading"><div><p className="eyebrow">KENANGAN BERSAMA</p><h2>Galeri acara</h2><p>Foto dari para tamu langsung tampil setelah selesai diproses.</p></div><div className="paparazzi-gallery-actions">{onAddPhoto && <button className="button button--dark button--small" type="button" onClick={onAddPhoto}><Camera size={15} />Tambah foto</button>}<button className="button button--outline button--small" type="button" aria-label="Muat ulang galeri acara" onClick={() => { setExpanded(false); void load(); }}><RefreshCw size={16} /></button></div></div>
     {error && <p className="paparazzi-error" role="alert">{error}</p>}
     {data.photos.length ? <div className="paparazzi-public-photo-grid">{data.photos.map((photo, index) => {
       const href = `/api/public/paparazzi/${token}/gallery/${photo.id}`;
-      return <figure key={photo.id} className="paparazzi-public-photo"><a href={href} target="_blank" rel="noreferrer" aria-label={`Buka foto acara ${index + 1}`}><Image src={href} alt={`Foto acara dari tamu ${index + 1}`} width={photo.width ?? 1200} height={photo.height ?? 900} unoptimized /></a><figcaption><span>Foto tamu</span><a href={`${href}?download=1`} aria-label={`Unduh foto acara ${index + 1}`}><Download size={16} /></a></figcaption></figure>;
+      return <figure key={photo.id} className="paparazzi-public-photo"><a href={href} target="_blank" rel="noreferrer" aria-label={`Buka foto acara ${index + 1}`}><Image src={href} alt={photo.instagramHandle ? `Foto acara dari ${photo.instagramHandle}` : `Foto acara dari tamu ${index + 1}`} width={photo.width ?? 1200} height={photo.height ?? 900} unoptimized /></a><figcaption><span>{photo.instagramHandle ? `Foto dari ${photo.instagramHandle}` : "Foto tamu"}</span><a href={`${href}?download=1`} aria-label={`Unduh foto acara ${index + 1}`}><Download size={16} /></a></figcaption></figure>;
     })}</div> : <div className="paparazzi-gallery-empty"><Images size={28} /><h3>{loading ? "Menyiapkan galeri…" : "Jadilah yang pertama berbagi"}</h3><p>Foto yang dikirim tamu akan muncul di sini.</p></div>}
     {data.nextCursor && <button type="button" className="button button--outline paparazzi-load-more" disabled={loading} onClick={() => void load(data.nextCursor ?? undefined)}>{loading ? <Loader2 size={16} className="paparazzi-spin" /> : null} Lihat foto lainnya</button>}
   </section>;

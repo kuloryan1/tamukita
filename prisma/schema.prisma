@@ -506,6 +506,7 @@ model PaparazziPhoto {
   storageProvider        PaparazziStorageProvider @default(R2)
   mimeType               String
   sizeBytes              BigInt
+  instagramHandle        String?        @db.VarChar(32)
   processedBytes         BigInt?
   width                  Int?
   height                 Int?

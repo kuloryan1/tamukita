@@ -6,6 +6,8 @@ import { getPrismaClient } from "@/lib/prisma";
 import { allowRequest } from "@/lib/rate-limit";
 import { stripControlCharacters } from "@/lib/text";
 import { readJsonBody } from "@/lib/request-json";
+import { getTemplate as getStationeryTemplate } from "@/lib/stationery-demo";
+import { isAdminSampleSnapshot } from "@/lib/invitation-publication";
 
 export const runtime = "nodejs";
 
@@ -16,6 +18,7 @@ const uploadSchema = z.object({
   sizeBytes: z.number().int().positive().max(5_000_000),
   cropContentType: z.enum(["image/png", "image/webp"]),
   cropSizeBytes: z.number().int().positive().max(5_000_000),
+  portraitSlot: z.enum(["hostOnePhoto", "hostTwoPhoto"]).optional(),
   cropData: z.object({
     x: z.number().min(0).max(40_000),
     y: z.number().min(0).max(40_000),
@@ -49,14 +52,25 @@ export async function POST(request: Request) {
       status: { in: ["DRAFT", "PUBLISHED"] },
       organization: { status: "ACTIVE", memberships: { some: { userId, role: { in: ["OWNER", "ADMIN", "EDITOR"] } } } },
     },
-    select: { id: true, organizationId: true },
+    select: { id: true, organizationId: true, status: true, draftData: true, publishedSnapshot: true },
   });
   if (!invitation) return NextResponse.json({ error: "Undangan tidak ditemukan." }, { status: 404 });
+  if (parsed.data.portraitSlot) {
+    const draftData = typeof invitation.draftData === "object" && invitation.draftData !== null && !Array.isArray(invitation.draftData)
+      ? invitation.draftData as Record<string, unknown>
+      : {};
+    if (session.user?.platformRole !== "SUPER_ADMIN"
+      || typeof draftData.templateId !== "string"
+      || !getStationeryTemplate(draftData.templateId)
+      || (invitation.status === "PUBLISHED" && !isAdminSampleSnapshot(invitation.publishedSnapshot))) {
+      return NextResponse.json({ error: "Foto bingkai hanya tersedia pada contoh Super Admin dengan template bingkai." }, { status: 403 });
+    }
+  }
 
   const assetId = randomUUID();
   const safeName = stripControlCharacters(parsed.data.originalName.split(/[\\/]/).pop() ?? "").slice(0, 255) || "foto";
   const storageKey = `originals/${invitation.organizationId}/${invitation.id}/${assetId}/source.${extensions[parsed.data.contentType]}`;
-  const cropKey = `private/pending/${invitation.organizationId}/${invitation.id}/${assetId}/cover.${cropExtensions[parsed.data.cropContentType]}`;
+  const cropKey = `private/pending/${invitation.organizationId}/${invitation.id}/${assetId}/${parsed.data.portraitSlot ?? "cover"}.${cropExtensions[parsed.data.cropContentType]}`;
   await prisma.mediaAsset.create({
     data: {
       id: assetId,
@@ -70,7 +84,12 @@ export async function POST(request: Request) {
       sizeBytes: BigInt(parsed.data.sizeBytes),
       status: "PENDING",
       visibility: "PRIVATE_SOURCE",
-      metadata: { cropKey, cropSizeBytes: parsed.data.cropSizeBytes, cropMimeType: parsed.data.cropContentType },
+      metadata: {
+        cropKey,
+        cropSizeBytes: parsed.data.cropSizeBytes,
+        cropMimeType: parsed.data.cropContentType,
+        ...(parsed.data.portraitSlot ? { mediaKind: "portrait", portraitSlot: parsed.data.portraitSlot } : {}),
+      },
       edits: { create: [{ revision: 1, editData: { ...parsed.data.cropData } }] },
     },
   });

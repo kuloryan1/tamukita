@@ -49,6 +49,22 @@ test("modern font mode is passed through the shared preview wrapper for every ca
   }
 });
 
+test("invitation copy overrides render in every template preview", () => {
+  const title = "Judul yang bisa diedit";
+  const greeting = "Sapaan pilihan pengundang";
+  for (const template of templates) {
+    const draft = {
+      ...createInitialDraft(),
+      templateId: template.slug,
+      templateVersion: template.version,
+      customFields: { invitationTitle: title, recipientGreeting: greeting },
+    };
+    const markup = renderToStaticMarkup(createElement(InvitationPreview, { draft, full: true, template, mode: "example" }));
+    expect(markup, `${template.slug} should render its editable title`).toContain(title);
+    expect(markup, `${template.slug} should render its editable greeting`).toContain(greeting);
+  }
+});
+
 test("modern font mode is passed through the complete public page for every catalog template", () => {
   const draft = { ...createInitialDraft(), themeFont: "modern" as const };
 

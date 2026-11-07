@@ -156,3 +156,88 @@ test("customer crops and processes a cover photo without losing draft details", 
   expect(editedCrop.cropData?.rotation).toBe(0);
   expect(editedCrop.cropData?.cropOffset).toMatchObject({ x: 0, y: 0 });
 });
+
+test("super admin uploads separate portraits and sees them in their own invitation frames", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "Run this full testable-sample publication flow once in desktop Chromium.");
+  test.setTimeout(120_000);
+  const adminEmail = process.env.E2E_ADMIN_EMAIL;
+  const adminPassword = process.env.E2E_ADMIN_PASSWORD;
+  if (!adminEmail || !adminPassword) {
+    test.skip(true, "Requires the disposable PostgreSQL Super Admin fixture and local media worker.");
+    return;
+  }
+
+  await signIn(page, adminEmail, adminPassword);
+  const creationResponsePromise = page.waitForResponse((response) =>
+    response.url().endsWith("/api/invitations/drafts") && response.request().method() === "POST",
+  );
+  await page.goto("/dashboard/invitations/new/edit?new=1");
+  const creationResponse = await creationResponsePromise;
+  expect(creationResponse.status()).toBe(201);
+  const creation = await creationResponse.json() as { draft?: { id?: string } };
+  const invitationId = creation.draft?.id;
+  expect(invitationId).toMatch(/^[0-9a-f-]{36}$/i);
+  if (!invitationId) throw new Error("The Super Admin draft response did not include an invitation ID.");
+
+  const suffix = randomUUID().slice(0, 8);
+  const groomName = `Frame Groom ${suffix}`;
+  const brideName = `Frame Bride ${suffix}`;
+  await page.getByLabel("Nama pertama").fill(groomName);
+  await page.getByLabel("Nama kedua").fill(brideName);
+  await advanceToStep(page, 2);
+
+  const makePortrait = async (color: string) => {
+    const dataUrl = await page.evaluate((background) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 180;
+      canvas.height = 230;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("Canvas is unavailable in this browser.");
+      context.fillStyle = background;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.fillStyle = "#f8efe4";
+      context.beginPath();
+      context.arc(90, 80, 42, 0, Math.PI * 2);
+      context.fill();
+      context.fillRect(38, 132, 104, 80);
+      return canvas.toDataURL("image/png");
+    }, color);
+    return Buffer.from(dataUrl.slice(dataUrl.indexOf(",") + 1), "base64");
+  };
+  const brideBuffer = await makePortrait("#bd637d");
+  const groomBuffer = await makePortrait("#557b68");
+  const portraitInputs = page.locator(".portrait-upload-card input[type=\"file\"]");
+  await expect(portraitInputs).toHaveCount(2);
+  await portraitInputs.nth(0).setInputFiles({ name: "bride.png", mimeType: "image/png", buffer: brideBuffer });
+  await expect(page.getByRole("dialog").getByRole("heading", { name: "Sesuaikan fotomu" })).toBeVisible();
+  await page.getByRole("button", { name: /Gunakan foto/ }).click();
+  await expect(page.locator(".portrait-upload-card").nth(0)).toContainText("Foto terpilih", { timeout: 45_000 });
+
+  await portraitInputs.nth(1).setInputFiles({ name: "groom.png", mimeType: "image/png", buffer: groomBuffer });
+  await expect(page.getByRole("dialog").getByRole("heading", { name: "Sesuaikan fotomu" })).toBeVisible();
+  await page.getByRole("button", { name: /Gunakan foto/ }).click();
+  await expect(page.locator(".portrait-upload-card").nth(1)).toContainText("Foto terpilih", { timeout: 45_000 });
+  await expect(page.locator(".editor-save-state")).toHaveText("Tersimpan otomatis", { timeout: 15_000 });
+
+  const portraitResponse = await page.request.get(`/api/invitations/drafts?id=${invitationId}`);
+  expect(portraitResponse.status()).toBe(200);
+  const portraitResult = await portraitResponse.json() as { draft?: { hostOnePhoto?: string; hostTwoPhoto?: string; slug?: string } };
+  const groomPhotoUrl = portraitResult.draft?.hostOnePhoto;
+  const bridePhotoUrl = portraitResult.draft?.hostTwoPhoto;
+  const slug = portraitResult.draft?.slug;
+  expect(groomPhotoUrl).toMatch(/\/api\/media\/files\/invitations\//);
+  expect(bridePhotoUrl).toMatch(/\/api\/media\/files\/invitations\//);
+  expect(groomPhotoUrl).not.toBe(bridePhotoUrl);
+  if (!groomPhotoUrl || !bridePhotoUrl || !slug) throw new Error("Both portrait slots and a public invitation slug must be saved.");
+  await expectWebp(page, groomPhotoUrl);
+  await expectWebp(page, bridePhotoUrl);
+
+  await page.getByRole("button", { name: "Lanjutkan", exact: true }).click();
+  await page.getByRole("button", { name: "Lihat preview", exact: true }).click();
+  await page.getByRole("button", { name: "Terbitkan contoh gratis", exact: true }).click();
+  await page.waitForURL((url) => url.pathname === `/${slug}`, { timeout: 30_000 });
+  await page.getByRole("button", { name: /Buka undangan/ }).click();
+
+  await expect(page.locator(".cover-photo-tile--host-one .cover-photo-image")).toHaveAttribute("src", groomPhotoUrl, { timeout: 15_000 });
+  await expect(page.locator(".cover-photo-tile--host-two .cover-photo-image")).toHaveAttribute("src", bridePhotoUrl);
+});

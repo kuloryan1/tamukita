@@ -4,6 +4,7 @@ import { GardenDemoRsvp } from "@/components/garden-demo-rsvp";
 import { PublicInvitationCountdown } from "@/components/public-invitation-countdown";
 import { PublicInvitationRsvp } from "@/components/public-invitation-actions";
 import { resolveSealMonogram } from "@/lib/seal-monogram";
+import { invitationCopy } from "@/lib/invitation-copy";
 import type { InvitationFeatureAccess } from "@/lib/invitation-features";
 import type { InvitationDraft } from "@/lib/invitations";
 
@@ -20,6 +21,7 @@ type GardenPublicContentProps = {
 };
 
 export function GardenPublicContent({ draft, dateString, mapsUrl, slug, recipientName, guestToken, isExample, initialRsvpCount, featureAccess }: GardenPublicContentProps) {
+  const copy = (key: Parameters<typeof invitationCopy>[1], fallback?: string) => invitationCopy(draft, key, fallback);
   const fields = draft.customFields ?? {};
   const hostNames = [draft.hostOne, draft.hostTwo].filter(Boolean);
   const sealMonogram = resolveSealMonogram(draft.sealMonogram, hostNames);
@@ -44,21 +46,21 @@ export function GardenPublicContent({ draft, dateString, mapsUrl, slug, recipien
     <section className="garden-welcome-section garden-paper" aria-labelledby="garden-welcome-title">
       <div className="garden-public-inner" data-garden-reveal>
         <GardenFlourish />
-        <h2 id="garden-welcome-title">Dua hati,<br />satu cerita.</h2>
-        <p className="garden-guest-greeting">Kepada {recipientName || "keluarga dan sahabat terkasih"},</p>
+        <h2 id="garden-welcome-title" style={{ whiteSpace: "pre-line" }}>{copy("gardenWelcomeHeading", "Dua hati,\nsatu cerita.")}</h2>
+        <p className="garden-guest-greeting">{copy("recipientGreeting", "Kepada Yth.")} {recipientName || "keluarga dan sahabat terkasih"},</p>
         <p>{draft.story || "Dengan penuh kebahagiaan, kami mengundang Anda untuk merayakan awal perjalanan kami bersama."}</p>
         <GardenRose />
       </div>
     </section>
 
     <div className="garden-countdown-wrap" data-garden-reveal>
-      <PublicInvitationCountdown eventDate={draft.eventDate} eventTime={draft.eventTime} id="countdown" label="Menuju hari bahagia" />
+      <PublicInvitationCountdown eventDate={draft.eventDate} eventTime={draft.eventTime} id="countdown" label={copy("countdownLabel", "Menuju hari bahagia")} />
       <GardenFlourish />
     </div>
 
     <section className="garden-events-section garden-paper" id="detail-acara" aria-labelledby="garden-events-title">
       <div className="garden-public-inner" data-garden-reveal>
-        <h2 id="garden-events-title">Rangkaian Acara</h2>
+        <h2 id="garden-events-title">{copy("gardenEventDateHeading", "Rangkaian Acara")}</h2>
         <p className="garden-section-date">{dateString}</p>
         <ol className="garden-event-list">
           {schedule.map((item, index) => <li className="garden-event-row" key={item.id}>
@@ -72,7 +74,7 @@ export function GardenPublicContent({ draft, dateString, mapsUrl, slug, recipien
 
     <section className="garden-location-section" aria-labelledby="garden-location-title">
       <div className="garden-public-inner garden-location-card" data-garden-reveal>
-        <h2 id="garden-location-title">Lokasi</h2>
+        <h2 id="garden-location-title">{copy("gardenLocationHeading", "Lokasi")}</h2>
         <GardenFlourish />
         <h3>{draft.venue || "Lokasi acara"}</h3>
         <p>{draft.address || "Lokasi acara akan diumumkan."}</p>
@@ -85,7 +87,7 @@ export function GardenPublicContent({ draft, dateString, mapsUrl, slug, recipien
             referrerPolicy="no-referrer-when-downgrade"
             allowFullScreen
           /></div>}
-          <a className="garden-map-link" href={mapsUrl} target="_blank" rel="noreferrer"><MapPin size={14} />Buka lokasi di peta<ArrowUpRight size={13} /></a>
+          <a className="garden-map-link" href={mapsUrl} target="_blank" rel="noreferrer"><MapPin size={14} />{copy("mapActionLabel", "Buka peta")}<ArrowUpRight size={13} /></a>
         </>}
       </div>
     </section>
@@ -94,13 +96,13 @@ export function GardenPublicContent({ draft, dateString, mapsUrl, slug, recipien
       <div className="garden-public-inner garden-notes-grid">
         {fields.dressCode && <article className="garden-note garden-paper" data-garden-reveal>
           <GardenFlourish />
-          <h2>Panduan Busana</h2>
+          <h2>{copy("gardenDressCodeHeading", "Panduan Busana")}</h2>
           <p>{fields.dressCode}</p>
           {palette.length > 0 && <div className="garden-color-palette" role="img" aria-label={`Warna inspirasi: ${palette.map(({ name }) => name).join(", ")}`}>{palette.map(({ name, color }) => <span key={name} style={{ backgroundColor: color }} />)}</div>}
         </article>}
         {fields.giftPreference && <article className="garden-note garden-paper" data-garden-reveal>
           <GardenRose />
-          <h2>Preferensi Hadiah</h2>
+          <h2>{copy("gardenGiftPreferenceHeading", "Preferensi Hadiah")}</h2>
           <p>{fields.giftPreference}</p>
           <GardenFlourish />
         </article>}
@@ -110,19 +112,19 @@ export function GardenPublicContent({ draft, dateString, mapsUrl, slug, recipien
     {featureAccess.rsvp && <section className="garden-rsvp-section" id="rsvp" aria-labelledby="garden-rsvp-title">
       <div className="garden-public-inner" data-garden-reveal>
         <span className="garden-rsvp-envelope" aria-hidden="true"><span>{sealMonogram}</span></span>
-        <h2 id="garden-rsvp-title">Konfirmasi Kehadiran</h2>
-        <p>Kabar kehadiran Anda melengkapi kebahagiaan kami.<br />Sampai bertemu di hari istimewa.</p>
+        <h2 id="garden-rsvp-title">{copy("rsvpSectionHeading", "Konfirmasi Kehadiran")}</h2>
+        <p style={{ whiteSpace: "pre-line" }}>{copy("rsvpSectionIntro", "Kabar kehadiran Anda melengkapi kebahagiaan kami.\nSampai bertemu di hari istimewa.")}</p>
         {isExample
           ? <GardenDemoRsvp />
-          : <PublicInvitationRsvp slug={slug} initialCount={initialRsvpCount} recipientName={recipientName} guestToken={guestToken} />}
+          : <PublicInvitationRsvp slug={slug} initialCount={initialRsvpCount} recipientName={recipientName} guestToken={guestToken} copy={{ trigger: copy("rsvpJumpLabel", "Konfirmasi kehadiran"), question: copy("rsvpFormQuestion", "Berkenan hadir?"), submit: copy("rsvpSubmitActionLabel", "Kirim konfirmasi") }} />}
       </div>
     </section>}
 
     <section className="garden-closing-section" aria-label="Salam penutup">
       <GardenFlourish />
-      <p>Dengan kasih,</p>
+      <p>{copy("gardenClosingSignoff", "Dengan kasih,")}</p>
       <h2>{hostNames.join(" & ") || draft.eventTitle}</h2>
-      <span>Terima kasih telah menjadi bagian dari cerita kami.</span>
+      <span>{copy("gardenClosingMessage", "Terima kasih telah menjadi bagian dari cerita kami.")}</span>
     </section>
   </div>;
 }

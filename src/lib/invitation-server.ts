@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 
 import { z } from "zod";
 import { getTemplate } from "@/lib/templates";
+import { ensureInvitationCopySection } from "@/lib/invitation-copy";
 import { INVITATION_THEME_COLOR_VALUES } from "@/lib/invitation-theme-colors";
 import { EVENT_KINDS, safeHttpsUrl, type InvitationDraft } from "@/lib/invitations";
 import { getPrismaClient } from "@/lib/prisma";
@@ -51,6 +52,8 @@ export const invitationDraftSchema = z.object({
     if (match[1].toLowerCase() === "png") return bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
     return bytes.subarray(0, 4).toString("ascii") === "RIFF" && bytes.subarray(8, 12).toString("ascii") === "WEBP";
   }),
+  hostOnePhoto: z.string().trim().max(2048).default("").refine((value) => !value || isMediaPublicUrl(value)),
+  hostTwoPhoto: z.string().trim().max(2048).default("").refine((value) => !value || isMediaPublicUrl(value)),
   coverPosition: z.number().int().min(0).max(100),
   coverPositionX: z.number().int().min(0).max(100).default(50),
   galleryPhotos: z.array(z.string().trim().max(2048)).max(6).default([]).refine((photos) => new Set(photos).size === photos.length && photos.every(isMediaPublicUrl)),
@@ -70,7 +73,7 @@ export const invitationDraftSchema = z.object({
   musicUrl: z.string().trim().max(2048).default("").refine((value) => !value || isMediaPublicUrl(value)),
   musicTitle: z.string().trim().max(80).default(""),
   customFields: z.record(z.string().refine(isSafeTemplateFieldKey), z.string().max(1_000)).default({}).superRefine((fields, context) => {
-    if (Object.keys(fields).length > 32) context.addIssue({ code: "custom", message: "Terlalu banyak field template." });
+    if (Object.keys(fields).length > 96) context.addIssue({ code: "custom", message: "Terlalu banyak field template." });
     if (new TextEncoder().encode(JSON.stringify(fields)).byteLength > 20_000) context.addIssue({ code: "custom", message: "Data field template terlalu besar." });
   }),
   updatedAt: z.string().datetime().optional(),
@@ -102,6 +105,23 @@ export async function ownsInvitationCoverPhoto(userId: string, invitationId: str
     select: { id: true },
   });
   return Boolean(asset);
+}
+
+export async function ownsInvitationPortraitPhoto(userId: string, invitationId: string, photoUrl: string, slot: "hostOnePhoto" | "hostTwoPhoto") {
+  if (!photoUrl) return true;
+  const key = mediaKeyFromPublicUrl(photoUrl);
+  if (!key) return false;
+  const variant = await getPrismaClient().mediaVariant.findFirst({
+    where: {
+      storageKey: key,
+      variantKey: "portrait",
+      mediaAsset: { invitationId, uploadedById: userId, status: "READY", deletedAt: null },
+    },
+    select: { mediaAsset: { select: { metadata: true } } },
+  });
+  const metadata = variant?.mediaAsset.metadata;
+  return typeof metadata === "object" && metadata !== null && !Array.isArray(metadata)
+    && metadata.portraitSlot === slot;
 }
 
 export async function ownsInvitationGalleryPhotos(userId: string, invitationId: string, photos: string[]) {
@@ -199,8 +219,10 @@ export async function ensureTemplateVersion(slug: string) {
     const record = await prisma.template.findUnique({ where: { slug }, include: { activeVersion: true } });
     if (!record?.activeVersion) return null;
     const manifest = validateTemplateManifest(record.activeVersion.manifest);
-    if (!manifest.success || manifest.data.slug !== slug || manifest.data.version !== record.activeVersion.version || !isEditorCompatibleTemplate(manifest.data)) return null;
-    return { template: record, version: record.activeVersion, templateData: manifest.data };
+    if (!manifest.success || manifest.data.slug !== slug || manifest.data.version !== record.activeVersion.version) return null;
+    const editorTemplate = ensureInvitationCopySection(manifest.data);
+    if (!isEditorCompatibleTemplate(editorTemplate)) return null;
+    return { template: record, version: record.activeVersion, templateData: editorTemplate };
   }
   const requiresAdminReview = templateVersionRequiresAdminReview(templateData.slug, templateData.version);
   const synced = await prisma.$transaction(async (tx) => {
@@ -274,7 +296,7 @@ export async function ensureTemplateVersion(slug: string) {
   return {
     template: synced.template,
     version: selectedVersion,
-    templateData: selectedManifest.success ? selectedManifest.data : templateData,
+    templateData: ensureInvitationCopySection(selectedManifest.success ? selectedManifest.data : templateData),
   };
 }
 
