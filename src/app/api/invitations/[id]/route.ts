@@ -6,6 +6,8 @@ import { readJsonBody } from "@/lib/request-json";
 import { validateInvitationDraft } from "@/lib/validation";
 import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
 import { validateDraftFeatureAccess } from "@/lib/invitation-features";
+import { getTemplate as getStationeryTemplate } from "@/lib/stationery-demo";
+import { isAdminSampleSnapshot } from "@/lib/invitation-publication";
 
 export const runtime = "nodejs";
 
@@ -23,9 +25,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const prisma = getPrismaClient();
   const existing = await prisma.invitation.findFirst({
     where: { id, ownerId: userId, deletedAt: null, status: { in: ["DRAFT", "PUBLISHED"] }, organization: { status: "ACTIVE", memberships: { some: { userId, role: { in: ["OWNER", "ADMIN", "EDITOR"] } } } } },
-    select: { slug: true, status: true, draftData: true },
+    select: { slug: true, status: true, draftData: true, publishedSnapshot: true },
   });
   if (!existing) return NextResponse.json({ error: "Draft tidak ditemukan atau aksesnya sudah tidak tersedia." }, { status: 404 });
+  if ((parsed.data.hostOnePhoto || parsed.data.hostTwoPhoto)
+    && (session.user?.platformRole !== "SUPER_ADMIN"
+      || !getStationeryTemplate(parsed.data.templateId)
+      || (existing.status === "PUBLISHED" && !isAdminSampleSnapshot(existing.publishedSnapshot)))) {
+    return NextResponse.json({ error: "Foto bingkai hanya tersedia pada contoh Super Admin dengan template bingkai." }, { status: 403 });
+  }
   const featureAccess = await getInvitationFeatureAccess(id);
   const featureError = validateDraftFeatureAccess(parsed.data, featureAccess);
   if (featureError) return NextResponse.json({ error: featureError }, { status: 403 });

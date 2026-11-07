@@ -6,6 +6,8 @@ import { getPrismaClient } from "@/lib/prisma";
 import { allowRequest } from "@/lib/rate-limit";
 import { stripControlCharacters } from "@/lib/text";
 import { readJsonBody } from "@/lib/request-json";
+import { getTemplate as getStationeryTemplate } from "@/lib/stationery-demo";
+import { isAdminSampleSnapshot } from "@/lib/invitation-publication";
 
 export const runtime = "nodejs";
 
@@ -50,9 +52,20 @@ export async function POST(request: Request) {
       status: { in: ["DRAFT", "PUBLISHED"] },
       organization: { status: "ACTIVE", memberships: { some: { userId, role: { in: ["OWNER", "ADMIN", "EDITOR"] } } } },
     },
-    select: { id: true, organizationId: true },
+    select: { id: true, organizationId: true, status: true, draftData: true, publishedSnapshot: true },
   });
   if (!invitation) return NextResponse.json({ error: "Undangan tidak ditemukan." }, { status: 404 });
+  if (parsed.data.portraitSlot) {
+    const draftData = typeof invitation.draftData === "object" && invitation.draftData !== null && !Array.isArray(invitation.draftData)
+      ? invitation.draftData as Record<string, unknown>
+      : {};
+    if (session.user?.platformRole !== "SUPER_ADMIN"
+      || typeof draftData.templateId !== "string"
+      || !getStationeryTemplate(draftData.templateId)
+      || (invitation.status === "PUBLISHED" && !isAdminSampleSnapshot(invitation.publishedSnapshot))) {
+      return NextResponse.json({ error: "Foto bingkai hanya tersedia pada contoh Super Admin dengan template bingkai." }, { status: 403 });
+    }
+  }
 
   const assetId = randomUUID();
   const safeName = stripControlCharacters(parsed.data.originalName.split(/[\\/]/).pop() ?? "").slice(0, 255) || "foto";

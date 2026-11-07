@@ -122,7 +122,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
             height={1000}
             sizes="(max-width: 640px) 33vw, 340px"
             unoptimized
-            style={{ objectPosition: position, "--portrait-offset-x": horizontalOffset } as CSSProperties}
+            style={{ objectPosition: photoUrl === draft?.coverPhoto ? position : "50% 50%", "--portrait-offset-x": horizontalOffset } as CSSProperties}
           />}
         </div>
         <Image
