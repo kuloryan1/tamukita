@@ -9,12 +9,15 @@ import { PublicInvitationGiftCopy } from "@/components/public-invitation-actions
 import { InvitationPaparazzi } from "@/components/invitation-paparazzi";
 import { invitationCopy, type InvitationCopyKey } from "@/lib/invitation-copy";
 import { invitationGiftAccounts, safeHttpsUrl, type InvitationDraft } from "@/lib/invitations";
+import { normalizeSealMonogram } from "@/lib/seal-monogram";
 import { templates, WEDDING, type WeddingTemplate } from "@/lib/stationery-demo";
 import { MAX_RECIPIENT_LENGTH, normalizeRecipient } from "@/lib/stationery-recipient";
 
-function Monogram({ small = false, hostOne = WEDDING.groom, hostTwo = WEDDING.bride }: { small?: boolean; hostOne?: string; hostTwo?: string }) {
+function Monogram({ small = false, hostOne = WEDDING.groom, hostTwo = WEDDING.bride, customMonogram = "" }: { small?: boolean; hostOne?: string; hostTwo?: string; customMonogram?: string }) {
   const firstInitial = (name: string) => Array.from(name.trim())[0]?.toLocaleUpperCase("id-ID") ?? "?";
-  return <div className={`monogram${small ? " monogram-small" : ""}`} role="img" aria-label={`${hostOne} dan ${hostTwo}`}><BotanicalWreath /><span>{firstInitial(hostOne)}<span className="monogram-amp">&</span>{firstInitial(hostTwo)}</span></div>;
+  const initials = normalizeSealMonogram(customMonogram);
+  if (initials === "WR") return <div className={`monogram monogram--custom-crest${small ? " monogram-small" : ""}`} role="img" aria-label={`Monogram W R untuk ${hostOne} dan ${hostTwo}`}><Image className="monogram-custom-artwork" src="/images/monograms/wr-crest.png" alt="" aria-hidden="true" width={500} height={500} sizes="(max-width: 640px) 108px, 125px" /></div>;
+  return <div className={`monogram${small ? " monogram-small" : ""}`} role="img" aria-label={initials ? `Monogram ${initials} untuk ${hostOne} dan ${hostTwo}` : `Monogram ${hostOne} dan ${hostTwo}`}><BotanicalWreath /><span>{initials || <>{firstInitial(hostOne)}<span className="monogram-amp">&</span>{firstInitial(hostTwo)}</>}</span></div>;
 }
 
 function Countdown({ targetDate, accessibleDate, label }: { targetDate: string; accessibleDate: string; label: string }) {
@@ -73,15 +76,22 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
 }) {
   const [opened, setOpened] = useState(false);
   const [opening, setOpening] = useState(false);
+  const [revealingOpening, setRevealingOpening] = useState(false);
   const [activeSection, setActiveSection] = useState("undangan");
   const mainRef = useRef<HTMLElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const openingVideoRef = useRef<HTMLVideoElement>(null);
   const openingTimeout = useRef<number | null>(null);
+  const openingComplete = useRef(false);
   const guest = normalizeRecipient(recipient);
   const copy = (key: InvitationCopyKey, fallback?: string) => draft ? invitationCopy(draft, key, fallback) : fallback ?? "";
+  const hasEnvelopeOpening = template.slug === "elegant-cream";
   const hostOne = draft?.hostOne || WEDDING.groom;
   const hostTwo = draft?.hostTwo || WEDDING.bride;
   const firstInitial = (name: string) => Array.from(name.trim())[0]?.toLocaleUpperCase("id-ID") ?? "?";
+  const requestedMonogram = normalizeSealMonogram(draft?.sealMonogram);
+  // Older sample drafts stored "RD" as a placeholder; keep their usual R&D initials.
+  const customMonogram = requestedMonogram === "RD" ? "" : requestedMonogram;
   const eventDate = draft?.eventDate || WEDDING.eventDate;
   const eventTime = draft?.eventTime || WEDDING.eventTime;
   const eventDateTime = new Date(`${eventDate}T${eventTime}:00+07:00`);
@@ -152,7 +162,9 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
         window.clearTimeout(openingTimeout.current);
         openingTimeout.current = null;
       }
-      setOpening(false); setOpened(true); setActiveSection(hash);
+      openingComplete.current = true;
+      openingVideoRef.current?.pause();
+      setOpening(false); setRevealingOpening(false); setOpened(true); setActiveSection(hash);
       // Existing sections already receive native anchor navigation. Wait only
       // when the cover must be replaced before the target exists in the DOM.
       if (!document.getElementById(hash)) {
@@ -166,7 +178,10 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
       if (scrollTimer !== null) window.clearTimeout(scrollTimer);
     };
   }, []);
-  useEffect(() => () => { if (openingTimeout.current !== null) window.clearTimeout(openingTimeout.current); }, []);
+  useEffect(() => () => {
+    if (openingTimeout.current !== null) window.clearTimeout(openingTimeout.current);
+    openingVideoRef.current?.pause();
+  }, []);
   useEffect(() => {
     if (!opened) return;
     const observer = new IntersectionObserver((entries) => { for (const entry of entries) if (entry.isIntersecting) setActiveSection(entry.target.id); }, { rootMargin: "-15% 0px -60% 0px", threshold: 0 });
@@ -174,41 +189,84 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
     return () => observer.disconnect();
   }, [opened]);
 
+  function revealInvitation() {
+    if (openingTimeout.current !== null) {
+      window.clearTimeout(openingTimeout.current);
+      openingTimeout.current = null;
+    }
+    openingVideoRef.current?.pause();
+    setOpened(true); setOpening(false); setRevealingOpening(false);
+    window.scrollTo({ top: 0, behavior: "instant" });
+    window.setTimeout(() => mainRef.current?.focus({ preventScroll: true }), 0);
+  }
+  function finishEnvelopeOpening() {
+    if (openingComplete.current) return;
+    openingComplete.current = true;
+    if (openingTimeout.current !== null) window.clearTimeout(openingTimeout.current);
+    openingVideoRef.current?.pause();
+    setRevealingOpening(true);
+    openingTimeout.current = window.setTimeout(revealInvitation, 460);
+  }
   function openInvitation() {
     if (opening) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return revealInvitation();
     setOpening(true);
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    openingTimeout.current = window.setTimeout(() => { setOpened(true); setOpening(false); window.scrollTo({ top: 0, behavior: "instant" }); window.setTimeout(() => mainRef.current?.focus({ preventScroll: true }), 0); }, reduced ? 0 : 650);
+    setRevealingOpening(false);
+    if (hasEnvelopeOpening) {
+      openingComplete.current = false;
+      const video = openingVideoRef.current;
+      if (!video) return revealInvitation();
+      if (video.readyState >= HTMLMediaElement.HAVE_METADATA) video.currentTime = 0;
+      openingTimeout.current = window.setTimeout(finishEnvelopeOpening, 10_000);
+      void video.play().catch(revealInvitation);
+      return;
+    }
+    openingTimeout.current = window.setTimeout(revealInvitation, 650);
   }
   function reopenCover() {
-    setOpened(false); setActiveSection("undangan"); window.history.replaceState(null, "", window.location.pathname + window.location.search); window.scrollTo({ top: 0, behavior: "instant" });
+    openingComplete.current = false;
+    openingVideoRef.current?.pause();
+    setOpening(false); setRevealingOpening(false); setOpened(false); setActiveSection("undangan"); window.history.replaceState(null, "", window.location.pathname + window.location.search); window.scrollTo({ top: 0, behavior: "instant" });
   }
 
   return <div className={`stationery-demo theme-${template.slug} style-${template.style} ${opened ? "is-open" : "is-closed"}`} style={style} data-invitation-publication={isTestableSample ? "published" : "demo"} data-template={template.slug}>
     <a className="skip-link" href={opened ? "#detail-acara" : "#open-invitation"}>Lewati ke undangan</a>
     <header className="site-header">
-      <a className="wordmark" href={catalogUrl} aria-label={`Undangan ${hostOne} dan ${hostTwo}`}><span className="wordmark-initials">{firstInitial(hostOne)}<span>&</span>{firstInitial(hostTwo)}</span><span className="wordmark-label">UNDANGAN<br />{draft?.eventKind && draft.eventKind !== "Pernikahan" ? eventTitle.toLocaleUpperCase("id-ID") : "PERNIKAHAN"}</span></a>
+      <a className="wordmark" href={catalogUrl} aria-label={`Undangan ${hostOne} dan ${hostTwo}`}><span className={`wordmark-initials${customMonogram ? " wordmark-initials--custom" : ""}`}>{customMonogram || <>{firstInitial(hostOne)}<span>&</span>{firstInitial(hostTwo)}</>}</span><span className="wordmark-label">UNDANGAN<br />{draft?.eventKind && draft.eventKind !== "Pernikahan" ? eventTitle.toLocaleUpperCase("id-ID") : "PERNIKAHAN"}</span></a>
       <div className="header-actions"><a className="catalog-link" href={catalogUrl}><LayoutGrid size={15} /><span>{copy("catalogLinkLabel", "Koleksi template")}</span></a><button type="button" className="icon-button share-trigger" aria-label={copy("shareActionLabel", "Bagikan undangan")} onClick={() => dialogRef.current?.showModal()}><Share2 size={16} /></button></div>
     </header>
 
-    {!opened ? <main className={`cover-stage${opening ? " is-opening" : ""}`}>
+    {!opened ? <main className={`cover-stage${opening ? " is-opening" : ""}${hasEnvelopeOpening ? " is-cream-envelope" : ""}`}>
       <div className="stage-caption"><span className="eyebrow">{copy("stageCaption", "SEBUAH UNDANGAN DARI HATI")}</span><span className="edition-mark">{dateHeading.day} · {dateHeading.monthNumber} · {dateHeading.year}</span></div>
-      <div className="invitation-cover paper">
+      {hasEnvelopeOpening ? <div className="cream-envelope-cover">
+        <Image className="cream-envelope-cover-art" src="/templates/reference-prototypes/cream-envelope-poster.jpg" alt="" fill priority sizes="(max-width: 640px) 82vw, 390px" />
+        <div className="cream-envelope-monogram"><Monogram small hostOne={hostOne} hostTwo={hostTwo} customMonogram={customMonogram} /></div>
+        <div className="cream-envelope-cover-copy">
+          <h1 className="cover-names"><span>{hostOne}</span><span className="name-amp">&</span><span>{hostTwo}</span></h1>
+          <div className="cover-date"><span className="fine-rule" /><p>{dateLabel}</p><span className="fine-rule" /></div>
+          <div className="recipient"><p>{copy("recipientGreeting", "Kepada Yth.")}</p><strong>{guest}</strong></div>
+        </div>
+        <button type="button" id="open-invitation" className="cream-envelope-open-button" onClick={openInvitation} disabled={opening}>{opening ? "Membuka undangan…" : copy("openingButtonLabel", "Buka undangan")}</button>
+      </div> : <div className="invitation-cover paper">
         <div className="paper-border" /><BotanicalCorner className="cover-botanical corner-top" variant={template.ornament} /><BotanicalCorner className="cover-botanical corner-bottom" variant={template.ornament} /><div className="cover-bow"><SatinBow /></div>
-        <div className="cover-content"><Monogram hostOne={hostOne} hostTwo={hostTwo} /><p className="eyebrow cover-eyebrow">{copy("coverEyebrow", draft?.eventKind && draft.eventKind !== "Pernikahan" ? eventTitle.toLocaleUpperCase("id-ID") : "HARI YANG KAMI NANTIKAN")}</p>
+        <div className="cover-content"><Monogram hostOne={hostOne} hostTwo={hostTwo} customMonogram={customMonogram} /><p className="eyebrow cover-eyebrow">{copy("coverEyebrow", draft?.eventKind && draft.eventKind !== "Pernikahan" ? eventTitle.toLocaleUpperCase("id-ID") : "HARI YANG KAMI NANTIKAN")}</p>
           <h1 className="cover-names"><span>{hostOne}</span><span className="name-amp">&</span><span>{hostTwo}</span></h1>
           <div className="cover-date"><span className="fine-rule" /><p>{dateLabel}</p><span className="fine-rule" /></div>
           <div className="recipient"><p>{copy("recipientGreeting", "Kepada Yth.")}</p><strong>{guest}</strong></div>
           <button type="button" id="open-invitation" className="button primary open-button" onClick={openInvitation} disabled={opening}><Mail size={16} strokeWidth={1.5} /><span>{opening ? "Membuka undangan…" : copy("openingButtonLabel", "Buka undangan")}</span><ArrowRight size={15} /></button>
           <span className="cover-footnote">{copy("coverMessage", "Dengan penuh sukacita, kami mengundang Anda.")}</span>
         </div>
-      </div>
+      </div>}
       <div className="cover-bottom"><span className="template-label"><span className="tiny-diamond" />{template.name}</span><label className="theme-selector">Pilih desain<select aria-label="Pilih template undangan" value={template.slug} onChange={(e) => window.location.assign(`/templates/${e.target.value}/demo${recipientQuery}`)}>{templates.map((item) => <option value={item.slug} key={item.slug}>{item.name}</option>)}</select></label></div>
+      {hasEnvelopeOpening && <section className={`cover-opening-overlay${revealingOpening ? " is-revealing" : ""}`} hidden={!opening} aria-label="Animasi pembukaan amplop">
+        <span className="sr-only" role="status">Membuka amplop undangan.</span>
+        <video ref={openingVideoRef} className="cover-opening-video" src="/templates/reference-prototypes/cream-envelope.mp4" poster="/templates/reference-prototypes/cream-envelope-poster.jpg" width={768} height={1364} muted playsInline preload="metadata" disablePictureInPicture aria-hidden="true" tabIndex={-1} onEnded={finishEnvelopeOpening} onError={() => { if (opening) revealInvitation(); }}>Video pembukaan amplop Elegant Cream.</video>
+      </section>}
       <noscript>Aktifkan JavaScript untuk membuka undangan. Acara: {dateLabel}, {eventTimeLabel}, {venue}.</noscript>
     </main> : <>
       <main className="opened-invitation" ref={mainRef} tabIndex={-1}>
         <section className="invitation-hero paper" id="undangan" aria-labelledby="invitation-heading">
-          <div className="paper-border" /><BotanicalCorner className="hero-botanical corner-top" variant={template.ornament} /><BotanicalCorner className="hero-botanical corner-bottom" variant={template.ornament} /><Monogram small hostOne={hostOne} hostTwo={hostTwo} />
+          <div className="paper-border" /><BotanicalCorner className="hero-botanical corner-top" variant={template.ornament} /><BotanicalCorner className="hero-botanical corner-bottom" variant={template.ornament} /><Monogram small hostOne={hostOne} hostTwo={hostTwo} customMonogram={customMonogram} />
           <p className="eyebrow">{copy("invitationKicker", "HARI YANG KAMI NANTIKAN")}</p><h1 id="invitation-heading" style={{ whiteSpace: "pre-line" }}>{copy("invitationHeadline", "Dengan penuh sukacita, kami mengundang Anda.")}</h1><TinyFlourish className="hero-flourish" />
           <div className="hero-names"><span>{hostOne}</span><span className="name-amp">&</span><span>{hostTwo}</span></div>
           <p className="invitation-message">{intro}</p>
