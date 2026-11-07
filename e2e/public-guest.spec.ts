@@ -297,7 +297,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
     data: { name: guestName, message: guestbookMessage, includesChildData: true },
   });
   expect(childGuestbookWithoutGuardianConsent.status()).toBe(400);
-  await expect(page.locator(".guestbook-heading")).toContainText("diterima oleh pemilik undangan");
+  await expect(page.locator(".guestbook-heading")).toContainText("Ucapan ditinjau oleh pemilik undangan sebelum ditampilkan.");
   let guestbookBrowserRequests = 0;
   await page.route(`**/api/public/invitations/${invitationSlug}/guestbook`, async (route) => {
     guestbookBrowserRequests += 1;
