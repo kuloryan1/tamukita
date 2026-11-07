@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, CheckCircle2, ChevronLeft, ChevronRight, Copy, ExternalLink, ImagePlus, Info, Monitor, Music2, Pencil, Redo2, RotateCcw, RotateCw, Save, Smartphone, Sparkles, Undo2, Upload, X } from "lucide-react";
@@ -373,7 +373,10 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
   }, [replaceDraft]);
   const canUndo = historyRef.current.past.length > 0;
   const canRedo = historyRef.current.future.length > 0;
-  const templates = (templateCatalog?.length ? templateCatalog : builtInTemplates).map(ensureInvitationCopySection);
+  const templates = useMemo(
+    () => (templateCatalog?.length ? templateCatalog : builtInTemplates).map(ensureInvitationCopySection),
+    [templateCatalog],
+  );
   const rawSelectedLegacyTemplate = getTemplate(draft.templateId);
   const selectedLegacyTemplate = rawSelectedLegacyTemplate ? ensureInvitationCopySection(rawSelectedLegacyTemplate) : undefined;
   const templateChoices = templates.some((template) => template.slug === draft.templateId) || !selectedLegacyTemplate ? templates : [...templates, selectedLegacyTemplate];
