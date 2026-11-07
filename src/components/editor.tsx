@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, CheckCircle2, ChevronLeft, ChevronRight, Copy, ExternalLink, ImagePlus, Info, Monitor, Music2, Pencil, Redo2, RotateCcw, RotateCw, Save, Smartphone, Sparkles, Undo2, Upload, X } from "lucide-react";
@@ -373,10 +373,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
   }, [replaceDraft]);
   const canUndo = historyRef.current.past.length > 0;
   const canRedo = historyRef.current.future.length > 0;
-  const templates = useMemo(
-    () => (templateCatalog?.length ? templateCatalog : builtInTemplates).map(ensureInvitationCopySection),
-    [templateCatalog],
-  );
+  const templates = (templateCatalog?.length ? templateCatalog : builtInTemplates).map(ensureInvitationCopySection);
   const rawSelectedLegacyTemplate = getTemplate(draft.templateId);
   const selectedLegacyTemplate = rawSelectedLegacyTemplate ? ensureInvitationCopySection(rawSelectedLegacyTemplate) : undefined;
   const templateChoices = templates.some((template) => template.slug === draft.templateId) || !selectedLegacyTemplate ? templates : [...templates, selectedLegacyTemplate];
@@ -425,9 +422,10 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
   useEffect(() => {
     let cancelled = false;
     async function initialize() {
+      const availableTemplates = (templateCatalog?.length ? templateCatalog : builtInTemplates).map(ensureInvitationCopySection);
       const params = new URLSearchParams(window.location.search);
       const requestedId = invitationId ?? params.get("id");
-      const selectedTemplate = templates.find((template) => template.slug === params.get("template"));
+      const selectedTemplate = availableTemplates.find((template) => template.slug === params.get("template"));
       if (params.get("new") !== "1" && requestedId) {
         const query = `?id=${encodeURIComponent(requestedId)}`;
         const response = await fetch(`/api/invitations/drafts${query}`, { cache: "no-store" }).catch(() => null);
@@ -438,7 +436,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
         const result = await response?.json().catch(() => null) as { draft?: InvitationDraft | null; featureAccess?: InvitationFeatureAccess } | null;
         if (!cancelled && response?.ok && result?.draft) {
           setFeatureAccess(result.featureAccess ?? legacyInvitationFeatureAccess);
-          const rawLoadedTemplate = selectedTemplate ?? templates.find((template) => template.slug === result.draft?.templateId) ?? getTemplate(result.draft.templateId);
+          const rawLoadedTemplate = selectedTemplate ?? availableTemplates.find((template) => template.slug === result.draft?.templateId) ?? getTemplate(result.draft.templateId);
           const loadedTemplate = rawLoadedTemplate ? ensureInvitationCopySection(rawLoadedTemplate) : undefined;
           setLoadedDraft({ ...result.draft, coverPositionX: result.draft.coverPositionX ?? 50, ...(loadedTemplate ? { ...(selectedTemplate ? { templateId: loadedTemplate.slug, templateVersion: loadedTemplate.version } : {}), customFields: applyTemplateFieldDefaults(loadedTemplate, result.draft.customFields) } : {}) });
           setHydrated(true);
@@ -454,7 +452,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
         }
       }
       const initial = createInitialDraft();
-      const initialTemplate = selectedTemplate ?? templates.find((template) => template.slug === initial.templateId) ?? getTemplate(initial.templateId);
+      const initialTemplate = selectedTemplate ?? availableTemplates.find((template) => template.slug === initial.templateId) ?? getTemplate(initial.templateId);
       const initialDraft = initialTemplate ? { ...initial, templateId: initialTemplate.slug, templateVersion: initialTemplate.version, customFields: applyTemplateFieldDefaults(initialTemplate, initial.customFields) } : initial;
       const response = await fetch("/api/invitations/drafts", {
         method: "POST",
@@ -478,7 +476,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
     }
     void initialize();
     return () => { cancelled = true; };
-  }, [invitationId, setLoadedDraft, templates]);
+  }, [invitationId, setLoadedDraft, templateCatalog]);
 
   useEffect(() => {
     if (!hydrated) return;
