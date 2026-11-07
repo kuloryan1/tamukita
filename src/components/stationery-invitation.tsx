@@ -216,8 +216,8 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
           <section className="cover-photo-section" aria-label={`Foto ${hostOne} dan ${hostTwo}`}>
             <div className="cover-photo-stage">
               <div className="cover-photo-grid">
-                {framedPortrait(hostTwo, draft?.hostTwoParents ?? "", hostTwoCoverPhotoPosition, "cover-photo-tile--host-two", "-16%")}
-                {framedPortrait(hostOne, draft?.hostOneParents ?? "", hostOneCoverPhotoPosition, "cover-photo-tile--host-one", "12%")}
+                {framedPortrait(hostTwo, draft?.hostTwoParents ?? "", hostTwoCoverPhotoPosition, "cover-photo-tile--host-two", "-13.2%")}
+                {framedPortrait(hostOne, draft?.hostOneParents ?? "", hostOneCoverPhotoPosition, "cover-photo-tile--host-one", "9.9%")}
               </div>
             </div>
           </section>
