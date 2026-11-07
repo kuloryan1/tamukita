@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { expect, test, type Page, type Request } from "@playwright/test";
 import { Pool } from "pg";
+import { resetE2eLoginRateLimit } from "./login-rate-limit";
 
 const invitationId = "10000000-0000-4000-8000-000000000001";
 const invitationSlug = "e2e-public-invite";
@@ -124,6 +125,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
   }
 
   await resetInvitationModerationFixture();
+  await resetE2eLoginRateLimit(analyticsPool, customerEmail);
   await signIn(page, customerEmail, customerPassword);
   const guestName = `Tamu ${randomUUID().slice(0, 8)}`;
   const guestResponse = await page.request.post(`/api/invitations/${invitationId}/guests`, { data: { names: [guestName] } });
@@ -222,7 +224,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
   await expect(page.getByRole("button", { name: "Mohon maaf berhalangan" })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("button", { name: "Dengan senang hati hadir" })).toHaveAttribute("aria-pressed", "false");
   await expect(page.getByText("TERIMA KASIH SUDAH MEMBERI KABAR", { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Kami mengerti kamu berhalangan hadir" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Berkenan hadir?" })).toBeVisible();
   await expect(page.getByLabel("Jumlah tamu yang hadir")).toHaveCount(0);
   let childRsvpBrowserRequests = 0;
   await page.route(`**/api/public/invitations/${invitationSlug}/rsvp`, async (route) => {
@@ -355,6 +357,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
   const reviewerContext = await browser.newContext({ baseURL: new URL(page.url()).origin });
   try {
     const reviewerPage = await reviewerContext.newPage();
+    await resetE2eLoginRateLimit(analyticsPool, reviewerEmail);
     await signIn(reviewerPage, reviewerEmail, reviewerPassword);
     await reviewerPage.goto("/admin/moderation");
     await expect(reviewerPage.getByRole("heading", { name: "Moderasi konten" })).toBeVisible();

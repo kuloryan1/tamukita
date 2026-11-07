@@ -1,5 +1,6 @@
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 import { Pool } from "pg";
+import { resetE2eLoginRateLimit } from "./login-rate-limit";
 
 const templateOrderId = "20000000-0000-4000-8000-000000000001";
 const resellerOrderId = "20000000-0000-4000-8000-000000000002";
@@ -41,6 +42,7 @@ test("verified payment callbacks publish a licensed invitation and top up resell
     return;
   }
 
+  await resetE2eLoginRateLimit(databasePool, customerEmail);
   await signIn(page, customerEmail, customerPassword);
   await page.goto(`/dashboard/checkout/return?invitationId=${paymentInvitationId}&payment=return`);
   if (testInfo.project.name === "desktop-chromium") {
