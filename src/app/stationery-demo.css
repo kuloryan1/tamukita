@@ -147,9 +147,14 @@
 .stationery-demo .cream-envelope-monogram .monogram { width: 54px; height: 54px; color: #8e7045; }
 .stationery-demo .cream-envelope-monogram .monogram > svg { display: none; }
 .stationery-demo .cream-envelope-monogram .monogram > span { padding: 0; color: #72552e; font-size: 18px; letter-spacing: -.03em; }
-.stationery-demo .cream-envelope-cover-copy { position: absolute; z-index: 1; top: 66%; right: 5%; left: 5%; display: flex; flex-direction: column; align-items: center; gap: 5px; color: #72552e; text-align: center; text-shadow: 0 1px 3px #fff8; transition: opacity .3s ease; }
-.stationery-demo .cream-envelope-cover-copy > span { max-width: 100%; font-family: "Pinyon Script", cursive; font-size: clamp(19px, 5.4vw, 25px); line-height: 1.12; overflow-wrap: anywhere; }
-.stationery-demo .cream-envelope-cover-copy > time { font-size: 10px; letter-spacing: .08em; }
+.stationery-demo .cream-envelope-cover-copy { position: absolute; z-index: 1; top: 64%; right: 5%; left: 5%; display: flex; flex-direction: column; align-items: center; gap: 5px; color: #72552e; text-align: center; text-shadow: 0 1px 3px #fff8; transition: opacity .3s ease; }
+.stationery-demo .cream-envelope-cover-copy > .cover-names { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 4px; font-size: clamp(17px, 4.2vw, 21px); line-height: 1.12; }
+.stationery-demo .cream-envelope-cover-copy > .cover-names > span { display: inline; overflow-wrap: anywhere; }
+.stationery-demo .cream-envelope-cover-copy > .cover-date { gap: 8px; margin: 0; color: inherit; }
+.stationery-demo .cream-envelope-cover-copy > .cover-date p { color: inherit; font-size: 9px; }
+.stationery-demo .cream-envelope-cover-copy > .recipient { margin: 0; color: inherit; }
+.stationery-demo .cream-envelope-cover-copy > .recipient p { margin: 0; font-size: 8px; }
+.stationery-demo .cream-envelope-cover-copy > .recipient strong { font-size: 12px; }
 .stationery-demo .cream-envelope-open-button { position: absolute; z-index: 2; bottom: 7.2%; left: 50%; min-height: 44px; padding: 8px 15px; transform: translateX(-50%); border: 1px solid #8b714944; border-radius: 22px; background: #fffaf0e8; color: #72552e; font-family: var(--font-display); font-size: 15px; letter-spacing: .04em; white-space: nowrap; }
 .stationery-demo .cream-envelope-open-button:focus-visible { outline: 2px solid #8b7149; outline-offset: 3px; }
 .stationery-demo .cover-opening-overlay { position: absolute; z-index: 5; inset: 0; display: flex; align-items: center; justify-content: center; padding: 10px 16px; background: var(--scene); opacity: 1; transition: opacity .46s ease; }

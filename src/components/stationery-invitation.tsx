@@ -241,7 +241,11 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
       {hasEnvelopeOpening ? <div className="cream-envelope-cover">
         <Image className="cream-envelope-cover-art" src="/templates/reference-prototypes/cream-envelope-poster.jpg" alt="" fill priority sizes="(max-width: 640px) 82vw, 390px" />
         <div className="cream-envelope-monogram"><Monogram small hostOne={hostOne} hostTwo={hostTwo} customMonogram={customMonogram} /></div>
-        <div className="cream-envelope-cover-copy"><span>{hostOne} &amp; {hostTwo}</span><time dateTime={eventStartsAt}>{dateLabel}</time></div>
+        <div className="cream-envelope-cover-copy">
+          <h1 className="cover-names"><span>{hostOne}</span><span className="name-amp">&</span><span>{hostTwo}</span></h1>
+          <div className="cover-date"><span className="fine-rule" /><p>{dateLabel}</p><span className="fine-rule" /></div>
+          <div className="recipient"><p>{copy("recipientGreeting", "Kepada Yth.")}</p><strong>{guest}</strong></div>
+        </div>
         <button type="button" id="open-invitation" className="cream-envelope-open-button" onClick={openInvitation} disabled={opening}>{opening ? "Membuka undangan…" : copy("openingButtonLabel", "Buka undangan")}</button>
       </div> : <div className="invitation-cover paper">
         <div className="paper-border" /><BotanicalCorner className="cover-botanical corner-top" variant={template.ornament} /><BotanicalCorner className="cover-botanical corner-bottom" variant={template.ornament} /><div className="cover-bow"><SatinBow /></div>
