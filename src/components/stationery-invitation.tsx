@@ -104,7 +104,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   const recipientQuery = guest === "Anda" ? "" : `?to=${encodeURIComponent(guest)}`;
   const catalogUrl = `/templates${recipientQuery}`;
   const style = { "--paper": template.paper, "--ink": template.ink, "--muted": template.muted, "--accent": template.accent, "--line": template.line, "--scene": template.background } as CSSProperties;
-  const framedPortrait = (name: string, position: string, placement: string) => (
+  const framedPortrait = (name: string, position: string, placement: string, horizontalOffset: string) => (
     <figure className={`cover-photo-tile ${placement}`} aria-label={`Potret ${name}`}>
       <div className="cover-photo-window">
         <Image
@@ -115,7 +115,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
           height={1000}
           sizes="(max-width: 720px) 48vw, 280px"
           unoptimized
-          style={{ objectPosition: position }}
+          style={{ objectPosition: position, "--portrait-offset-x": horizontalOffset } as CSSProperties}
         />
       </div>
       <Image
@@ -207,8 +207,8 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
           <section className="cover-photo-section" aria-label={`Foto ${hostOne} dan ${hostTwo}`}>
             <div className="cover-photo-stage">
               <div className="cover-photo-grid">
-                {framedPortrait(hostTwo, hostTwoCoverPhotoPosition, "cover-photo-tile--host-two")}
-                {framedPortrait(hostOne, hostOneCoverPhotoPosition, "cover-photo-tile--host-one")}
+                {framedPortrait(hostTwo, hostTwoCoverPhotoPosition, "cover-photo-tile--host-two", "-12%")}
+                {framedPortrait(hostOne, hostOneCoverPhotoPosition, "cover-photo-tile--host-one", "12%")}
               </div>
             </div>
           </section>
