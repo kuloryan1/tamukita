@@ -110,20 +110,20 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   const recipientQuery = guest === "Anda" ? "" : `?to=${encodeURIComponent(guest)}`;
   const catalogUrl = `/templates${recipientQuery}`;
   const style = { "--paper": template.paper, "--ink": template.ink, "--muted": template.muted, "--accent": template.accent, "--line": template.line, "--scene": template.background } as CSSProperties;
-  const framedPortrait = (name: string, parents: string, position: string, placement: string, horizontalOffset: string) => (
+  const framedPortrait = (name: string, parents: string, photoUrl: string, position: string, placement: string, horizontalOffset: string) => (
     <figure className={`cover-photo-tile ${placement}`} aria-label={`Potret ${name}`}>
       <div className="cover-photo-frame">
         <div className="cover-photo-window">
-          <Image
-            className="cover-photo-image"
-            src={draft?.coverPhoto ?? ""}
+          {photoUrl && <Image
+            className={`cover-photo-image${photoUrl === draft?.coverPhoto ? "" : " cover-photo-image--individual"}`}
+            src={photoUrl}
             alt={`Potret ${name}`}
             width={1600}
             height={1000}
             sizes="(max-width: 640px) 33vw, 340px"
             unoptimized
             style={{ objectPosition: position, "--portrait-offset-x": horizontalOffset } as CSSProperties}
-          />
+          />}
         </div>
         <Image
           className="cover-photo-ornament"
@@ -215,12 +215,12 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
           <div className="hero-date"><span className="eyebrow">{copy("eventDateLabel", "HARI & TANGGAL")}</span><p>{dateLabel}</p><span>{eventTimeLabel}</span></div>
           <a className="detail-link" href="#detail-acara">{copy("detailLinkLabel", "LIHAT DETAIL ACARA")} <ArrowDown size={15} /></a>
         </section>
-        {draft?.coverPhoto && (
+        {(draft?.coverPhoto || draft?.hostOnePhoto || draft?.hostTwoPhoto) && (
           <section className="cover-photo-section" aria-label={`Foto ${hostOne} dan ${hostTwo}`}>
             <div className="cover-photo-stage">
               <div className="cover-photo-grid">
-                {framedPortrait(hostTwo, draft?.hostTwoParents ?? "", hostTwoCoverPhotoPosition, "cover-photo-tile--host-two", "-13.2%")}
-                {framedPortrait(hostOne, draft?.hostOneParents ?? "", hostOneCoverPhotoPosition, "cover-photo-tile--host-one", "9.9%")}
+                {framedPortrait(hostTwo, draft?.hostTwoParents ?? "", draft?.hostTwoPhoto || draft?.coverPhoto || "", hostTwoCoverPhotoPosition, "cover-photo-tile--host-two", "-13.2%")}
+                {framedPortrait(hostOne, draft?.hostOneParents ?? "", draft?.hostOnePhoto || draft?.coverPhoto || "", hostOneCoverPhotoPosition, "cover-photo-tile--host-one", "9.9%")}
               </div>
             </div>
           </section>

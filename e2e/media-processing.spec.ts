@@ -116,6 +116,33 @@ test("customer crops and processes a cover photo without losing draft details", 
   if (!originalCoverUrl) throw new Error("The processed cover photo was not saved to the draft.");
   await expectWebp(page, originalCoverUrl);
 
+  const portraitInputs = page.locator(".portrait-upload-card input[type=\"file\"]");
+  await expect(portraitInputs).toHaveCount(2);
+  await portraitInputs.nth(0).setInputFiles({ name: "bride.png", mimeType: "image/png", buffer: pngBuffer });
+  await expect(page.getByRole("dialog").getByRole("heading", { name: "Sesuaikan fotomu" })).toBeVisible();
+  await page.getByRole("button", { name: /Gunakan foto/ }).click();
+  await expect(page.locator(".portrait-upload-card").nth(0)).toContainText("Foto terpilih", { timeout: 45_000 });
+
+  await portraitInputs.nth(1).setInputFiles({ name: "groom.png", mimeType: "image/png", buffer: pngBuffer });
+  await expect(page.getByRole("dialog").getByRole("heading", { name: "Sesuaikan fotomu" })).toBeVisible();
+  await page.getByRole("button", { name: /Gunakan foto/ }).click();
+  await expect(page.locator(".portrait-upload-card").nth(1)).toContainText("Foto terpilih", { timeout: 45_000 });
+  await expect(page.locator(".editor-save-state")).toHaveText("Tersimpan otomatis", { timeout: 15_000 });
+
+  const portraitResponse = await page.request.get(`/api/invitations/drafts?id=${invitationId}`);
+  expect(portraitResponse.status()).toBe(200);
+  const portraitDraft = await portraitResponse.json() as { draft?: { hostOnePhoto?: string; hostTwoPhoto?: string } };
+  const groomPhotoUrl = portraitDraft.draft?.hostOnePhoto;
+  const bridePhotoUrl = portraitDraft.draft?.hostTwoPhoto;
+  expect(groomPhotoUrl).toMatch(/\/api\/media\/files\/invitations\//);
+  expect(bridePhotoUrl).toMatch(/\/api\/media\/files\/invitations\//);
+  expect(groomPhotoUrl).not.toBe(bridePhotoUrl);
+  expect(groomPhotoUrl).not.toBe(originalCoverUrl);
+  expect(bridePhotoUrl).not.toBe(originalCoverUrl);
+  if (!groomPhotoUrl || !bridePhotoUrl) throw new Error("Both individual portrait photos must be saved to the draft.");
+  await expectWebp(page, groomPhotoUrl);
+  await expectWebp(page, bridePhotoUrl);
+
   const savedCropResponse = await page.request.get(`/api/media/cover-edit?invitationId=${invitationId}`);
   expect(savedCropResponse.status()).toBe(200);
   const savedCrop = await savedCropResponse.json() as { cropData?: { zoom?: number; rotation?: number; cropOffset?: { x?: number; y?: number } } | null };

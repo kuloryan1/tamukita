@@ -211,7 +211,7 @@ export async function processMediaAsset(
 
   const assetMetadata = isRecord(asset.metadata) ? asset.metadata : {};
   const storage = getMediaObjectStore(asset.storageProvider, s3, config);
-  const mediaKind = assetMetadata.mediaKind === "gallery" || assetMetadata.mediaKind === "music" ? assetMetadata.mediaKind : "cover";
+  const mediaKind = assetMetadata.mediaKind === "gallery" || assetMetadata.mediaKind === "music" || assetMetadata.mediaKind === "portrait" ? assetMetadata.mediaKind : "cover";
   const variantKey = mediaKind;
   const maxBytes = mediaKind === "music" ? 10_000_000 : 5_000_000;
   if (!asset.invitationId || asset.sizeBytes < BigInt(1) || asset.sizeBytes > BigInt(maxBytes)) {
@@ -510,7 +510,7 @@ export async function failMediaProcessing(
   if (asset?.status !== "PROCESSING"
     || asset.processingStartedAt?.getTime() !== processingStartedAt.getTime()) return;
   const assetMetadata = isRecord(asset.metadata) ? asset.metadata : {};
-  const mediaKind = assetMetadata.mediaKind === "gallery" || assetMetadata.mediaKind === "music" ? assetMetadata.mediaKind : "cover";
+  const mediaKind = assetMetadata.mediaKind === "gallery" || assetMetadata.mediaKind === "music" || assetMetadata.mediaKind === "portrait" ? assetMetadata.mediaKind : "cover";
   const variantKey = mediaKind;
   const failed = await prisma.mediaAsset.updateMany({
     where: { id: asset.id, status: "PROCESSING", processingStartedAt },

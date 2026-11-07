@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { ensureTemplateVersion, eventStartsAt, invitationDraftSchema, invitationTitle, ownsInvitationCoverPhoto, ownsInvitationGalleryPhotos, ownsInvitationMusic } from "@/lib/invitation-server";
+import { ensureTemplateVersion, eventStartsAt, invitationDraftSchema, invitationTitle, ownsInvitationCoverPhoto, ownsInvitationGalleryPhotos, ownsInvitationMusic, ownsInvitationPortraitPhoto } from "@/lib/invitation-server";
 import { getPrismaClient } from "@/lib/prisma";
 import { readJsonBody } from "@/lib/request-json";
 import { validateInvitationDraft } from "@/lib/validation";
@@ -39,6 +39,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
   if (parsed.data.coverPhoto.startsWith("https://") && !await ownsInvitationCoverPhoto(userId, id, parsed.data.coverPhoto)) {
     return NextResponse.json({ error: "Foto sampul tidak dimiliki draft ini." }, { status: 400 });
+  }
+  if (!await ownsInvitationPortraitPhoto(userId, id, parsed.data.hostOnePhoto, "hostOnePhoto")
+    || !await ownsInvitationPortraitPhoto(userId, id, parsed.data.hostTwoPhoto, "hostTwoPhoto")) {
+    return NextResponse.json({ error: "Foto mempelai tidak dimiliki draft ini." }, { status: 400 });
   }
   if (!await ownsInvitationGalleryPhotos(userId, id, parsed.data.galleryPhotos)) {
     return NextResponse.json({ error: "Satu atau beberapa foto galeri tidak dimiliki draft ini." }, { status: 400 });

@@ -55,7 +55,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       expectedBytes = Number(metadata.cropSizeBytes);
     }
   } else {
-    if (asset.status !== "READY" || metadata.mediaKind === "gallery" || metadata.mediaKind === "music") {
+    if (asset.status !== "READY" || metadata.mediaKind === "gallery" || metadata.mediaKind === "music" || metadata.mediaKind === "portrait") {
       return NextResponse.json({ error: "Foto sampul ini tidak dapat diedit." }, { status: 409 });
     }
     key = `private/pending/${asset.organizationId}/${asset.invitationId}/${asset.id}/edits/${revisionKey}.webp`;

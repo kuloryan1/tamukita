@@ -16,6 +16,7 @@ const uploadSchema = z.object({
   sizeBytes: z.number().int().positive().max(5_000_000),
   cropContentType: z.enum(["image/png", "image/webp"]),
   cropSizeBytes: z.number().int().positive().max(5_000_000),
+  portraitSlot: z.enum(["hostOnePhoto", "hostTwoPhoto"]).optional(),
   cropData: z.object({
     x: z.number().min(0).max(40_000),
     y: z.number().min(0).max(40_000),
@@ -56,7 +57,7 @@ export async function POST(request: Request) {
   const assetId = randomUUID();
   const safeName = stripControlCharacters(parsed.data.originalName.split(/[\\/]/).pop() ?? "").slice(0, 255) || "foto";
   const storageKey = `originals/${invitation.organizationId}/${invitation.id}/${assetId}/source.${extensions[parsed.data.contentType]}`;
-  const cropKey = `private/pending/${invitation.organizationId}/${invitation.id}/${assetId}/cover.${cropExtensions[parsed.data.cropContentType]}`;
+  const cropKey = `private/pending/${invitation.organizationId}/${invitation.id}/${assetId}/${parsed.data.portraitSlot ?? "cover"}.${cropExtensions[parsed.data.cropContentType]}`;
   await prisma.mediaAsset.create({
     data: {
       id: assetId,
@@ -70,7 +71,12 @@ export async function POST(request: Request) {
       sizeBytes: BigInt(parsed.data.sizeBytes),
       status: "PENDING",
       visibility: "PRIVATE_SOURCE",
-      metadata: { cropKey, cropSizeBytes: parsed.data.cropSizeBytes, cropMimeType: parsed.data.cropContentType },
+      metadata: {
+        cropKey,
+        cropSizeBytes: parsed.data.cropSizeBytes,
+        cropMimeType: parsed.data.cropContentType,
+        ...(parsed.data.portraitSlot ? { mediaKind: "portrait", portraitSlot: parsed.data.portraitSlot } : {}),
+      },
       edits: { create: [{ revision: 1, editData: { ...parsed.data.cropData } }] },
     },
   });

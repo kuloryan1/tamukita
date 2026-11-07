@@ -38,7 +38,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   if (asset.status !== "READY") return NextResponse.json({ status: asset.status }, { status: 200, headers: { "Cache-Control": "private, no-store" } });
 
   const metadata = isRecord(asset.metadata) ? asset.metadata : {};
-  const variantKey = metadata.mediaKind === "gallery" || metadata.mediaKind === "music" ? metadata.mediaKind : "cover";
+  const variantKey = metadata.mediaKind === "gallery" || metadata.mediaKind === "music" || metadata.mediaKind === "portrait" ? metadata.mediaKind : "cover";
   const variant = await prisma.mediaVariant.findUnique({
     where: { mediaAssetId_variantKey: { mediaAssetId: id, variantKey } },
     select: { storageKey: true },
