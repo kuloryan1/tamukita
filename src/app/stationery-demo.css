@@ -118,7 +118,7 @@
 .stationery-demo .wordmark-initials { display: inline-flex; align-items: baseline; font-family: var(--font-display); font-size: 31px; font-weight: 500; line-height: 1; letter-spacing: -.065em; }
 .stationery-demo .wordmark-initials > span { margin: 0 5px; font-size: 19px; font-style: italic; font-weight: 400; color: var(--accent); }
 .stationery-demo .wordmark-label { display: block; padding-left: 17px; border-left: 1px solid color-mix(in srgb, var(--line) 70%, transparent); font-size: 8px; font-weight: 400; line-height: 1.7; letter-spacing: .15em; color: var(--muted); }
-.stationery-demo .header-actions { display: flex; align-items: center; gap: 28px; }
+.stationery-demo .header-actions { display: none; align-items: center; gap: 28px; }
 .stationery-demo .catalog-link { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; font-size: 11px; }
 .stationery-demo .catalog-link svg { color: var(--muted); }
 .stationery-demo .catalog-link:hover span { text-decoration: underline; text-underline-offset: 5px; }
@@ -287,7 +287,7 @@
 .stationery-demo .closing-date { display: block; color: var(--muted); font-size: 9px; letter-spacing: .14em; }
 .stationery-demo .closing-section .text-link { margin: 18px auto 0; font-size: 11px; }
 .stationery-demo .closing-botanical { position: absolute; bottom: 19px; left: 19px; width: 215px; height: auto; transform: rotate(-90deg); color: var(--accent); opacity: .42; }
-.stationery-demo .site-footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; width: 100%; max-width: 1060px; margin: 0 auto; padding: 7px 40px 116px; color: var(--muted); font-size: 10px; }
+.stationery-demo .site-footer { display: none; align-items: center; justify-content: space-between; gap: 20px; width: 100%; max-width: 1060px; margin: 0 auto; padding: 7px 40px 116px; color: var(--muted); font-size: 10px; }
 .stationery-demo .site-footer > a, .stationery-demo .site-footer > button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0; border: 0; background: transparent; font-size: 10px; }
 .stationery-demo .site-footer > a:hover, .stationery-demo .site-footer > button:hover { color: var(--ink); }
 .stationery-demo .bottom-nav { position: fixed; z-index: 20; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 330px; max-width: calc(100vw - 28px); min-height: 67px; padding: 6px 8px; transform: translateX(-50%); border: 1px solid color-mix(in srgb, var(--line) 65%, transparent); border-radius: 50px; background: color-mix(in srgb, var(--paper) 94%, transparent); box-shadow: 0 4px 25px #332d2012; backdrop-filter: blur(15px); }
