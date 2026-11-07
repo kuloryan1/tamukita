@@ -47,7 +47,8 @@ export function ReferenceInvitation({
   const dateString = draft.eventDate
     ? new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(new Date(`${draft.eventDate}T12:00:00+07:00`))
     : "Tanggal akan diumumkan";
-  const mapsUrl = safeHttpsUrl(draft.mapsUrl);
+  const mapQuery = [draft.venue, draft.address].filter(Boolean).join(", ");
+  const mapsUrl = safeHttpsUrl(draft.mapsUrl) || (mapQuery ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}` : "");
   const eventSchedule = (draft.eventSchedule ?? []).filter((item) => item.time.trim() && item.title.trim());
   const giftAccounts = invitationGiftAccounts(draft);
   if (isExample && preset.slug === "destinasi-cinta") {
@@ -139,7 +140,7 @@ export function ReferenceInvitation({
                       <span className="reference-kicker">TANDA KASIH</span>
                       <h2>Kehadiranmu adalah hadiah terindah</h2>
                       <p>{draft.giftMessage || "Jika berkenan, Anda dapat mengirimkan tanda kasih melalui rekening berikut."}</p>
-                      <div className="reference-gift-accounts">{giftAccounts.map((account) => <div className="reference-gift-account" key={account.id}><span>{account.bankName}</span><b>{account.accountName}</b><strong>{account.accountNumber}</strong><PublicInvitationGiftCopy accountNumber={account.accountNumber} /></div>)}</div>
+                      <div className="reference-gift-accounts">{giftAccounts.map((account) => <div className="reference-gift-account" key={account.id}><span className="reference-gift-recipient">{account.recipientLabel}</span><span>{account.bankName}</span><b>{account.accountName}</b><strong>{account.accountNumber}</strong><PublicInvitationGiftCopy accountNumber={account.accountNumber} /></div>)}</div>
                     </div>
                   </section>
                 )}

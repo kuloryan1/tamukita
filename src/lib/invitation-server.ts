@@ -22,6 +22,8 @@ export const invitationDraftSchema = z.object({
   eventTitle: z.string().trim().max(120),
   hostOne: z.string().trim().max(80),
   hostTwo: z.string().trim().max(80),
+  hostOneParents: z.string().trim().max(240).default(""),
+  hostTwoParents: z.string().trim().max(240).default(""),
   sealMonogram: z.string().trim().max(3).regex(SEAL_MONOGRAM_PATTERN).transform((value) => value.toUpperCase()).default(""),
   familyDetails: z.string().trim().max(600).default(""),
   eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {

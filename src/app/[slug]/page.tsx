@@ -47,6 +47,7 @@ const findPublished = cache(async (slug: string) => {
       title: true,
       publishedSnapshot: true,
       templateVersion: { select: { version: true, manifest: true, template: { select: { slug: true } } } },
+      paparazziAlbum: { select: { token: true, enabled: true, closesAt: true } },
       _count: { select: { rsvps: true } },
     },
   });
@@ -130,7 +131,9 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
       isTestableSample
       slug={slug}
       guestToken={guestLink ? candidateToken ?? undefined : undefined}
+      paparazziToken={record.paparazziAlbum?.token}
+      paparazziOpen={Boolean(record.paparazziAlbum?.enabled && record.paparazziAlbum.closesAt > new Date())}
     />;
   }
-  return <PublicInvitation slug={slug} initialDraft={record.draft} initialRsvpCount={record._count.rsvps} initialGuestbook={guestbook.map((entry) => ({ ...entry, createdAt: entry.createdAt.toISOString() }))} recipientName={guestLink?.guest.name} guestToken={guestLink ? candidateToken ?? undefined : undefined} featureAccess={record.featureAccess} templateSlug={record.template.slug} preview={<InvitationPreview draft={record.draft} full recipientName={guestLink?.guest.name} template={record.template} mode="public" />} />;
+  return <PublicInvitation slug={slug} initialDraft={record.draft} initialRsvpCount={record._count.rsvps} initialGuestbook={guestbook.map((entry) => ({ ...entry, createdAt: entry.createdAt.toISOString() }))} recipientName={guestLink?.guest.name} guestToken={guestLink ? candidateToken ?? undefined : undefined} paparazziToken={record.paparazziAlbum?.token} paparazziOpen={Boolean(record.paparazziAlbum?.enabled && record.paparazziAlbum.closesAt > new Date())} featureAccess={record.featureAccess} templateSlug={record.template.slug} preview={<InvitationPreview draft={record.draft} full recipientName={guestLink?.guest.name} template={record.template} mode="public" />} />;
 }

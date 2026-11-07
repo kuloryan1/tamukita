@@ -962,6 +962,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
             {step === 0 && <div className="form-step-content">
               <div className="editor-field"><span className="field-label">Jenis acara</span><div className="event-kind-grid">{EVENT_KINDS.map((kind) => <button key={kind} type="button" className={`event-kind-card${draft.eventKind === kind ? " is-selected" : ""}`} onClick={() => changeKind(kind)}><span className="event-kind-icon">{eventKindIcons[kind]}</span><span>{kind}</span>{draft.eventKind === kind && <CheckCircle2 size={14} />}</button>)}</div></div>
               {draft.eventKind === "Pernikahan" ? <div className="field-row">{identityFields.filter((field) => field.key === "hostOne" || field.key === "hostTwo").map(renderSchemaField)}</div> : identityFields.filter((field) => field.key === "eventTitle").map(renderSchemaField)}
+              {draft.eventKind === "Pernikahan" && <div className="field-row"><Field label={`Nama orang tua ${draft.hostOne || "mempelai pertama"}`} hint="Ditampilkan di bawah nama pada foto."><input className="text-input" maxLength={240} value={draft.hostOneParents ?? ""} onChange={(event) => update("hostOneParents", event.target.value)} placeholder="Contoh: Bapak Ali dan Ibu Sari" /></Field><Field label={`Nama orang tua ${draft.hostTwo || "mempelai kedua"}`} hint="Ditampilkan di bawah nama pada foto."><input className="text-input" maxLength={240} value={draft.hostTwoParents ?? ""} onChange={(event) => update("hostTwoParents", event.target.value)} placeholder="Contoh: Bapak Budi dan Ibu Rina" /></Field></div>}
               {activeTemplate.slug === "taman-abadi" && <Field label="Huruf pada segel amplop"><GardenMonogramControl value={draft.sealMonogram ?? ""} hostOne={draft.hostOne} hostTwo={draft.hostTwo} onChange={(value) => update("sealMonogram", value)} /></Field>}
               <Field label={familyPrompt.label} hint="Informasi ini akan ditampilkan di undangan publik."><textarea className="text-input text-area" maxLength={600} rows={2} value={draft.familyDetails} onChange={(event) => update("familyDetails", event.target.value)} placeholder={familyPrompt.placeholder} /></Field>
               {identityFields.filter((field) => field.key === "story").map(renderSchemaField)}
@@ -978,7 +979,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
                 <p>Isi satu atau dua rekening. Informasi ini akan tampil di undangan publik.</p>
                 <div className="editor-gift-account-grid">
                   <section className="editor-gift-account-card" aria-labelledby="gift-account-one-title">
-                    <h3 id="gift-account-one-title">Rekening pertama</h3>
+                    <h3 id="gift-account-one-title">{draft.eventKind === "Pernikahan" ? `Rekening mempelai laki-laki${draft.hostOne ? ` · ${draft.hostOne}` : ""}` : "Rekening pertama"}</h3>
                     <div className="schema-fields-grid">
                       <div className="schema-grid-item"><Field label="Nama bank"><input className="text-input" maxLength={80} value={draft.giftBankName} onChange={(event) => update("giftBankName", event.target.value)} placeholder="Contoh: BCA" /></Field></div>
                       <div className="schema-grid-item"><Field label="Nama pemilik rekening"><input className="text-input" maxLength={100} value={draft.giftAccountName} onChange={(event) => update("giftAccountName", event.target.value)} placeholder="Nama sesuai rekening" /></Field></div>
@@ -986,7 +987,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
                     </div>
                   </section>
                   <section className="editor-gift-account-card" aria-labelledby="gift-account-two-title">
-                    <h3 id="gift-account-two-title">Rekening kedua <span>Opsional</span></h3>
+                    <h3 id="gift-account-two-title">{draft.eventKind === "Pernikahan" ? `Rekening mempelai perempuan${draft.hostTwo ? ` · ${draft.hostTwo}` : ""}` : <>Rekening kedua <span>Opsional</span></>}</h3>
                     <div className="schema-fields-grid">
                       <div className="schema-grid-item"><Field label="Nama bank"><input className="text-input" maxLength={80} value={draft.giftBankName2} onChange={(event) => update("giftBankName2", event.target.value)} placeholder="Contoh: BNI" /></Field></div>
                       <div className="schema-grid-item"><Field label="Nama pemilik rekening"><input className="text-input" maxLength={100} value={draft.giftAccountName2} onChange={(event) => update("giftAccountName2", event.target.value)} placeholder="Nama sesuai rekening" /></Field></div>

@@ -189,14 +189,20 @@
 .stationery-demo .detail-link { display: inline-flex; align-items: center; justify-content: center; gap: 15px; min-height: 44px; margin-top: 25px; border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); color: var(--ink); font-size: 10px; letter-spacing: .09em; }
 .stationery-demo .detail-link:hover { color: var(--accent); border-color: var(--accent); }
 .stationery-demo .cover-photo-section { width: 100%; max-width: 780px; margin: 28px auto 0; }
-.stationery-demo .cover-photo-stage { isolation: isolate; position: relative; width: min(100%, 560px); aspect-ratio: 1; margin: 0 auto; }
+.stationery-demo .cover-photo-stage { isolation: isolate; position: relative; width: min(100%, 760px); aspect-ratio: 1; margin: 0 auto; }
 .stationery-demo .cover-photo-grid { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.stationery-demo .cover-photo-tile { position: relative; min-width: 0; margin: 0; }
-.stationery-demo .cover-photo-tile--host-two { grid-column: 2; grid-row: 1; }
+.stationery-demo .cover-photo-tile { position: relative; display: flex; align-items: center; gap: 12px; min-width: 0; margin: 0; }
+.stationery-demo .cover-photo-tile--host-two { grid-column: 2; grid-row: 1; flex-direction: row-reverse; }
 .stationery-demo .cover-photo-tile--host-one { grid-column: 1; grid-row: 2; }
+.stationery-demo .cover-photo-frame { position: relative; flex: 0 0 44%; min-width: 0; aspect-ratio: 1; }
 .stationery-demo .cover-photo-window { position: absolute; z-index: 0; top: 18.8%; left: 20%; width: 60%; height: 66.5%; overflow: hidden; border-radius: 50%; background: var(--paper); }
 .stationery-demo .cover-photo-image { display: block; width: 100%; height: 100%; object-fit: cover; transform: scale(2.8) translate(var(--portrait-offset-x, 0%), 20%); }
 .stationery-demo .cover-photo-ornament { position: absolute; z-index: 1; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; filter: drop-shadow(0 7px 8px #372e251e); }
+.stationery-demo .cover-photo-caption { position: relative; z-index: 2; flex: 1; min-width: 0; color: var(--ink); }
+.stationery-demo .cover-photo-caption h3 { margin: 0; font-family: var(--font-display); font-size: 21px; font-weight: 400; line-height: 1.15; overflow-wrap: anywhere; }
+.stationery-demo .cover-photo-parents { margin-top: 9px; }
+.stationery-demo .cover-photo-parents span { display: block; color: var(--muted); font-size: 8px; letter-spacing: .13em; line-height: 1.4; text-transform: uppercase; }
+.stationery-demo .cover-photo-parents p { margin: 4px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
 .stationery-demo .event-gallery-section { width: 100%; max-width: 900px; margin: 48px auto 4px; }
 .stationery-demo .event-gallery-heading { margin-bottom: 22px; text-align: center; }
 .stationery-demo .event-gallery-heading h2 { color: var(--ink); font-family: var(--font-display); font-size: 36px; font-weight: 400; line-height: 1.15; margin: 8px 0 0; }
@@ -220,18 +226,20 @@
 .stationery-demo .section-flourish { width: 82px; height: auto; margin: 20px auto 0; color: var(--accent); }
 .stationery-demo .event-section { border-top: 1px solid color-mix(in srgb, var(--line) 40%, transparent); }
 .stationery-demo .event-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
-.stationery-demo .event-rundown { margin: 42px auto 0; max-width: 620px; text-align: center; }
-.stationery-demo .event-rundown > .eyebrow { color: var(--muted); font-size: 9px; }
-.stationery-demo .event-rundown > h3 { color: var(--ink); font-family: var(--font-display); font-size: 36px; font-weight: 400; line-height: 1.1; margin: 8px 0 17px; }
-.stationery-demo .event-rundown > ol { list-style: none; margin: 0; padding: 0; position: relative; text-align: left; }
-.stationery-demo .event-rundown > ol::before { background: color-mix(in srgb, var(--line) 70%, transparent); bottom: 23px; content: ""; left: 93px; position: absolute; top: 23px; width: 1px; }
-.stationery-demo .event-rundown li { align-items: start; display: grid; gap: 26px; grid-template-columns: 68px minmax(0,1fr); padding: 13px 0; position: relative; }
-.stationery-demo .event-rundown li::before { background: var(--paper); border: 1px solid var(--accent); border-radius: 50%; content: ""; height: 8px; left: 89px; position: absolute; top: 21px; width: 8px; }
+.stationery-demo .event-rundown { margin: 42px auto 0; max-width: 620px; }
+.stationery-demo .event-rundown-heading { margin-bottom: 21px; text-align: center; }
+.stationery-demo .event-rundown-heading > .eyebrow { color: var(--muted); font-size: 9px; }
+.stationery-demo .event-rundown-heading h3 { color: var(--ink); font-family: var(--font-display); font-size: 36px; font-weight: 400; line-height: 1.1; margin: 8px 0 7px; }
+.stationery-demo .event-rundown-heading p { color: var(--muted); font-size: 11px; line-height: 1.6; margin: 0; }
+.stationery-demo .event-rundown > ol { display: grid; gap: 9px; list-style: none; margin: 0; padding: 0; position: relative; text-align: left; }
+.stationery-demo .event-rundown > ol::before { background: color-mix(in srgb, var(--line) 70%, transparent); bottom: 25px; content: ""; left: 93px; position: absolute; top: 25px; width: 1px; }
+.stationery-demo .event-rundown li { align-items: center; display: grid; gap: 14px; grid-template-columns: 64px 30px minmax(0,1fr); position: relative; }
 .stationery-demo .event-rundown time { color: var(--accent); font-family: var(--font-display); font-size: 17px; line-height: 1.2; text-align: right; }
-.stationery-demo .event-rundown time small { color: var(--muted); display: block; font-family: var(--font-sans); font-size: 8px; letter-spacing: .1em; margin-top: 3px; }
-.stationery-demo .event-rundown li > div { padding-left: 20px; }
+.stationery-demo .event-rundown time small { color: var(--muted); display: block; font-family: var(--font-sans); font-size: 9px; letter-spacing: .1em; margin-top: 3px; }
+.stationery-demo .event-rundown-index { align-items: center; background: var(--paper); border: 1px solid var(--accent); border-radius: 50%; color: var(--accent); display: flex; font-size: 9px; height: 28px; justify-content: center; position: relative; width: 28px; }
+.stationery-demo .event-rundown-content { background: color-mix(in srgb, var(--paper) 78%, transparent); border: 1px solid color-mix(in srgb, var(--line) 48%, transparent); min-height: 66px; padding: 12px 16px; }
 .stationery-demo .event-rundown li b { color: var(--ink); font-family: var(--font-display); font-size: 20px; font-weight: 500; line-height: 1.25; }
-.stationery-demo .event-rundown li p { color: var(--muted); font-size: 11px; line-height: 1.6; margin-top: 4px; }
+.stationery-demo .event-rundown li p { color: var(--muted); font-size: 11px; line-height: 1.6; margin: 4px 0 0; }
 .stationery-demo .event-card { display: flex; flex-direction: column; align-items: center; min-width: 0; min-height: 338px; padding: 32px 28px 31px; border: 1px solid color-mix(in srgb, var(--line) 45%, transparent); background: color-mix(in srgb, var(--paper) 75%, transparent); text-align: center; }
 .stationery-demo .event-card > svg { margin-bottom: 16px; color: var(--accent); }
 .stationery-demo .event-card > .eyebrow { font-size: 9px; }
@@ -252,10 +260,21 @@
 .stationery-demo .gift-message { color: var(--muted); font-size: 12px; line-height: 1.75; margin: -14px auto 22px; max-width: 430px; }
 .stationery-demo .gift-account-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0 auto; max-width: 700px; }
 .stationery-demo .gift-account-card { align-items: center; background: color-mix(in srgb, var(--paper) 78%, transparent); border: 1px solid color-mix(in srgb, var(--line) 50%, transparent); display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 22px 16px; }
+.stationery-demo .gift-account-recipient { color: var(--muted); font-size: 10px; font-weight: 600; letter-spacing: .04em; line-height: 1.4; overflow-wrap: anywhere; text-transform: uppercase; }
 .stationery-demo .gift-account-card > .eyebrow { overflow-wrap: anywhere; }
 .stationery-demo .gift-account-card > b { color: var(--ink); font-family: var(--font-display); font-size: 19px; font-weight: 500; line-height: 1.2; overflow-wrap: anywhere; }
 .stationery-demo .gift-account-card > strong { color: var(--accent); font-size: 16px; letter-spacing: .07em; overflow-wrap: anywhere; }
 .stationery-demo .gift-account-card .button { margin-top: 3px; }
+.stationery-demo .invitation-paparazzi { background: transparent; border-top: 1px solid color-mix(in srgb, var(--line) 40%, transparent); margin: 45px 0 0; }
+.stationery-demo .invitation-paparazzi-inner { color: var(--ink); }
+.stationery-demo .invitation-paparazzi-qr { background: color-mix(in srgb, var(--paper) 82%, transparent); border-color: color-mix(in srgb, var(--line) 62%, transparent); }
+.stationery-demo .invitation-paparazzi-copy > .eyebrow { color: var(--muted); }
+.stationery-demo .invitation-paparazzi-copy h2 { color: var(--ink); font-family: var(--font-display); }
+.stationery-demo .invitation-paparazzi-copy h2 em { color: var(--accent); }
+.stationery-demo .invitation-paparazzi-copy > p { color: var(--muted); }
+.stationery-demo .invitation-paparazzi-status { color: var(--muted); }
+.stationery-demo .invitation-paparazzi-status.is-open { color: var(--accent); }
+.stationery-demo .invitation-paparazzi-copy > a { border-color: color-mix(in srgb, var(--line) 65%, transparent); color: var(--ink); }
 
 .stationery-demo .closing-section { width: 100%; max-width: 900px; margin: 47px auto 0; padding: 54px 48px 51px; overflow: hidden; text-align: center; }
 .stationery-demo .closing-section::after { content: ""; position: absolute; z-index: 0; inset: 15px; border: .7px solid color-mix(in srgb, var(--line) 65%, transparent); pointer-events: none; }
@@ -400,6 +419,13 @@
   .stationery-demo .opened-invitation { padding: 26px 18px 25px; }
   .stationery-demo .invitation-hero { padding: 37px 30px 39px; }
   .stationery-demo .cover-photo-section { margin-top: 20px; }
+  .stationery-demo .cover-photo-grid { gap: 8px; }
+  .stationery-demo .cover-photo-tile { gap: 5px; }
+  .stationery-demo .cover-photo-frame { flex-basis: 43%; }
+  .stationery-demo .cover-photo-caption h3 { font-size: 15px; line-height: 1.15; }
+  .stationery-demo .cover-photo-parents { margin-top: 6px; }
+  .stationery-demo .cover-photo-parents span { font-size: 8px; letter-spacing: .1em; }
+  .stationery-demo .cover-photo-parents p { margin-top: 3px; font-size: 10px; line-height: 1.35; }
   .stationery-demo .event-gallery-section { margin-top: 36px; }
   .stationery-demo .event-gallery-heading h2 { font-size: 30px; }
   .stationery-demo .event-gallery-grid { gap: 8px; }
@@ -430,12 +456,14 @@
   .stationery-demo .section-flourish { width: 75px; margin-top: 17px; }
   .stationery-demo .event-grid { grid-template-columns: minmax(0, 1fr); gap: 17px; }
   .stationery-demo .event-rundown { margin-top: 36px; }
-  .stationery-demo .event-rundown > h3 { font-size: 33px; }
-  .stationery-demo .event-rundown > ol::before { left: 77px; }
-  .stationery-demo .event-rundown li { gap: 22px; grid-template-columns: 53px minmax(0,1fr); }
-  .stationery-demo .event-rundown li::before { left: 73px; }
-  .stationery-demo .event-rundown li > div { padding-left: 12px; }
+  .stationery-demo .event-rundown-heading h3 { font-size: 33px; }
+  .stationery-demo .event-rundown > ol { gap: 8px; }
+  .stationery-demo .event-rundown > ol::before { left: 69px; }
+  .stationery-demo .event-rundown li { gap: 9px; grid-template-columns: 48px 26px minmax(0,1fr); }
+  .stationery-demo .event-rundown-index { font-size: 8px; height: 25px; width: 25px; }
+  .stationery-demo .event-rundown-content { min-height: 62px; padding: 11px 12px; }
   .stationery-demo .event-rundown li b { font-size: 19px; }
+  .stationery-demo .event-rundown li p { font-size: 11px; }
   .stationery-demo .event-card { min-height: 326px; padding: 29px 25px; }
   .stationery-demo .event-card > .eyebrow { font-size: 10px; }
   .stationery-demo .event-card > svg { margin-bottom: 14px; }
