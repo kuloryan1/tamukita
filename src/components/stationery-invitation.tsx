@@ -6,6 +6,7 @@ import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, Check, Cl
 import { BotanicalCorner, BotanicalWreath, SatinBow, TinyFlourish } from "@/components/stationery-ornaments";
 import { RSVP } from "@/components/stationery-demo-rsvp";
 import { PublicInvitationGiftCopy } from "@/components/public-invitation-actions";
+import { InvitationPaparazzi } from "@/components/invitation-paparazzi";
 import { invitationGiftAccounts, safeHttpsUrl, type InvitationDraft } from "@/lib/invitations";
 import { templates, WEDDING, type WeddingTemplate } from "@/lib/stationery-demo";
 import { MAX_RECIPIENT_LENGTH, normalizeRecipient } from "@/lib/stationery-recipient";
@@ -59,12 +60,14 @@ function ShareDialog({ dialogRef, recipient, basePath }: { dialogRef: RefObject<
   </dialog>;
 }
 
-export function StationeryInvitation({ template, recipient, isTestableSample = false, slug, guestToken, draft }: {
+export function StationeryInvitation({ template, recipient, isTestableSample = false, slug, guestToken, paparazziToken, paparazziOpen = false, draft }: {
   template: WeddingTemplate;
   recipient: string;
   isTestableSample?: boolean;
   slug?: string;
   guestToken?: string;
+  paparazziToken?: string;
+  paparazziOpen?: boolean;
   draft?: InvitationDraft;
 }) {
   const [opened, setOpened] = useState(false);
@@ -104,29 +107,35 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   const recipientQuery = guest === "Anda" ? "" : `?to=${encodeURIComponent(guest)}`;
   const catalogUrl = `/templates${recipientQuery}`;
   const style = { "--paper": template.paper, "--ink": template.ink, "--muted": template.muted, "--accent": template.accent, "--line": template.line, "--scene": template.background } as CSSProperties;
-  const framedPortrait = (name: string, position: string, placement: string, horizontalOffset: string) => (
+  const framedPortrait = (name: string, parents: string, position: string, placement: string, horizontalOffset: string) => (
     <figure className={`cover-photo-tile ${placement}`} aria-label={`Potret ${name}`}>
-      <div className="cover-photo-window">
+      <div className="cover-photo-frame">
+        <div className="cover-photo-window">
+          <Image
+            className="cover-photo-image"
+            src={draft?.coverPhoto ?? ""}
+            alt={`Potret ${name}`}
+            width={1600}
+            height={1000}
+            sizes="(max-width: 720px) 35vw, 220px"
+            unoptimized
+            style={{ objectPosition: position, "--portrait-offset-x": horizontalOffset } as CSSProperties}
+          />
+        </div>
         <Image
-          className="cover-photo-image"
-          src={draft?.coverPhoto ?? ""}
-          alt={`Potret ${name}`}
-          width={1600}
-          height={1000}
-          sizes="(max-width: 720px) 48vw, 280px"
-          unoptimized
-          style={{ objectPosition: position, "--portrait-offset-x": horizontalOffset } as CSSProperties}
+          className="cover-photo-ornament"
+          src="/images/frames/rococo-silver-oval-v2.png"
+          alt=""
+          aria-hidden="true"
+          width={1254}
+          height={1254}
+          sizes="(max-width: 720px) 35vw, 220px"
         />
       </div>
-      <Image
-        className="cover-photo-ornament"
-        src="/images/frames/rococo-silver-oval-v2.png"
-        alt=""
-        aria-hidden="true"
-        width={1254}
-        height={1254}
-        sizes="(max-width: 720px) 48vw, 280px"
-      />
+      <figcaption className="cover-photo-caption">
+        <h3>{name}</h3>
+        {parents.trim() && <div className="cover-photo-parents"><span>Nama orang tua</span><p>{parents}</p></div>}
+      </figcaption>
     </figure>
   );
 
@@ -207,8 +216,8 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
           <section className="cover-photo-section" aria-label={`Foto ${hostOne} dan ${hostTwo}`}>
             <div className="cover-photo-stage">
               <div className="cover-photo-grid">
-                {framedPortrait(hostTwo, hostTwoCoverPhotoPosition, "cover-photo-tile--host-two", "-12%")}
-                {framedPortrait(hostOne, hostOneCoverPhotoPosition, "cover-photo-tile--host-one", "12%")}
+                {framedPortrait(hostTwo, draft?.hostTwoParents ?? "", hostTwoCoverPhotoPosition, "cover-photo-tile--host-two", "-16%")}
+                {framedPortrait(hostOne, draft?.hostOneParents ?? "", hostOneCoverPhotoPosition, "cover-photo-tile--host-one", "12%")}
               </div>
             </div>
           </section>
@@ -220,12 +229,13 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
             <article className="event-card"><CalendarDays size={25} strokeWidth={1.1} /><span className="eyebrow">HARI & TANGGAL</span><div className="date-composition"><span className="date-weekday">{dateHeading.weekday}</span><strong>{dateHeading.day}</strong><span className="date-month">{dateHeading.month}<br />{dateHeading.year}</span></div><p className="event-time"><Clock3 size={15} />{eventTimeLabel}</p><a className="button secondary" href="/api/templates/demo/calendar" download="Ryan-Dwi-21-November-2026.ics">Simpan ke kalender <ArrowDown size={15} /></a></article>
             <article className="event-card venue-card"><MapPin size={25} strokeWidth={1.1} /><span className="eyebrow">LOKASI ACARA</span><h3>{venue}</h3><p>{city}</p><div className="venue-rule"><span /><Heart size={14} strokeWidth={1} /><span /></div><a className="button secondary" href={mapUrl} target="_blank" rel="noopener noreferrer">Buka peta <ArrowUpRight size={16} /></a></article>
           </div>
-          {eventSchedule.length > 0 && <section className="event-rundown" aria-labelledby="event-rundown-title"><span className="eyebrow">RANGKAIAN ACARA</span><h3 id="event-rundown-title">Rundown acara</h3><ol>{eventSchedule.filter((item) => item.time.trim() && item.title.trim()).map((item) => <li key={item.id}><time dateTime={item.time}>{item.time}<small>WIB</small></time><div><b>{item.title}</b>{item.description && <p>{item.description}</p>}</div></li>)}</ol></section>}
+          {eventSchedule.length > 0 && <section className="event-rundown" aria-labelledby="event-rundown-title"><div className="event-rundown-heading"><span className="eyebrow">RANGKAIAN ACARA</span><h3 id="event-rundown-title">Rundown acara</h3><p>Setiap momen istimewa telah kami siapkan.</p></div><ol>{eventSchedule.filter((item) => item.time.trim() && item.title.trim()).map((item, index) => <li key={item.id}><time dateTime={item.time}>{item.time}<small>WIB</small></time><span className="event-rundown-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><div className="event-rundown-content"><b>{item.title}</b>{item.description && <p>{item.description}</p>}</div></li>)}</ol></section>}
           <a className="text-link rsvp-jump" href="#konfirmasi">Konfirmasi kehadiran <ArrowDown size={15} /></a>
         </section>
+        {paparazziToken && <InvitationPaparazzi token={paparazziToken} isOpen={paparazziOpen} />}
         {galleryPhotos.length > 0 && <section className="event-gallery-section" aria-label={`Galeri foto ${hostOne} dan ${hostTwo}`}><div className="event-gallery-heading"><span className="eyebrow">POTONGAN CERITA</span><h2>Momen yang ingin <em>kami kenang.</em></h2></div><div className="event-gallery-grid">{galleryPhotos.slice(0, 6).map((photo, index) => <figure key={photo}><Image src={photo} alt={`Foto ${index + 1} ${hostOne} dan ${hostTwo}`} width={640} height={480} sizes="(max-width: 720px) 50vw, 33vw" unoptimized /></figure>)}</div></section>}
         <RSVP template={template} recipient={guest} isTestableSample={isTestableSample} slug={slug} guestToken={guestToken} />
-        {giftAccounts.length > 0 && <section className="gift-section content-section" id="hadiah" aria-labelledby="gift-title"><div className="section-heading"><Gift size={20} strokeWidth={1.2} /><span className="eyebrow">TANDA KASIH</span><h2 id="gift-title">Kehadiranmu adalah<br /><em>hadiah terindah.</em></h2></div><p className="gift-message">{giftMessage}</p><div className="gift-account-grid">{giftAccounts.map((account) => <article className="gift-account-card" key={account.id}><span className="eyebrow">{account.bankName}</span><b>{account.accountName}</b><strong>{account.accountNumber}</strong><PublicInvitationGiftCopy accountNumber={account.accountNumber} /></article>)}</div></section>}
+        {giftAccounts.length > 0 && <section className="gift-section content-section" id="hadiah" aria-labelledby="gift-title"><div className="section-heading"><Gift size={20} strokeWidth={1.2} /><span className="eyebrow">TANDA KASIH</span><h2 id="gift-title">Kehadiranmu adalah<br /><em>hadiah terindah.</em></h2></div><p className="gift-message">{giftMessage}</p><div className="gift-account-grid">{giftAccounts.map((account) => <article className="gift-account-card" key={account.id}><span className="gift-account-recipient">{account.recipientLabel}</span><span className="eyebrow">{account.bankName}</span><b>{account.accountName}</b><strong>{account.accountNumber}</strong><PublicInvitationGiftCopy accountNumber={account.accountNumber} /></article>)}</div></section>}
         <section className="closing-section paper"><BotanicalCorner className="closing-botanical" variant={template.ornament} /><TinyFlourish className="section-flourish" /><span className="eyebrow">DENGAN PENUH SUKACITA</span><h2>Hari istimewa ini,<br />lebih indah bersama <em>Anda.</em></h2><p>{intro}</p><div className="closing-names">{hostOne.split(" ")[0]} <em>&</em> {hostTwo.split(" ")[0]}</div><span className="closing-date">{dateLabel.toLocaleUpperCase("id-ID")}</span><button type="button" className="text-link" onClick={() => dialogRef.current?.showModal()}>Bagikan undangan <Share2 size={14} /></button></section>
       </main>
       <footer className="site-footer"><a href={catalogUrl}><ArrowLeft size={14} />Koleksi template</a><span>{template.name} · {hostOne} & {hostTwo}</span><button type="button" onClick={reopenCover}><RotateCcw size={13} />Lihat sampul</button></footer>

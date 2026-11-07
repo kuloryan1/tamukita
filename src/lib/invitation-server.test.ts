@@ -35,12 +35,15 @@ test("does not create a self-service draft in a reseller workspace", async () =>
   expect(prismaMock.membership.findFirst.mock.calls[0]?.[0]?.where.organization).toEqual({ type: "PERSONAL", status: "ACTIVE" });
 });
 
-test("preserves and canonicalizes the seal monogram through the draft API payload and published snapshot", () => {
+test("preserves host parent names and canonicalizes the seal monogram through save and publish", () => {
   const apiSchema = invitationDraftSchema.omit({ id: true, updatedAt: true, publishedAt: true, isPublished: true, qaFixture: true });
-  const saved = apiSchema.parse({ ...createInitialDraft(), sealMonogram: " nr " });
+  const saved = apiSchema.parse({ ...createInitialDraft(), sealMonogram: " nr ", hostOneParents: " Bapak Ali dan Ibu Sari " });
   expect(saved.sealMonogram).toBe("NR");
+  expect(saved.hostOneParents).toBe("Bapak Ali dan Ibu Sari");
+  expect(saved.hostTwoParents).toBe("");
   const published = JSON.parse(JSON.stringify({ ...saved, id: "73ea210e-c986-4e31-8b44-603812b5b1ac" }));
   expect(parseInvitationDraft(published)?.sealMonogram).toBe("NR");
+  expect(parseInvitationDraft(published)?.hostOneParents).toBe("Bapak Ali dan Ibu Sari");
 });
 
 test("keeps older snapshots compatible with automatic initials and rejects unsupported seal letters", () => {

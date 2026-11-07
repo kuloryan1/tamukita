@@ -21,6 +21,7 @@ export type InvitationEventScheduleItem = {
 
 export type InvitationGiftAccount = {
   id: "first" | "second";
+  recipientLabel: string;
   bankName: string;
   accountName: string;
   accountNumber: string;
@@ -57,6 +58,8 @@ export type InvitationDraft = {
   eventTitle: string;
   hostOne: string;
   hostTwo: string;
+  hostOneParents?: string;
+  hostTwoParents?: string;
   sealMonogram?: string;
   familyDetails: string;
   eventDate: string;
@@ -135,6 +138,8 @@ export function createInitialDraft(): InvitationDraft {
     eventTitle: "Undangan Pernikahan",
     hostOne: "Ryan",
     hostTwo: "Wulan",
+    hostOneParents: "",
+    hostTwoParents: "",
     sealMonogram: "",
     familyDetails: "",
     eventDate: "2027-05-22",
@@ -167,10 +172,13 @@ export function createInitialDraft(): InvitationDraft {
   };
 }
 
-export function invitationGiftAccounts(draft: Pick<InvitationDraft, "giftBankName" | "giftAccountName" | "giftAccountNumber" | "giftBankName2" | "giftAccountName2" | "giftAccountNumber2">): InvitationGiftAccount[] {
+export function invitationGiftAccounts(draft: Pick<InvitationDraft, "eventKind" | "hostOne" | "hostTwo" | "giftBankName" | "giftAccountName" | "giftAccountNumber" | "giftBankName2" | "giftAccountName2" | "giftAccountNumber2">): InvitationGiftAccount[] {
+  const recipientLabels = draft.eventKind === "Pernikahan"
+    ? [`Mempelai laki-laki${draft.hostOne ? ` · ${draft.hostOne}` : ""}`, `Mempelai perempuan${draft.hostTwo ? ` · ${draft.hostTwo}` : ""}`]
+    : ["Penerima utama", "Penerima kedua"];
   const accounts: InvitationGiftAccount[] = [
-    { id: "first", bankName: draft.giftBankName, accountName: draft.giftAccountName, accountNumber: draft.giftAccountNumber },
-    { id: "second", bankName: draft.giftBankName2, accountName: draft.giftAccountName2, accountNumber: draft.giftAccountNumber2 },
+    { id: "first", recipientLabel: recipientLabels[0], bankName: draft.giftBankName, accountName: draft.giftAccountName, accountNumber: draft.giftAccountNumber },
+    { id: "second", recipientLabel: recipientLabels[1], bankName: draft.giftBankName2, accountName: draft.giftAccountName2, accountNumber: draft.giftAccountNumber2 },
   ];
   return accounts.filter((account) => account.bankName.trim() && account.accountName.trim() && account.accountNumber.trim());
 }
