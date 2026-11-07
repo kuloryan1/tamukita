@@ -16,10 +16,10 @@ function dateLabel(date: Date) {
   return new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(date);
 }
 
-async function getWorkspaceInvitations(userId: string) {
+async function getWorkspaceInvitations(userId: string, includeAdminSamples: boolean) {
   const prisma = getPrismaClient();
   const invitationScope = { ownerId: userId, deletedAt: null, organization: { status: "ACTIVE" as const } };
-  const adminSamples = await prisma.invitation.findMany({
+  const adminSamples = includeAdminSamples ? [] : await prisma.invitation.findMany({
     where: {
       ...invitationScope,
       publishedSnapshot: { path: ["publicationMode"], equals: ADMIN_SAMPLE_PUBLICATION_MODE },
@@ -28,7 +28,7 @@ async function getWorkspaceInvitations(userId: string) {
   });
 
   return prisma.invitation.findMany({
-    where: { ...invitationScope, id: { notIn: adminSamples.map(({ id }) => id) } },
+    where: { ...invitationScope, ...(!includeAdminSamples ? { id: { notIn: adminSamples.map(({ id }) => id) } } : {}) },
     orderBy: { updatedAt: "desc" },
     take: 6,
     include: {
@@ -52,7 +52,7 @@ export default async function DashboardPage() {
   const organizationIds = memberships.map((membership) => membership.organizationId);
   const personalOrganizationIds = memberships.filter((membership) => membership.organization.type === "PERSONAL").map((membership) => membership.organizationId);
   const [invitations, analytics, resellerRequests] = await Promise.all([
-    getWorkspaceInvitations(userId),
+    getWorkspaceInvitations(userId, platformUser?.platformRole === "SUPER_ADMIN"),
     organizationIds.length
       ? prisma.analyticsDaily.aggregate({ where: { organizationId: { in: organizationIds }, metricKey: "invitation_views" }, _sum: { metricValue: true } })
       : Promise.resolve({ _sum: { metricValue: null } }),
