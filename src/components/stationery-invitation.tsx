@@ -91,7 +91,10 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   const intro = draft?.story || WEDDING.intro;
   const eventSchedule = draft?.eventSchedule ?? WEDDING.eventSchedule;
   const galleryPhotos = draft?.galleryPhotos ?? [];
-  const coverPhotoPosition = `${draft?.coverPositionX ?? 50}% ${draft?.coverPosition ?? 50}%`;
+  const coverPositionX = draft?.coverPositionX ?? 50;
+  const coverPositionY = draft?.coverPosition ?? 50;
+  const hostOneCoverPhotoPosition = `${Math.max(0, coverPositionX - 35)}% ${coverPositionY}%`;
+  const hostTwoCoverPhotoPosition = `${Math.min(100, coverPositionX + 35)}% ${coverPositionY}%`;
   const giftAccounts = draft ? invitationGiftAccounts(draft) : [];
   const giftMessage = draft?.giftMessage || "Jika berkenan, Anda dapat mengirimkan tanda kasih melalui rekening berikut.";
   const mapQuery = [venue, city].filter(Boolean).join(", ");
@@ -101,6 +104,31 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   const recipientQuery = guest === "Anda" ? "" : `?to=${encodeURIComponent(guest)}`;
   const catalogUrl = `/templates${recipientQuery}`;
   const style = { "--paper": template.paper, "--ink": template.ink, "--muted": template.muted, "--accent": template.accent, "--line": template.line, "--scene": template.background } as CSSProperties;
+  const framedPortrait = (name: string, position: string, placement: string) => (
+    <figure className={`cover-photo-tile ${placement}`} aria-label={`Potret ${name}`}>
+      <div className="cover-photo-window">
+        <Image
+          className="cover-photo-image"
+          src={draft?.coverPhoto ?? ""}
+          alt={`Potret ${name}`}
+          width={1600}
+          height={1000}
+          sizes="(max-width: 720px) 48vw, 280px"
+          unoptimized
+          style={{ objectPosition: position }}
+        />
+      </div>
+      <Image
+        className="cover-photo-ornament"
+        src="/images/frames/rococo-silver-oval-v2.png"
+        alt=""
+        aria-hidden="true"
+        width={1254}
+        height={1254}
+        sizes="(max-width: 720px) 48vw, 280px"
+      />
+    </figure>
+  );
 
   useEffect(() => {
     let scrollTimer: number | null = null;
@@ -178,27 +206,10 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
         {draft?.coverPhoto && (
           <section className="cover-photo-section" aria-label={`Foto ${hostOne} dan ${hostTwo}`}>
             <div className="cover-photo-stage">
-              <div className="cover-photo-window">
-                <Image
-                  className="cover-photo-image"
-                  src={draft.coverPhoto}
-                  alt={`Momen ${hostOne} dan ${hostTwo}`}
-                  width={1600}
-                  height={1000}
-                  sizes="(max-width: 720px) 50vw, 336px"
-                  unoptimized
-                  style={{ objectPosition: coverPhotoPosition }}
-                />
+              <div className="cover-photo-grid">
+                {framedPortrait(hostTwo, hostTwoCoverPhotoPosition, "cover-photo-tile--host-two")}
+                {framedPortrait(hostOne, hostOneCoverPhotoPosition, "cover-photo-tile--host-one")}
               </div>
-              <Image
-                className="cover-photo-ornament"
-                src="/images/frames/rococo-silver-oval-v2.png"
-                alt=""
-                aria-hidden="true"
-                width={1254}
-                height={1254}
-                sizes="(max-width: 720px) 100vw, 680px"
-              />
             </div>
           </section>
         )}
