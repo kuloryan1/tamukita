@@ -7,11 +7,15 @@ import { getTemplate } from "@/lib/templates";
 import { StationeryInvitation } from "@/components/stationery-invitation";
 import { getTemplate as getStationeryTemplate } from "@/lib/stationery-demo";
 import { normalizeRecipient } from "@/lib/stationery-recipient";
+import { isTemplateListed } from "@/lib/template-visibility";
 
-export const metadata: Metadata = {
-  title: "Taman Abadi — Contoh Undangan",
-  description: "Lihat contoh lengkap undangan Taman Abadi, dari sampul amplop hingga konfirmasi kehadiran.",
-};
+export function generateMetadata(): Metadata {
+  if (!isTemplateListed("taman-abadi")) notFound();
+  return {
+    title: "Taman Abadi — Contoh Undangan",
+    description: "Lihat contoh lengkap undangan Taman Abadi, dari sampul amplop hingga konfirmasi kehadiran.",
+  };
+}
 
 type TamanAbadiDemoPageProps = {
   searchParams: Promise<{
@@ -28,6 +32,7 @@ function demoName(value: string | string[] | undefined, fallback: string) {
 }
 
 export default async function TamanAbadiDemoPage({ searchParams }: TamanAbadiDemoPageProps) {
+  if (!isTemplateListed("taman-abadi")) notFound();
   const query = await searchParams;
   const template = getTemplate("taman-abadi");
   if (!template) notFound();

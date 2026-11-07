@@ -8,8 +8,10 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { InvitationPreview } from "@/components/invitation-preview";
 import { createDemoDraft } from "@/lib/invitations";
+import { createElegantCreamDemoDraft } from "@/lib/elegant-cream-demo";
 import { formatRupiah, getTemplate } from "@/lib/templates";
-import { getPublishedTemplateCatalog } from "@/lib/template-catalog";
+import { getListedTemplateCatalog } from "@/lib/template-catalog";
+import { isTemplateListed } from "@/lib/template-visibility";
 import { recordPlatformMetric } from "@/lib/platform-analytics";
 import { normalizeRecipient } from "@/lib/stationery-recipient";
 
@@ -17,13 +19,13 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const template = getTemplate(slug);
+  const template = isTemplateListed(slug) ? getTemplate(slug) : undefined;
   return { title: template ? `${template.name} — Template Undangan` : "Template tidak ditemukan" };
 }
 
 export default async function TemplateDetailPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ to?: string | string[] }> }) {
   const { slug } = await params;
-  const catalog = await getPublishedTemplateCatalog();
+  const catalog = await getListedTemplateCatalog();
   const template = catalog.find((candidate) => candidate.slug === slug);
   if (!template) notFound();
   const createInvitationPath = `/dashboard/invitations/new/edit?new=1&template=${encodeURIComponent(template.slug)}`;
@@ -34,7 +36,7 @@ export default async function TemplateDetailPage({ params, searchParams }: { par
   const useTemplateHref = (await auth())?.user?.id
     ? createInvitationPath
     : `/login?callbackUrl=${encodeURIComponent(createInvitationPath)}`;
-  const demoDraft = {
+  const demoDraft = template.slug === "elegant-cream" ? createElegantCreamDemoDraft(template.version) : {
     ...createDemoDraft(),
     templateId: template.slug,
     templateVersion: template.version,
@@ -86,7 +88,7 @@ export default async function TemplateDetailPage({ params, searchParams }: { par
             <div className="detail-demo-heading">
               <span className="eyebrow">DEMO AMAN DICOBA</span>
               <h2 id="template-demo-title">Lihat seperti tamu melihat undangan</h2>
-              <p>Contoh ini memakai nama Ryan Pratam &amp; Dwi Wulan Maulida. Coba sampul, detail acara, kalender, dan konfirmasi kehadiran. Jawaban percobaan disimpan hanya di tab browser ini dan tidak dikirim kepada mempelai.</p>
+              <p>Contoh ini memakai nama {demoDraft.hostOne} &amp; {demoDraft.hostTwo}. Coba sampul, detail acara, kalender, dan konfirmasi kehadiran. Jawaban percobaan disimpan hanya di tab browser ini dan tidak dikirim kepada mempelai.</p>
             </div>
             <div className="detail-demo-preview detail-demo-cta">
               <Link href={demoHref} className="button button--dark">Buka demo {template.name} <ArrowRight size={15} /></Link>

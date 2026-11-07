@@ -133,6 +133,7 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
       guestToken={guestLink ? candidateToken ?? undefined : undefined}
       paparazziToken={record.paparazziAlbum?.token}
       paparazziOpen={Boolean(record.paparazziAlbum?.enabled && record.paparazziAlbum.closesAt > new Date())}
+      calendarHref={record.template.slug === "elegant-cream" ? "/api/templates/demo/calendar?template=elegant-cream" : "/api/templates/demo/calendar"}
     />;
   }
   return <PublicInvitation slug={slug} initialDraft={record.draft} initialRsvpCount={record._count.rsvps} initialGuestbook={guestbook.map((entry) => ({ ...entry, createdAt: entry.createdAt.toISOString() }))} recipientName={guestLink?.guest.name} guestToken={guestLink ? candidateToken ?? undefined : undefined} paparazziToken={record.paparazziAlbum?.token} paparazziOpen={Boolean(record.paparazziAlbum?.enabled && record.paparazziAlbum.closesAt > new Date())} featureAccess={record.featureAccess} templateSlug={record.template.slug} preview={<InvitationPreview draft={record.draft} full recipientName={guestLink?.guest.name} template={record.template} mode="public" />} />;

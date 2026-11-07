@@ -9,6 +9,7 @@ import { ADULT_ATTESTATION_VERSION } from "@/lib/consent-versions";
 import { allowRequest, getRequestAddress } from "@/lib/rate-limit";
 import { readJsonBody } from "@/lib/request-json";
 import { getSafePostLoginPath } from "@/lib/auth-redirect";
+import { isCustomerRegistrationOpen } from "@/lib/registration-policy";
 
 const registrationSchema = z.object({
   name: z.string().trim().min(2).max(80),
@@ -25,6 +26,9 @@ function workspaceSlug(name: string, id: string) {
 }
 
 export async function POST(request: Request) {
+  if (!isCustomerRegistrationOpen(process.env.NEXT_PUBLIC_APP_URL)) {
+    return NextResponse.json({ error: "Pendaftaran akun baru sedang ditutup." }, { status: 410 });
+  }
   const body = await readJsonBody(request, 16_000);
   if (!body.ok) return NextResponse.json({ error: "Isi formulir pendaftaran tidak valid." }, { status: body.status });
 

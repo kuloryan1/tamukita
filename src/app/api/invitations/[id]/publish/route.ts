@@ -16,6 +16,7 @@ import { readJsonBody } from "@/lib/request-json";
 import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
 import { resolveInvitationFeatureAccess, validateDraftFeatureAccess } from "@/lib/invitation-features";
 import { ADMIN_SAMPLE_PUBLICATION_MODE, isAdminSampleSnapshot } from "@/lib/invitation-publication";
+import { isTemplateListed } from "@/lib/template-visibility";
 
 export const runtime = "nodejs";
 
@@ -61,7 +62,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       status: { in: ["DRAFT", "PUBLISHED"] },
       organization: { status: "ACTIVE", memberships: { some: { userId, role: { in: ["OWNER", "ADMIN", "EDITOR"] } } } },
     },
-    include: { owner: { select: { name: true, email: true } } },
+    include: { owner: { select: { name: true, email: true } }, templateVersion: { select: { template: { select: { slug: true } } } } },
   });
   if (!invitation) return NextResponse.json({ error: "Draft tidak ditemukan." }, { status: 404 });
   const isAdminSamplePublication = isAdminSampleSnapshot(invitation.publishedSnapshot);
@@ -69,6 +70,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const draft = parseInvitationDraft({ ...invitation.draftData as object, id: invitation.id, slug: invitation.slug });
   if (!draft) return NextResponse.json({ error: "Data draft perlu diperiksa ulang sebelum diterbitkan." }, { status: 400 });
   const checkedDraft = { ...draft, slug: invitation.slug };
+  if (!isTemplateListed(checkedDraft.templateId)
+    && (invitation.status === "DRAFT" || checkedDraft.templateId !== invitation.templateVersion.template.slug)) {
+    return NextResponse.json({ error: "Template ini tidak tersedia untuk publikasi undangan baru." }, { status: 409 });
+  }
   const validation = validateInvitationDraft(checkedDraft);
   if (!validation.valid) return NextResponse.json({ error: validation.message ?? "Detail undangan belum lengkap." }, { status: 400 });
 

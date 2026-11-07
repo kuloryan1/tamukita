@@ -12,28 +12,83 @@ import { invitationGiftAccounts, safeHttpsUrl, type InvitationDraft } from "@/li
 import { normalizeSealMonogram } from "@/lib/seal-monogram";
 import { templates, WEDDING, type WeddingTemplate } from "@/lib/stationery-demo";
 import { MAX_RECIPIENT_LENGTH, normalizeRecipient } from "@/lib/stationery-recipient";
+import { filterListedTemplates } from "@/lib/template-visibility";
+import { useCreamParallax } from "@/components/use-cream-parallax";
 
-function Monogram({ small = false, hostOne = WEDDING.groom, hostTwo = WEDDING.bride, customMonogram = "" }: { small?: boolean; hostOne?: string; hostTwo?: string; customMonogram?: string }) {
+const listedStationeryTemplates = filterListedTemplates(templates);
+const ELEGANT_CREAM_OPENING_VIDEO = "/templates/elegant-cream-envelope-v1.mp4";
+const ENVELOPE_START_TIMEOUT_MS = 3_000;
+const ENVELOPE_PLAY_TIMEOUT_MS = 7_000;
+const ENVELOPE_HANDOFF_TIMEOUT_MS = 1_300;
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+
+type OpeningPhase = "idle" | "loading" | "playing" | "revealing";
+
+function Monogram({ small = false, hostOne = WEDDING.groom, hostTwo = WEDDING.bride, customMonogram = "", crestSrc = "/images/monograms/wr-crest.png" }: { small?: boolean; hostOne?: string; hostTwo?: string; customMonogram?: string; crestSrc?: string }) {
   const firstInitial = (name: string) => Array.from(name.trim())[0]?.toLocaleUpperCase("id-ID") ?? "?";
   const initials = normalizeSealMonogram(customMonogram);
-  if (initials === "WR") return <div className={`monogram monogram--custom-crest${small ? " monogram-small" : ""}`} role="img" aria-label={`Monogram W R untuk ${hostOne} dan ${hostTwo}`}><Image className="monogram-custom-artwork" src="/images/monograms/wr-crest.png" alt="" aria-hidden="true" width={500} height={500} sizes="(max-width: 640px) 108px, 125px" /></div>;
+  if (initials === "WR") return <div className={`monogram monogram--custom-crest${small ? " monogram-small" : ""}`} role="img" aria-label={`Monogram W R untuk ${hostOne} dan ${hostTwo}`}><Image className="monogram-custom-artwork" src={crestSrc} alt="" aria-hidden="true" width={500} height={500} sizes="(max-width: 640px) 108px, 125px" /></div>;
   return <div className={`monogram${small ? " monogram-small" : ""}`} role="img" aria-label={initials ? `Monogram ${initials} untuk ${hostOne} dan ${hostTwo}` : `Monogram ${hostOne} dan ${hostTwo}`}><BotanicalWreath /><span>{initials || <>{firstInitial(hostOne)}<span className="monogram-amp">&</span>{firstInitial(hostTwo)}</>}</span></div>;
 }
 
-function Countdown({ targetDate, accessibleDate, label }: { targetDate: string; accessibleDate: string; label: string }) {
-  const [remaining, setRemaining] = useState<number | null>(null);
+function CreamTypedHeadline({ text }: { text: string }) {
+  const letters = typeof Intl.Segmenter === "function"
+    ? Array.from(new Intl.Segmenter("id", { granularity: "grapheme" }).segment(text), ({ segment, index }) => ({ letter: segment, offset: index }))
+    : Array.from(text, (letter, offset) => ({ letter, offset }));
+  const step = Math.min(58, 2_600 / Math.max(letters.length, 1));
+  return (
+    <span aria-hidden="true" style={{ "--cream-letter-step": `${step}ms` } as CSSProperties}>
+      {letters.map(({ letter, offset }, index) => (
+        <span className="cream-type-letter" key={offset} style={{ "--cream-letter-index": index } as CSSProperties}>{letter}</span>
+      ))}
+    </span>
+  );
+}
+
+const countdownUnits = ["Hari", "Jam", "Menit", "Detik"] as const;
+
+function Countdown({ targetDate, accessibleDate, label, animate = false }: { targetDate: string; accessibleDate: string; label: string; animate?: boolean }) {
+  const [secondsRemaining, setSecondsRemaining] = useState<number | null>(null);
   useEffect(() => {
-    const update = () => setRemaining(Math.max(0, new Date(targetDate).getTime() - Date.now()));
-    update(); const interval = window.setInterval(update, 1000);
-    return () => window.clearInterval(interval);
+    const target = Date.parse(targetDate);
+    if (!Number.isFinite(target)) {
+      setSecondsRemaining(null);
+      return;
+    }
+    let timer: number | undefined;
+    function update() {
+      const distance = target - Date.now();
+      setSecondsRemaining(Math.max(0, Math.ceil(distance / 1_000)));
+      if (distance > 0) timer = window.setTimeout(update, distance % 1_000 || 1_000);
+    }
+    update();
+    return () => window.clearTimeout(timer);
   }, [targetDate]);
-  const values = remaining === null ? [null, null, null, null] : [Math.floor(remaining / 86400000), Math.floor(remaining / 3600000) % 24, Math.floor(remaining / 60000) % 60, Math.floor(remaining / 1000) % 60];
-  return <section className="countdown-section" aria-label={label}>
-    <p className="eyebrow">{label}</p>
-    <div className="countdown" role="timer" aria-label={`${label}: ${accessibleDate}`}>
-      {values.map((value, i) => <div className="countdown-unit" key={["Hari", "Jam", "Menit", "Detik"][i]}><span className="countdown-number">{value === null ? "—" : String(value).padStart(2, "0")}</span><span className="countdown-label">{["Hari", "Jam", "Menit", "Detik"][i]}</span></div>)}
-    </div><span className="countdown-timezone">Waktu Indonesia Barat</span>
-  </section>;
+  const values = secondsRemaining === null ? [] : [
+    Math.floor(secondsRemaining / 86_400),
+    Math.floor(secondsRemaining / 3_600) % 24,
+    Math.floor(secondsRemaining / 60) % 60,
+    secondsRemaining % 60,
+  ];
+  return (
+    <section className="countdown-section" aria-label={label}>
+      <p className="eyebrow">{label}</p>
+      <div className="countdown" role="timer" aria-label={`${label}: ${accessibleDate}`}>
+        {countdownUnits.map((unit, index) => {
+          const display = values[index]?.toString().padStart(2, "0") ?? "—";
+          return (
+            <div className="countdown-unit" key={unit}>
+              <span className="countdown-number" data-wide={display.length > 3 || undefined}>
+                {animate ? <span className="countdown-digit" key={display}>{display}</span> : display}
+              </span>
+              <span className="countdown-label">{unit}</span>
+            </div>
+          );
+        })}
+      </div>
+      <span className="countdown-timezone">Waktu Indonesia Barat</span>
+    </section>
+  );
 }
 
 function ShareDialog({ dialogRef, recipient, basePath }: { dialogRef: RefObject<HTMLDialogElement | null>; recipient: string; basePath: string }) {
@@ -64,7 +119,7 @@ function ShareDialog({ dialogRef, recipient, basePath }: { dialogRef: RefObject<
   </dialog>;
 }
 
-export function StationeryInvitation({ template, recipient, isTestableSample = false, slug, guestToken, paparazziToken, paparazziOpen = false, draft }: {
+export function StationeryInvitation({ template, recipient, isTestableSample = false, slug, guestToken, paparazziToken, paparazziOpen = false, draft, calendarHref = "/api/templates/demo/calendar" }: {
   template: WeddingTemplate;
   recipient: string;
   isTestableSample?: boolean;
@@ -73,19 +128,27 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   paparazziToken?: string;
   paparazziOpen?: boolean;
   draft?: InvitationDraft;
+  calendarHref?: string;
 }) {
+  const monogramCrestSrc = template.slug === "elegant-cream" ? "/images/monograms/wr-crest-elegant-cream.png" : "/images/monograms/wr-crest.png";
   const [opened, setOpened] = useState(false);
-  const [opening, setOpening] = useState(false);
-  const [revealingOpening, setRevealingOpening] = useState(false);
+  const [openingPhase, setOpeningPhase] = useState<OpeningPhase>("idle");
+  const [playHeroIntro, setPlayHeroIntro] = useState(false);
+  const opening = openingPhase !== "idle";
+  const animatingCover = openingPhase === "playing" || openingPhase === "revealing";
   const [activeSection, setActiveSection] = useState("undangan");
   const mainRef = useRef<HTMLElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const openingVideoRef = useRef<HTMLVideoElement>(null);
-  const openingTimeout = useRef<number | null>(null);
+  const coverRef = useRef<HTMLDivElement>(null);
+  const [openingBounds, setOpeningBounds] = useState<CSSProperties>({});
+  const openingTimeout = useRef<number | undefined>(undefined);
   const openingComplete = useRef(false);
+  const openingAttempt = useRef(0);
   const guest = normalizeRecipient(recipient);
   const copy = (key: InvitationCopyKey, fallback?: string) => draft ? invitationCopy(draft, key, fallback) : fallback ?? "";
   const hasEnvelopeOpening = template.slug === "elegant-cream";
+  useCreamParallax(mainRef, opened && hasEnvelopeOpening);
   const hostOne = draft?.hostOne || WEDDING.groom;
   const hostTwo = draft?.hostTwo || WEDDING.bride;
   const firstInitial = (name: string) => Array.from(name.trim())[0]?.toLocaleUpperCase("id-ID") ?? "?";
@@ -104,6 +167,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   const venue = draft?.venue || WEDDING.venue;
   const city = draft?.address || WEDDING.city;
   const intro = draft?.story || WEDDING.intro;
+  const headline = copy("invitationHeadline", "Dengan penuh sukacita, kami mengundang Anda.");
   const eventSchedule = draft?.eventSchedule ?? WEDDING.eventSchedule;
   const galleryPhotos = draft?.galleryPhotos ?? [];
   const coverPositionX = draft?.coverPositionX ?? 50;
@@ -158,13 +222,16 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
       const hash = window.location.hash.slice(1);
       if (!["undangan", "detail-acara", "konfirmasi", "hadiah"].includes(hash)) return;
       if (scrollTimer !== null) window.clearTimeout(scrollTimer);
-      if (openingTimeout.current !== null) {
-        window.clearTimeout(openingTimeout.current);
-        openingTimeout.current = null;
-      }
+      window.clearTimeout(openingTimeout.current);
+      openingTimeout.current = undefined;
       openingComplete.current = true;
+      openingAttempt.current += 1;
       openingVideoRef.current?.pause();
-      setOpening(false); setRevealingOpening(false); setOpened(true); setActiveSection(hash);
+      openingVideoRef.current?.removeAttribute("src");
+      openingVideoRef.current?.load();
+      setOpeningPhase("idle");
+      setOpened(true);
+      setActiveSection(hash);
       // Existing sections already receive native anchor navigation. Wait only
       // when the cover must be replaced before the target exists in the DOM.
       if (!document.getElementById(hash)) {
@@ -178,55 +245,133 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
       if (scrollTimer !== null) window.clearTimeout(scrollTimer);
     };
   }, []);
-  useEffect(() => () => {
-    if (openingTimeout.current !== null) window.clearTimeout(openingTimeout.current);
-    openingVideoRef.current?.pause();
-  }, []);
   useEffect(() => {
-    if (!opened) return;
+    const video = hasEnvelopeOpening ? openingVideoRef.current : null;
+    return () => {
+      window.clearTimeout(openingTimeout.current);
+      openingAttempt.current += 1;
+      if (!video?.hasAttribute("src")) return;
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+    };
+  }, [hasEnvelopeOpening]);
+  useEffect(() => {
+    if (!opened || !("IntersectionObserver" in window)) return;
     const observer = new IntersectionObserver((entries) => { for (const entry of entries) if (entry.isIntersecting) setActiveSection(entry.target.id); }, { rootMargin: "-15% 0px -60% 0px", threshold: 0 });
     ["undangan", "detail-acara", "konfirmasi", "hadiah"].forEach((id) => { const element = document.getElementById(id); if (element) observer.observe(element); });
     return () => observer.disconnect();
   }, [opened]);
-
-  function revealInvitation() {
-    if (openingTimeout.current !== null) {
-      window.clearTimeout(openingTimeout.current);
-      openingTimeout.current = null;
+  useEffect(() => {
+    const main = mainRef.current;
+    if (!opened || !hasEnvelopeOpening || !main || !("IntersectionObserver" in window)) return;
+    const panels = main.querySelectorAll<HTMLElement>([
+      ".cover-photo-tile", ".countdown-section", ".event-section > .section-heading",
+      ".event-card", ".event-rundown", ".event-gallery-section", ".rsvp-intro", ".rsvp-card",
+      ".gift-account-card", ".closing-section",
+    ].join(", "));
+    const leadIn = 24;
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const jumpedPastStart = entry.boundingClientRect.top < window.innerHeight / 4;
+        entry.target.setAttribute("data-cream-reveal", jumpedPastStart ? "skip" : "visible");
+        observer.unobserve(entry.target);
+      }
+    }, { rootMargin: `0px 0px ${leadIn}px 0px` });
+    for (const panel of panels) {
+      if (panel.getBoundingClientRect().top <= window.innerHeight + leadIn) continue;
+      panel.dataset.creamReveal = "pending";
+      observer.observe(panel);
     }
+    const revealAnchor = () => {
+      const target = document.getElementById(window.location.hash.slice(1));
+      if (!target || !main.contains(target)) return;
+      for (const panel of panels) {
+        if (!target.contains(panel) && !panel.contains(target)) continue;
+        panel.dataset.creamReveal = "skip";
+        observer.unobserve(panel);
+      }
+    };
+    revealAnchor();
+    window.addEventListener("hashchange", revealAnchor);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("hashchange", revealAnchor);
+      for (const panel of panels) delete panel.dataset.creamReveal;
+    };
+  }, [hasEnvelopeOpening, opened]);
+
+  function revealInvitation(keepScroll = false) {
+    openingComplete.current = true;
+    openingAttempt.current += 1;
+    window.clearTimeout(openingTimeout.current);
+    openingTimeout.current = undefined;
     openingVideoRef.current?.pause();
-    setOpened(true); setOpening(false); setRevealingOpening(false);
-    window.scrollTo({ top: 0, behavior: "instant" });
-    window.setTimeout(() => mainRef.current?.focus({ preventScroll: true }), 0);
+    openingVideoRef.current?.removeAttribute("src");
+    openingVideoRef.current?.load();
+    setOpeningPhase("idle");
+    setOpened(true);
+    if (!keepScroll) window.scrollTo({ top: 0, behavior: "instant" });
+    window.setTimeout(() => { if (!mainRef.current?.contains(document.activeElement)) mainRef.current?.focus({ preventScroll: true }); }, 0);
   }
   function finishEnvelopeOpening() {
     if (openingComplete.current) return;
     openingComplete.current = true;
-    if (openingTimeout.current !== null) window.clearTimeout(openingTimeout.current);
+    window.clearTimeout(openingTimeout.current);
     openingVideoRef.current?.pause();
-    setRevealingOpening(true);
-    openingTimeout.current = window.setTimeout(revealInvitation, 460);
+    setOpened(true);
+    setOpeningPhase("revealing");
+    window.scrollTo({ top: 0, behavior: "instant" });
+    const attempt = openingAttempt.current;
+    openingTimeout.current = window.setTimeout(() => {
+      if (openingAttempt.current === attempt) revealInvitation(true);
+    }, ENVELOPE_HANDOFF_TIMEOUT_MS);
+  }
+  function showEnvelopeVideo() {
+    if (openingPhase !== "loading" || openingComplete.current) return;
+    window.clearTimeout(openingTimeout.current);
+    setOpeningPhase("playing");
+    openingTimeout.current = window.setTimeout(finishEnvelopeOpening, ENVELOPE_PLAY_TIMEOUT_MS);
   }
   function openInvitation() {
-    if (opening) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return revealInvitation();
-    setOpening(true);
-    setRevealingOpening(false);
-    if (hasEnvelopeOpening) {
-      openingComplete.current = false;
-      const video = openingVideoRef.current;
-      if (!video) return revealInvitation();
-      if (video.readyState >= HTMLMediaElement.HAVE_METADATA) video.currentTime = 0;
-      openingTimeout.current = window.setTimeout(finishEnvelopeOpening, 10_000);
-      void video.play().catch(revealInvitation);
+    if (opening || openingTimeout.current !== undefined) return;
+    if (window.matchMedia(REDUCED_MOTION_QUERY).matches) return revealInvitation();
+    if (!hasEnvelopeOpening) {
+      setOpeningPhase("playing");
+      openingTimeout.current = window.setTimeout(revealInvitation, 650);
       return;
     }
-    openingTimeout.current = window.setTimeout(revealInvitation, 650);
+
+    setPlayHeroIntro(true);
+    const video = openingVideoRef.current;
+    if (!video) return revealInvitation();
+    const bounds = coverRef.current?.getBoundingClientRect();
+    if (bounds) setOpeningBounds({ "--cream-video-left": `${bounds.left}px`, "--cream-video-top": `${bounds.top}px`, "--cream-video-width": `${bounds.width}px`, "--cream-video-height": `${bounds.height}px` } as CSSProperties);
+    openingComplete.current = false;
+    const attempt = ++openingAttempt.current;
+    setOpeningPhase("loading");
+    openingTimeout.current = window.setTimeout(revealInvitation, ENVELOPE_START_TIMEOUT_MS);
+    // Request the clip on demand and keep play() inside the button gesture.
+    video.src = ELEGANT_CREAM_OPENING_VIDEO;
+    void video.play().catch(() => {
+      if (!openingComplete.current && openingAttempt.current === attempt && openingVideoRef.current === video) revealInvitation();
+    });
   }
   function reopenCover() {
-    openingComplete.current = false;
+    openingAttempt.current += 1;
+    window.clearTimeout(openingTimeout.current);
+    openingTimeout.current = undefined;
     openingVideoRef.current?.pause();
-    setOpening(false); setRevealingOpening(false); setOpened(false); setActiveSection("undangan"); window.history.replaceState(null, "", window.location.pathname + window.location.search); window.scrollTo({ top: 0, behavior: "instant" });
+    openingVideoRef.current?.removeAttribute("src");
+    openingVideoRef.current?.load();
+    openingComplete.current = false;
+    setOpeningPhase("idle");
+    setOpened(false);
+    setPlayHeroIntro(false);
+    setActiveSection("undangan");
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    window.scrollTo({ top: 0, behavior: "instant" });
   }
 
   return <div className={`stationery-demo theme-${template.slug} style-${template.style} ${opened ? "is-open" : "is-closed"}`} style={style} data-invitation-publication={isTestableSample ? "published" : "demo"} data-template={template.slug}>
@@ -236,20 +381,22 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
       <div className="header-actions"><a className="catalog-link" href={catalogUrl}><LayoutGrid size={15} /><span>{copy("catalogLinkLabel", "Koleksi template")}</span></a><button type="button" className="icon-button share-trigger" aria-label={copy("shareActionLabel", "Bagikan undangan")} onClick={() => dialogRef.current?.showModal()}><Share2 size={16} /></button></div>
     </header>
 
-    {!opened ? <main className={`cover-stage${opening ? " is-opening" : ""}${hasEnvelopeOpening ? " is-cream-envelope" : ""}`}>
+    {!opened ? <main className={`cover-stage${animatingCover ? " is-opening" : ""}${hasEnvelopeOpening ? " is-cream-envelope" : ""}`}>
       <div className="stage-caption"><span className="eyebrow">{copy("stageCaption", "SEBUAH UNDANGAN DARI HATI")}</span><span className="edition-mark">{dateHeading.day} · {dateHeading.monthNumber} · {dateHeading.year}</span></div>
-      {hasEnvelopeOpening ? <div className="cream-envelope-cover">
-        <Image className="cream-envelope-cover-art" src="/templates/reference-prototypes/cream-envelope-poster.jpg" alt="" fill priority sizes="(max-width: 640px) 82vw, 390px" />
-        <div className="cream-envelope-monogram"><Monogram small hostOne={hostOne} hostTwo={hostTwo} customMonogram={customMonogram} /></div>
-        <div className="cream-envelope-cover-copy">
-          <h1 className="cover-names"><span>{hostOne}</span><span className="name-amp">&</span><span>{hostTwo}</span></h1>
-          <div className="cover-date"><span className="fine-rule" /><p>{dateLabel}</p><span className="fine-rule" /></div>
-          <div className="recipient"><p>{copy("recipientGreeting", "Kepada Yth.")}</p><strong>{guest}</strong></div>
+      {hasEnvelopeOpening ? <div className="cream-envelope-cover" ref={coverRef}>
+        <Image className="cream-envelope-cover-art" src="/templates/reference-prototypes/cream-envelope-poster.jpg" alt="" fill preload sizes="(max-width: 640px) 82vw, 390px" />
+        <div className="cream-envelope-monogram"><Monogram small hostOne={hostOne} hostTwo={hostTwo} customMonogram={customMonogram} crestSrc={monogramCrestSrc} /></div>
+        <div className="cream-envelope-cover-details">
+          <div className="cream-envelope-cover-copy">
+            <h1 className="cover-names"><span>{hostOne}</span><span className="name-amp">&</span><span>{hostTwo}</span></h1>
+            <div className="cover-date"><span className="fine-rule" /><p>{dateLabel} · {eventTimeLabel}</p><span className="fine-rule" /></div>
+            <div className="recipient"><p>{copy("recipientGreeting", "Kepada Yth.")}</p><strong>{guest}</strong></div>
+          </div>
+          <button type="button" id="open-invitation" className="cream-envelope-open-button" onClick={openInvitation} disabled={opening}>{opening ? "Membuka undangan…" : copy("openingButtonLabel", "Buka undangan")}</button>
         </div>
-        <button type="button" id="open-invitation" className="cream-envelope-open-button" onClick={openInvitation} disabled={opening}>{opening ? "Membuka undangan…" : copy("openingButtonLabel", "Buka undangan")}</button>
       </div> : <div className="invitation-cover paper">
         <div className="paper-border" /><BotanicalCorner className="cover-botanical corner-top" variant={template.ornament} /><BotanicalCorner className="cover-botanical corner-bottom" variant={template.ornament} /><div className="cover-bow"><SatinBow /></div>
-        <div className="cover-content"><Monogram hostOne={hostOne} hostTwo={hostTwo} customMonogram={customMonogram} /><p className="eyebrow cover-eyebrow">{copy("coverEyebrow", draft?.eventKind && draft.eventKind !== "Pernikahan" ? eventTitle.toLocaleUpperCase("id-ID") : "HARI YANG KAMI NANTIKAN")}</p>
+        <div className="cover-content"><Monogram hostOne={hostOne} hostTwo={hostTwo} customMonogram={customMonogram} crestSrc={monogramCrestSrc} /><p className="eyebrow cover-eyebrow">{copy("coverEyebrow", draft?.eventKind && draft.eventKind !== "Pernikahan" ? eventTitle.toLocaleUpperCase("id-ID") : "HARI YANG KAMI NANTIKAN")}</p>
           <h1 className="cover-names"><span>{hostOne}</span><span className="name-amp">&</span><span>{hostTwo}</span></h1>
           <div className="cover-date"><span className="fine-rule" /><p>{dateLabel}</p><span className="fine-rule" /></div>
           <div className="recipient"><p>{copy("recipientGreeting", "Kepada Yth.")}</p><strong>{guest}</strong></div>
@@ -257,17 +404,27 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
           <span className="cover-footnote">{copy("coverMessage", "Dengan penuh sukacita, kami mengundang Anda.")}</span>
         </div>
       </div>}
-      <div className="cover-bottom"><span className="template-label"><span className="tiny-diamond" />{template.name}</span><label className="theme-selector">Pilih desain<select aria-label="Pilih template undangan" value={template.slug} onChange={(e) => window.location.assign(`/templates/${e.target.value}/demo${recipientQuery}`)}>{templates.map((item) => <option value={item.slug} key={item.slug}>{item.name}</option>)}</select></label></div>
-      {hasEnvelopeOpening && <section className={`cover-opening-overlay${revealingOpening ? " is-revealing" : ""}`} hidden={!opening} aria-label="Animasi pembukaan amplop">
-        <span className="sr-only" role="status">Membuka amplop undangan.</span>
-        <video ref={openingVideoRef} className="cover-opening-video" src="/templates/reference-prototypes/cream-envelope.mp4" poster="/templates/reference-prototypes/cream-envelope-poster.jpg" width={768} height={1364} muted playsInline preload="metadata" disablePictureInPicture aria-hidden="true" tabIndex={-1} onEnded={finishEnvelopeOpening} onError={() => { if (opening) revealInvitation(); }}>Video pembukaan amplop Elegant Cream.</video>
-      </section>}
+      <div className="cover-bottom">
+        <span className="template-label"><span className="tiny-diamond" />{template.name}</span>
+        {listedStationeryTemplates.length > 1 && (
+          <label className="theme-selector">
+            Pilih desain
+            <select aria-label="Pilih template undangan" value={template.slug} onChange={(event) => window.location.assign(`/templates/${event.target.value}/demo${recipientQuery}`)}>
+              {listedStationeryTemplates.map((item) => <option value={item.slug} key={item.slug}>{item.name}</option>)}
+            </select>
+          </label>
+        )}
+      </div>
       <noscript>Aktifkan JavaScript untuk membuka undangan. Acara: {dateLabel}, {eventTimeLabel}, {venue}.</noscript>
     </main> : <>
-      <main className="opened-invitation" ref={mainRef} tabIndex={-1}>
+      <main className="opened-invitation" ref={mainRef} tabIndex={-1} data-cream-intro={playHeroIntro || undefined}>
         <section className="invitation-hero paper" id="undangan" aria-labelledby="invitation-heading">
-          <div className="paper-border" /><BotanicalCorner className="hero-botanical corner-top" variant={template.ornament} /><BotanicalCorner className="hero-botanical corner-bottom" variant={template.ornament} /><Monogram small hostOne={hostOne} hostTwo={hostTwo} customMonogram={customMonogram} />
-          <p className="eyebrow">{copy("invitationKicker", "HARI YANG KAMI NANTIKAN")}</p><h1 id="invitation-heading" style={{ whiteSpace: "pre-line" }}>{copy("invitationHeadline", "Dengan penuh sukacita, kami mengundang Anda.")}</h1><TinyFlourish className="hero-flourish" />
+          <div className="paper-border" /><BotanicalCorner className="hero-botanical corner-top" variant={template.ornament} /><BotanicalCorner className="hero-botanical corner-bottom" variant={template.ornament} /><Monogram small hostOne={hostOne} hostTwo={hostTwo} customMonogram={customMonogram} crestSrc={monogramCrestSrc} />
+          <p className="eyebrow">{copy("invitationKicker", "HARI YANG KAMI NANTIKAN")}</p>
+          <h1 id="invitation-heading" aria-label={playHeroIntro ? headline : undefined} style={{ whiteSpace: "pre-line" }}>
+            {playHeroIntro ? <CreamTypedHeadline text={headline} /> : headline}
+          </h1>
+          <TinyFlourish className="hero-flourish" />
           <div className="hero-names"><span>{hostOne}</span><span className="name-amp">&</span><span>{hostTwo}</span></div>
           <p className="invitation-message">{intro}</p>
           <div className="hero-date"><span className="eyebrow">{copy("eventDateLabel", "HARI & TANGGAL")}</span><p>{dateLabel}</p><span>{eventTimeLabel}</span></div>
@@ -283,11 +440,11 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
             </div>
           </section>
         )}
-        <Countdown targetDate={eventStartsAt} accessibleDate={`${dateLabel} pukul ${eventTime} WIB`} label={copy("countdownLabel", "Menuju hari bahagia")} />
+        <Countdown targetDate={eventStartsAt} accessibleDate={`${dateLabel} pukul ${eventTime} WIB`} label={copy("countdownLabel", "Menuju hari bahagia")} animate={hasEnvelopeOpening} />
         <section className="event-section content-section" id="detail-acara" aria-labelledby="event-title">
           <div className="section-heading"><span className="eyebrow">{copy("eventSectionEyebrow", "SIMPAN TANGGALNYA")}</span><h2 id="event-title" style={{ whiteSpace: "pre-line" }}>{copy("eventSectionHeading", "Sampai jumpa di hari bahagia.")}</h2><TinyFlourish className="section-flourish" /></div>
           <div className="event-grid">
-            <article className="event-card"><CalendarDays size={25} strokeWidth={1.1} /><span className="eyebrow">{copy("eventDateLabel", "HARI & TANGGAL")}</span><div className="date-composition"><span className="date-weekday">{dateHeading.weekday}</span><strong>{dateHeading.day}</strong><span className="date-month">{dateHeading.month}<br />{dateHeading.year}</span></div><p className="event-time"><Clock3 size={15} />{eventTimeLabel}</p><a className="button secondary" href="/api/templates/demo/calendar" download="Ryan-Dwi-21-November-2026.ics">{copy("calendarActionLabel", "Simpan ke kalender")} <ArrowDown size={15} /></a></article>
+            <article className="event-card"><CalendarDays size={25} strokeWidth={1.1} /><span className="eyebrow">{copy("eventDateLabel", "HARI & TANGGAL")}</span><div className="date-composition"><span className="date-weekday">{dateHeading.weekday}</span><strong>{dateHeading.day}</strong><span className="date-month">{dateHeading.month}<br />{dateHeading.year}</span></div><p className="event-time"><Clock3 size={15} />{eventTimeLabel}</p><a className="button secondary" href={calendarHref} download>{copy("calendarActionLabel", "Simpan ke kalender")} <ArrowDown size={15} /></a></article>
             <article className="event-card venue-card"><MapPin size={25} strokeWidth={1.1} /><span className="eyebrow">{copy("locationLabel", "LOKASI ACARA")}</span><h3>{venue}</h3><p>{city}</p><div className="venue-rule"><span /><Heart size={14} strokeWidth={1} /><span /></div><a className="button secondary" href={mapUrl} target="_blank" rel="noopener noreferrer">{copy("mapActionLabel", "Buka peta")} <ArrowUpRight size={16} /></a></article>
           </div>
           {eventSchedule.length > 0 && <section className="event-rundown" aria-labelledby="event-rundown-title"><div className="event-rundown-heading"><span className="eyebrow">{copy("scheduleSectionEyebrow", "RANGKAIAN ACARA")}</span><h3 id="event-rundown-title">{copy("scheduleSectionHeading", "Rundown acara")}</h3><p>{copy("scheduleSectionIntro", "Setiap momen istimewa telah kami siapkan.")}</p></div><ol>{eventSchedule.filter((item) => item.time.trim() && item.title.trim()).map((item, index) => <li key={item.id}><time dateTime={item.time}>{item.time}<small>WIB</small></time><span className="event-rundown-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><div className="event-rundown-content"><b>{item.title}</b>{item.description && <p>{item.description}</p>}</div></li>)}</ol></section>}
@@ -302,6 +459,14 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
       <footer className="site-footer"><a href={catalogUrl}><ArrowLeft size={14} />{copy("catalogLinkLabel", "Koleksi template")}</a><span>{template.name} · {hostOne} & {hostTwo}</span><button type="button" onClick={reopenCover}><RotateCcw size={13} />{copy("reopenCoverLabel", "Lihat sampul")}</button></footer>
       <nav className="bottom-nav" aria-label="Navigasi undangan" style={{ gridTemplateColumns: `repeat(${giftAccounts.length > 0 ? 4 : 3}, minmax(0, 1fr))` }}>{[{ id: "undangan", text: copy("navInvitationLabel", "Undangan"), Icon: Mail }, { id: "detail-acara", text: copy("navEventLabel", "Acara"), Icon: CalendarDays }, { id: "konfirmasi", text: copy("navRsvpLabel", "Kehadiran"), Icon: Users }, ...(giftAccounts.length > 0 ? [{ id: "hadiah", text: copy("navGiftLabel", "Hadiah"), Icon: Gift }] : [])].map(({ id, text, Icon }) => <a href={`#${id}`} key={id} aria-current={activeSection === id ? "location" : undefined} className={activeSection === id ? "active" : ""}><Icon size={17} strokeWidth={1.5} /><span>{text}</span></a>)}</nav>
     </>}
+    {hasEnvelopeOpening && <section className={`cover-opening-overlay${openingPhase === "loading" ? " is-loading" : ""}${openingPhase === "revealing" ? " is-revealing" : ""}`} style={openingBounds} hidden={!opening} aria-label="Animasi pembukaan amplop" onTransitionEnd={(event) => {
+      if (event.target === event.currentTarget && event.propertyName === "opacity" && openingPhase === "revealing") revealInvitation(true);
+    }}>
+      <span className="sr-only" role="status">Membuka amplop undangan.</span>
+      <video ref={openingVideoRef} className="cover-opening-video" width={540} height={960} muted playsInline preload="none" disablePictureInPicture aria-hidden="true" tabIndex={-1} onPlaying={showEnvelopeVideo} onEnded={finishEnvelopeOpening} onError={(event) => {
+        if (event.currentTarget.error && opening && !openingComplete.current) revealInvitation();
+      }}>Video pembukaan amplop Elegant Cream.</video>
+    </section>}
     <ShareDialog dialogRef={dialogRef} recipient={guest} basePath={shareBasePath} />
   </div>;
 }

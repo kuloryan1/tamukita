@@ -126,6 +126,10 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .template-section .section-heading-row > p { margin: 0; }
 .template-section .template-grid { margin-top: 34px; }
 .template-grid { display: grid; gap: 23px; grid-template-columns: repeat(3,minmax(0,1fr)); }
+.template-grid:has(> .template-card:only-child) {
+  grid-template-columns: minmax(0, 340px);
+  justify-content: center;
+}
 .template-card { min-width: 0; }
 .template-card-art { display: block; position: relative; }
 .template-card-art:focus-visible { outline: 2px solid #728c7b; outline-offset: 4px; }

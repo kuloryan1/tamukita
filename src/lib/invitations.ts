@@ -1,5 +1,7 @@
 import { isSafeTemplateFieldKey } from "@/lib/template-sdk";
 import type { InvitationThemeColor } from "@/lib/invitation-theme-colors";
+import { isTemplateListed } from "@/lib/template-visibility";
+import { templates } from "@/lib/templates";
 
 export const EVENT_KINDS = [
   "Pernikahan",
@@ -133,6 +135,7 @@ export const reservedSlugs = new Set([
 ]);
 
 export function createInitialDraft(): InvitationDraft {
+  const template = templates.find((candidate) => isTemplateListed(candidate.slug)) ?? templates[0];
   return {
     id: "invitation-demo",
     slug: "ryan-wulan",
@@ -150,8 +153,8 @@ export function createInitialDraft(): InvitationDraft {
     address: "Jl. Kemang Raya No. 12, Jakarta Selatan",
     mapsUrl: "",
     story: "Dengan penuh kebahagiaan, kami mengundang Anda untuk menjadi bagian dari hari istimewa kami.",
-    templateId: "royal-gold",
-    templateVersion: "1.0.0",
+    templateId: template.slug,
+    templateVersion: template.version,
     themeColor: "default",
     themeFont: "classic",
     sectionOrder: "story-first",

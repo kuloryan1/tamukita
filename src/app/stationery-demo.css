@@ -140,14 +140,29 @@
 .stationery-demo .monogram-small > span { font-size: 29px; }
 
 .stationery-demo .cover-stage { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100svh - 88px); padding: 24px 32px 26px; background-image: radial-gradient(ellipse at 77% 16%, #ffffff38, transparent 60%), linear-gradient(127deg, #ffffff08 15%, transparent 40%, #ffffff16 64%, transparent 82%); }
-.stationery-demo .cover-stage.is-cream-envelope { padding-top: 14px; padding-bottom: 16px; }
-.stationery-demo .cream-envelope-cover { position: relative; isolation: isolate; flex: none; width: auto; height: min(844px, calc(100svh - 200px)); max-width: 100%; aspect-ratio: 390 / 844; overflow: hidden; background: var(--paper); box-shadow: 0 5px 28px #51473520; }
+.stationery-demo .cover-stage.is-cream-envelope {
+  --cream-envelope-height: clamp(480px, calc(100svh - 200px), 844px);
+  padding-top: 14px;
+  padding-bottom: 16px;
+}
+.stationery-demo .cream-envelope-cover { position: relative; isolation: isolate; flex: none; width: auto; height: var(--cream-envelope-height); max-width: 100%; aspect-ratio: 390 / 844; overflow: hidden; background: var(--paper); box-shadow: 0 5px 28px #51473520; }
 .stationery-demo .cream-envelope-cover-art { object-fit: cover; object-position: center; }
 .stationery-demo .cream-envelope-monogram { position: absolute; z-index: 1; top: 50%; left: 50%; transform: translate(-50%, -50%); transition: opacity .3s ease; }
 .stationery-demo .cream-envelope-monogram .monogram { width: 54px; height: 54px; color: #8e7045; }
 .stationery-demo .cream-envelope-monogram .monogram > svg { display: none; }
 .stationery-demo .cream-envelope-monogram .monogram > span { padding: 0; color: #72552e; font-size: 18px; letter-spacing: -.03em; }
-.stationery-demo .cream-envelope-cover-copy { position: absolute; z-index: 1; top: 58%; right: 5%; left: 5%; display: flex; flex-direction: column; align-items: center; gap: 5px; color: #72552e; text-align: center; text-shadow: 0 1px 3px #fff8; transition: opacity .3s ease; }
+.stationery-demo .cream-envelope-cover-details {
+  position: absolute;
+  z-index: 2;
+  inset: auto 5% 7.2%;
+  display: flex;
+  min-height: 34.8%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.stationery-demo .cream-envelope-cover-copy { display: flex; width: 100%; flex-direction: column; align-items: center; gap: 5px; color: #72552e; text-align: center; text-shadow: 0 1px 3px #fff8; transition: opacity .3s ease; }
 .stationery-demo .cream-envelope-cover-copy > .cover-names { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 4px; font-size: clamp(17px, 4.2vw, 21px); line-height: 1.12; }
 .stationery-demo .cream-envelope-cover-copy > .cover-names > span { display: inline; overflow-wrap: anywhere; }
 .stationery-demo .cream-envelope-cover-copy > .cover-date { gap: 8px; margin: 0; color: inherit; }
@@ -155,11 +170,12 @@
 .stationery-demo .cream-envelope-cover-copy > .recipient { margin: 0; color: inherit; }
 .stationery-demo .cream-envelope-cover-copy > .recipient p { margin: 0; font-size: 8px; }
 .stationery-demo .cream-envelope-cover-copy > .recipient strong { font-size: 12px; }
-.stationery-demo .cream-envelope-open-button { position: absolute; z-index: 2; bottom: 7.2%; left: 50%; min-height: 44px; padding: 8px 15px; transform: translateX(-50%); border: 1px solid #8b714944; border-radius: 22px; background: #fffaf0e8; color: #72552e; font-family: var(--font-display); font-size: 15px; letter-spacing: .04em; white-space: nowrap; }
+.stationery-demo .cream-envelope-open-button { max-width: 100%; min-height: 44px; padding: 8px 15px; border: 1px solid #8b714944; border-radius: 22px; background: #fffaf0e8; color: #72552e; font-family: var(--font-display); font-size: 15px; letter-spacing: .04em; text-align: center; overflow-wrap: anywhere; }
 .stationery-demo .cream-envelope-open-button:focus-visible { outline: 2px solid #8b7149; outline-offset: 3px; }
-.stationery-demo .cover-opening-overlay { position: absolute; z-index: 5; inset: 0; display: flex; align-items: center; justify-content: center; padding: 10px 16px; background: var(--scene); opacity: 1; transition: opacity .46s ease; }
-.stationery-demo .cover-opening-overlay.is-revealing { opacity: 0; pointer-events: none; }
-.stationery-demo .cover-opening-video { display: block; flex: none; width: auto; height: min(844px, calc(100svh - 200px)); max-width: 100%; aspect-ratio: 390 / 844; object-fit: cover; background: var(--paper); box-shadow: 0 5px 28px #51473520; }
+.stationery-demo .cover-opening-overlay { position: fixed; z-index: 40; inset: 0; display: block; background: var(--scene); opacity: 1; }
+.stationery-demo .cover-opening-overlay.is-loading, .stationery-demo .cover-opening-overlay.is-revealing { opacity: 0; pointer-events: none; }
+.stationery-demo .cover-opening-overlay.is-revealing { transition: opacity .9s ease-in-out; }
+.stationery-demo .cover-opening-video { position: absolute; left: var(--cream-video-left, 0px); top: var(--cream-video-top, 0px); display: block; width: var(--cream-video-width, 390px); height: var(--cream-video-height, 844px); max-width: none; object-fit: cover; background: var(--paper); box-shadow: 0 5px 28px #51473520; }
 .stationery-demo .cover-stage.is-opening .cream-envelope-monogram, .stationery-demo .cover-stage.is-opening .cream-envelope-cover-copy { opacity: 0; }
 .stationery-demo .stage-caption { display: flex; align-items: center; justify-content: space-between; gap: 20px; width: 600px; max-width: 100%; margin-bottom: 18px; }
 .stationery-demo .stage-caption .eyebrow { font-size: 8px; letter-spacing: .16em; }
@@ -194,11 +210,57 @@
 /* The opened invitation keeps the same paper language, with room to read. */
 .stationery-demo .opened-invitation { width: 100%; max-width: 1060px; margin: 0 auto; padding: 40px 40px 30px; animation: stationery-reveal-invitation .6s ease both; }
 .stationery-demo .opened-invitation:focus { outline: none; }
+.stationery-demo.theme-elegant-cream .opened-invitation {
+  --muted: #6c5945;
+  animation: none;
+}
+.stationery-demo.theme-elegant-cream .opened-invitation > section { width: 100%; max-width: none; }
+
+/* A shared grain tile and warm edges give the opened invitation an aged paper finish. */
+.stationery-demo.theme-elegant-cream.is-open {
+  --cream-paper-grain: url("/images/textures/elegant-cream-paper-grain.svg");
+  --cream-paper-base: #f7ecd8;
+  --cream-paper-center: #fffaf0;
+  --cream-paper-edge: #a6743c;
+  background-color: color-mix(in srgb, var(--scene) 88%, var(--cream-paper-edge));
+  background-image:
+    var(--cream-paper-grain),
+    linear-gradient(90deg, color-mix(in srgb, var(--cream-paper-edge) 12%, transparent), transparent 26%, transparent 74%, color-mix(in srgb, var(--cream-paper-edge) 12%, transparent));
+  background-size: 144px 144px, auto;
+}
+
+.stationery-demo.theme-elegant-cream .opened-invitation :is(
+  .paper,
+  .event-card,
+  .event-rundown-content,
+  .rsvp-card,
+  .gift-account-card,
+  .invitation-paparazzi-inner
+) {
+  background-color: var(--cream-paper-base);
+  background-image:
+    var(--cream-paper-grain),
+    radial-gradient(ellipse at 0 0, color-mix(in srgb, var(--cream-paper-edge) 28%, transparent), transparent 48%),
+    radial-gradient(ellipse at 100% 100%, color-mix(in srgb, var(--cream-paper-edge) 24%, transparent), transparent 52%),
+    linear-gradient(90deg, color-mix(in srgb, var(--cream-paper-edge) 14%, transparent), transparent 6%, transparent 94%, color-mix(in srgb, var(--cream-paper-edge) 14%, transparent)),
+    linear-gradient(0deg, color-mix(in srgb, var(--cream-paper-edge) 12%, transparent), transparent 6%, transparent 94%, color-mix(in srgb, var(--cream-paper-edge) 12%, transparent)),
+    radial-gradient(ellipse at 48% 39%, var(--cream-paper-center) 10%, transparent 78%);
+  background-size: 144px 144px, auto, auto, auto, auto, auto;
+}
+
+.stationery-demo.theme-elegant-cream .opened-invitation .paper {
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--ink) 7%, transparent),
+    0 12px 28px color-mix(in srgb, var(--ink) 7%, transparent),
+    inset 0 0 24px color-mix(in srgb, var(--cream-paper-edge) 6%, transparent);
+}
+
 .stationery-demo .invitation-hero { width: 100%; max-width: 780px; margin: 0 auto; padding: 49px 70px 47px; text-align: center; box-shadow: 0 4px 10px #51473506, 5px 18px 42px #5147350b; }
 .stationery-demo .invitation-hero > :not(.paper-border):not(.hero-botanical) { position: relative; z-index: 1; }
 .stationery-demo .invitation-hero > .monogram { margin: 0 auto 18px; }
 .stationery-demo .hero-botanical { width: 215px; opacity: .55; }
 .stationery-demo .invitation-hero h1 { margin: 18px 0 0; font-family: var(--font-display); font-size: 43px; font-weight: 400; line-height: 1.12; letter-spacing: -.025em; }
+.stationery-demo.theme-elegant-cream .invitation-hero h1 { max-width: 640px; margin-inline: auto; }
 .stationery-demo .invitation-hero h1 em, .stationery-demo .section-heading h2 em, .stationery-demo .closing-section h2 em { color: var(--accent); font-weight: 400; }
 .stationery-demo .hero-flourish { width: 80px; height: auto; margin: 20px auto 17px; color: var(--accent); }
 .stationery-demo .hero-names { display: flex; flex-direction: column; align-items: center; gap: 4px; font-family: "Pinyon Script", cursive; font-size: clamp(54px, 5.8vw, 64px); font-weight: 400; line-height: 1.08; letter-spacing: 0; text-transform: none; }
@@ -225,6 +287,14 @@
 .stationery-demo .cover-photo-parents { margin: 5px 0 0; }
 .stationery-demo .cover-photo-parents span { display: block; color: var(--muted); font-size: 10px; letter-spacing: .13em; line-height: 1.4; text-transform: uppercase; }
 .stationery-demo .cover-photo-parents p { margin: 4px 0 0; color: var(--muted); font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
+.stationery-demo.theme-elegant-cream .cover-photo-stage { width: 100%; height: auto; aspect-ratio: auto; }
+.stationery-demo.theme-elegant-cream .cover-photo-grid { position: relative; inset: auto; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; gap: clamp(32px, 5vw, 56px); }
+.stationery-demo.theme-elegant-cream .cover-photo-tile--host-two { grid-column: 1; grid-row: 1; }
+.stationery-demo.theme-elegant-cream .cover-photo-tile--host-one { grid-column: 1; grid-row: 2; }
+.stationery-demo.theme-elegant-cream .cover-photo-frame { flex-basis: min(36%, 340px); max-width: 340px; }
+.stationery-demo.theme-elegant-cream .cover-photo-caption h3 { font-size: clamp(46px, 5vw, 58px); line-height: 1.1; }
+.stationery-demo.theme-elegant-cream .cover-photo-caption h3,
+.stationery-demo.theme-elegant-cream .cover-photo-parents p { overflow-wrap: normal; word-break: normal; text-wrap: pretty; }
 .stationery-demo .event-gallery-section { width: 100%; max-width: 900px; margin: 48px auto 4px; }
 .stationery-demo .event-gallery-heading { margin-bottom: 22px; text-align: center; }
 .stationery-demo .event-gallery-heading h2 { color: var(--ink); font-family: var(--font-display); font-size: 36px; font-weight: 400; line-height: 1.15; margin: 8px 0 0; }
@@ -236,6 +306,7 @@
 .stationery-demo .countdown-section { max-width: 510px; margin: 52px auto 20px; padding: 17px 15px 28px; text-align: center; }
 .stationery-demo .countdown-section > .eyebrow { font-size: 9px; }
 .stationery-demo .countdown { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 23px; }
+.stationery-demo.theme-elegant-cream .countdown { max-width: 480px; margin-inline: auto; }
 .stationery-demo .countdown-unit { position: relative; display: flex; flex-direction: column; gap: 4px; align-items: center; }
 .stationery-demo .countdown-unit + .countdown-unit::before { content: ""; position: absolute; top: 10px; bottom: 10px; left: 0; width: 1px; background: color-mix(in srgb, var(--line) 55%, transparent); }
 .stationery-demo .countdown-number { font-family: var(--font-display); font-size: 49px; font-weight: 400; font-variant-numeric: tabular-nums; line-height: 1; }
@@ -414,8 +485,6 @@
   .stationery-demo .share-trigger { width: 38px; height: 38px; }
   .stationery-demo .cover-stage { min-height: calc(100svh - 74px); justify-content: flex-start; padding: 24px 20px 27px; }
   .stationery-demo .cover-stage.is-cream-envelope { justify-content: center; padding: 10px 16px; }
-  .stationery-demo .cream-envelope-cover, .stationery-demo .cover-opening-video { height: min(844px, calc(100svh - 200px)); }
-  .stationery-demo .cover-opening-overlay { padding: 8px 12px; }
   .stationery-demo .stage-caption { gap: 12px; margin-bottom: 19px; }
   .stationery-demo .stage-caption .eyebrow { font-size: 7.5px; letter-spacing: .11em; }
   .stationery-demo .edition-mark { font-size: 8px; letter-spacing: .1em; }
@@ -453,6 +522,10 @@
   .stationery-demo .cover-photo-parents { margin-top: 4px; }
   .stationery-demo .cover-photo-parents span { font-size: 8.5px; letter-spacing: .08em; }
   .stationery-demo .cover-photo-parents p { margin-top: 2px; font-size: 12px; line-height: 1.4; }
+  .stationery-demo.theme-elegant-cream .cover-photo-grid { gap: 24px; }
+  .stationery-demo.theme-elegant-cream .cover-photo-frame { flex-basis: min(43%, 170px); max-width: 170px; }
+  .stationery-demo.theme-elegant-cream .cover-photo-caption h3 { font-size: clamp(28px, 8vw, 38px); line-height: 1.08; }
+  .stationery-demo.theme-elegant-cream .cover-photo-parents p { font-size: 12px; line-height: 1.4; }
   .stationery-demo .event-gallery-section { margin-top: 36px; }
   .stationery-demo .event-gallery-heading h2 { font-size: 30px; }
   .stationery-demo .event-gallery-grid { gap: 8px; }

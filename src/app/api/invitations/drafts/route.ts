@@ -9,6 +9,7 @@ import { isTemplateSelectable } from "@/lib/template-sdk";
 import { normalizeSealMonogram } from "@/lib/seal-monogram";
 import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
 import { isAdminSampleSnapshot } from "@/lib/invitation-publication";
+import { isTemplateListed } from "@/lib/template-visibility";
 
 export const runtime = "nodejs";
 
@@ -47,6 +48,7 @@ export async function POST(request: Request) {
   if (!body.ok) return NextResponse.json({ error: "Isi draft tidak valid atau terlalu besar." }, { status: body.status });
   const parsed = invitationDraftSchema.omit({ id: true, updatedAt: true, publishedAt: true, isPublished: true, qaFixture: true }).safeParse(body.value);
   if (!parsed.success) return NextResponse.json({ error: "Detail draft undangan tidak valid." }, { status: 400 });
+  if (!isTemplateListed(parsed.data.templateId)) return NextResponse.json({ error: "Template ini tidak tersedia untuk undangan baru." }, { status: 409 });
   if (parsed.data.coverPhoto || parsed.data.hostOnePhoto || parsed.data.hostTwoPhoto || parsed.data.galleryPhotos.length || parsed.data.musicUrl) return NextResponse.json({ error: "Foto dan musik ditambahkan setelah draft dibuat." }, { status: 400 });
   const organizationId = await getWritableOrganizationId(userId);
   if (!organizationId) return NextResponse.json({ error: "Workspace aktif tidak ditemukan." }, { status: 403 });

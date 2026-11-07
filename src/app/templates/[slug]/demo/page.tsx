@@ -4,8 +4,9 @@ import { InvitationPreview } from "@/components/invitation-preview";
 import { PublicInvitation } from "@/components/public-invitation";
 import { ReferenceInvitation } from "@/components/reference-invitation";
 import { createDemoDraft } from "@/lib/invitations";
+import { createElegantCreamDemoDraft, ELEGANT_CREAM_DEMO_CALENDAR_HREF } from "@/lib/elegant-cream-demo";
 import { getReferenceTemplatePreset } from "@/lib/reference-template-presets";
-import { getPublishedTemplateCatalog } from "@/lib/template-catalog";
+import { getListedTemplateCatalog } from "@/lib/template-catalog";
 import { StationeryInvitation } from "@/components/stationery-invitation";
 import { getTemplate as getStationeryTemplate } from "@/lib/stationery-demo";
 import { normalizeRecipient } from "@/lib/stationery-recipient";
@@ -16,7 +17,7 @@ type TemplateDemoPageProps = { params: Promise<{ slug: string }>; searchParams: 
 
 export async function generateMetadata({ params }: TemplateDemoPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const template = (await getPublishedTemplateCatalog()).find((candidate) => candidate.slug === slug);
+  const template = (await getListedTemplateCatalog()).find((candidate) => candidate.slug === slug);
   return {
     title: template ? `Demo ${template.name}` : "Demo template",
     description: template ? `Lihat undangan contoh dengan template ${template.name}.` : "Lihat demo template undangan TamuKita.",
@@ -26,17 +27,23 @@ export async function generateMetadata({ params }: TemplateDemoPageProps): Promi
 export default async function TemplateDemoPage({ params, searchParams }: TemplateDemoPageProps) {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
   const design = Array.isArray(query.design) ? query.design[0] : query.design;
-  const template = (await getPublishedTemplateCatalog()).find((candidate) => candidate.slug === slug);
+  const template = (await getListedTemplateCatalog()).find((candidate) => candidate.slug === slug);
   if (!template) notFound();
 
+  const elegantCreamDraft = template.slug === "elegant-cream" ? createElegantCreamDemoDraft(template.version) : undefined;
   const stationeryTemplate = getStationeryTemplate(template.slug);
   if (stationeryTemplate && (!design || design === "stationery")) {
     const recipient = normalizeRecipient(Array.isArray(query.to) ? query.to[0] : query.to);
-    return <StationeryInvitation template={stationeryTemplate} recipient={recipient} />;
+    return <StationeryInvitation
+      template={stationeryTemplate}
+      recipient={recipient}
+      draft={elegantCreamDraft}
+      calendarHref={elegantCreamDraft ? ELEGANT_CREAM_DEMO_CALENDAR_HREF : undefined}
+    />;
   }
 
   const demoPath = `/templates/${encodeURIComponent(template.slug)}/demo`;
-  const draft = {
+  const draft = elegantCreamDraft ?? {
     ...createDemoDraft(),
     slug: `demo-${template.slug}`,
     templateId: template.slug,

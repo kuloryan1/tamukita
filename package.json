@@ -26,6 +26,7 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed:staging-fixture": "tsx scripts/seed-staging-public-fixture.ts",
+    "db:seed:production-wulan-ryan": "tsx scripts/seed-production-wulan-ryan.ts",
     "db:seed:staging-paparazzi-fixture": "tsx scripts/seed-staging-paparazzi-fixture.ts",
     "db:studio": "prisma studio"
   },

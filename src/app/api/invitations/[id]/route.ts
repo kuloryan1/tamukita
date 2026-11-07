@@ -8,6 +8,7 @@ import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
 import { validateDraftFeatureAccess } from "@/lib/invitation-features";
 import { getTemplate as getStationeryTemplate } from "@/lib/stationery-demo";
 import { isAdminSampleSnapshot } from "@/lib/invitation-publication";
+import { isTemplateListed } from "@/lib/template-visibility";
 
 export const runtime = "nodejs";
 
@@ -28,6 +29,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     select: { slug: true, status: true, draftData: true, publishedSnapshot: true },
   });
   if (!existing) return NextResponse.json({ error: "Draft tidak ditemukan atau aksesnya sudah tidak tersedia." }, { status: 404 });
+  const existingDraft = typeof existing.draftData === "object" && existing.draftData !== null && !Array.isArray(existing.draftData)
+    ? existing.draftData as Record<string, unknown>
+    : {};
+  if (parsed.data.templateId !== existingDraft.templateId && !isTemplateListed(parsed.data.templateId)) {
+    return NextResponse.json({ error: "Template ini tidak tersedia untuk undangan baru." }, { status: 409 });
+  }
   if ((parsed.data.hostOnePhoto || parsed.data.hostTwoPhoto)
     && (session.user?.platformRole !== "SUPER_ADMIN"
       || !getStationeryTemplate(parsed.data.templateId)
@@ -39,9 +46,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (featureError) return NextResponse.json({ error: featureError }, { status: 403 });
   const template = await ensureTemplateVersion(parsed.data.templateId);
   if (!template) return NextResponse.json({ error: "Template tidak tersedia." }, { status: 400 });
-  const legacyCover = typeof existing.draftData === "object" && existing.draftData !== null && !Array.isArray(existing.draftData)
-    ? (existing.draftData as Record<string, unknown>).coverPhoto
-    : undefined;
+  const legacyCover = existingDraft.coverPhoto;
   if (parsed.data.coverPhoto.startsWith("data:image/") && parsed.data.coverPhoto !== legacyCover) {
     return NextResponse.json({ error: "Gunakan pengunggah foto untuk menambahkan foto sampul." }, { status: 400 });
   }

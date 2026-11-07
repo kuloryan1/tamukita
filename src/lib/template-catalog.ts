@@ -5,6 +5,7 @@ import { ensureTemplateVersion } from "@/lib/invitation-server";
 import { ensureInvitationCopySection } from "@/lib/invitation-copy";
 import { templates as builtInTemplates } from "@/lib/templates";
 import { isEditorCompatibleTemplate, validateTemplateManifest, type Template } from "@/lib/template-sdk";
+import { filterListedTemplates } from "@/lib/template-visibility";
 
 let builtInTemplateSync: Promise<void> | undefined;
 
@@ -37,4 +38,8 @@ export async function getPublishedTemplateCatalog(): Promise<Template[]> {
     const editorTemplate = ensureInvitationCopySection({ ...parsed.data, price: record.priceIdr });
     return isEditorCompatibleTemplate(editorTemplate) ? [editorTemplate] : [];
   });
+}
+
+export async function getListedTemplateCatalog(): Promise<Template[]> {
+  return filterListedTemplates(await getPublishedTemplateCatalog());
 }

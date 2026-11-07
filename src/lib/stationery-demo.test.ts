@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { elegantCreamDemoEvent } from "@/lib/elegant-cream-demo";
 import { calendarContent } from "@/lib/stationery-calendar";
 import { WEDDING } from "@/lib/stationery-demo";
 import { normalizeRecipient } from "@/lib/stationery-recipient";
 
-function eventProperties() {
-  const unfolded = calendarContent().replace(/\r\n[ \t]/g, "");
+function eventProperties(content = calendarContent()) {
+  const unfolded = content.replace(/\r\n[ \t]/g, "");
   const event = unfolded.split("BEGIN:VEVENT\r\n")[1]?.split("\r\nEND:VEVENT")[0];
   if (!event) throw new Error("The download does not contain a complete calendar event.");
   return new Map<string, string>(event.split("\r\n").map((line) => {
@@ -28,6 +29,18 @@ function calendarUtcInstant(value: string | undefined) {
 }
 
 describe("stationery calendar and countdown", () => {
+  it("exports the Elegant Cream date and complete address at 19:00 WIB", () => {
+    const content = calendarContent(elegantCreamDemoEvent, "elegant-cream-demo@tamukita.io");
+    const event = eventProperties(content);
+    expect(calendarUtcInstant(event.get("DTSTART")).toISOString()).toBe("2026-11-21T12:00:00.000Z");
+    expect(decodeCalendarText(event.get("SUMMARY"))).toBe("Pernikahan Ryan Pratama & Dwi Wulan Maulida");
+    expect(decodeCalendarText(event.get("LOCATION"))).toBe(
+      "Gedung Graha Wisata Surabaya, Blok N–O, Jl. Wisata Menanggal No. 38, Dukuh Menanggal, Kec. Gayungan, Surabaya",
+    );
+    expect(decodeCalendarText(event.get("DESCRIPTION"))).toContain("Sabtu, 21 November 2026 pukul 19:00 WIB.");
+    expect(content.split("\r\n").every((line) => Buffer.byteLength(line, "utf8") <= 75)).toBe(true);
+  });
+
   it("keeps the countdown and calendar at Saturday 21 November 2026, 18:00 WIB in every viewer timezone", () => {
     const start = new Date(WEDDING.startAt);
     const calendarStart = calendarUtcInstant(eventProperties().get("DTSTART"));

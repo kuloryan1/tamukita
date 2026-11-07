@@ -10,6 +10,7 @@ import { getResellerCreditState, lockResellerCreditBalance } from "@/lib/reselle
 import { readJsonBody } from "@/lib/request-json";
 import { isEditorCompatibleTemplate, isTemplateSelectable, validateTemplateManifest } from "@/lib/template-sdk";
 import { getHostingTermDays } from "@/lib/platform-settings";
+import { isTemplateListed } from "@/lib/template-visibility";
 import { validateInvitationDraft, validateTemplateFields } from "@/lib/validation";
 
 export const runtime = "nodejs";
@@ -59,6 +60,9 @@ export async function POST(request: Request) {
   }
   if (!isTemplateSelectable(invitation.templateVersion.template.status)) {
     return NextResponse.json({ error: "Template ini tidak lagi tersedia untuk aktivasi baru." }, { status: 409 });
+  }
+  if (!isTemplateListed(invitation.templateVersion.template.slug)) {
+    return NextResponse.json({ error: "Template ini tidak tersedia untuk aktivasi baru." }, { status: 409 });
   }
 
   const draft = parseInvitationDraft({ ...(invitation.draftData as object), id: invitation.id, slug: invitation.slug });

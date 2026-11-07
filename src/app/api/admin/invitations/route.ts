@@ -10,6 +10,7 @@ import { allowRequest } from "@/lib/rate-limit";
 import { readJsonBody } from "@/lib/request-json";
 import { validateInvitationDraft } from "@/lib/validation";
 import { isTemplateSelectable } from "@/lib/template-sdk";
+import { isTemplateListed } from "@/lib/template-visibility";
 
 export const runtime = "nodejs";
 
@@ -37,6 +38,7 @@ export async function POST(request: Request) {
   if (!body.ok) return NextResponse.json({ error: "Informasi undangan terlalu besar atau tidak valid." }, { status: body.status });
   const parsed = managedInvitationSchema.safeParse(body.value);
   if (!parsed.success) return NextResponse.json({ error: "Periksa email pelanggan dan detail undangan." }, { status: 400 });
+  if (!isTemplateListed(parsed.data.draft.templateId)) return NextResponse.json({ error: "Template ini tidak tersedia untuk undangan baru." }, { status: 409 });
   if (parsed.data.draft.galleryPhotos.length || parsed.data.draft.coverPhoto || parsed.data.draft.musicUrl) return NextResponse.json({ error: "Foto dan musik ditambahkan pelanggan setelah draft dibuat." }, { status: 400 });
   const validation = validateInvitationDraft({ ...parsed.data.draft, id: "preview", updatedAt: new Date().toISOString() });
   if (!validation.valid) return NextResponse.json({ error: validation.message ?? "Detail undangan belum lengkap." }, { status: 400 });

@@ -12,10 +12,12 @@ import { AdminWorkspaces } from "@/components/admin-workspaces";
 import { AdminTemplateReview } from "@/components/admin-template-review";
 import { getPrismaClient } from "@/lib/prisma";
 import { templates } from "@/lib/templates";
+import { filterListedTemplates } from "@/lib/template-visibility";
 import { ensureTemplateVersion } from "@/lib/invitation-server";
 import { getAdminTemplates } from "@/lib/admin-templates";
 
 export const metadata: Metadata = { title: "Admin TamuKita" };
+const listedTemplates = filterListedTemplates(templates);
 
 export default async function AdminPage() {
   const session = await auth();
@@ -177,7 +179,7 @@ export default async function AdminPage() {
       <AdminOverview metrics={metrics} orders={orderRows} audit={auditRows} />
       <AdminOrders />
       <AdminWorkspaces />
-      <AdminManagedInvitation templates={templates.map(({ slug, name, version }) => ({ slug, name, version }))} />
+      {listedTemplates.length > 0 && <AdminManagedInvitation templates={listedTemplates.map(({ slug, name, version }) => ({ slug, name, version }))} />}
       <AdminInvitations invitations={invitationRows} />
       <AdminTemplateReview templates={templateRows} canSetPricing />
       <section className="dashboard-content-card">

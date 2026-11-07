@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { TemplateCard } from "@/components/template-card";
 import { MarketplaceVisitTracker } from "@/components/marketplace-visit-tracker";
-import { getPublishedTemplateCatalog } from "@/lib/template-catalog";
+import { getListedTemplateCatalog } from "@/lib/template-catalog";
 import { recordPlatformMetric } from "@/lib/platform-analytics";
 import { normalizeRecipient } from "@/lib/stationery-recipient";
 
@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Koleksi Template" };
 export const dynamic = "force-dynamic";
 
 export default async function TemplatesPage({ searchParams }: { searchParams: Promise<{ category?: string; to?: string | string[] }> }) {
-  const catalog = await getPublishedTemplateCatalog();
+  const catalog = await getListedTemplateCatalog();
   const categories = [...new Set(catalog.map((template) => template.category))];
   const { category: requestedCategory, to } = await searchParams;
   const recipient = normalizeRecipient(Array.isArray(to) ? to[0] : to, "");

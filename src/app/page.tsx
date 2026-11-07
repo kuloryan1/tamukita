@@ -4,8 +4,11 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { TemplateCard } from "@/components/template-card";
 import { InvitationPreview } from "@/components/invitation-preview";
-import { templates } from "@/lib/templates";
+import { templates as builtInTemplates } from "@/lib/templates";
+import { filterListedTemplates } from "@/lib/template-visibility";
 import { createDemoDraft, DEMO_COUPLE_NAMES } from "@/lib/invitations";
+
+const templates = filterListedTemplates(builtInTemplates);
 
 const steps = [
   { number: "01", title: "Pilih desain yang kamu suka", text: "Temukan template yang terasa paling kamu. Semuanya dibuat untuk mudah dibaca di layar ponsel." },

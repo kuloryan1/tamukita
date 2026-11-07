@@ -15,6 +15,13 @@ import { SEAL_MONOGRAM_PATTERN } from "@/lib/seal-monogram";
 const stagingQaOrigin = "https://staging.tamukita.io";
 const stagingQaFixtureSlug = "qa-blueprint-fixture";
 const stagingQaFixtureCoverPhoto = `${stagingQaOrigin}/qa-fixtures/couple-cover.webp`;
+const productionSampleOrigin = "https://tamukita.io";
+const productionSampleSlug = "wulan-dan-ryan";
+const productionSampleCoverPhoto = "/templates/elegant-cream/wulan-dan-ryan-couple.webp";
+
+function isProductionSampleOrigin() {
+  try { return process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL).origin === productionSampleOrigin : false; } catch { return false; }
+}
 
 export const invitationDraftSchema = z.object({
   id: z.string().uuid().optional(),
@@ -44,6 +51,7 @@ export const invitationDraftSchema = z.object({
   coverPhoto: z.string().max(1_800_000).refine((value) => {
     if (!value) return true;
     if (isMediaPublicUrl(value)) return true;
+    if (value === productionSampleCoverPhoto) return isProductionSampleOrigin();
     if (value === stagingQaFixtureCoverPhoto) return process.env.NEXT_PUBLIC_APP_URL === stagingQaOrigin;
     const match = /^data:image\/(jpeg|png|webp);base64,([a-z\d+/]+={0,2})$/i.exec(value);
     if (!match) return false;
@@ -90,6 +98,11 @@ export function parseInvitationDraft(value: unknown): InvitationDraft | null {
     && result.data.qaFixture === true
     && result.data.coverPhoto === stagingQaFixtureCoverPhoto;
   if ((result.data.qaFixture === true || result.data.coverPhoto === stagingQaFixtureCoverPhoto) && !isStagingQaFixture) return null;
+  const isProductionSampleCover = isProductionSampleOrigin()
+    && result.data.slug === productionSampleSlug
+    && result.data.templateId === "elegant-cream"
+    && result.data.coverPhoto === productionSampleCoverPhoto;
+  if (result.data.coverPhoto === productionSampleCoverPhoto && !isProductionSampleCover) return null;
   return result.data as InvitationDraft;
 }
 
