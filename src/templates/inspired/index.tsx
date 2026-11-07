@@ -2,6 +2,7 @@ import { CalendarDays, Flower2, MapPin, Plane, Sparkles } from "lucide-react";
 import type { InvitationDraft } from "@/lib/invitations";
 import type { TemplateRenderProps } from "@/lib/template-sdk";
 import { InvitationFamilyDetails, invitationCoverStyle, invitationDate, invitationKicker, invitationTitle, isLongInvitationTitle } from "@/templates/shared";
+import { invitationCopy } from "@/lib/invitation-copy";
 
 function InvitationDetailsPanel({
   draft,
@@ -18,12 +19,12 @@ function InvitationDetailsPanel({
 }) {
   return (
     <div className={`invite-details inspired-details ${className}`}>
-      <p className="invite-greeting">Kepada Yth.{recipientName ? ` ${recipientName}` : ""}</p>
+      <p className="invite-greeting">{invitationCopy(draft, "recipientGreeting", "Kepada Yth.")}{recipientName ? ` ${recipientName}` : ""}</p>
       <InvitationFamilyDetails draft={draft} />
       <p className="invite-message">{draft.story || message}</p>
       {showEventDetails && <>
-        <div className="invite-detail-row"><CalendarDays size={15} /><span>{invitationDate(draft.eventDate)}<small>{draft.eventTime || "Waktu menyusul"} WIB</small></span></div>
-        <div className="invite-detail-row"><MapPin size={15} /><span>{draft.venue || "Nama tempat"}<small>{draft.address || "Alamat acara"}</small></span></div>
+        <div className="invite-detail-row"><CalendarDays size={15} /><span>{invitationCopy(draft, "eventDateLabel", "HARI & TANGGAL")} · {invitationDate(draft.eventDate)}<small>{invitationCopy(draft, "eventTimeLabel", "WAKTU")} · {draft.eventTime || "Waktu menyusul"} WIB</small></span></div>
+        <div className="invite-detail-row"><MapPin size={15} /><span>{invitationCopy(draft, "locationLabel", "LOKASI ACARA")} · {draft.venue || "Nama tempat"}<small>{draft.address || "Alamat acara"}</small></span></div>
       </>}
     </div>
   );
@@ -90,16 +91,16 @@ export function DestinasiCintaTemplate({ draft, recipientName, full = false }: T
   return (
     <article className={`invite-preview invite-preview--boarding template-code-renderer template-code-renderer--boarding${full ? " invite-preview--full" : ""}`} data-template="destinasi-cinta">
       <section className="boarding-ticket">
-        <header className="boarding-ticket-heading"><span>TAMUKITA · CATAT TANGGAL</span><Plane size={17} aria-hidden="true" /></header>
+        <header className="boarding-ticket-heading"><span>{invitationCopy(draft, "boardingTicketEyebrow", "TAMUKITA · CATAT TANGGAL")}</span><Plane size={17} aria-hidden="true" /></header>
         <div className="boarding-ticket-main" style={invitationCoverStyle(draft)}>
-          <span>PERNIKAHAN DI DESTINASI</span>
+          <span>{invitationCopy(draft, "boardingCoverKicker", "PERNIKAHAN DI DESTINASI")}</span>
           <h2 className={isLongInvitationTitle(draft) ? "invite-title--long" : undefined}>{invitationTitle(draft)}</h2>
-          <i>Perjalanan menuju hari bahagia</i>
+          <i>{invitationCopy(draft, "boardingCoverSubtitle", "Perjalanan menuju hari bahagia")}</i>
         </div>
         <div className="boarding-ticket-meta">
-          <div><small>TANGGAL</small><b>{invitationDate(draft.eventDate)}</b></div>
-          <div><small>WAKTU</small><b>{draft.eventTime || "Menyusul"} WIB</b></div>
-          <div><small>TUJUAN</small><b>{draft.venue || "Tempat acara"}</b></div>
+          <div><small>{invitationCopy(draft, "boardingDateLabel", "TANGGAL")}</small><b>{invitationDate(draft.eventDate)}</b></div>
+          <div><small>{invitationCopy(draft, "boardingTimeLabel", "WAKTU")}</small><b>{draft.eventTime || "Menyusul"} WIB</b></div>
+          <div><small>{invitationCopy(draft, "boardingDestinationLabel", "TUJUAN")}</small><b>{draft.venue || "Tempat acara"}</b></div>
         </div>
       </section>
       <InvitationDetailsPanel draft={draft} recipientName={recipientName} className="boarding-details" message="Simpan tanggalnya dan mari bertemu di destinasi cerita kami." showEventDetails={false} />
@@ -124,9 +125,11 @@ export function TamanAbadiTemplate({ draft, recipientName, full = false, mode }:
         <span className="garden-photo-art" aria-hidden="true"><span className="garden-photo-drift" style={backgroundStyle} /></span>
         {!draft.coverPhoto && <span className="garden-petals" aria-hidden="true"><i /><i /><i /><i /><i /></span>}
         <div className="garden-copy">
-          <span className="garden-kicker">{coverLabel}</span>
+          <span className="garden-kicker">{invitationCopy(draft, "coverEyebrow", coverLabel)}</span>
           <time>{shortDate}</time>
-          <Heading className={`garden-copy-heading${isLongInvitationTitle(draft) ? " invite-title--long" : ""}`} tabIndex={mode === "public" ? -1 : undefined}>{draft.eventKind === "Pernikahan" && hostNames.length > 0
+          <Heading className={`garden-copy-heading${isLongInvitationTitle(draft) ? " invite-title--long" : ""}`} tabIndex={mode === "public" ? -1 : undefined}>{draft.customFields?.invitationTitle?.trim()
+            ? <span style={{ whiteSpace: "pre-line" }}>{invitationTitle(draft)}</span>
+            : draft.eventKind === "Pernikahan" && hostNames.length > 0
             ? <><span>{hostNames[0]}</span>{hostNames[1] && <><i aria-hidden="true">&amp;</i><span>{hostNames[1]}</span></>}</>
             : <span>{invitationTitle(draft)}</span>}
           </Heading>

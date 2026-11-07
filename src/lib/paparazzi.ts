@@ -4,15 +4,20 @@ import { guardianConsentMatchesChildData } from "./child-data-consent";
 export const PAPARAZZI_MAX_BYTES = 10_000_000;
 export const PAPARAZZI_RETENTION_DAYS = 90;
 export const PAPARAZZI_UPLOAD_TTL_MS = 15 * 60 * 1_000;
-export const PAPARAZZI_CONSENT_VERSION = "paparazzi-public-2026-10-v1";
-export const PAPARAZZI_CONSENT_COPY = "Saya berusia minimal 18 tahun dan memiliki izin membagikan foto ini. Saya memahami foto akan langsung tampil di galeri acara yang bisa dilihat publik melalui QR atau tautan acara.";
+export const PAPARAZZI_CONSENT_VERSION = "paparazzi-public-2026-11-v2";
+export const PAPARAZZI_LEGACY_CONSENT_VERSIONS = ["paparazzi-public-2026-10-v1"] as const;
+export const PAPARAZZI_CONSENT_COPY = "Saya berusia minimal 18 tahun dan memiliki izin membagikan foto ini. Saya setuju nama Instagram yang saya masukkan ditampilkan sebagai watermark pada foto. Foto akan langsung tampil di galeri acara yang bisa dilihat publik melalui QR atau tautan acara.";
 export const PAPARAZZI_GUARDIAN_COPY = "Saya orang tua/wali yang berwenang dan menyetujui TamuKita memproses foto anak ini serta langsung menampilkannya di galeri acara yang bisa dilihat publik.";
 
 export const paparazziTokenSchema = z.string().regex(/^[a-f0-9]{64}$/);
 export const paparazziPhotoIdSchema = z.string().uuid();
+export const paparazziInstagramHandleSchema = z.string().trim().transform(value => value.replace(/^@/, ""))
+  .refine(value => /^[A-Za-z0-9._]{1,30}$/.test(value) && !value.startsWith(".") && !value.endsWith(".") && !value.includes(".."), "Masukkan nama Instagram yang valid.")
+  .transform(value => `@${value}`);
 export const paparazziUploadSchema = z.object({
   contentType: z.enum(["image/jpeg", "image/png", "image/webp"]),
   sizeBytes: z.number().int().min(1).max(PAPARAZZI_MAX_BYTES),
+  instagramHandle: paparazziInstagramHandleSchema,
   consent: z.literal(true),
   includesChildData: z.boolean(),
   guardianConsent: z.boolean(),
@@ -43,7 +48,7 @@ export function paparazziIsOpen(album: { enabled: boolean; closesAt: Date; invit
 
 export type PaparazziPublicAlbum = { title: string; open: boolean; galleryAvailable: boolean; invitationSlug: string | null; closesAt: string; maxBytes: number; retentionDays: number };
 export type PaparazziOwnerPhoto = { id: string; status: string; isVisible: boolean; createdAt: string; retentionAt: string; width: number | null; height: number | null };
-export type PaparazziGallery = { photos: Array<{ id: string; width: number | null; height: number | null; createdAt: string }>; nextCursor: string | null };
+export type PaparazziGallery = { photos: Array<{ id: string; width: number | null; height: number | null; createdAt: string; instagramHandle: string | null }>; nextCursor: string | null };
 export type PaparazziOwnerAlbum = {
   invitation: { id: string; title: string; slug: string; status: string; expiresAt: string | null };
   album: { enabled: boolean; open: boolean; closesAt: string; maxPhotos: number | null; shareUrl: string; qrVersion: string; count: number; readyCount: number } | null;

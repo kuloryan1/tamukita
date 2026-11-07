@@ -7,6 +7,17 @@ import { removePaparazziTemporaryFiles } from "./paparazzi-server-files";
 
 export class InvalidPaparazziPhotoError extends Error {}
 
+export function createPaparazziWatermarkSvg(width: number, height: number, instagramHandle: string) {
+  const safeHandle = instagramHandle.replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&apos;" })[character] ?? character);
+  const padding = Math.max(8, Math.round(width * 0.026));
+  const brandSize = Math.max(12, Math.round(width * 0.028));
+  const handleSize = Math.max(10, Math.round(width * 0.021));
+  const gap = Math.max(3, Math.round(width * 0.008));
+  const bandHeight = Math.min(height, padding * 2 + brandSize + handleSize + gap);
+  const right = width - padding;
+  return Buffer.from(`<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#12211c" stop-opacity="0"/><stop offset="1" stop-color="#12211c" stop-opacity=".78"/></linearGradient></defs><rect x="0" y="${height - bandHeight}" width="${width}" height="${bandHeight}" fill="url(#fade)"/><text x="${right}" y="${height - padding - handleSize - gap}" text-anchor="end" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="${brandSize}" font-weight="700" letter-spacing="1">W&amp;R</text><text x="${right}" y="${height - padding}" text-anchor="end" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="${handleSize}" font-weight="500">${safeHandle}</text></svg>`);
+}
+
 export async function deletePaparazziPhotoObjects(prisma: PrismaClient, s3: S3Client | null, bucket: string | undefined, photoId: string) {
   const photo = await prisma.paparazziPhoto.findUnique({ where: { id: photoId } });
   if (!photo?.deletedAt || photo.storageDeletedAt) return;
@@ -17,7 +28,7 @@ export async function deletePaparazziPhotoObjects(prisma: PrismaClient, s3: S3Cl
   // Keep recent in-flight deletions eligible for the maintenance retry.
   const settling = photo.createdAt.getTime() + PAPARAZZI_UPLOAD_TTL_MS > Date.now()
     || Boolean(photo.processingStartedAt && photo.deletedAt.getTime() > Date.now() - 60 * 60 * 1_000);
-  await prisma.paparazziPhoto.updateMany({ where: { id: photo.id, deletedAt: { not: null } }, data: { storageDeletedAt: settling ? null : new Date(), receiptHash: photo.status === "FAILED" ? photo.receiptHash : "", guardianConsentAt: null, guardianConsentVersion: null } });
+  await prisma.paparazziPhoto.updateMany({ where: { id: photo.id, deletedAt: { not: null } }, data: { storageDeletedAt: settling ? null : new Date(), receiptHash: photo.status === "FAILED" ? photo.receiptHash : "", instagramHandle: null, guardianConsentAt: null, guardianConsentVersion: null } });
 }
 
 export async function processPaparazziPhoto(prisma: PrismaClient, s3: S3Client | null, bucket: string | undefined, value: unknown) {
@@ -50,13 +61,15 @@ export async function processPaparazziPhoto(prisma: PrismaClient, s3: S3Client |
   } finally { io.abortSignal.removeEventListener("abort", abortRead); reader.releaseLock(); }
   if (io.abortSignal.aborted) throw new Error("Paparazzi storage processing timed out.");
   const source = Buffer.concat(chunks);
-  let output: { data: Buffer; info: { width: number; height: number; size: number } };
+  let normalized: { data: Buffer; info: { width: number; height: number; size: number } };
   try {
     const image = sharp(source, { failOn: "error", limitInputPixels: 40_000_000, animated: false });
     const metadata = await image.metadata();
     if (metadata.format !== expectedFormat || !metadata.width || !metadata.height || (metadata.pages ?? 1) > 1) throw new Error("Invalid image");
-    output = await image.rotate().resize({ width: 2400, height: 2400, fit: "inside", withoutEnlargement: true }).flatten({ background: "#fff" }).jpeg({ quality: 90, mozjpeg: true }).toBuffer({ resolveWithObject: true });
+    normalized = await image.rotate().resize({ width: 2400, height: 2400, fit: "inside", withoutEnlargement: true }).flatten({ background: "#fff" }).jpeg({ quality: 90, mozjpeg: true }).toBuffer({ resolveWithObject: true });
   } catch { throw new InvalidPaparazziPhotoError("Foto tidak dapat dibaca. Gunakan JPG, PNG, atau WebP yang valid."); }
+  const watermark = photo.instagramHandle ? createPaparazziWatermarkSvg(normalized.info.width, normalized.info.height, photo.instagramHandle) : null;
+  const output = await sharp(normalized.data).composite(watermark ? [{ input: watermark }] : []).jpeg({ quality: 90, mozjpeg: true }).toBuffer({ resolveWithObject: true });
   await storage.write(photo.processedKey, output.data, "image/jpeg");
   const updated = await prisma.paparazziPhoto.updateMany({ where: { id: photo.id, status: "PROCESSING", processingStartedAt: startedAt, deletedAt: null, retentionAt: { gt: new Date() } }, data: { status: "READY", processedBytes: BigInt(output.info.size), width: output.info.width, height: output.info.height } });
   if (updated.count !== 1) {

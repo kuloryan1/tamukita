@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import { templates } from "@/lib/templates";
 import { createInitialDraft } from "@/lib/invitations";
+import { ensureInvitationCopySection, getInvitationCopySections, isInvitationCopyField } from "@/lib/invitation-copy";
 import { validateTemplateFields } from "@/lib/validation";
 import {
   applyTemplateFieldDefaults,
@@ -53,6 +54,20 @@ test("accepts compatible extension fields and defaults only values that are not 
     welcomeNote: "Teks tersimpan",
   });
   expect(applyTemplateFieldDefaults(template)).toEqual({ welcomeNote: "Kami menantikan kehadiranmu." });
+});
+
+test("adds all invitation copy controls to every source template without colliding with custom fields", () => {
+  for (const sourceTemplate of templates) {
+    const template = ensureInvitationCopySection(sourceTemplate);
+    const copySections = getInvitationCopySections(template);
+    const copyFields = copySections.flatMap((section) => section.fields);
+    const defaults = applyTemplateFieldDefaults(template);
+
+    expect(copyFields, sourceTemplate.slug).toHaveLength(64);
+    expect(copyFields.every((field) => isInvitationCopyField(field.key)), sourceTemplate.slug).toBe(true);
+    expect(Object.keys(defaults).filter(isInvitationCopyField), sourceTemplate.slug).toHaveLength(64);
+    expect(isEditorCompatibleTemplate(template), sourceTemplate.slug).toBe(true);
+  }
 });
 
 test("rejects unsafe keys, duplicate custom keys, and extra image slots", () => {

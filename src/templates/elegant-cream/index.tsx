@@ -1,6 +1,7 @@
 import { CalendarDays, Flower2, MapPin } from "lucide-react";
 import type { TemplateRenderProps } from "@/lib/template-sdk";
 import { InvitationFamilyDetails, invitationCoverStyle, invitationDate, invitationKicker, invitationTitle, isLongInvitationTitle } from "@/templates/shared";
+import { invitationCopy } from "@/lib/invitation-copy";
 
 export function ElegantCreamTemplate({ draft, recipientName, full = false }: TemplateRenderProps) {
   return (
@@ -15,7 +16,7 @@ export function ElegantCreamTemplate({ draft, recipientName, full = false }: Tem
         <span className="template-cream-date">{invitationDate(draft.eventDate)}</span>
       </div>
       <div className="invite-details template-cream-details">
-        <p className="invite-greeting">Kepada Yth.{recipientName ? ` ${recipientName}` : ""}</p>
+        <p className="invite-greeting">{invitationCopy(draft, "recipientGreeting", "Kepada Yth.")}{recipientName ? ` ${recipientName}` : ""}</p>
         <InvitationFamilyDetails draft={draft} />
         <p className="invite-message">{draft.story || "Dengan hangat, kami menantikan kehadiran Anda di hari istimewa kami."}</p>
         <div className="template-cream-event"><CalendarDays size={14} /><span>{draft.eventTime || "Waktu menyusul"} WIB</span><MapPin size={14} /><span>{draft.venue || "Lokasi acara"}</span></div>

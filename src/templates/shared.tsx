@@ -1,11 +1,13 @@
 import type { CSSProperties } from "react";
 import type { EventKind, InvitationDraft } from "@/lib/invitations";
+import { invitationCopy } from "@/lib/invitation-copy";
 
 export function invitationTitle(draft: InvitationDraft) {
   const hosts = [draft.hostOne, draft.hostTwo].filter(Boolean);
-  return draft.eventKind === "Pernikahan" && hosts.length === 2
+  const generated = draft.eventKind === "Pernikahan" && hosts.length === 2
     ? `${hosts[0]} & ${hosts[1]}`
     : draft.eventTitle || draft.eventKind;
+  return invitationCopy(draft, "invitationTitle", generated);
 }
 
 export function isLongInvitationTitle(draft: InvitationDraft) {
@@ -13,13 +15,14 @@ export function isLongInvitationTitle(draft: InvitationDraft) {
 }
 
 export function invitationKicker(draft: InvitationDraft) {
-  return draft.eventKind === "Pernikahan" ? "UNDANGAN PERNIKAHAN" : draft.eventKind.toUpperCase();
+  const generated = draft.eventKind === "Pernikahan" ? "UNDANGAN PERNIKAHAN" : draft.eventKind.toUpperCase();
+  return invitationCopy(draft, "invitationKicker", generated);
 }
 
 export function InvitationFamilyDetails({ draft }: { draft: InvitationDraft }) {
   const familyDetails = draft.familyDetails.trim();
   if (!familyDetails) return null;
-  const label = publicFamilyDetailsLabel(draft.eventKind);
+  const label = invitationCopy(draft, "familyDetailsLabel", publicFamilyDetailsLabel(draft.eventKind));
   return <div className="invite-family-details"><span>{label}</span><p>{familyDetails}</p></div>;
 }
 

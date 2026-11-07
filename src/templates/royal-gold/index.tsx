@@ -1,6 +1,7 @@
 import { CalendarDays, MapPin, Sparkles } from "lucide-react";
 import type { TemplateRenderProps } from "@/lib/template-sdk";
 import { InvitationFamilyDetails, invitationCoverStyle, invitationDate, invitationKicker, invitationTitle, isLongInvitationTitle } from "@/templates/shared";
+import { invitationCopy } from "@/lib/invitation-copy";
 
 export function RoyalGoldTemplate({ draft, recipientName, full = false }: TemplateRenderProps) {
   return (
@@ -17,7 +18,7 @@ export function RoyalGoldTemplate({ draft, recipientName, full = false }: Templa
         </div>
       </div>
       <div className="invite-details">
-        <p className="invite-greeting">Kepada Yth.{recipientName ? ` ${recipientName}` : ""}</p>
+        <p className="invite-greeting">{invitationCopy(draft, "recipientGreeting", "Kepada Yth.")}{recipientName ? ` ${recipientName}` : ""}</p>
         <InvitationFamilyDetails draft={draft} />
         <p className="invite-message">{draft.story || "Dengan penuh kebahagiaan, kami mengundang Anda untuk hadir di hari istimewa kami."}</p>
         <div className="invite-detail-row"><CalendarDays size={15} /><span>{invitationDate(draft.eventDate)}<small>{draft.eventTime || "Waktu menyusul"} WIB</small></span></div>

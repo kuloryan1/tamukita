@@ -3,13 +3,13 @@ import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectComm
 import sharp from "sharp";
 import { expect, test } from "vitest";
 import type { PrismaClient } from "../generated/prisma/client";
-import { deletePaparazziPhotoObjects, processPaparazziPhoto } from "./paparazzi-processing";
+import { createPaparazziWatermarkSvg, deletePaparazziPhotoObjects, processPaparazziPhoto } from "./paparazzi-processing";
 
 async function fixture({ duplicate = false, deleteDuringPut = false, deleteAfterCommit = false } = {}) {
   const source = await sharp({ create: { width: 100, height: 70, channels: 3, background: "#69876a" } }).jpeg().toBuffer();
   const id = randomUUID(); const organizationId = randomUUID(); const invitationId = randomUUID(); const startedAt = new Date();
   const prefix = `${organizationId}/${invitationId}/${id}`;
-  const state = { id, storageProvider: "R2" as const, createdAt: startedAt, sourceKey: `private/pending/paparazzi/${prefix}/input.jpg`, processedKey: `private/paparazzi/${prefix}.jpg`, mimeType: "image/jpeg", sizeBytes: BigInt(source.length), status: "PROCESSING", deletedAt: null as Date | null, storageDeletedAt: null as Date | null, processingStartedAt: startedAt as Date | null, retentionAt: new Date(Date.now() + 86_400_000), receiptHash: "test-only-hash", guardianConsentAt: null, guardianConsentVersion: null, album: { invitation: { id: invitationId, organizationId } } };
+  const state = { id, storageProvider: "R2" as const, createdAt: startedAt, sourceKey: `private/pending/paparazzi/${prefix}/input.jpg`, processedKey: `private/paparazzi/${prefix}.jpg`, mimeType: "image/jpeg", sizeBytes: BigInt(source.length), instagramHandle: "@guest_qa", status: "PROCESSING", deletedAt: null as Date | null, storageDeletedAt: null as Date | null, processingStartedAt: startedAt as Date | null, retentionAt: new Date(Date.now() + 86_400_000), receiptHash: "test-only-hash", guardianConsentAt: null, guardianConsentVersion: null, album: { invitation: { id: invitationId, organizationId } } };
   const objects = new Map<string, Buffer>([[state.sourceKey, source]]);
   let readyRelease: () => void = () => {};
   const committed = new Promise<void>(resolve => { readyRelease = resolve; });
@@ -62,6 +62,10 @@ test("duplicate worker delivery preserves the committed public image", async () 
   expect(f.state.status).toBe("READY");
   expect(f.objects.has(f.state.processedKey)).toBe(true);
   expect((await sharp(f.objects.get(f.state.processedKey)).metadata()).format).toBe("jpeg");
+  expect(createPaparazziWatermarkSvg(100, 70, "@guest_qa").toString()).toContain("W&amp;R");
+  expect(createPaparazziWatermarkSvg(100, 70, "@guest_qa").toString()).toContain("@guest_qa");
+  const outputPixels = await sharp(f.objects.get(f.state.processedKey)).extract({ left: 0, top: 69, width: 1, height: 1 }).removeAlpha().raw().toBuffer();
+  expect(outputPixels[0] + outputPixels[1] + outputPixels[2]).toBeLessThan(255 * 3);
   expect(f.objects.has(f.state.sourceKey)).toBe(false);
 });
 
@@ -73,6 +77,7 @@ test("deletion stays eligible for retry when an in-flight write arrives after ow
   await deletePaparazziPhotoObjects(f.prisma, f.s3, "private", f.state.id);
   expect(f.objects.has(f.state.processedKey)).toBe(false);
   expect(f.objects.has(f.state.sourceKey)).toBe(false);
+  expect(f.state.instagramHandle).toBeNull();
   f.state.deletedAt = new Date(Date.now() - 2 * 60 * 60 * 1_000);
   f.state.createdAt = new Date(Date.now() - 3 * 60 * 60 * 1_000);
   f.state.processingStartedAt = new Date(Date.now() - 3 * 60 * 60 * 1_000);

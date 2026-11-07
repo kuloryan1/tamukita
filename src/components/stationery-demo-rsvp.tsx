@@ -77,12 +77,13 @@ function CheckMark() {
   return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 12 4 4 8-8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
-export function RSVP({ template, recipient, isTestableSample = false, slug, guestToken }: {
+export function RSVP({ template, recipient, isTestableSample = false, slug, guestToken, copy }: {
   template: WeddingTemplate;
   recipient: string;
   isTestableSample?: boolean;
   slug?: string;
   guestToken?: string;
+  copy?: { eyebrow?: string; heading?: string; intro?: string; question?: string; submit?: string };
 }) {
   const id = useId();
   const recipientRef = useRef(recipient);
@@ -316,9 +317,9 @@ export function RSVP({ template, recipient, isTestableSample = false, slug, gues
   return (
     <section id="konfirmasi" className="rsvp-section content-section" data-demo-rsvp={isTestableSample ? "live" : "local-only"} aria-labelledby={`${id}-heading`}>
       <div className="rsvp-intro">
-        <p className="eyebrow">KONFIRMASI KEHADIRAN</p>
-        <h2 id={`${id}-heading`} className="section-heading">Sebuah kabar,<br /><em>berarti bagi kami.</em></h2>
-        <p className="rsvp-lead">Isi konfirmasi kehadiran dan titipkan ucapan hangat untuk hari istimewa kami.</p>
+        <p className="eyebrow">{copy?.eyebrow ?? "KONFIRMASI KEHADIRAN"}</p>
+        <h2 id={`${id}-heading`} className="section-heading" style={{ whiteSpace: "pre-line" }}>{copy?.heading ?? "Sebuah kabar, berarti bagi kami."}</h2>
+        <p className="rsvp-lead">{copy?.intro ?? "Isi konfirmasi kehadiran dan titipkan ucapan hangat untuk hari istimewa kami."}</p>
         {!isTestableSample && <div className="rsvp-demo-note">
           <span className="rsvp-note-label">ANDA SEDANG MENCOBA DEMO</span>
           <p>{storageAvailable ? "Jawaban percobaan disimpan hanya di tab browser ini. Konfirmasi dan ucapan tidak dikirim kepada mempelai." : "Penyimpanan tab tidak tersedia. Jawaban hanya tampil sementara pada halaman ini. Konfirmasi dan ucapan tidak dikirim kepada mempelai."}</p>
@@ -381,7 +382,7 @@ export function RSVP({ template, recipient, isTestableSample = false, slug, gues
               </div>
             ) : (
               <form className="rsvp-form" ref={formRef} onSubmit={(event) => void handleSubmit(event)} noValidate>
-                <div className="rsvp-form-heading"><span className="rsvp-note-label">SEBUAH KABAR DARI ANDA</span><h3>{submission ? "Perbarui jawaban Anda." : "Berkenan hadir?"}</h3></div>
+                <div className="rsvp-form-heading"><span className="rsvp-note-label">SEBUAH KABAR DARI ANDA</span><h3>{submission ? "Perbarui jawaban Anda." : copy?.question ?? "Berkenan hadir?"}</h3></div>
 
                 <div className="rsvp-field">
                   <label htmlFor={`${id}-name`}>Nama Anda <span aria-hidden="true">*</span></label>
@@ -415,7 +416,7 @@ export function RSVP({ template, recipient, isTestableSample = false, slug, gues
                 <div className="rsvp-honeypot" aria-hidden="true"><label htmlFor={`${id}-website`}>Website<input id={`${id}-website`} type="text" name="website" autoComplete="off" tabIndex={-1} value={draft.website} onChange={(event) => changeField("website", event.target.value)} /></label></div>
 
                 <div className="rsvp-submit-actions">
-                  <button className="button primary rsvp-submit" type="submit" disabled={busy !== ""}>{busy === "saving" ? <><span className="spinner" aria-hidden="true" />{isTestableSample ? "Mengirim…" : "Menyimpan…"}</> : isTestableSample ? "Kirim konfirmasi" : storageAvailable ? submission ? "Simpan perubahan di tab ini" : "Simpan jawaban di tab ini" : "Coba jawaban sementara"}<span aria-hidden="true">↗</span></button>
+                  <button className="button primary rsvp-submit" type="submit" disabled={busy !== ""}>{busy === "saving" ? <><span className="spinner" aria-hidden="true" />{isTestableSample ? "Mengirim…" : "Menyimpan…"}</> : isTestableSample ? copy?.submit ?? "Kirim konfirmasi" : storageAvailable ? submission ? "Simpan perubahan di tab ini" : "Simpan jawaban di tab ini" : "Coba jawaban sementara"}<span aria-hidden="true">↗</span></button>
                   {submission && <button className="text-link" type="button" onClick={cancelEditing} disabled={busy !== ""}>Batal mengubah</button>}
                 </div>
                 <p className="rsvp-form-footnote">{isTestableSample ? "Konfirmasi kehadiran dikirim kepada pemilik undangan. Ucapan akan menunggu persetujuan." : storageAvailable ? "Dengan menekan simpan, Anda memilih menyimpan jawaban percobaan hanya di tab ini." : "Jawaban sementara akan hilang ketika halaman dimuat ulang."}</p>

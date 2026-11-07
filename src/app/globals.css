@@ -765,6 +765,12 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .schema-fields-grid { display: grid; gap: 0 12px; grid-template-columns: 1fr 1fr; }
 .editor-schema-section { border-top: 1px solid #e9e7df; margin-top: 14px; padding-top: 14px; }
 .editor-schema-section > .eyebrow { color: #7e887e; display: block; margin-bottom: 11px; }
+.editor-copy-details { border: 1px solid #e7e5dc; border-radius: 6px; margin: 18px 0; padding: 14px; background: #fafaf7; }
+.editor-copy-details > summary { color: #405b4d; cursor: pointer; font-size: 12px; font-weight: 650; line-height: 1.5; }
+.editor-copy-details > p { color: #737b72; font-size: 10px; line-height: 1.65; margin: 8px 0 14px; }
+.editor-copy-group { border-top: 1px solid #e9e7df; margin-top: 12px; padding-top: 12px; }
+.editor-copy-group > summary { color: #626e64; cursor: pointer; font-size: 10px; font-weight: 600; line-height: 1.5; }
+.editor-copy-group > .schema-fields-grid { padding-top: 8px; }
 .editor-media-extra-fields { margin-bottom: 18px; }
 .schema-grid-item--full { grid-column: 1 / -1; }
 .field-hint { color: #9a9e97; display: block; font-size: 8px; line-height: 1.55; margin-top: 6px; }

@@ -2,6 +2,7 @@ import "server-only";
 
 import { getPrismaClient } from "@/lib/prisma";
 import { ensureTemplateVersion } from "@/lib/invitation-server";
+import { ensureInvitationCopySection } from "@/lib/invitation-copy";
 import { templates as builtInTemplates } from "@/lib/templates";
 import { isEditorCompatibleTemplate, validateTemplateManifest, type Template } from "@/lib/template-sdk";
 
@@ -32,11 +33,8 @@ export async function getPublishedTemplateCatalog(): Promise<Template[]> {
   });
   return records.flatMap((record) => {
     const parsed = validateTemplateManifest(record.activeVersion?.manifest);
-    return parsed.success
-      && parsed.data.slug === record.slug
-      && parsed.data.version === record.activeVersion?.version
-      && isEditorCompatibleTemplate(parsed.data)
-      ? [{ ...parsed.data, price: record.priceIdr }]
-      : [];
+    if (!parsed.success || parsed.data.slug !== record.slug || parsed.data.version !== record.activeVersion?.version) return [];
+    const editorTemplate = ensureInvitationCopySection({ ...parsed.data, price: record.priceIdr });
+    return isEditorCompatibleTemplate(editorTemplate) ? [editorTemplate] : [];
   });
 }

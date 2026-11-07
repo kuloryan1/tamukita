@@ -12,6 +12,7 @@ import { INVITATION_THEME_PALETTES } from "@/lib/invitation-theme-colors";
 import { EditorFeedbackDialog } from "@/components/editor-feedback-dialog";
 import { GardenMonogramControl } from "@/components/garden-monogram-control";
 import { formatRupiah, getTemplate, templates as builtInTemplates, type TemplateSchemaField } from "@/lib/templates";
+import { ensureInvitationCopySection, getInvitationCopySections, isInvitationCopyField } from "@/lib/invitation-copy";
 import { applyTemplateFieldDefaults, templateFieldMaximumLength, templateImageAspectRatio, type Template } from "@/lib/template-sdk";
 import { createInitialDraft, EVENT_KINDS, EVENT_KIND_TITLE_SUGGESTIONS, familyDetailsPrompt, isSlugAllowed, slugify, type EventKind, type InvitationDraft } from "@/lib/invitations";
 import { validateInvitationDraft, validateTemplateFields } from "@/lib/validation";
@@ -372,19 +373,24 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
   }, [replaceDraft]);
   const canUndo = historyRef.current.past.length > 0;
   const canRedo = historyRef.current.future.length > 0;
-  const templates = templateCatalog?.length ? templateCatalog : builtInTemplates;
-  const selectedLegacyTemplate = getTemplate(draft.templateId);
+  const templates = (templateCatalog?.length ? templateCatalog : builtInTemplates).map(ensureInvitationCopySection);
+  const rawSelectedLegacyTemplate = getTemplate(draft.templateId);
+  const selectedLegacyTemplate = rawSelectedLegacyTemplate ? ensureInvitationCopySection(rawSelectedLegacyTemplate) : undefined;
   const templateChoices = templates.some((template) => template.slug === draft.templateId) || !selectedLegacyTemplate ? templates : [...templates, selectedLegacyTemplate];
   const activeTemplate = templateChoices.find((template) => template.slug === draft.templateId) ?? templateChoices[0] ?? builtInTemplates[0];
   const selectedPlan = customerPlans.find((plan) => plan.id === selectedPlanId) ?? null;
   const selectedPlanFeatureAccess = selectedPlan ? resolveInvitationFeatureAccess(selectedPlan.entitlements) : null;
   const selectedPlanFeatureError = selectedPlanFeatureAccess ? validateDraftFeatureAccess(draft, selectedPlanFeatureAccess) : null;
   const identityFields = activeTemplate.schema.sections.find((section) => section.key === "identity")?.fields ?? [];
-  const scheduleFields = activeTemplate.schema.sections.find((section) => section.key === "schedule")?.fields ?? [];
-  const mediaFields = activeTemplate.schema.sections.find((section) => section.key === "media")?.fields ?? [];
-  const identityCustomFields = identityFields.filter((field) => !["eventTitle", "hostOne", "hostTwo", "story"].includes(field.key));
+  const scheduleFields = activeTemplate.schema.sections.find((section) => section.key === "schedule")?.fields.filter((field) => !isInvitationCopyField(field.key)) ?? [];
+  const mediaFields = activeTemplate.schema.sections.find((section) => section.key === "media")?.fields.filter((field) => !isInvitationCopyField(field.key)) ?? [];
+  const copySections = getInvitationCopySections(activeTemplate);
+  const identityCustomFields = identityFields.filter((field) => !["eventTitle", "hostOne", "hostTwo", "story"].includes(field.key) && !isInvitationCopyField(field.key));
   const additionalMediaFields = mediaFields.filter((field) => field.key !== "coverPhoto");
-  const detailSections = activeTemplate.schema.sections.filter((section) => !["identity", "schedule", "media"].includes(section.key));
+  const detailSections = activeTemplate.schema.sections
+    .filter((section) => !["identity", "schedule", "media"].includes(section.key))
+    .map((section) => ({ ...section, fields: section.fields.filter((field) => !isInvitationCopyField(field.key)) }))
+    .filter((section) => section.fields.length > 0);
   const familyPrompt = familyDetailsPrompt(draft.eventKind);
   const coverField = mediaFields.find((field) => field.key === "coverPhoto");
   const coverAspectRatio = templateImageAspectRatio(coverField?.aspectRatio);
@@ -429,7 +435,9 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
         const result = await response?.json().catch(() => null) as { draft?: InvitationDraft | null; featureAccess?: InvitationFeatureAccess } | null;
         if (!cancelled && response?.ok && result?.draft) {
           setFeatureAccess(result.featureAccess ?? legacyInvitationFeatureAccess);
-          setLoadedDraft({ ...result.draft, coverPositionX: result.draft.coverPositionX ?? 50, ...(selectedTemplate ? { templateId: selectedTemplate.slug, templateVersion: selectedTemplate.version, customFields: applyTemplateFieldDefaults(selectedTemplate, result.draft.customFields) } : {}) });
+          const rawLoadedTemplate = selectedTemplate ?? templates.find((template) => template.slug === result.draft?.templateId) ?? getTemplate(result.draft.templateId);
+          const loadedTemplate = rawLoadedTemplate ? ensureInvitationCopySection(rawLoadedTemplate) : undefined;
+          setLoadedDraft({ ...result.draft, coverPositionX: result.draft.coverPositionX ?? 50, ...(loadedTemplate ? { ...(selectedTemplate ? { templateId: loadedTemplate.slug, templateVersion: loadedTemplate.version } : {}), customFields: applyTemplateFieldDefaults(loadedTemplate, result.draft.customFields) } : {}) });
           setHydrated(true);
           return;
         }
@@ -443,10 +451,12 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
         }
       }
       const initial = createInitialDraft();
+      const initialTemplate = selectedTemplate ?? templates.find((template) => template.slug === initial.templateId) ?? getTemplate(initial.templateId);
+      const initialDraft = initialTemplate ? { ...initial, templateId: initialTemplate.slug, templateVersion: initialTemplate.version, customFields: applyTemplateFieldDefaults(initialTemplate, initial.customFields) } : initial;
       const response = await fetch("/api/invitations/drafts", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...initial, ...(selectedTemplate ? { templateId: selectedTemplate.slug, templateVersion: selectedTemplate.version, customFields: applyTemplateFieldDefaults(selectedTemplate, initial.customFields) } : {}) }),
+        body: JSON.stringify(initialDraft),
       }).catch(() => null);
       if (response?.status === 401) {
         window.location.assign("/login");
@@ -966,6 +976,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
               {activeTemplate.slug === "taman-abadi" && <Field label="Huruf pada segel amplop"><GardenMonogramControl value={draft.sealMonogram ?? ""} hostOne={draft.hostOne} hostTwo={draft.hostTwo} onChange={(value) => update("sealMonogram", value)} /></Field>}
               <Field label={familyPrompt.label} hint="Informasi ini akan ditampilkan di undangan publik."><textarea className="text-input text-area" maxLength={600} rows={2} value={draft.familyDetails} onChange={(event) => update("familyDetails", event.target.value)} placeholder={familyPrompt.placeholder} /></Field>
               {identityFields.filter((field) => field.key === "story").map(renderSchemaField)}
+              {copySections.length > 0 && <details className="editor-copy-details"><summary>Ubah teks di undangan</summary><p>Ubah copy pada sampul, acara, tombol, rundown, galeri, konfirmasi, dan penutup. Perubahan tersimpan otomatis.</p>{copySections.map((section) => <details className="editor-copy-group" key={section.key} open={section.key === "copy"}><summary>{section.label}</summary><div className="schema-fields-grid">{section.fields.map((field) => <div className={field.type === "textarea" || field.type === "url" ? "schema-grid-item schema-grid-item--full" : "schema-grid-item"} key={field.key}>{renderSchemaField(field)}</div>)}</div></details>)}</details>}
               <div className="schema-fields-grid">{identityCustomFields.map((field) => <div className={field.type === "textarea" || field.type === "url" ? "schema-grid-item schema-grid-item--full" : "schema-grid-item"} key={field.key}>{renderSchemaField(field)}</div>)}</div><div className="private-note"><Info size={15} /><span>Informasi ini ditampilkan di undanganmu. Form dasar ini dibuat dari schema template.</span></div>
             </div>}
 

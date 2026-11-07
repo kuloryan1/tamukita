@@ -1,6 +1,7 @@
 import { CalendarDays, MapPin, Sprout } from "lucide-react";
 import type { TemplateRenderProps } from "@/lib/template-sdk";
 import { InvitationFamilyDetails, invitationCoverStyle, invitationDate, invitationKicker, invitationTitle, isLongInvitationTitle } from "@/templates/shared";
+import { invitationCopy } from "@/lib/invitation-copy";
 
 export function ModernSageTemplate({ draft, recipientName, full = false }: TemplateRenderProps) {
   return (
@@ -15,7 +16,7 @@ export function ModernSageTemplate({ draft, recipientName, full = false }: Templ
         <span className="template-sage-date">{invitationDate(draft.eventDate)}</span>
       </div>
       <div className="invite-details template-sage-details">
-        <p className="invite-greeting">Kepada Yth.{recipientName ? ` ${recipientName}` : ""}</p>
+        <p className="invite-greeting">{invitationCopy(draft, "recipientGreeting", "Kepada Yth.")}{recipientName ? ` ${recipientName}` : ""}</p>
         <InvitationFamilyDetails draft={draft} />
         <p className="invite-message">{draft.story || "Mari hadir dan berbagi cerita di hari istimewa kami."}</p>
         <div className="template-sage-event"><span><CalendarDays size={14} />{draft.eventTime || "Waktu menyusul"} WIB</span><span><MapPin size={14} />{draft.venue || "Lokasi acara"}</span></div>
