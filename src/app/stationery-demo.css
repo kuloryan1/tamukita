@@ -147,7 +147,7 @@
 .stationery-demo .cream-envelope-monogram .monogram { width: 54px; height: 54px; color: #8e7045; }
 .stationery-demo .cream-envelope-monogram .monogram > svg { display: none; }
 .stationery-demo .cream-envelope-monogram .monogram > span { padding: 0; color: #72552e; font-size: 18px; letter-spacing: -.03em; }
-.stationery-demo .cream-envelope-cover-copy { position: absolute; z-index: 1; top: 64%; right: 5%; left: 5%; display: flex; flex-direction: column; align-items: center; gap: 5px; color: #72552e; text-align: center; text-shadow: 0 1px 3px #fff8; transition: opacity .3s ease; }
+.stationery-demo .cream-envelope-cover-copy { position: absolute; z-index: 1; top: 58%; right: 5%; left: 5%; display: flex; flex-direction: column; align-items: center; gap: 5px; color: #72552e; text-align: center; text-shadow: 0 1px 3px #fff8; transition: opacity .3s ease; }
 .stationery-demo .cream-envelope-cover-copy > .cover-names { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 4px; font-size: clamp(17px, 4.2vw, 21px); line-height: 1.12; }
 .stationery-demo .cream-envelope-cover-copy > .cover-names > span { display: inline; overflow-wrap: anywhere; }
 .stationery-demo .cream-envelope-cover-copy > .cover-date { gap: 8px; margin: 0; color: inherit; }
