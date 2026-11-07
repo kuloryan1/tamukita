@@ -192,7 +192,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
               </div>
               <Image
                 className="cover-photo-ornament"
-                src="/images/frames/rococo-silver-oval.png"
+                src="/images/frames/rococo-silver-oval-v2.png"
                 alt=""
                 aria-hidden="true"
                 width={1254}
