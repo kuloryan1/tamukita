@@ -117,7 +117,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
             alt={`Potret ${name}`}
             width={1600}
             height={1000}
-            sizes="(max-width: 720px) 35vw, 220px"
+            sizes="(max-width: 640px) 33vw, 340px"
             unoptimized
             style={{ objectPosition: position, "--portrait-offset-x": horizontalOffset } as CSSProperties}
           />
@@ -129,7 +129,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
           aria-hidden="true"
           width={1254}
           height={1254}
-          sizes="(max-width: 720px) 35vw, 220px"
+          sizes="(max-width: 640px) 33vw, 340px"
         />
       </div>
       <figcaption className="cover-photo-caption">
