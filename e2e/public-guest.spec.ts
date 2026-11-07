@@ -143,7 +143,7 @@ test("public guest flows and marketplace page view metrics work, and content rev
   const pageMetadata = await page.locator("head").innerHTML();
   expect(pageMetadata).not.toContain(guestToken);
   expect(pageMetadata).not.toContain(guestName);
-  const shareLink = await page.getByRole("link", { name: "Bagikan undangan ini" }).getAttribute("href");
+  const shareLink = await page.getByRole("link", { name: "Bagikan undangan", exact: true }).getAttribute("href");
   expect(shareLink).toBeTruthy();
   const shareText = new URL(shareLink as string).searchParams.get("text");
   expect(shareText).toContain(new URL(`/${invitationSlug}`, baseURL).toString());

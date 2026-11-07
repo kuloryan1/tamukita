@@ -113,7 +113,7 @@ test("recipient text stays literal and survives sharing and switching templates 
   await page.goto(personalizedUrl);
   await expect(stationery(page).locator(".recipient strong")).toHaveText(boundaryName);
 
-  const catalogHref = await stationery(page).getByRole("link", { name: "Semua template" }).getAttribute("href");
+  const catalogHref = await stationery(page).getByRole("link", { name: "Koleksi template" }).getAttribute("href");
   expect(new URL(catalogHref ?? "", page.url()).searchParams.get("to")).toBe(boundaryName);
   await stationery(page).getByRole("combobox", { name: "Pilih template undangan" }).selectOption("wisteria-senja");
   await expect(stationery(page)).toHaveAttribute("data-template", "wisteria-senja");
