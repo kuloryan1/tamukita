@@ -188,19 +188,19 @@
 .stationery-demo .hero-date > span:last-child { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; }
 .stationery-demo .detail-link { display: inline-flex; align-items: center; justify-content: center; gap: 15px; min-height: 44px; margin-top: 25px; border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); color: var(--ink); font-size: 10px; letter-spacing: .09em; }
 .stationery-demo .detail-link:hover { color: var(--accent); border-color: var(--accent); }
-.stationery-demo .cover-photo-section { width: 100%; max-width: 780px; margin: 28px auto 0; }
-.stationery-demo .cover-photo-stage { isolation: isolate; position: relative; width: min(100%, 760px); aspect-ratio: 1; margin: 0 auto; }
+.stationery-demo .cover-photo-section { width: 100%; max-width: 920px; margin: 28px auto 0; }
+.stationery-demo .cover-photo-stage { isolation: isolate; position: relative; width: min(100%, 900px); aspect-ratio: 1; margin: 0 auto; }
 .stationery-demo .cover-photo-grid { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.stationery-demo .cover-photo-tile { position: relative; display: flex; align-items: center; gap: 12px; min-width: 0; margin: 0; }
-.stationery-demo .cover-photo-tile--host-two { grid-column: 2; grid-row: 1; flex-direction: row-reverse; }
+.stationery-demo .cover-photo-tile { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-width: 0; margin: 0; }
+.stationery-demo .cover-photo-tile--host-two { grid-column: 2; grid-row: 1; }
 .stationery-demo .cover-photo-tile--host-one { grid-column: 1; grid-row: 2; }
-.stationery-demo .cover-photo-frame { position: relative; flex: 0 0 44%; min-width: 0; aspect-ratio: 1; }
+.stationery-demo .cover-photo-frame { position: relative; flex: 0 0 auto; width: min(62%, 270px); min-width: 0; aspect-ratio: 1; }
 .stationery-demo .cover-photo-window { position: absolute; z-index: 0; top: 18.8%; left: 20%; width: 60%; height: 66.5%; overflow: hidden; border-radius: 50%; background: var(--paper); }
-.stationery-demo .cover-photo-image { display: block; width: 100%; height: 100%; object-fit: cover; transform: scale(2.8) translate(var(--portrait-offset-x, 0%), 20%); }
+.stationery-demo .cover-photo-image { display: block; width: 100%; height: 100%; object-fit: cover; transform: scale(3.4) translate(var(--portrait-offset-x, 0%), 16.5%); }
 .stationery-demo .cover-photo-ornament { position: absolute; z-index: 1; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; filter: drop-shadow(0 7px 8px #372e251e); }
-.stationery-demo .cover-photo-caption { position: relative; z-index: 2; flex: 1; min-width: 0; color: var(--ink); }
+.stationery-demo .cover-photo-caption { position: relative; z-index: 2; flex: 0 0 auto; width: 100%; min-width: 0; color: var(--ink); text-align: center; }
 .stationery-demo .cover-photo-caption h3 { margin: 0; font-family: var(--font-display); font-size: 21px; font-weight: 400; line-height: 1.15; overflow-wrap: anywhere; }
-.stationery-demo .cover-photo-parents { margin-top: 9px; }
+.stationery-demo .cover-photo-parents { margin: 5px auto 0; }
 .stationery-demo .cover-photo-parents span { display: block; color: var(--muted); font-size: 8px; letter-spacing: .13em; line-height: 1.4; text-transform: uppercase; }
 .stationery-demo .cover-photo-parents p { margin: 4px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
 .stationery-demo .event-gallery-section { width: 100%; max-width: 900px; margin: 48px auto 4px; }
@@ -419,13 +419,14 @@
   .stationery-demo .opened-invitation { padding: 26px 18px 25px; }
   .stationery-demo .invitation-hero { padding: 37px 30px 39px; }
   .stationery-demo .cover-photo-section { margin-top: 20px; }
+  .stationery-demo .cover-photo-stage { aspect-ratio: .92; }
   .stationery-demo .cover-photo-grid { gap: 8px; }
-  .stationery-demo .cover-photo-tile { gap: 5px; }
-  .stationery-demo .cover-photo-frame { flex-basis: 43%; }
-  .stationery-demo .cover-photo-caption h3 { font-size: 15px; line-height: 1.15; }
-  .stationery-demo .cover-photo-parents { margin-top: 6px; }
-  .stationery-demo .cover-photo-parents span { font-size: 8px; letter-spacing: .1em; }
-  .stationery-demo .cover-photo-parents p { margin-top: 3px; font-size: 10px; line-height: 1.35; }
+  .stationery-demo .cover-photo-tile { gap: 3px; }
+  .stationery-demo .cover-photo-frame { width: min(66%, 142px); }
+  .stationery-demo .cover-photo-caption h3 { font-size: 14px; line-height: 1.1; }
+  .stationery-demo .cover-photo-parents { margin-top: 4px; }
+  .stationery-demo .cover-photo-parents span { font-size: 7px; letter-spacing: .08em; }
+  .stationery-demo .cover-photo-parents p { margin-top: 2px; font-size: 9px; line-height: 1.25; }
   .stationery-demo .event-gallery-section { margin-top: 36px; }
   .stationery-demo .event-gallery-heading h2 { font-size: 30px; }
   .stationery-demo .event-gallery-grid { gap: 8px; }
