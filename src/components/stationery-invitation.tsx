@@ -182,8 +182,9 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   const eventTitle = draft?.eventTitle || "Undangan Pernikahan";
   const venue = draft?.venue || WEDDING.venue;
   const city = draft?.address || WEDDING.city;
-  const intro = draft?.story || WEDDING.intro;
+  const intro = draft?.story ?? WEDDING.intro;
   const headline = copy("invitationHeadline", "Dengan penuh sukacita, kami mengundang Anda.");
+  const coverMessage = copy("coverMessage", "Dengan penuh sukacita, kami mengundang Anda.");
   const eventSchedule = draft?.eventSchedule ?? WEDDING.eventSchedule;
   const galleryPhotos = draft?.galleryPhotos ?? [];
   const coverPositionX = draft?.coverPositionX ?? 50;
@@ -412,12 +413,10 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
       {hasEnvelopeOpening ? <div className="cream-envelope-cover" ref={coverRef} onAnimationEnd={(event) => {
         if (event.target === event.currentTarget && openingPhase === "fallback") revealInvitation();
       }}>
-        <Image className="cream-envelope-cover-art" src="/templates/reference-prototypes/cream-envelope-poster.jpg" alt="" fill preload sizes="(max-width: 640px) 82vw, 390px" />
+        <Image className="cream-envelope-cover-art" src="/templates/reference-prototypes/cream-envelope-poster.jpg" alt="" fill preload sizes="100vw" />
         <div className="cream-envelope-monogram"><Monogram small hostOne={hostOne} hostTwo={hostTwo} customMonogram={customMonogram} crestSrc={monogramCrestSrc} /></div>
         <div className="cream-envelope-cover-details">
           <div className="cream-envelope-cover-copy">
-            <h1 className="cover-names"><span>{hostOne}</span><span className="name-amp">&</span><span>{hostTwo}</span></h1>
-            <div className="cover-date"><span className="fine-rule" /><p>{dateLabel} · {eventTimeLabel}</p><span className="fine-rule" /></div>
             <div className="recipient"><p>{copy("recipientGreeting", "Kepada Yth.")}</p><strong>{guest}</strong></div>
           </div>
           <button type="button" id="open-invitation" className="cream-envelope-open-button" onClick={openInvitation} disabled={opening}>{opening ? "Membuka undangan…" : copy("openingButtonLabel", "Buka undangan")}</button>
@@ -429,7 +428,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
           <div className="cover-date"><span className="fine-rule" /><p>{dateLabel}</p><span className="fine-rule" /></div>
           <div className="recipient"><p>{copy("recipientGreeting", "Kepada Yth.")}</p><strong>{guest}</strong></div>
           <button type="button" id="open-invitation" className="button primary open-button" onClick={openInvitation} disabled={opening}><Mail size={16} strokeWidth={1.5} /><span>{opening ? "Membuka undangan…" : copy("openingButtonLabel", "Buka undangan")}</span><ArrowRight size={15} /></button>
-          <span className="cover-footnote">{copy("coverMessage", "Dengan penuh sukacita, kami mengundang Anda.")}</span>
+          {coverMessage && <span className="cover-footnote">{coverMessage}</span>}
         </div>
       </div>}
       {!hasEnvelopeOpening && <div className="cover-bottom">
@@ -446,15 +445,15 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
       <noscript>Aktifkan JavaScript untuk membuka undangan. Acara: {dateLabel}, {eventTimeLabel}, {venue}.</noscript>
     </main> : <>
       <main className="opened-invitation" ref={mainRef} tabIndex={-1} data-cream-intro={playHeroIntro ? (openingPhase === "revealing" ? "queued" : "running") : undefined}>
-        <section className="invitation-hero paper" id="undangan" aria-labelledby="invitation-heading">
+        <section className="invitation-hero paper" id="undangan" aria-labelledby={headline.trim() ? "invitation-heading" : undefined}>
           <div className="paper-border" /><BotanicalCorner className="hero-botanical corner-top" variant={template.ornament} /><BotanicalCorner className="hero-botanical corner-bottom" variant={template.ornament} /><Monogram small hostOne={hostOne} hostTwo={hostTwo} customMonogram={customMonogram} crestSrc={monogramCrestSrc} />
           <p className="eyebrow">{copy("invitationKicker", "HARI YANG KAMI NANTIKAN")}</p>
-          <h1 id="invitation-heading" aria-label={playHeroIntro ? headline : undefined} style={{ whiteSpace: "pre-line" }}>
+          {headline.trim() && <h1 id="invitation-heading" aria-label={playHeroIntro ? headline : undefined} style={{ whiteSpace: "pre-line" }}>
             {playHeroIntro ? <CreamTypedHeadline text={headline} /> : headline}
-          </h1>
+          </h1>}
           <TinyFlourish className="hero-flourish" />
           <div className={`hero-names${isWulanRyanSample ? " hero-names--wulan-ryan" : ""}`}><span>{firstHeroName}</span><span className="name-amp">&</span><span>{secondHeroName}</span></div>
-          <p className="invitation-message">{intro}</p>
+          {intro.trim() && <p className="invitation-message">{intro}</p>}
           <div className="hero-date"><span className="eyebrow">{copy("eventDateLabel", "HARI & TANGGAL")}</span><p>{dateLabel}</p><span>{eventTimeLabel}</span></div>
           <a className="detail-link" href="#detail-acara">{copy("detailLinkLabel", "LIHAT DETAIL ACARA")} <ArrowDown size={15} /></a>
         </section>
@@ -482,7 +481,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
         {galleryPhotos.length > 0 && <section className="event-gallery-section" aria-label={`Galeri foto ${hostOne} dan ${hostTwo}`}><div className="event-gallery-heading"><span className="eyebrow">{copy("gallerySectionEyebrow", "POTONGAN CERITA")}</span><h2 style={{ whiteSpace: "pre-line" }}>{copy("gallerySectionHeading", "Momen yang ingin kami kenang.")}</h2><p>{copy("gallerySectionIntro", "Foto-foto kenangan dari hari istimewa kami.")}</p></div><div className="event-gallery-grid">{galleryPhotos.slice(0, 6).map((photo, index) => <figure key={photo}><Image src={photo} alt={`Foto ${index + 1} ${hostOne} dan ${hostTwo}`} width={640} height={480} sizes="(max-width: 720px) 50vw, 33vw" unoptimized /></figure>)}</div></section>}
         <RSVP template={template} recipient={guest} isTestableSample={isTestableSample} slug={slug} guestToken={guestToken} copy={{ eyebrow: copy("rsvpSectionEyebrow", "KONFIRMASI KEHADIRAN"), heading: copy("rsvpSectionHeading", "Sebuah kabar, berarti bagi kami."), intro: copy("rsvpSectionIntro", "Isi konfirmasi kehadiran dan titipkan ucapan hangat untuk hari istimewa kami."), question: copy("rsvpFormQuestion", "Berkenan hadir?"), submit: copy("rsvpSubmitActionLabel", "Kirim konfirmasi") }} />
         {giftAccounts.length > 0 && <section className="gift-section content-section" id="hadiah" aria-labelledby="gift-title"><div className="section-heading"><Gift size={20} strokeWidth={1.2} /><span className="eyebrow">{copy("giftSectionEyebrow", "TANDA KASIH")}</span><h2 id="gift-title" style={{ whiteSpace: "pre-line" }}>{copy("giftSectionHeading", "Kehadiranmu adalah hadiah terindah.")}</h2></div><p className="gift-message">{giftMessage}</p><div className="gift-account-grid">{giftAccounts.map((account) => <article className="gift-account-card" key={account.id}><span className="gift-account-recipient">{account.recipientLabel}</span><span className="eyebrow">{account.bankName}</span><b>{account.accountName}</b><strong>{account.accountNumber}</strong><PublicInvitationGiftCopy accountNumber={account.accountNumber} label={copy("giftCopyActionLabel", "Salin nomor rekening")} /></article>)}</div></section>}
-        <section className="closing-section paper"><BotanicalCorner className="closing-botanical" variant={template.ornament} /><TinyFlourish className="section-flourish" /><span className="eyebrow">{copy("closingSectionEyebrow", "DENGAN PENUH SUKACITA")}</span><h2 style={{ whiteSpace: "pre-line" }}>{copy("closingSectionHeading", "Hari istimewa ini, lebih indah bersama Anda.")}</h2><p>{intro}</p><div className="closing-names" style={{ whiteSpace: "pre-line" }}>{closingNames}</div><span className="closing-date">{dateLabel.toLocaleUpperCase("id-ID")}</span><button type="button" className="text-link" onClick={() => dialogRef.current?.showModal()}>{copy("shareActionLabel", "Bagikan undangan")} <Share2 size={14} /></button></section>
+        <section className="closing-section paper"><BotanicalCorner className="closing-botanical" variant={template.ornament} /><TinyFlourish className="section-flourish" /><span className="eyebrow">{copy("closingSectionEyebrow", "DENGAN PENUH SUKACITA")}</span><h2 style={{ whiteSpace: "pre-line" }}>{copy("closingSectionHeading", "Hari istimewa ini, lebih indah bersama Anda.")}</h2>{intro.trim() && <p>{intro}</p>}<div className="closing-names" style={{ whiteSpace: "pre-line" }}>{closingNames}</div><span className="closing-date">{dateLabel.toLocaleUpperCase("id-ID")}</span><button type="button" className="text-link" onClick={() => dialogRef.current?.showModal()}>{copy("shareActionLabel", "Bagikan undangan")} <Share2 size={14} /></button></section>
       </main>
       <footer className="site-footer"><a href={catalogUrl}><ArrowLeft size={14} />{copy("catalogLinkLabel", "Koleksi template")}</a><span>{template.name} · {hostOne} & {hostTwo}</span><button type="button" onClick={reopenCover}><RotateCcw size={13} />{copy("reopenCoverLabel", "Lihat sampul")}</button></footer>
       <nav className="bottom-nav" aria-label="Navigasi undangan" style={{ gridTemplateColumns: `repeat(${giftAccounts.length > 0 ? 4 : 3}, minmax(0, 1fr))` }}>{[{ id: "undangan", text: copy("navInvitationLabel", "Undangan"), Icon: Mail }, { id: "detail-acara", text: copy("navEventLabel", "Acara"), Icon: CalendarDays }, { id: "konfirmasi", text: copy("navRsvpLabel", "Kehadiran"), Icon: Users }, ...(giftAccounts.length > 0 ? [{ id: "hadiah", text: copy("navGiftLabel", "Hadiah"), Icon: Gift }] : [])].map(({ id, text, Icon }) => <a href={`#${id}`} key={id} aria-current={activeSection === id ? "location" : undefined} className={activeSection === id ? "active" : ""}><Icon size={17} strokeWidth={1.5} /><span>{text}</span></a>)}</nav>

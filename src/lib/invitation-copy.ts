@@ -90,13 +90,20 @@ const invitationCopyFieldByKey = new Map<string, TemplateSchemaField>(allInvitat
 
 export type InvitationCopyKey = (typeof allInvitationCopyFields)[number]["key"];
 
+const copyKeysWithEmptyFallback = new Set<InvitationCopyKey>([
+  "invitationKicker",
+  "invitationTitle",
+  "familyDetailsLabel",
+  "closingNames",
+]);
+
 export function isInvitationCopyField(key: string) {
   return invitationCopyKeys.has(key);
 }
 
 export function invitationCopy(draft: InvitationDraft, key: InvitationCopyKey, fallback?: string) {
   const value = draft.customFields?.[key];
-  if (typeof value === "string" && value.trim()) return value;
+  if (typeof value === "string" && (value.trim() || !copyKeysWithEmptyFallback.has(key))) return value;
   return fallback ?? invitationCopyFieldByKey.get(key)?.defaultValue ?? "";
 }
 
