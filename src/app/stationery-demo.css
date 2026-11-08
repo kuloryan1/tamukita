@@ -302,7 +302,7 @@
   max-width: none;
   transform: translate(var(--cream-portrait-x), var(--cream-portrait-y));
 }
-.stationery-demo.theme-elegant-cream .cover-photo-tile--host-one { --cream-portrait-x: -45%; --cream-portrait-y: -23%; }
+.stationery-demo.theme-elegant-cream .cover-photo-tile--host-one { --cream-portrait-x: -42%; --cream-portrait-y: -21%; }
 .stationery-demo.theme-elegant-cream .cover-photo-tile--host-two { --cream-portrait-x: -68%; --cream-portrait-y: -35%; }
 .stationery-demo.theme-elegant-cream .cover-photo-caption h3 { font-size: clamp(46px, 5vw, 58px); line-height: 1.1; }
 .stationery-demo.theme-elegant-cream .cover-photo-caption h3,

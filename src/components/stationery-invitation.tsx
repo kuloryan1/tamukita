@@ -349,9 +349,8 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   }
   function openInvitation() {
     if (opening || openingTimeout.current !== undefined) return;
-    const reducedMotion = window.matchMedia(REDUCED_MOTION_QUERY).matches;
     if (!hasEnvelopeOpening) {
-      if (reducedMotion) return revealInvitation();
+      if (window.matchMedia(REDUCED_MOTION_QUERY).matches) return revealInvitation();
       setOpeningPhase("playing");
       openingTimeout.current = window.setTimeout(revealInvitation, 650);
       return;
@@ -361,10 +360,10 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
     openingComplete.current = false;
     const attempt = ++openingAttempt.current;
     const video = openingVideoRef.current;
-    if (reducedMotion || !video) return startCoverFallback(attempt);
+    if (!video) return startCoverFallback(attempt);
 
     const bounds = coverRef.current?.getBoundingClientRect();
-    // Make the video renderable before play(), inside the same button gesture.
+    // The open button explicitly starts the clip. Make it renderable within that gesture.
     flushSync(() => {
       if (bounds) setOpeningBounds({ "--cream-video-left": `${bounds.left}px`, "--cream-video-top": `${bounds.top}px`, "--cream-video-width": `${bounds.width}px`, "--cream-video-height": `${bounds.height}px` } as CSSProperties);
       setOpeningPhase("loading");
