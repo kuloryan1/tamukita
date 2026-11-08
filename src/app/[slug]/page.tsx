@@ -15,7 +15,6 @@ import { isAdminSampleSnapshot } from "@/lib/invitation-publication";
 import { StationeryInvitation } from "@/components/stationery-invitation";
 import { getTemplate as getStationeryTemplate } from "@/lib/stationery-demo";
 import { normalizeRecipient } from "@/lib/stationery-recipient";
-import { paparazziIsOpen } from "@/lib/paparazzi";
 
 type PageProps = { params: Promise<{ slug: string }> };
 type InvitationPageProps = PageProps & { searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -52,7 +51,6 @@ const findPublished = cache(async (slug: string) => {
       organization: { select: { status: true } },
       publishedSnapshot: true,
       templateVersion: { select: { version: true, manifest: true, template: { select: { slug: true } } } },
-      paparazziAlbum: { select: { token: true, enabled: true, closesAt: true } },
       _count: { select: { rsvps: true } },
     },
   });
@@ -135,8 +133,6 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
   });
   const isTestableSample = isAdminSampleSnapshot(record.publishedSnapshot);
   const stationeryTemplate = isTestableSample ? getStationeryTemplate(record.template.slug) : undefined;
-  const album = record.paparazziAlbum;
-  const paparazziToken = album && paparazziIsOpen({ ...album, invitation: record }, now) ? album.token : undefined;
   if (stationeryTemplate) {
     const recipient = guestLink?.guest.name ?? normalizeRecipient(Array.isArray(query.to) ? query.to[0] : query.to);
     return <StationeryInvitation
@@ -146,9 +142,8 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
       isTestableSample
       slug={slug}
       guestToken={guestLink ? candidateToken ?? undefined : undefined}
-      paparazziToken={paparazziToken}
       calendarHref={record.template.slug === "elegant-cream" ? "/api/templates/demo/calendar?template=elegant-cream" : "/api/templates/demo/calendar"}
     />;
   }
-  return <PublicInvitation slug={slug} initialDraft={record.draft} initialRsvpCount={record._count.rsvps} initialGuestbook={guestbook.map((entry) => ({ ...entry, createdAt: entry.createdAt.toISOString() }))} recipientName={guestLink?.guest.name} guestToken={guestLink ? candidateToken ?? undefined : undefined} paparazziToken={paparazziToken} featureAccess={record.featureAccess} templateSlug={record.template.slug} preview={<InvitationPreview draft={record.draft} full recipientName={guestLink?.guest.name} template={record.template} mode="public" />} />;
+  return <PublicInvitation slug={slug} initialDraft={record.draft} initialRsvpCount={record._count.rsvps} initialGuestbook={guestbook.map((entry) => ({ ...entry, createdAt: entry.createdAt.toISOString() }))} recipientName={guestLink?.guest.name} guestToken={guestLink ? candidateToken ?? undefined : undefined} featureAccess={record.featureAccess} templateSlug={record.template.slug} preview={<InvitationPreview draft={record.draft} full recipientName={guestLink?.guest.name} template={record.template} mode="public" />} />;
 }

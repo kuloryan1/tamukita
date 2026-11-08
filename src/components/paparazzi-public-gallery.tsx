@@ -66,8 +66,8 @@ export function PaparazziPublicGallery({ token, available, refreshKey, onAddPhot
     }
   }
   if (!available) return null;
-  return <section className="paparazzi-public-gallery" id="galeri-acara">
-    <div className="paparazzi-gallery-heading"><div><p className="eyebrow">KENANGAN BERSAMA</p><h2>Galeri acara</h2><p>Foto dari para tamu langsung tampil setelah selesai diproses.</p></div><div className="paparazzi-gallery-actions">{onAddPhoto && <button className="button button--dark button--small" type="button" onClick={onAddPhoto}><Camera size={15} />Tambah foto</button>}<button className="button button--outline button--small" type="button" aria-label="Muat ulang galeri acara" onClick={() => { setExpanded(false); void load(); }}><RefreshCw size={16} /></button></div></div>
+  return <section className="paparazzi-public-gallery" id="galeri-keluarga">
+    <div className="paparazzi-gallery-heading"><div><p className="eyebrow">KENANGAN BERSAMA</p><h2>Galeri keluarga</h2><p>Foto keluarga yang dikirim melalui tautan khusus ini.</p></div><div className="paparazzi-gallery-actions">{onAddPhoto && <button className="button button--dark button--small" type="button" onClick={onAddPhoto}><Camera size={15} />Tambah foto</button>}<button className="button button--outline button--small" type="button" aria-label="Muat ulang galeri keluarga" onClick={() => { setExpanded(false); void load(); }}><RefreshCw size={16} /></button></div></div>
     {error && <p className="paparazzi-error" role="alert">{error}</p>}
     {data.photos.length ? <div className="paparazzi-public-photo-grid">{data.photos.map((photo, index) => {
       const href = `/api/public/paparazzi/${token}/gallery/${photo.id}`;

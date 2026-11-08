@@ -9,7 +9,7 @@ import { getR2Client, getR2Config } from "@/lib/r2";
 import { ensurePaparazziStorage } from "@/lib/paparazzi-web-storage";
 import { childDataConsentRecord } from "@/lib/child-data-consent";
 import { PAPARAZZI_CHILD_DATA_GUARDIAN_CONSENT_VERSION } from "@/lib/consent-versions";
-import { PAPARAZZI_CONSENT_VERSION, PAPARAZZI_UPLOAD_TTL_MS, paparazziIsOpen, paparazziRetentionAt, paparazziTokenSchema, paparazziUploadSchema } from "@/lib/paparazzi";
+import { PAPARAZZI_UPLOAD_TTL_MS, paparazziIsOpen, paparazziRetentionAt, paparazziTokenSchema, paparazziUploadSchema } from "@/lib/paparazzi";
 import { paparazziInvitationSelect, paparazziPrivateHeaders, paparazziTransactionOptions, paparazziReceiptHash } from "@/lib/paparazzi-server";
 
 export const runtime = "nodejs";
@@ -22,7 +22,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
   catch { return NextResponse.json({ error: "Penyimpanan foto belum tersedia. Coba lagi nanti." }, { status: 503 }); }
   const body = await readJsonBody(request, 2_000); if (!body.ok) return NextResponse.json({ error: "Detail foto tidak valid." }, { status: body.status });
   const parsed = paparazziUploadSchema.safeParse(body.value);
-  if (!parsed.success) return NextResponse.json({ error: "Gunakan nama Instagram yang valid, JPG, PNG, atau WebP maksimal 10 MB, dan lengkapi persetujuan. Foto anak memerlukan persetujuan orang tua/wali." }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: "Gunakan nama Instagram yang valid, JPG, PNG, atau WebP maksimal 10 MB. Foto anak memerlukan persetujuan orang tua/wali." }, { status: 400 });
   if (!await allowRequest(`paparazzi:upload:${getRequestAddress(request)}`, 36_000, 900)) return NextResponse.json({ error: "Terlalu banyak unggahan dari jaringan ini. Coba lagi nanti." }, { status: 429 });
   const photoId = randomUUID(); const receipt = randomBytes(32).toString("hex"); const now = new Date();
   const result = await getPrismaClient().$transaction(async tx => {
@@ -37,7 +37,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
     const prefix = `${album.invitation.organizationId}/${album.invitationId}/${photoId}`;
     const sourceKey = `private/pending/paparazzi/${prefix}/source`;
     const retentionAt = paparazziRetentionAt(now, album.invitation.expiresAt);
-    await tx.paparazziPhoto.create({ data: { id: photoId, albumId: album.id, storageProvider, sourceKey, processedKey: `private/paparazzi/${prefix}.jpg`, mimeType: parsed.data.contentType, sizeBytes: BigInt(parsed.data.sizeBytes), instagramHandle: parsed.data.instagramHandle, receiptHash: paparazziReceiptHash(receipt), consentAt: now, consentVersion: PAPARAZZI_CONSENT_VERSION, ...childDataConsentRecord(parsed.data.includesChildData, PAPARAZZI_CHILD_DATA_GUARDIAN_CONSENT_VERSION, now), retentionAt } });
+    await tx.paparazziPhoto.create({ data: { id: photoId, albumId: album.id, storageProvider, sourceKey, processedKey: `private/paparazzi/${prefix}.jpg`, mimeType: parsed.data.contentType, sizeBytes: BigInt(parsed.data.sizeBytes), instagramHandle: parsed.data.instagramHandle, receiptHash: paparazziReceiptHash(receipt), consentAt: null, consentVersion: null, ...childDataConsentRecord(parsed.data.includesChildData, PAPARAZZI_CHILD_DATA_GUARDIAN_CONSENT_VERSION, now), retentionAt } });
     return { sourceKey, retentionAt } as const;
   }, paparazziTransactionOptions);
   if ("error" in result) return NextResponse.json({ error: result.error }, { status: result.status, headers: paparazziPrivateHeaders });

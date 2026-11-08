@@ -15,7 +15,7 @@ export default async function PaparazziOwnerPage({ params }: { params: Promise<{
   const data = await getOwnerPaparazziAlbum(session.user.id, id); if (!data) notFound();
   return <section className="dashboard-paparazzi-page">
     <Link href="/dashboard#invitations" className="back-link"><ArrowLeft size={15} /> Kembali ke undangan</Link>
-    <div className="dashboard-page-heading"><div><p className="dashboard-date">MOMEN DARI PARA TAMU</p><h1><Camera size={27} /> Paparazi acara</h1><p>{data.invitation.title} · Kamera dan galeri publik lewat QR</p></div></div>
+    <div className="dashboard-page-heading"><div><p className="dashboard-date">MOMEN KELUARGA</p><h1><Camera size={27} /> Paparazi acara</h1><p>{data.invitation.title} · Galeri keluarga melalui QR pribadi</p></div></div>
     <PaparazziOwner initial={data} />
   </section>;
 }

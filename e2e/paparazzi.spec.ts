@@ -15,7 +15,7 @@ async function signIn(page: Page, email: string, password: string) {
   await page.waitForURL(/\/(?:dashboard|admin)(?:\/|$)/);
 }
 
-test("event QR opens the camera, stores validated photos, and immediately publishes an owner-controlled gallery", async ({ page, browser, request }, testInfo) => {
+test("family QR opens the camera, stores validated photos, and serves an owner-controlled family gallery", async ({ page, browser, request }, testInfo) => {
   test.setTimeout(300_000);
   test.skip(testInfo.project.name !== "desktop-chromium", "The persisted upload scenario runs once per disposable database.");
   const databaseUrl = process.env.DATABASE_URL;
@@ -57,7 +57,7 @@ test("event QR opens the camera, stores validated photos, and immediately publis
     await page.goto("/dashboard"); await page.getByRole("link", { name: "Paparazi", exact: true }).click();
     await page.waitForURL(new RegExp(`/dashboard/invitations/${invitationId}/paparazi$`));
     await page.getByRole("button", { name: "Siapkan QR & buka unggahan", exact: true }).click();
-    await expect(page.getByText("Menerima foto dari tamu", { exact: true })).toBeVisible();
+    await expect(page.getByText("Menerima foto keluarga", { exact: true })).toBeVisible();
     const album = (await (await page.request.get(ownerPath)).json()).album;
     expect(album.maxPhotos).toBeNull();
     expect(new URL(album.shareUrl).origin).toBe(new URL(String(testInfo.project.use.baseURL)).origin);
@@ -76,16 +76,16 @@ test("event QR opens the camera, stores validated photos, and immediately publis
     expect(entry?.headers()["x-robots-tag"]).toContain("noindex");
     expect((await request.get("/")).headers()["permissions-policy"]).toContain("camera=()");
     await expect(guest.getByRole("heading", { name: "Nara & Raka", exact: true })).toBeVisible();
-    await expect(guest.getByText("Foto langsung masuk galeri publik acara", { exact: true })).toBeVisible();
+    await expect(guest.getByText("Galeri melalui QR atau tautan keluarga", { exact: true })).toBeVisible();
     expect(await guest.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await capture("guest-mobile-entry", guest);
     await guest.getByRole("button", { name: "Tambah foto", exact: true }).click();
-    await expect(guest.getByRole("dialog", { name: "Unggah foto ke galeri acara" })).toBeVisible();
+    await expect(guest.getByRole("dialog", { name: "Unggah foto ke galeri keluarga" })).toBeVisible();
     await expect(guest.getByRole("button", { name: "Buka kamera", exact: true })).toBeDisabled();
     await guest.getByLabel("Nama Instagram").fill("nara_raka");
     await guest.getByRole("button", { name: "Buka kamera", exact: true }).click();
     await expect(guest.getByRole("button", { name: "Ambil foto", exact: true })).toBeEnabled();
-    const cameraDialog = guest.getByRole("dialog", { name: "Unggah foto ke galeri acara" });
+    const cameraDialog = guest.getByRole("dialog", { name: "Unggah foto ke galeri keluarga" });
     await expect(cameraDialog).toHaveClass(/paparazzi-upload-dialog--camera/);
     await expect(guest.getByRole("button", { name: "Tutup kamera", exact: true })).toBeVisible();
     await expect(guest.getByRole("button", { name: "Ganti kamera", exact: true })).toBeVisible();
@@ -99,10 +99,9 @@ test("event QR opens the camera, stores validated photos, and immediately publis
     await guest.getByRole("button", { name: "Ambil foto", exact: true }).click();
     await expect(guest.getByRole("heading", { name: "Siap dibagikan?" })).toBeVisible();
     await expect(guest.locator(".paparazzi-watermark-preview img")).toHaveAttribute("alt", "Watermark W&R");
-    await expect(guest.locator(".paparazzi-watermark-preview")).toContainText("@nara_raka");
+    await expect(guest.locator(".paparazzi-watermark-preview")).not.toContainText("@nara_raka");
     await capture("guest-mobile-preview", guest);
-    const send = guest.getByRole("button", { name: "Bagikan ke galeri acara", exact: true }); await expect(send).toBeDisabled();
-    await guest.getByLabel(/^Saya berusia minimal 18 tahun/).check();
+    const send = guest.getByRole("button", { name: "Kirim ke galeri keluarga", exact: true }); await expect(send).toBeEnabled();
     const reservationResponse = guest.waitForResponse(response => response.url().endsWith(`${publicPath}/uploads`) && response.request().method() === "POST");
     await send.click(); const firstTicket = await (await reservationResponse).json();
     await expect(guest.getByRole("heading", { name: "Foto sudah diterima!" })).toBeVisible({ timeout: 90_000 });
@@ -117,7 +116,7 @@ test("event QR opens the camera, stores validated photos, and immediately publis
     await expect(guest.locator(".paparazzi-public-photo figcaption").filter({ hasText: "@nara_raka" })).toBeVisible();
     const storedPhoto = (await pool.query('SELECT "instagramHandle", "consentVersion" FROM paparazzi_photos WHERE id=$1', [firstTicket.photoId])).rows[0];
     expect(storedPhoto.instagramHandle).toBe("@nara_raka");
-    expect(storedPhoto.consentVersion).toBe("paparazzi-public-2026-11-v2");
+    expect(storedPhoto.consentVersion).toBeNull();
     expect((await request.get(ownerPhoto)).status()).toBe(401);
     expect((await other.request.get(ownerPhoto)).status()).toBe(404);
     expect((await request.patch(ownerPhoto, { data: { visible: false } })).status()).toBe(401);
@@ -134,7 +133,7 @@ test("event QR opens the camera, stores validated photos, and immediately publis
     await expect.poll(async () => (await request.get(photoPath)).status()).toBe(200);
 
     async function reserve(client: APIRequestContext, bytes: Buffer, overrides: Record<string, unknown> = {}) {
-      return client.post(`${publicPath}/uploads`, { data: { contentType: "image/jpeg", sizeBytes: bytes.length, instagramHandle: "@qa_guest", consent: true, includesChildData: false, guardianConsent: false, ...overrides } });
+      return client.post(`${publicPath}/uploads`, { data: { contentType: "image/jpeg", sizeBytes: bytes.length, instagramHandle: "@qa_guest", includesChildData: false, guardianConsent: false, ...overrides } });
     }
     const source = await sharp({ create: { width: 96, height: 64, channels: 3, background: "#8aa385" } }).withMetadata({ orientation: 6, exif: { IFD0: { Artist: "Synthetic Paparazi QA" } } }).jpeg().toBuffer();
     expect((await sharp(source).metadata()).exif).toBeDefined();
@@ -155,7 +154,7 @@ test("event QR opens the camera, stores validated photos, and immediately publis
     expect(processed.format).toBe("jpeg"); expect(processed.width).toBe(PAPARAZZI_STORY_WIDTH); expect(processed.height).toBe(PAPARAZZI_STORY_HEIGHT);
     expect(processed.exif).toBeUndefined(); expect(processed.orientation).toBeUndefined();
     const stored = (await pool.query('SELECT "sourceKey", "processedKey", "storageProvider", "consentVersion", "guardianConsentVersion" FROM paparazzi_photos WHERE id=$1', [second.photoId])).rows[0];
-    expect(stored.consentVersion).toBe("paparazzi-public-2026-11-v2"); expect(stored.guardianConsentVersion).toBe("child-paparazzi-public-guardian-2026-10-v1");
+    expect(stored.consentVersion).toBeNull(); expect(stored.guardianConsentVersion).toBe("child-paparazzi-public-guardian-2026-10-v1");
     expect(stored.storageProvider).toBe("SERVER");
     const diskRoot = path.resolve(process.env.PAPARAZZI_STORAGE_DIR || ".local-storage/paparazzi-e2e");
     async function exists(key: string) { try { await access(paparazziFilePath(key, diskRoot)); return true; } catch { return false; } }
@@ -171,10 +170,7 @@ test("event QR opens the camera, stores validated photos, and immediately publis
     await page.setViewportSize({ width: 390, height: 844 }); expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await capture("owner-mobile-gallery", page);
     await page.setViewportSize({ width: 1280, height: 900 });
-    await pool.query('UPDATE paparazzi_photos SET "consentVersion" = $2 WHERE id = $1', [second.photoId, "paparazzi-private-2026-10-v1"]);
-    expect((await request.get(`${galleryPath}/${second.photoId}`)).status()).toBe(404);
-    expect((await page.request.patch(`${ownerPath}/photos/${second.photoId}`, { data: { visible: true } })).status()).toBe(409);
-    await pool.query('UPDATE paparazzi_photos SET "consentVersion" = $2 WHERE id = $1', [second.photoId, "paparazzi-public-2026-10-v1"]);
+    expect((await request.get(`${galleryPath}/${second.photoId}`)).status()).toBe(200);
     const invalid = Buffer.from("This is not an image."); const bad = await (await reserve(request, invalid)).json();
     await request.put(bad.uploadUrl, { data: invalid, headers: { "content-type": "image/jpeg", "content-length": String(invalid.length), ...bad.uploadHeaders } });
     await request.post(`${publicPath}/photos/${bad.photoId}`, { data: { receipt: bad.receipt } });
@@ -230,7 +226,7 @@ test("event QR opens the camera, stores validated photos, and immediately publis
     const burstSource = await sharp(randomBytes(1920 * 1280 * 3), { raw: { width: 1920, height: 1280, channels: 3 } }).blur(0.8).jpeg({ quality: 90 }).toBuffer();
     // Model the event estimate: 60 guests reserve, upload, and submit at once.
     const burstResults = await Promise.allSettled(Array.from({ length: 60 }, async () => {
-      const reservation = await request.post(`${activePublic}/uploads`, { data: { contentType: "image/jpeg", sizeBytes: burstSource.length, instagramHandle: "@qa_guest", consent: true, includesChildData: false, guardianConsent: false } });
+      const reservation = await request.post(`${activePublic}/uploads`, { data: { contentType: "image/jpeg", sizeBytes: burstSource.length, instagramHandle: "@qa_guest", includesChildData: false, guardianConsent: false } });
       expect(reservation.status()).toBe(201); const ticket = await reservation.json();
       expect(ticket.uploadUrl).toMatch(/\/file$/);
       expect((await request.put(ticket.uploadUrl, { data: burstSource, headers: { "content-type": "image/jpeg", ...ticket.uploadHeaders } })).status()).toBe(201);
@@ -247,7 +243,7 @@ test("event QR opens the camera, stores validated photos, and immediately publis
     await expect(guest.locator(".paparazzi-public-photo img")).toHaveCount(refreshedGallery.photos.length, { timeout: 15_000 });
     // A legacy limit of 200 must no longer cap new event reservations.
     await pool.query(`INSERT INTO paparazzi_photos (id,"albumId","sourceKey","processedKey","storageProvider","mimeType","sizeBytes","receiptHash","consentAt","consentVersion","includesChildData","retentionAt") SELECT g.id,$1,'private/pending/paparazzi/'||$2||'/'||$3||'/'||g.id||'/source','private/paparazzi/'||$2||'/'||$3||'/'||g.id||'.jpg','SERVER','image/jpeg',$4,$5,now(),'paparazzi-public-2026-10-v1',false,now()+interval '90 days' FROM (SELECT gen_random_uuid() AS id FROM generate_series(1,200)) g`, [legacy.id,legacy.organizationId,invitationId,source.length,createHash("sha256").update(legacyReceipt).digest("hex")]);
-    expect((await request.post(`${activePublic}/uploads`, { data: { contentType: "image/jpeg", sizeBytes: source.length, instagramHandle: "@qa_guest", consent: true, includesChildData: false, guardianConsent: false } })).status()).toBe(201);
+    expect((await request.post(`${activePublic}/uploads`, { data: { contentType: "image/jpeg", sizeBytes: source.length, instagramHandle: "@qa_guest", includesChildData: false, guardianConsent: false } })).status()).toBe(201);
     expect(clientErrors).toEqual([]);
   } finally {
     await pool.query('UPDATE users SET "platformRole"=\'CUSTOMER\' WHERE email=$1', [email]);

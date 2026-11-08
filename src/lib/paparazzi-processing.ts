@@ -1,7 +1,7 @@
 import type { S3Client } from "@aws-sdk/client-s3";
 import sharp from "sharp";
 import type { Prisma, PrismaClient } from "../generated/prisma/client";
-import { PAPARAZZI_CONSENT_VERSION, PAPARAZZI_LEGACY_CONSENT_VERSIONS, PAPARAZZI_MAX_BYTES, PAPARAZZI_STORY_HEIGHT, PAPARAZZI_STORY_WIDTH, PAPARAZZI_UPLOAD_TTL_MS, paparazziJobSchema } from "./paparazzi";
+import { PAPARAZZI_MAX_BYTES, PAPARAZZI_STORY_HEIGHT, PAPARAZZI_STORY_WIDTH, PAPARAZZI_UPLOAD_TTL_MS, paparazziJobSchema } from "./paparazzi";
 import { paparazziStorage } from "./paparazzi-storage";
 import { removePaparazziTemporaryFiles } from "./paparazzi-server-files";
 import { cropLegacyPaparazziStamp, PAPARAZZI_STORY_LAYOUT_VERSION, refreshPaparazziStoryStamp, renderPaparazziStory } from "./paparazzi-story";
@@ -94,7 +94,7 @@ export async function processPaparazziPhoto(prisma: PrismaClient, s3: S3Client |
 export async function upgradePaparazziStoryPhotos(prisma: PrismaClient, s3: S3Client | null, bucket?: string) {
   const photos = await prisma.paparazziPhoto.findMany({
     where: {
-      status: "READY", consentVersion: { in: [PAPARAZZI_CONSENT_VERSION, ...PAPARAZZI_LEGACY_CONSENT_VERSIONS] },
+      status: "READY",
       OR: [{ storyKey: null }, { storyLayoutVersion: { lt: PAPARAZZI_STORY_LAYOUT_VERSION } }],
       deletedAt: null, storageDeletedAt: null, retentionAt: { gt: new Date() },
       ...(s3 && bucket ? {} : { storageProvider: "SERVER" }),

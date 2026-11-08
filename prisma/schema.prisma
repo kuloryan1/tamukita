@@ -515,8 +515,8 @@ model PaparazziPhoto {
   status                 MediaStatus    @default(PENDING)
   receiptHash            String
   isVisible              Boolean        @default(true)
-  consentAt              DateTime
-  consentVersion         String
+  consentAt              DateTime?
+  consentVersion         String?
   includesChildData      Boolean        @default(false)
   guardianConsentAt      DateTime?
   guardianConsentVersion String?

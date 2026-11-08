@@ -25,6 +25,7 @@
 .paparazzi-consent-form{display:grid;gap:16px}
 .paparazzi-check{display:flex;align-items:flex-start;gap:11px;font-size:12px;line-height:1.8;color:#526453;cursor:pointer}
 .paparazzi-check input{flex-shrink:0;width:18px;height:18px;margin:2px 0 0;accent-color:#315e4b}
+.paparazzi-family-note{margin:0;color:#718071;font-size:11px;line-height:1.8}
 .paparazzi-guardian{background:#f3f3eb;padding:13px;border-radius:8px}
 .paparazzi-consent-form .button{min-height:49px}
 .paparazzi-processing-note{font-size:11px;line-height:1.8;color:#7e877a;text-align:center}

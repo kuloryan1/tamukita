@@ -37,8 +37,8 @@ describe("event QR and availability", () => {
   });
 });
 
-describe("public photo sharing consent and retention", () => {
-  const input = { contentType: "image/jpeg", sizeBytes: 2400, instagramHandle: "@guest_qa", consent: true, includesChildData: false, guardianConsent: false };
+describe("family-link photo uploads and retention", () => {
+  const input = { contentType: "image/jpeg", sizeBytes: 2400, instagramHandle: "@guest_qa", includesChildData: false, guardianConsent: false };
   it("normalizes required Instagram names and rejects invalid or missing names", () => {
     expect(paparazziInstagramHandleSchema.parse("guest.2026")).toBe("@guest.2026");
     expect(paparazziInstagramHandleSchema.parse(" @Guest_QA ")).toBe("@Guest_QA");
@@ -47,11 +47,9 @@ describe("public photo sharing consent and retention", () => {
     const { instagramHandle: _missing, ...withoutInstagram } = input;
     expect(paparazziUploadSchema.safeParse(withoutInstagram).success).toBe(false);
   });
-  it("requires explicit public sharing consent before reserving storage", () => {
+  it("accepts an upload without a public sharing consent checkbox", () => {
     expect(paparazziUploadSchema.safeParse(input).success).toBe(true);
-    expect(paparazziUploadSchema.safeParse({ ...input, consent: false }).success).toBe(false);
-    const { consent: _omitted, ...withoutConsent } = input;
-    expect(paparazziUploadSchema.safeParse(withoutConsent).success).toBe(false);
+    expect(paparazziUploadSchema.safeParse({ ...input, consent: true }).success).toBe(false);
   });
   it("requires the guardian attestation exactly when the photo contains child data", () => {
     expect(paparazziUploadSchema.safeParse({ ...input, includesChildData: true }).success).toBe(false);

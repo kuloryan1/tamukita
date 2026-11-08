@@ -3,7 +3,7 @@ import "server-only";
 import { createHash, timingSafeEqual } from "node:crypto";
 import type { Prisma } from "@/generated/prisma/client";
 import { getPrismaClient } from "@/lib/prisma";
-import { PAPARAZZI_CONSENT_VERSION, PAPARAZZI_LEGACY_CONSENT_VERSIONS, PAPARAZZI_MAX_BYTES, PAPARAZZI_RETENTION_DAYS, paparazziGalleryVisible, paparazziIsOpen, paparazziTokenSchema, paparazziPhotoIdSchema, paparazziUrl, type PaparazziOwnerAlbum, type PaparazziPublicAlbum } from "@/lib/paparazzi";
+import { PAPARAZZI_MAX_BYTES, PAPARAZZI_RETENTION_DAYS, paparazziGalleryVisible, paparazziIsOpen, paparazziTokenSchema, paparazziPhotoIdSchema, paparazziUrl, type PaparazziOwnerAlbum, type PaparazziPublicAlbum } from "@/lib/paparazzi";
 import { PAPARAZZI_CHILD_DATA_GUARDIAN_CONSENT_VERSION } from "@/lib/consent-versions";
 
 export const paparazziPrivateHeaders = { "Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer", "X-Robots-Tag": "noindex, nofollow" };
@@ -65,7 +65,7 @@ export async function getOwnerPaparazziAlbum(userId: string, invitationId: strin
 
 export function paparazziPublicPhotoWhere(token: string, photoId?: string): Prisma.PaparazziPhotoWhereInput {
   const now = new Date();
-  return { ...(photoId ? { id: photoId } : {}), status: "READY", isVisible: true, deletedAt: null, retentionAt: { gt: now }, consentVersion: { in: [PAPARAZZI_CONSENT_VERSION, ...PAPARAZZI_LEGACY_CONSENT_VERSIONS] },
+  return { ...(photoId ? { id: photoId } : {}), status: "READY", isVisible: true, deletedAt: null, retentionAt: { gt: now },
     OR: [{ includesChildData: false }, { includesChildData: true, guardianConsentAt: { not: null }, guardianConsentVersion: PAPARAZZI_CHILD_DATA_GUARDIAN_CONSENT_VERSION }],
     album: { token, invitation: { status: "PUBLISHED", deletedAt: null, expiresAt: { gt: now }, organization: { status: "ACTIVE" } } } };
 }
