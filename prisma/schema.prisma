@@ -504,6 +504,7 @@ model PaparazziPhoto {
   sourceKey              String         @unique
   processedKey           String         @unique
   storyKey               String?        @unique
+  storyLayoutVersion     Int            @default(0)
   storageProvider        PaparazziStorageProvider @default(R2)
   mimeType               String
   sizeBytes              BigInt

@@ -119,7 +119,7 @@ export function PaparazziGuest({ token, initial }: { token: string; initial: Pap
             <Image className="paparazzi-photo-preview" src={preview} alt="Pratinjau foto sebelum dikirim" width={PAPARAZZI_STORY_WIDTH} height={PAPARAZZI_STORY_HEIGHT} unoptimized />
             {parsedInstagramHandle.success && <span className="paparazzi-watermark-preview">
               <small>{parsedInstagramHandle.data}</small>
-              <Image src="/images/paparazi/wr-crest.png" alt="" width={44} height={44} unoptimized />
+              <Image src="/images/paparazi/wr-crest.png" alt="" width={36} height={36} unoptimized />
             </span>}
           </div>
           <form onSubmit={send} className="paparazzi-consent-form">

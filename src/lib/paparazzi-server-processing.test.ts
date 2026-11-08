@@ -7,6 +7,7 @@ import { expect, test, vi } from "vitest";
 import type { PrismaClient } from "../generated/prisma/client";
 import { deletePaparazziPhotoObjects, failPaparazziPhoto, processPaparazziPhoto, upgradePaparazziStoryPhotos } from "./paparazzi-processing";
 import { paparazziServerStore } from "./paparazzi-server-files";
+import { PAPARAZZI_STORY_LAYOUT_VERSION } from "./paparazzi-story";
 
 test("the worker processes, retries cleanup, and deletes server photos without any R2 client", async () => {
   const root = await realpath(await mkdtemp(path.join(os.tmpdir(), "tamukita-paparazzi-worker-")));
@@ -51,12 +52,12 @@ test("an existing album image gets a Story variant while the saved JPEG is kept 
     const id = randomUUID();
     const prefix = `${randomUUID()}/${randomUUID()}/${id}`;
     const state = {
-      id, storageProvider: "SERVER", storyKey: null as string | null, instagramHandle: "@guest_qa",
+      id, storageProvider: "SERVER", storyKey: null as string | null, storyLayoutVersion: 0, instagramHandle: "@guest_qa",
       status: "READY", processedKey: `private/paparazzi/${prefix}.jpg`, sourceKey: `private/pending/paparazzi/${prefix}/source`,
       createdAt: new Date(Date.now() - 86_400_000), processingStartedAt: null, deletedAt: null as Date | null, storageDeletedAt: null,
     };
     const photoModel = {
-      findMany: async () => state.storyKey || state.deletedAt ? [] : [{ ...state }],
+      findMany: async () => state.deletedAt || (state.storyKey && state.storyLayoutVersion >= PAPARAZZI_STORY_LAYOUT_VERSION) ? [] : [{ ...state }],
       findUnique: async () => ({ ...state }),
       updateMany: async ({ data }: { data: Record<string, unknown> }) => { Object.assign(state, data); return { count: 1 }; },
     };
@@ -71,8 +72,21 @@ test("an existing album image gets a Story variant while the saved JPEG is kept 
     const read = async (key: string) => Buffer.from(await new Response(await storage.read(key)).arrayBuffer());
     expect(await read(state.processedKey)).toEqual(original);
     expect(await sharp(await read(storyKey)).metadata()).toMatchObject({ width: 1080, height: 1920 });
+    expect(state.storyLayoutVersion).toBe(PAPARAZZI_STORY_LAYOUT_VERSION);
+    const oldStory = await sharp(await read(storyKey)).composite([
+      { input: { create: { width: 40, height: 40, channels: 3, background: "#fff" } }, left: 520, top: 1760 },
+    ]).jpeg().toBuffer();
+    await storage.write(storyKey, oldStory, "image/jpeg");
+    state.storyLayoutVersion = 1;
     await upgradePaparazziStoryPhotos(prisma, null);
     expect(state.storyKey).toBe(storyKey);
+    expect(state.storyLayoutVersion).toBe(PAPARAZZI_STORY_LAYOUT_VERSION);
+    const updated = await read(storyKey);
+    const clearedPixel = await sharp(updated).extract({ left: 540, top: 1780, width: 1, height: 1 }).raw().toBuffer();
+    expect(Math.max(...clearedPixel)).toBeLessThan(70);
+    expect(await read(state.processedKey)).toEqual(original);
+    await upgradePaparazziStoryPhotos(prisma, null);
+    expect(await read(storyKey)).toEqual(updated);
     state.deletedAt = new Date();
     await deletePaparazziPhotoObjects(prisma, null, undefined, id);
     await expect(storage.head(state.processedKey)).rejects.toMatchObject({ code: "ENOENT" });

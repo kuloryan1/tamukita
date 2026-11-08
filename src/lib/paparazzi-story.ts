@@ -1,10 +1,13 @@
 import { fileURLToPath } from "node:url";
-import sharp, { type Sharp } from "sharp";
+import sharp, { type OverlayOptions, type Sharp } from "sharp";
 import { PAPARAZZI_STORY_HEIGHT, PAPARAZZI_STORY_WIDTH } from "./paparazzi";
 
+export const PAPARAZZI_STORY_LAYOUT_VERSION = 2;
 const logoPath = fileURLToPath(new URL("../../public/images/paparazi/wr-crest.png", import.meta.url));
 const photoAreaHeight = 1600;
-const logoSize = 112;
+const logoSize = 88;
+const captionGap = 24;
+const stampCenterY = photoAreaHeight + 94;
 const xmlEntities: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" };
 
 function captionSvg(handle: string, color: string) {
@@ -30,6 +33,39 @@ async function monochromeLogo(shade: number) {
   return { input: data, raw: { width: info.width, height: info.height, channels: 4 as const } };
 }
 
+function storyBackground(light: boolean) {
+  return light ? "#f9f6ee" : "#17201c";
+}
+
+async function storyStamp(light: boolean, handle: string | null | undefined): Promise<OverlayOptions[]> {
+  const logo = await monochromeLogo(light ? 0 : 255);
+  const caption = handle ? await sharp(captionSvg(handle, light ? "#000000" : "#ffffff"))
+    .trim({ background: "#00000000", threshold: 8 })
+    .resize({ width: PAPARAZZI_STORY_WIDTH - logoSize - captionGap - 96, withoutEnlargement: true })
+    .png().toBuffer({ resolveWithObject: true }) : null;
+  const captionSpace = caption ? caption.info.width + captionGap : 0;
+  const left = Math.floor((PAPARAZZI_STORY_WIDTH - captionSpace - logoSize) / 2);
+  return [
+    ...(caption ? [{ input: caption.data, left, top: stampCenterY - Math.floor(caption.info.height / 2) }] : []),
+    { ...logo, left: left + captionSpace, top: stampCenterY - Math.floor(logoSize / 2) },
+  ];
+}
+
+export async function refreshPaparazziStoryStamp(image: Sharp, handle: string | null | undefined) {
+  // The corner of the existing footer contains only its solid background.
+  const [red, green, blue] = await image.clone().extract({ left: 0, top: PAPARAZZI_STORY_HEIGHT - 1, width: 1, height: 1 })
+    .toColourspace("srgb").removeAlpha().raw().toBuffer();
+  const light = .2126 * red + .7152 * green + .0722 * blue >= 145;
+  const stamp = await storyStamp(light, handle);
+  return image.composite([
+    { input: { create: {
+      width: PAPARAZZI_STORY_WIDTH, height: PAPARAZZI_STORY_HEIGHT - photoAreaHeight,
+      channels: 3, background: storyBackground(light),
+    } }, left: 0, top: photoAreaHeight },
+    ...stamp,
+  ]).jpeg({ quality: 90, mozjpeg: true }).toBuffer({ resolveWithObject: true });
+}
+
 export function cropLegacyPaparazziStamp(image: Sharp, width: number, height: number) {
   const oldBand = 2 * Math.max(8, Math.round(width * .026))
     + Math.max(12, Math.round(width * .028))
@@ -53,16 +89,14 @@ export async function renderPaparazziStory(image: Sharp, instagramHandle: string
     alpha += weight;
   }
   const light = alpha > 0 && luma / alpha >= 145;
-  const color = light ? "#000000" : "#ffffff";
-  const logo = await monochromeLogo(light ? 0 : 255);
+  const stamp = await storyStamp(light, instagramHandle);
   return sharp({ create: {
     width: PAPARAZZI_STORY_WIDTH,
     height: PAPARAZZI_STORY_HEIGHT,
     channels: 3,
-    background: light ? "#f9f6ee" : "#17201c",
+    background: storyBackground(light),
   } }).composite([
     { input: data, raw, left: Math.floor((PAPARAZZI_STORY_WIDTH - raw.width) / 2), top: Math.floor((photoAreaHeight - raw.height) / 2) },
-    ...(instagramHandle ? [{ input: captionSvg(instagramHandle, color), left: 0, top: photoAreaHeight }] : []),
-    { ...logo, left: Math.floor((PAPARAZZI_STORY_WIDTH - logoSize) / 2), top: photoAreaHeight + (instagramHandle ? 84 : 30) },
+    ...stamp,
   ]).jpeg({ quality: 90, mozjpeg: true }).toBuffer({ resolveWithObject: true });
 }

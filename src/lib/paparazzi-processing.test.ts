@@ -4,7 +4,7 @@ import sharp from "sharp";
 import { expect, test } from "vitest";
 import type { PrismaClient } from "../generated/prisma/client";
 import { deletePaparazziPhotoObjects, processPaparazziPhoto } from "./paparazzi-processing";
-import { renderPaparazziStory } from "./paparazzi-story";
+import { PAPARAZZI_STORY_LAYOUT_VERSION, renderPaparazziStory } from "./paparazzi-story";
 
 async function fixture({ duplicate = false, deleteDuringPut = false, deleteAfterCommit = false } = {}) {
   const source = await sharp({ create: { width: 100, height: 70, channels: 3, background: "#69876a" } }).jpeg().toBuffer();
@@ -63,29 +63,44 @@ test("duplicate worker delivery preserves the committed public image", async () 
   expect(f.state.status).toBe("READY");
   expect(f.objects.has(f.state.processedKey)).toBe(true);
   expect(await sharp(f.objects.get(f.state.processedKey)).metadata()).toMatchObject({ format: "jpeg", width: 1080, height: 1920 });
-  expect(f.state).toMatchObject({ storyKey: f.state.processedKey, width: 1080, height: 1920 });
+  expect(f.state).toMatchObject({ storyKey: f.state.processedKey, storyLayoutVersion: PAPARAZZI_STORY_LAYOUT_VERSION, width: 1080, height: 1920 });
   expect(f.objects.has(f.state.sourceKey)).toBe(false);
 });
 
 test.each([
   { background: "#191a1c", ink: "white" },
   { background: "#f0e4b1", ink: "black" },
-])("Story JPEG contains $ink username and the supplied WR crest below it", async ({ background, ink }) => {
+])("Story JPEG puts the $ink username and WR crest side by side", async ({ background, ink }) => {
   const image = sharp({ create: { width: 300, height: 200, channels: 3, background } });
   const story = await renderPaparazziStory(image, "@guest_qa");
   expect(story.info).toMatchObject({ width: 1080, height: 1920, format: "jpeg" });
-  const boxes = [
-    { left: 300, top: 1615, width: 480, height: 55 },
-    { left: 484, top: 1684, width: 112, height: 112 },
-  ];
-  for (const box of boxes) {
-    const data = await sharp(story.data).extract(box).removeAlpha().raw().toBuffer();
-    let inkPixels = 0;
-    for (let index = 0; index < data.length; index += 3) {
-      if (ink === "white" ? Math.min(data[index], data[index + 1], data[index + 2]) >= 225 : Math.max(data[index], data[index + 1], data[index + 2]) <= 35) inkPixels++;
+  const { data, info } = await sharp(story.data).extract({ left: 0, top: 1600, width: 1080, height: 250 })
+    .removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  const groups: { left: number; right: number; top: number; bottom: number }[] = [];
+  for (let x = 0; x < info.width; x++) {
+    let top = info.height;
+    let bottom = -1;
+    for (let y = 0; y < info.height; y++) {
+      const offset = (y * info.width + x) * info.channels;
+      const [red, green, blue] = data.subarray(offset, offset + 3);
+      const visible = ink === "white" ? Math.min(red, green, blue) >= 225 : Math.max(red, green, blue) <= 35;
+      if (visible) { top = Math.min(top, y); bottom = y; }
     }
-    expect(inkPixels).toBeGreaterThan(100);
+    if (bottom < 0) continue;
+    const previous = groups.at(-1);
+    if (previous && x - previous.right <= 18) {
+      previous.right = x;
+      previous.top = Math.min(previous.top, top);
+      previous.bottom = Math.max(previous.bottom, bottom);
+    } else {
+      groups.push({ left: x, right: x, top, bottom });
+    }
   }
+  expect(groups).toHaveLength(2);
+  const [caption, crest] = groups;
+  expect(crest.left - caption.right).toBeGreaterThan(18);
+  expect(caption.right - caption.left).toBeGreaterThan(crest.right - crest.left);
+  expect(Math.abs((caption.top + caption.bottom) / 2 - (crest.top + crest.bottom) / 2)).toBeLessThan(8);
 });
 
 test("deletion stays eligible for retry when an in-flight write arrives after owner cleanup", async () => {

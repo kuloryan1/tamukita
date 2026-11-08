@@ -1,10 +1,10 @@
 import type { S3Client } from "@aws-sdk/client-s3";
 import sharp from "sharp";
 import type { Prisma, PrismaClient } from "../generated/prisma/client";
-import { PAPARAZZI_CONSENT_VERSION, PAPARAZZI_MAX_BYTES, PAPARAZZI_UPLOAD_TTL_MS, paparazziJobSchema } from "./paparazzi";
+import { PAPARAZZI_CONSENT_VERSION, PAPARAZZI_MAX_BYTES, PAPARAZZI_STORY_HEIGHT, PAPARAZZI_STORY_WIDTH, PAPARAZZI_UPLOAD_TTL_MS, paparazziJobSchema } from "./paparazzi";
 import { paparazziStorage } from "./paparazzi-storage";
 import { removePaparazziTemporaryFiles } from "./paparazzi-server-files";
-import { cropLegacyPaparazziStamp, renderPaparazziStory } from "./paparazzi-story";
+import { cropLegacyPaparazziStamp, PAPARAZZI_STORY_LAYOUT_VERSION, refreshPaparazziStoryStamp, renderPaparazziStory } from "./paparazzi-story";
 
 export class InvalidPaparazziPhotoError extends Error {}
 
@@ -78,7 +78,10 @@ export async function processPaparazziPhoto(prisma: PrismaClient, s3: S3Client |
   await storage.write(photo.processedKey, output.data, "image/jpeg");
   const updated = await prisma.paparazziPhoto.updateMany({
     where: { id: photo.id, status: "PROCESSING", processingStartedAt: startedAt, deletedAt: null, retentionAt: { gt: new Date() } },
-    data: { status: "READY", storyKey: photo.processedKey, processedBytes: BigInt(output.info.size), width: output.info.width, height: output.info.height },
+    data: {
+      status: "READY", storyKey: photo.processedKey, storyLayoutVersion: PAPARAZZI_STORY_LAYOUT_VERSION,
+      processedBytes: BigInt(output.info.size), width: output.info.width, height: output.info.height,
+    },
   });
   if (updated.count !== 1) {
     const current = await prisma.paparazziPhoto.findUnique({ where: { id: photo.id } });
@@ -91,29 +94,39 @@ export async function processPaparazziPhoto(prisma: PrismaClient, s3: S3Client |
 export async function upgradePaparazziStoryPhotos(prisma: PrismaClient, s3: S3Client | null, bucket?: string) {
   const photos = await prisma.paparazziPhoto.findMany({
     where: {
-      status: "READY", storyKey: null, instagramHandle: { not: null }, consentVersion: PAPARAZZI_CONSENT_VERSION,
+      status: "READY", instagramHandle: { not: null }, consentVersion: PAPARAZZI_CONSENT_VERSION,
+      OR: [{ storyKey: null }, { storyLayoutVersion: { lt: PAPARAZZI_STORY_LAYOUT_VERSION } }],
       deletedAt: null, storageDeletedAt: null, retentionAt: { gt: new Date() },
       ...(s3 && bucket ? {} : { storageProvider: "SERVER" }),
     },
     take: 8, orderBy: { createdAt: "desc" },
-    select: { id: true, processedKey: true, storageProvider: true, instagramHandle: true },
+    select: { id: true, processedKey: true, storyKey: true, storyLayoutVersion: true, storageProvider: true, instagramHandle: true },
   });
   let failed = 0;
   for (const photo of photos) {
     try {
-      const storyKey = legacyStoryKey(photo.processedKey);
-      if (storyKey === photo.processedKey) throw new Error("Invalid legacy Paparazi key");
+      const storyKey = photo.storyKey ?? legacyStoryKey(photo.processedKey);
+      if (!photo.storyKey && storyKey === photo.processedKey) throw new Error("Invalid legacy Paparazi key");
       const signal = AbortSignal.timeout(120_000);
       const storage = paparazziStorage(photo.storageProvider, s3, bucket, signal);
-      const source = await readPhotoBytes(storage, photo.processedKey, signal);
+      const source = await readPhotoBytes(storage, photo.storyKey ?? photo.processedKey, signal);
       const image = sharp(source, { failOn: "error", limitInputPixels: 40_000_000 });
       const metadata = await image.metadata();
       if (metadata.format !== "jpeg" || !metadata.width || !metadata.height) throw new Error("Invalid saved Paparazi image");
-      const output = await renderPaparazziStory(cropLegacyPaparazziStamp(image, metadata.width, metadata.height), photo.instagramHandle);
+      if (photo.storyKey && (metadata.width !== PAPARAZZI_STORY_WIDTH || metadata.height !== PAPARAZZI_STORY_HEIGHT)) throw new Error("Invalid saved Story dimensions");
+      const output = photo.storyKey
+        ? await refreshPaparazziStoryStamp(image, photo.instagramHandle)
+        : await renderPaparazziStory(cropLegacyPaparazziStamp(image, metadata.width, metadata.height), photo.instagramHandle);
       await prisma.$transaction(async tx => {
         const updated = await tx.paparazziPhoto.updateMany({
-          where: { id: photo.id, processedKey: photo.processedKey, status: "READY", storyKey: null, deletedAt: null, retentionAt: { gt: new Date() } },
-          data: { storyKey, width: output.info.width, height: output.info.height, processedBytes: BigInt(output.info.size) },
+          where: {
+            id: photo.id, processedKey: photo.processedKey, status: "READY", storyKey: photo.storyKey,
+            storyLayoutVersion: photo.storyLayoutVersion, deletedAt: null, retentionAt: { gt: new Date() },
+          },
+          data: {
+            storyKey, storyLayoutVersion: PAPARAZZI_STORY_LAYOUT_VERSION,
+            width: output.info.width, height: output.info.height, processedBytes: BigInt(output.info.size),
+          },
         });
         // Hold the row through the variant write so deletion cannot leave an orphan.
         if (updated.count === 1) await storage.write(storyKey, output.data, "image/jpeg");
