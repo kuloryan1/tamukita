@@ -1,7 +1,7 @@
 import type { S3Client } from "@aws-sdk/client-s3";
 import sharp from "sharp";
 import type { Prisma, PrismaClient } from "../generated/prisma/client";
-import { PAPARAZZI_CONSENT_VERSION, PAPARAZZI_MAX_BYTES, PAPARAZZI_STORY_HEIGHT, PAPARAZZI_STORY_WIDTH, PAPARAZZI_UPLOAD_TTL_MS, paparazziJobSchema } from "./paparazzi";
+import { PAPARAZZI_CONSENT_VERSION, PAPARAZZI_LEGACY_CONSENT_VERSIONS, PAPARAZZI_MAX_BYTES, PAPARAZZI_STORY_HEIGHT, PAPARAZZI_STORY_WIDTH, PAPARAZZI_UPLOAD_TTL_MS, paparazziJobSchema } from "./paparazzi";
 import { paparazziStorage } from "./paparazzi-storage";
 import { removePaparazziTemporaryFiles } from "./paparazzi-server-files";
 import { cropLegacyPaparazziStamp, PAPARAZZI_STORY_LAYOUT_VERSION, refreshPaparazziStoryStamp, renderPaparazziStory } from "./paparazzi-story";
@@ -74,7 +74,7 @@ export async function processPaparazziPhoto(prisma: PrismaClient, s3: S3Client |
     const metadata = await image.metadata();
     if (metadata.format !== expectedFormat || !metadata.width || !metadata.height || (metadata.pages ?? 1) > 1) throw new Error("Invalid image");
   } catch { throw new InvalidPaparazziPhotoError("Foto tidak dapat dibaca. Gunakan JPG, PNG, atau WebP yang valid."); }
-  const output = await renderPaparazziStory(image, photo.instagramHandle);
+  const output = await renderPaparazziStory(image);
   await storage.write(photo.processedKey, output.data, "image/jpeg");
   const updated = await prisma.paparazziPhoto.updateMany({
     where: { id: photo.id, status: "PROCESSING", processingStartedAt: startedAt, deletedAt: null, retentionAt: { gt: new Date() } },
@@ -94,13 +94,13 @@ export async function processPaparazziPhoto(prisma: PrismaClient, s3: S3Client |
 export async function upgradePaparazziStoryPhotos(prisma: PrismaClient, s3: S3Client | null, bucket?: string) {
   const photos = await prisma.paparazziPhoto.findMany({
     where: {
-      status: "READY", instagramHandle: { not: null }, consentVersion: PAPARAZZI_CONSENT_VERSION,
+      status: "READY", consentVersion: { in: [PAPARAZZI_CONSENT_VERSION, ...PAPARAZZI_LEGACY_CONSENT_VERSIONS] },
       OR: [{ storyKey: null }, { storyLayoutVersion: { lt: PAPARAZZI_STORY_LAYOUT_VERSION } }],
       deletedAt: null, storageDeletedAt: null, retentionAt: { gt: new Date() },
       ...(s3 && bucket ? {} : { storageProvider: "SERVER" }),
     },
     take: 8, orderBy: { createdAt: "desc" },
-    select: { id: true, processedKey: true, storyKey: true, storyLayoutVersion: true, storageProvider: true, instagramHandle: true },
+    select: { id: true, processedKey: true, storyKey: true, storyLayoutVersion: true, storageProvider: true },
   });
   let failed = 0;
   for (const photo of photos) {
@@ -115,8 +115,8 @@ export async function upgradePaparazziStoryPhotos(prisma: PrismaClient, s3: S3Cl
       if (metadata.format !== "jpeg" || !metadata.width || !metadata.height) throw new Error("Invalid saved Paparazi image");
       if (photo.storyKey && (metadata.width !== PAPARAZZI_STORY_WIDTH || metadata.height !== PAPARAZZI_STORY_HEIGHT)) throw new Error("Invalid saved Story dimensions");
       const output = photo.storyKey
-        ? await refreshPaparazziStoryStamp(image, photo.instagramHandle)
-        : await renderPaparazziStory(cropLegacyPaparazziStamp(image, metadata.width, metadata.height), photo.instagramHandle);
+        ? await refreshPaparazziStoryStamp(image)
+        : await renderPaparazziStory(cropLegacyPaparazziStamp(image, metadata.width, metadata.height));
       await prisma.$transaction(async tx => {
         const updated = await tx.paparazziPhoto.updateMany({
           where: {

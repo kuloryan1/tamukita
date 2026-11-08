@@ -6,7 +6,7 @@ import { paparazziWebStore } from "@/lib/paparazzi-web-storage";
 import { paparazziOwnerWhere, paparazziPrivateHeaders } from "@/lib/paparazzi-server";
 import { allowRequest } from "@/lib/rate-limit";
 import { readJsonBody } from "@/lib/request-json";
-import { PAPARAZZI_CONSENT_VERSION } from "@/lib/paparazzi";
+import { PAPARAZZI_CONSENT_VERSION, PAPARAZZI_RESTORABLE_CONSENT_VERSIONS } from "@/lib/paparazzi";
 import { PAPARAZZI_CHILD_DATA_GUARDIAN_CONSENT_VERSION } from "@/lib/consent-versions";
 
 async function context(params: Promise<{ id: string; photoId: string }>) {
@@ -49,7 +49,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const parsed = z.object({ visible: z.boolean() }).strict().safeParse(body.value);
   if (!parsed.success) return NextResponse.json({ error: "Pilih apakah foto ditampilkan atau disembunyikan." }, { status: 400 });
   if (!await allowRequest(`paparazzi:visibility:${result.userId}`, 300, 3_600)) return NextResponse.json({ error: "Terlalu banyak perubahan. Coba lagi nanti." }, { status: 429 });
-  if (parsed.data.visible && (result.photo.consentVersion !== PAPARAZZI_CONSENT_VERSION || (result.photo.includesChildData && (!result.photo.guardianConsentAt || result.photo.guardianConsentVersion !== PAPARAZZI_CHILD_DATA_GUARDIAN_CONSENT_VERSION)))) return NextResponse.json({ error: "Foto ini tidak memiliki persetujuan untuk galeri publik." }, { status: 409 });
+  const consentAllowsVisibility = result.photo.consentVersion === PAPARAZZI_CONSENT_VERSION || PAPARAZZI_RESTORABLE_CONSENT_VERSIONS.includes(result.photo.consentVersion as typeof PAPARAZZI_RESTORABLE_CONSENT_VERSIONS[number]);
+  if (parsed.data.visible && (!consentAllowsVisibility || (result.photo.includesChildData && (!result.photo.guardianConsentAt || result.photo.guardianConsentVersion !== PAPARAZZI_CHILD_DATA_GUARDIAN_CONSENT_VERSION)))) return NextResponse.json({ error: "Foto ini tidak memiliki persetujuan untuk galeri publik." }, { status: 409 });
   const updated = await getPrismaClient().$transaction(async tx => {
     const change = await tx.paparazziPhoto.updateMany({ where: { id: result.photo.id, deletedAt: null, album: { invitation: paparazziOwnerWhere(result.userId) } }, data: { isVisible: parsed.data.visible } });
     if (change.count) await tx.auditLog.create({ data: { actorId: result.userId, action: "paparazzi.visibility_updated", targetType: "PaparazziPhoto", targetId: result.photo.id, metadata: { visible: parsed.data.visible } } });

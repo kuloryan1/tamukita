@@ -70,37 +70,25 @@ test("duplicate worker delivery preserves the committed public image", async () 
 test.each([
   { background: "#191a1c", ink: "white" },
   { background: "#f0e4b1", ink: "black" },
-])("Story JPEG puts the $ink username and WR crest side by side", async ({ background, ink }) => {
+])("Story JPEG centres only the larger $ink WR crest", async ({ background, ink }) => {
   const image = sharp({ create: { width: 300, height: 200, channels: 3, background } });
-  const story = await renderPaparazziStory(image, "@guest_qa");
+  const story = await renderPaparazziStory(image);
   expect(story.info).toMatchObject({ width: 1080, height: 1920, format: "jpeg" });
-  const { data, info } = await sharp(story.data).extract({ left: 0, top: 1600, width: 1080, height: 250 })
+  const { data, info } = await sharp(story.data).extract({ left: 300, top: 780, width: 480, height: 360 })
     .removeAlpha().raw().toBuffer({ resolveWithObject: true });
-  const groups: { left: number; right: number; top: number; bottom: number }[] = [];
-  for (let x = 0; x < info.width; x++) {
-    let top = info.height;
-    let bottom = -1;
-    for (let y = 0; y < info.height; y++) {
+  let left = info.width; let right = -1; let top = info.height; let bottom = -1;
+  for (let y = 0; y < info.height; y++) {
+    for (let x = 0; x < info.width; x++) {
       const offset = (y * info.width + x) * info.channels;
       const [red, green, blue] = data.subarray(offset, offset + 3);
       const visible = ink === "white" ? Math.min(red, green, blue) >= 225 : Math.max(red, green, blue) <= 35;
-      if (visible) { top = Math.min(top, y); bottom = y; }
-    }
-    if (bottom < 0) continue;
-    const previous = groups.at(-1);
-    if (previous && x - previous.right <= 18) {
-      previous.right = x;
-      previous.top = Math.min(previous.top, top);
-      previous.bottom = Math.max(previous.bottom, bottom);
-    } else {
-      groups.push({ left: x, right: x, top, bottom });
+      if (visible) { left = Math.min(left, x); right = x; top = Math.min(top, y); bottom = y; }
     }
   }
-  expect(groups).toHaveLength(2);
-  const [caption, crest] = groups;
-  expect(crest.left - caption.right).toBeGreaterThan(18);
-  expect(caption.right - caption.left).toBeGreaterThan(crest.right - crest.left);
-  expect(Math.abs((caption.top + caption.bottom) / 2 - (crest.top + crest.bottom) / 2)).toBeLessThan(8);
+  expect(right - left).toBeGreaterThan(100);
+  expect(bottom - top).toBeGreaterThan(100);
+  expect(Math.abs(300 + (left + right) / 2 - 540)).toBeLessThan(8);
+  expect(Math.abs(780 + (top + bottom) / 2 - 960)).toBeLessThan(8);
 });
 
 test("deletion stays eligible for retry when an in-flight write arrives after owner cleanup", async () => {

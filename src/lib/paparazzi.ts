@@ -6,9 +6,10 @@ export const PAPARAZZI_STORY_WIDTH = 1080;
 export const PAPARAZZI_STORY_HEIGHT = 1920;
 export const PAPARAZZI_RETENTION_DAYS = 90;
 export const PAPARAZZI_UPLOAD_TTL_MS = 15 * 60 * 1_000;
-export const PAPARAZZI_CONSENT_VERSION = "paparazzi-public-2026-11-v2";
-export const PAPARAZZI_LEGACY_CONSENT_VERSIONS = ["paparazzi-public-2026-10-v1"] as const;
-export const PAPARAZZI_CONSENT_COPY = "Saya berusia minimal 18 tahun dan memiliki izin membagikan foto ini. Saya setuju nama Instagram yang saya masukkan ditampilkan sebagai watermark pada foto. Foto akan langsung tampil di galeri acara yang bisa dilihat publik melalui QR atau tautan acara.";
+export const PAPARAZZI_CONSENT_VERSION = "paparazzi-public-2026-11-v3";
+export const PAPARAZZI_LEGACY_CONSENT_VERSIONS = ["paparazzi-public-2026-11-v2", "paparazzi-public-2026-10-v1"] as const;
+export const PAPARAZZI_RESTORABLE_CONSENT_VERSIONS = ["paparazzi-public-2026-11-v2"] as const;
+export const PAPARAZZI_CONSENT_COPY = "Saya berusia minimal 18 tahun dan memiliki izin membagikan foto ini. Nama Instagram saya akan ditampilkan sebagai keterangan galeri, bukan pada foto. Foto akan diberi watermark W&R dan langsung tampil di galeri publik melalui QR atau tautan acara.";
 export const PAPARAZZI_GUARDIAN_COPY = "Saya orang tua/wali yang berwenang dan menyetujui TamuKita memproses foto anak ini serta langsung menampilkannya di galeri acara yang bisa dilihat publik.";
 
 export const paparazziTokenSchema = z.string().regex(/^[a-f0-9]{64}$/);
