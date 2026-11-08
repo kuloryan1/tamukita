@@ -163,6 +163,10 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   useCreamParallax(mainRef, opened && hasEnvelopeOpening);
   const hostOne = draft?.hostOne || WEDDING.groom;
   const hostTwo = draft?.hostTwo || WEDDING.bride;
+  const isWulanRyanSample = isTestableSample && template.slug === "elegant-cream" && slug === "wulan-dan-ryan";
+  const [firstHeroName, secondHeroName] = isWulanRyanSample
+    ? ["Wulan", "Ryan"]
+    : [hostOne, hostTwo];
   const firstInitial = (name: string) => Array.from(name.trim())[0]?.toLocaleUpperCase("id-ID") ?? "?";
   const requestedMonogram = normalizeSealMonogram(draft?.sealMonogram);
   // Older sample drafts stored "RD" as a placeholder; keep their usual R&D initials.
@@ -188,7 +192,10 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   const hostTwoCoverPhotoPosition = `${Math.min(100, coverPositionX + 35)}% ${coverPositionY}%`;
   const giftAccounts = draft ? invitationGiftAccounts(draft) : [];
   const giftMessage = draft?.giftMessage || copy("giftSectionIntro", "Jika berkenan, Anda dapat mengirimkan tanda kasih melalui rekening berikut.");
-  const closingNames = copy("closingNames", `${hostOne.split(" ")[0]} & ${hostTwo.split(" ")[0]}`);
+  const savedClosingNames = copy("closingNames", isWulanRyanSample ? "Wulan & Ryan" : `${hostOne.split(" ")[0]} & ${hostTwo.split(" ")[0]}`);
+  const closingNames = isWulanRyanSample && savedClosingNames.trim().toLocaleLowerCase("id-ID") === "ryan & wulan"
+    ? "Wulan & Ryan"
+    : savedClosingNames;
   const mapQuery = [venue, city].filter(Boolean).join(", ");
   const mapUrl = safeHttpsUrl(draft?.mapsUrl ?? "") || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
   const eventStartsAt = `${eventDate}T${eventTime}:00+07:00`;
@@ -446,7 +453,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
             {playHeroIntro ? <CreamTypedHeadline text={headline} /> : headline}
           </h1>
           <TinyFlourish className="hero-flourish" />
-          <div className="hero-names"><span>{hostOne}</span><span className="name-amp">&</span><span>{hostTwo}</span></div>
+          <div className={`hero-names${isWulanRyanSample ? " hero-names--wulan-ryan" : ""}`}><span>{firstHeroName}</span><span className="name-amp">&</span><span>{secondHeroName}</span></div>
           <p className="invitation-message">{intro}</p>
           <div className="hero-date"><span className="eyebrow">{copy("eventDateLabel", "HARI & TANGGAL")}</span><p>{dateLabel}</p><span>{eventTimeLabel}</span></div>
           <a className="detail-link" href="#detail-acara">{copy("detailLinkLabel", "LIHAT DETAIL ACARA")} <ArrowDown size={15} /></a>

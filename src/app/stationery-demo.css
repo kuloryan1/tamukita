@@ -687,3 +687,34 @@
   .stationery-demo { scroll-behavior: auto; }
   .stationery-demo, .stationery-demo *, .stationery-demo::before, .stationery-demo *::before, .stationery-demo::after, .stationery-demo *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+.stationery-demo.theme-elegant-cream .opened-invitation .hero-names--wulan-ryan {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: clamp(10px, 1.8vw, 18px);
+  width: max-content;
+  max-width: 100%;
+  margin-inline: auto;
+  font-size: clamp(62px, 6vw, 74px);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.stationery-demo.theme-elegant-cream .opened-invitation .hero-names--wulan-ryan > span {
+  display: inline-block;
+  max-width: none;
+  overflow-wrap: normal;
+}
+
+.stationery-demo.theme-elegant-cream .opened-invitation .hero-names--wulan-ryan .name-amp {
+  font-size: .54em;
+}
+
+@media (max-width: 600px) {
+  .stationery-demo.theme-elegant-cream .opened-invitation .hero-names--wulan-ryan {
+    gap: clamp(7px, 2.2vw, 11px);
+    font-size: clamp(42px, 11.5vw, 56px);
+  }
+}
