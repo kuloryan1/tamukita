@@ -402,13 +402,13 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
 
   return <div className={`stationery-demo theme-${template.slug} style-${template.style} ${opened ? "is-open" : "is-closed"}`} style={style} data-invitation-publication={isTestableSample ? "published" : "demo"} data-template={template.slug}>
     <a className="skip-link" href={opened ? "#detail-acara" : "#open-invitation"}>Lewati ke undangan</a>
-    <header className="site-header">
+    {!hasEnvelopeOpening && <header className="site-header">
       <a className="wordmark" href={catalogUrl} aria-label={`Undangan ${hostOne} dan ${hostTwo}`}><span className={`wordmark-initials${customMonogram ? " wordmark-initials--custom" : ""}`}>{customMonogram || <>{firstInitial(hostOne)}<span>&</span>{firstInitial(hostTwo)}</>}</span><span className="wordmark-label">UNDANGAN<br />{draft?.eventKind && draft.eventKind !== "Pernikahan" ? eventTitle.toLocaleUpperCase("id-ID") : "PERNIKAHAN"}</span></a>
       <div className="header-actions"><a className="catalog-link" href={catalogUrl}><LayoutGrid size={15} /><span>{copy("catalogLinkLabel", "Koleksi template")}</span></a><button type="button" className="icon-button share-trigger" aria-label={copy("shareActionLabel", "Bagikan undangan")} onClick={() => dialogRef.current?.showModal()}><Share2 size={16} /></button></div>
-    </header>
+    </header>}
 
     {!opened ? <main className={`cover-stage${animatingCover ? " is-opening" : ""}${hasEnvelopeOpening ? " is-cream-envelope" : ""}${openingPhase === "fallback" ? " is-cream-fallback" : ""}`}>
-      <div className="stage-caption"><span className="eyebrow">{copy("stageCaption", "SEBUAH UNDANGAN DARI HATI")}</span><span className="edition-mark">{dateHeading.day} · {dateHeading.monthNumber} · {dateHeading.year}</span></div>
+      {!hasEnvelopeOpening && <div className="stage-caption"><span className="eyebrow">{copy("stageCaption", "SEBUAH UNDANGAN DARI HATI")}</span><span className="edition-mark">{dateHeading.day} · {dateHeading.monthNumber} · {dateHeading.year}</span></div>}
       {hasEnvelopeOpening ? <div className="cream-envelope-cover" ref={coverRef} onAnimationEnd={(event) => {
         if (event.target === event.currentTarget && openingPhase === "fallback") revealInvitation();
       }}>
@@ -432,7 +432,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
           <span className="cover-footnote">{copy("coverMessage", "Dengan penuh sukacita, kami mengundang Anda.")}</span>
         </div>
       </div>}
-      <div className="cover-bottom">
+      {!hasEnvelopeOpening && <div className="cover-bottom">
         <span className="template-label"><span className="tiny-diamond" />{template.name}</span>
         {listedStationeryTemplates.length > 1 && (
           <label className="theme-selector">
@@ -442,7 +442,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
             </select>
           </label>
         )}
-      </div>
+      </div>}
       <noscript>Aktifkan JavaScript untuk membuka undangan. Acara: {dateLabel}, {eventTimeLabel}, {venue}.</noscript>
     </main> : <>
       <main className="opened-invitation" ref={mainRef} tabIndex={-1} data-cream-intro={playHeroIntro ? (openingPhase === "revealing" ? "queued" : "running") : undefined}>
