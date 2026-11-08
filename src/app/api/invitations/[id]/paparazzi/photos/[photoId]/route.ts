@@ -23,7 +23,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   if ("error" in result) return NextResponse.json({ error: result.error }, { status: result.status });
   if (result.photo.status !== "READY") return NextResponse.json({ error: "Foto masih diproses." }, { status: 409 });
   try {
-    const stream = await paparazziWebStore(result.photo.storageProvider).read(result.photo.processedKey);
+    const stream = await paparazziWebStore(result.photo.storageProvider).read(result.photo.storyKey ?? result.photo.processedKey);
     return new NextResponse(stream, { headers: { ...paparazziPrivateHeaders, "Content-Type": "image/jpeg", "X-Content-Type-Options": "nosniff", ...(new URL(request.url).searchParams.get("download") === "1" ? { "Content-Disposition": `attachment; filename="paparazi-${result.photo.id}.jpg"` } : {}) } });
   } catch { return NextResponse.json({ error: "Foto belum dapat dimuat. Coba lagi nanti." }, { status: 503 }); }
 }

@@ -15,7 +15,7 @@ export function paparazziStorageDirectory(env: Partial<NodeJS.ProcessEnv> = proc
 
 export function paparazziFilePath(key: string, root = paparazziStorageDirectory()) {
   const uuid = "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}";
-  if (!new RegExp(`^private/(?:pending/paparazzi/${uuid}/${uuid}/${uuid}/source|paparazzi/${uuid}/${uuid}/${uuid}\\.jpg)$`).test(key)) throw new Error("Invalid Paparazi storage key.");
+  if (!new RegExp(`^private/(?:pending/paparazzi/${uuid}/${uuid}/${uuid}/source|paparazzi/${uuid}/${uuid}/${uuid}(?:-story-v1)?\\.jpg)$`).test(key)) throw new Error("Invalid Paparazi storage key.");
   const destination = path.resolve(root, key);
   if (!destination.startsWith(`${path.resolve(root)}${path.sep}`)) throw new Error("Invalid Paparazi storage path.");
   return destination;
@@ -42,7 +42,7 @@ export async function stagePaparazziServerFile(key: string, bytes: Buffer, signa
   if (info.bavail * info.bsize < reserve + bytes.length) throw new PaparazziDiskFullError("Penyimpanan server hampir penuh. Hubungi pemilik acara.");
   const destination = paparazziFilePath(key, root);
   await mkdir(path.dirname(destination), { recursive: true, mode: 0o700 });
-  const photoId = key.endsWith("/source") ? path.basename(path.dirname(destination)) : path.basename(destination, ".jpg");
+  const photoId = key.endsWith("/source") ? path.basename(path.dirname(destination)) : path.basename(destination).replace(/(?:-story-v1)?\.jpg$/, "");
   const temporaryDirectory = path.join(root, ".tmp", photoId);
   await mkdir(temporaryDirectory, { recursive: true, mode: 0o700 });
   const temp = path.join(temporaryDirectory, `${randomUUID()}.tmp`);

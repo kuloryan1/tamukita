@@ -3,7 +3,8 @@ import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectComm
 import sharp from "sharp";
 import { expect, test } from "vitest";
 import type { PrismaClient } from "../generated/prisma/client";
-import { createPaparazziWatermarkSvg, deletePaparazziPhotoObjects, processPaparazziPhoto } from "./paparazzi-processing";
+import { deletePaparazziPhotoObjects, processPaparazziPhoto } from "./paparazzi-processing";
+import { renderPaparazziStory } from "./paparazzi-story";
 
 async function fixture({ duplicate = false, deleteDuringPut = false, deleteAfterCommit = false } = {}) {
   const source = await sharp({ create: { width: 100, height: 70, channels: 3, background: "#69876a" } }).jpeg().toBuffer();
@@ -61,12 +62,30 @@ test("duplicate worker delivery preserves the committed public image", async () 
   await Promise.all([processPaparazziPhoto(f.prisma, f.s3, "private", f.payload), processPaparazziPhoto(f.prisma, f.s3, "private", f.payload)]);
   expect(f.state.status).toBe("READY");
   expect(f.objects.has(f.state.processedKey)).toBe(true);
-  expect((await sharp(f.objects.get(f.state.processedKey)).metadata()).format).toBe("jpeg");
-  expect(createPaparazziWatermarkSvg(100, 70, "@guest_qa").toString()).toContain("W&amp;R");
-  expect(createPaparazziWatermarkSvg(100, 70, "@guest_qa").toString()).toContain("@guest_qa");
-  const outputPixels = await sharp(f.objects.get(f.state.processedKey)).extract({ left: 0, top: 69, width: 1, height: 1 }).removeAlpha().raw().toBuffer();
-  expect(outputPixels[0] + outputPixels[1] + outputPixels[2]).toBeLessThan(255 * 3);
+  expect(await sharp(f.objects.get(f.state.processedKey)).metadata()).toMatchObject({ format: "jpeg", width: 1080, height: 1920 });
+  expect(f.state).toMatchObject({ storyKey: f.state.processedKey, width: 1080, height: 1920 });
   expect(f.objects.has(f.state.sourceKey)).toBe(false);
+});
+
+test.each([
+  { background: "#191a1c", ink: "white" },
+  { background: "#f0e4b1", ink: "black" },
+])("Story JPEG contains $ink username and the supplied WR crest below it", async ({ background, ink }) => {
+  const image = sharp({ create: { width: 300, height: 200, channels: 3, background } });
+  const story = await renderPaparazziStory(image, "@guest_qa");
+  expect(story.info).toMatchObject({ width: 1080, height: 1920, format: "jpeg" });
+  const boxes = [
+    { left: 300, top: 1615, width: 480, height: 55 },
+    { left: 484, top: 1684, width: 112, height: 112 },
+  ];
+  for (const box of boxes) {
+    const data = await sharp(story.data).extract(box).removeAlpha().raw().toBuffer();
+    let inkPixels = 0;
+    for (let index = 0; index < data.length; index += 3) {
+      if (ink === "white" ? Math.min(data[index], data[index + 1], data[index + 2]) >= 225 : Math.max(data[index], data[index + 1], data[index + 2]) <= 35) inkPixels++;
+    }
+    expect(inkPixels).toBeGreaterThan(100);
+  }
 });
 
 test("deletion stays eligible for retry when an in-flight write arrives after owner cleanup", async () => {

@@ -503,6 +503,7 @@ model PaparazziPhoto {
   albumId                String         @db.Uuid
   sourceKey              String         @unique
   processedKey           String         @unique
+  storyKey               String?        @unique
   storageProvider        PaparazziStorageProvider @default(R2)
   mimeType               String
   sizeBytes              BigInt

@@ -14,7 +14,7 @@ import { invitationGiftAccounts, safeHttpsUrl, type InvitationDraft } from "@/li
 
 type GuestbookMessage = { id: string; displayName: string; message: string; createdAt: string };
 
-export function PublicInvitation({ slug, initialDraft, initialRsvpCount, initialGuestbook = [], recipientName, guestToken, isExample = false, demoLabel, preview, templateSlug, sharePath, paparazziToken, paparazziOpen = false, featureAccess = legacyInvitationFeatureAccess }: {
+export function PublicInvitation({ slug, initialDraft, initialRsvpCount, initialGuestbook = [], recipientName, guestToken, isExample = false, demoLabel, preview, templateSlug, sharePath, paparazziToken, featureAccess = legacyInvitationFeatureAccess }: {
   slug: string;
   initialDraft: InvitationDraft;
   initialRsvpCount: number;
@@ -27,7 +27,6 @@ export function PublicInvitation({ slug, initialDraft, initialRsvpCount, initial
   templateSlug?: string;
   sharePath?: string;
   paparazziToken?: string;
-  paparazziOpen?: boolean;
   featureAccess?: InvitationFeatureAccess;
 }) {
   const draft = initialDraft;
@@ -84,7 +83,7 @@ export function PublicInvitation({ slug, initialDraft, initialRsvpCount, initial
         </div>
       </section>}
       {!isGardenTemplate && eventSchedule.length > 0 && <section className="public-schedule-section" id="susunan-acara" aria-labelledby="public-schedule-title"><div className="public-schedule-inner"><span className="eyebrow">{invitationCopy(draft, "scheduleSectionEyebrow", "RANGKAIAN ACARA")}</span><h2 id="public-schedule-title">{invitationCopy(draft, "scheduleSectionHeading", "Susunan acara.")}</h2><p>{invitationCopy(draft, "scheduleSectionIntro", "Setiap momen istimewa telah kami siapkan.")}</p><ol className="public-schedule-list">{eventSchedule.map((item, index) => <li key={item.id}><time dateTime={item.time}>{item.time}<small>WIB</small></time><span className="public-schedule-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><div><h3>{item.title}</h3>{item.description && <p>{item.description}</p>}</div></li>)}</ol></div></section>}
-      {!isExample && paparazziToken && <InvitationPaparazzi token={paparazziToken} isOpen={paparazziOpen} />}
+      {!isExample && paparazziToken && <InvitationPaparazzi token={paparazziToken} />}
       {featureAccess.galleryLimit > 0 && draft.galleryPhotos.slice(0, featureAccess.galleryLimit).length > 0 && <section className="public-gallery-section"><div className="public-gallery-inner"><span className="eyebrow">{invitationCopy(draft, "gallerySectionEyebrow", "POTONGAN CERITA")}</span><h2 style={{ whiteSpace: "pre-line" }}>{invitationCopy(draft, "gallerySectionHeading", "Momen yang ingin kami kenang.")}</h2><p>{invitationCopy(draft, "gallerySectionIntro", "Foto-foto kenangan dari hari istimewa kami.")}</p><div className="public-gallery-grid">{draft.galleryPhotos.slice(0, featureAccess.galleryLimit).map((photo, index) => <figure key={photo}><Image src={photo} alt={`Foto galeri ${index + 1} ${draft.eventKind.toLowerCase()}`} width={640} height={480} sizes="(max-width: 720px) 50vw, 33vw" unoptimized /></figure>)}</div></div></section>}
       {giftAccounts.length > 0 && <section className="public-gift-section"><div className="public-gift-card"><span className="detail-card-icon"><Gift size={18} /></span><span className="eyebrow">{copy("giftSectionEyebrow", "TANDA KASIH")}</span><h2 style={{ whiteSpace: "pre-line" }}>{copy("giftSectionHeading", "Kehadiranmu adalah hadiah terindah.")}</h2><p>{draft.giftMessage || copy("giftSectionIntro", "Jika berkenan, kamu dapat mengirimkan tanda kasih melalui rekening berikut.")}</p><div className="public-gift-accounts">{giftAccounts.map((account) => <div className="public-gift-account" key={account.id}><span className="gift-account-recipient">{account.recipientLabel}</span><span>{account.bankName}</span><b>{account.accountName}</b><strong>{account.accountNumber}</strong><PublicInvitationGiftCopy accountNumber={account.accountNumber} label={copy("giftCopyActionLabel", "Salin nomor rekening")} /></div>)}</div></div></section>}
       {!isExample && <PublicInvitationGuestbook slug={slug} entries={initialGuestbook} copy={{ eyebrow: copy("guestbookEyebrow", "UCAPAN & DOA"), heading: copy("guestbookHeading", "Kirimkan doa terbaikmu."), intro: copy("guestbookIntro", "Tinggalkan doa dan pesan hangat untuk hari istimewa kami."), submit: copy("guestbookSubmitActionLabel", "Kirim ucapan") }} />}

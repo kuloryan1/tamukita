@@ -208,8 +208,8 @@ async function main() {
 
       await tx.paparazziAlbum.upsert({
         where: { invitationId },
-        create: { invitationId, token: albumToken, enabled: true, closesAt: albumClosesAt, maxPhotos: 200 },
-        update: { ...(savedAlbum?.token === albumToken ? {} : { token: albumToken }), enabled: true, closesAt: albumClosesAt, maxPhotos: 200 },
+        create: { invitationId, token: albumToken, enabled: false, closesAt: albumClosesAt, maxPhotos: 200 },
+        update: savedAlbum?.token === albumToken ? {} : { token: albumToken },
       });
 
       if (hasChanged) {
@@ -217,14 +217,14 @@ async function main() {
           data: {
             organizationId, actorId: admin.id, action: "invitation.production_sample.reconciled",
             targetType: "Invitation", targetId: invitationId,
-            metadata: { slug: invitationSlug, template: "elegant-cream", paparazziEnabled: true, publicationMode: "ADMIN_SAMPLE" },
+            metadata: { slug: invitationSlug, template: "elegant-cream", paparazziConfigured: true, publicationMode: "ADMIN_SAMPLE" },
           },
         });
       }
       return true;
     });
 
-    process.stdout.write(reconciled ? `Production sample reconciled: /${invitationSlug}; Elegant Cream and Paparazi are enabled.\n` : preservedMessage);
+    process.stdout.write(reconciled ? `Production sample reconciled: /${invitationSlug}; Paparazi is managed from the invitation dashboard.\n` : preservedMessage);
   } finally {
     await prisma.$disconnect();
   }

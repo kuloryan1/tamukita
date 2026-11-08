@@ -35,6 +35,7 @@ CMD ["node", "server.js"]
 
 FROM base AS worker
 ENV NODE_ENV=production
+RUN apk add --no-cache fontconfig font-dejavu
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 RUN mkdir -p /data/paparazzi /data/media && chown nextjs:nodejs /data/paparazzi /data/media && chmod 700 /data/paparazzi /data/media
 COPY --from=production-dependencies /app/node_modules ./node_modules
@@ -49,6 +50,8 @@ COPY --from=builder /app/src/lib/media-processing.ts ./src/lib/media-processing.
 COPY --from=builder /app/src/lib/media-server-storage.ts ./src/lib/media-server-storage.ts
 COPY --from=builder /app/src/lib/paparazzi.ts ./src/lib/paparazzi.ts
 COPY --from=builder /app/src/lib/paparazzi-processing.ts ./src/lib/paparazzi-processing.ts
+COPY --from=builder /app/src/lib/paparazzi-story.ts ./src/lib/paparazzi-story.ts
+COPY --from=builder /app/public/images/paparazi/wr-crest.png ./public/images/paparazi/wr-crest.png
 COPY --from=builder /app/src/lib/paparazzi-storage.ts ./src/lib/paparazzi-storage.ts
 COPY --from=builder /app/src/lib/paparazzi-server-files.ts ./src/lib/paparazzi-server-files.ts
 COPY --from=builder /app/src/lib/paparazzi-maintenance.ts ./src/lib/paparazzi-maintenance.ts

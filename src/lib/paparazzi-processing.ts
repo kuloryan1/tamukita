@@ -1,28 +1,50 @@
 import type { S3Client } from "@aws-sdk/client-s3";
 import sharp from "sharp";
 import type { Prisma, PrismaClient } from "../generated/prisma/client";
-import { PAPARAZZI_MAX_BYTES, PAPARAZZI_UPLOAD_TTL_MS, paparazziJobSchema } from "./paparazzi";
+import { PAPARAZZI_CONSENT_VERSION, PAPARAZZI_MAX_BYTES, PAPARAZZI_UPLOAD_TTL_MS, paparazziJobSchema } from "./paparazzi";
 import { paparazziStorage } from "./paparazzi-storage";
 import { removePaparazziTemporaryFiles } from "./paparazzi-server-files";
+import { cropLegacyPaparazziStamp, renderPaparazziStory } from "./paparazzi-story";
 
 export class InvalidPaparazziPhotoError extends Error {}
 
-export function createPaparazziWatermarkSvg(width: number, height: number, instagramHandle: string) {
-  const safeHandle = instagramHandle.replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&apos;" })[character] ?? character);
-  const padding = Math.max(8, Math.round(width * 0.026));
-  const brandSize = Math.max(12, Math.round(width * 0.028));
-  const handleSize = Math.max(10, Math.round(width * 0.021));
-  const gap = Math.max(3, Math.round(width * 0.008));
-  const bandHeight = Math.min(height, padding * 2 + brandSize + handleSize + gap);
-  const right = width - padding;
-  return Buffer.from(`<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#12211c" stop-opacity="0"/><stop offset="1" stop-color="#12211c" stop-opacity=".78"/></linearGradient></defs><rect x="0" y="${height - bandHeight}" width="${width}" height="${bandHeight}" fill="url(#fade)"/><text x="${right}" y="${height - padding - handleSize - gap}" text-anchor="end" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="${brandSize}" font-weight="700" letter-spacing="1">W&amp;R</text><text x="${right}" y="${height - padding}" text-anchor="end" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="${handleSize}" font-weight="500">${safeHandle}</text></svg>`);
+function legacyStoryKey(processedKey: string) {
+  return processedKey.replace(/\.jpg$/, "-story-v1.jpg");
+}
+
+async function readPhotoBytes(storage: ReturnType<typeof paparazziStorage>, key: string, signal: AbortSignal) {
+  const reader = (await storage.read(key)).getReader();
+  const abortRead = () => { void reader.cancel().catch(() => {}); };
+  signal.addEventListener("abort", abortRead, { once: true });
+  if (signal.aborted) abortRead();
+  const chunks: Buffer[] = [];
+  let bytes = 0;
+  try {
+    while (true) {
+      const result = await reader.read();
+      if (result.done) break;
+      bytes += result.value.byteLength;
+      if (bytes > PAPARAZZI_MAX_BYTES) {
+        await reader.cancel();
+        throw new InvalidPaparazziPhotoError("Foto terlalu besar.");
+      }
+      chunks.push(Buffer.from(result.value));
+    }
+  } finally {
+    signal.removeEventListener("abort", abortRead);
+    reader.releaseLock();
+  }
+  signal.throwIfAborted();
+  return Buffer.concat(chunks, bytes);
 }
 
 export async function deletePaparazziPhotoObjects(prisma: PrismaClient, s3: S3Client | null, bucket: string | undefined, photoId: string) {
   const photo = await prisma.paparazziPhoto.findUnique({ where: { id: photoId } });
   if (!photo?.deletedAt || photo.storageDeletedAt) return;
   const storage = paparazziStorage(photo.storageProvider, s3, bucket, AbortSignal.timeout(30_000));
-  for (const key of [photo.sourceKey, photo.processedKey]) await storage.delete(key);
+  for (const key of new Set([photo.sourceKey, photo.processedKey, photo.storyKey ?? legacyStoryKey(photo.processedKey)])) {
+    await storage.delete(key);
+  }
   if (photo.storageProvider === "SERVER") await removePaparazziTemporaryFiles(photo.id);
   // A worker already holding the input may finish a late write after deletion.
   // Keep recent in-flight deletions eligible for the maintenance retry.
@@ -46,38 +68,61 @@ export async function processPaparazziPhoto(prisma: PrismaClient, s3: S3Client |
   if (!expectedFormat || photo.sizeBytes < BigInt(1) || photo.sizeBytes > BigInt(PAPARAZZI_MAX_BYTES)) throw new InvalidPaparazziPhotoError("Format atau ukuran foto tidak valid.");
   const head = await storage.head(photo.sourceKey);
   if (head.size !== Number(photo.sizeBytes) || ("contentType" in head && head.contentType !== photo.mimeType)) throw new InvalidPaparazziPhotoError("Data foto tidak sesuai unggahan.");
-  const reader = (await storage.read(photo.sourceKey)).getReader();
-  const abortRead = () => { void reader.cancel().catch(() => {}); };
-  io.abortSignal.addEventListener("abort", abortRead, { once: true });
-  if (io.abortSignal.aborted) abortRead();
-  const chunks: Buffer[] = []; let bytes = 0;
+  const source = await readPhotoBytes(storage, photo.sourceKey, io.abortSignal);
+  const image = sharp(source, { failOn: "error", limitInputPixels: 40_000_000, animated: false });
   try {
-    while (true) {
-      const result = await reader.read(); if (result.done) break;
-      bytes += result.value.byteLength;
-      if (bytes > PAPARAZZI_MAX_BYTES) { await reader.cancel(); throw new InvalidPaparazziPhotoError("Foto terlalu besar."); }
-      chunks.push(Buffer.from(result.value));
-    }
-  } finally { io.abortSignal.removeEventListener("abort", abortRead); reader.releaseLock(); }
-  if (io.abortSignal.aborted) throw new Error("Paparazzi storage processing timed out.");
-  const source = Buffer.concat(chunks);
-  let normalized: { data: Buffer; info: { width: number; height: number; size: number } };
-  try {
-    const image = sharp(source, { failOn: "error", limitInputPixels: 40_000_000, animated: false });
     const metadata = await image.metadata();
     if (metadata.format !== expectedFormat || !metadata.width || !metadata.height || (metadata.pages ?? 1) > 1) throw new Error("Invalid image");
-    normalized = await image.rotate().resize({ width: 2400, height: 2400, fit: "inside", withoutEnlargement: true }).flatten({ background: "#fff" }).jpeg({ quality: 90, mozjpeg: true }).toBuffer({ resolveWithObject: true });
   } catch { throw new InvalidPaparazziPhotoError("Foto tidak dapat dibaca. Gunakan JPG, PNG, atau WebP yang valid."); }
-  const watermark = photo.instagramHandle ? createPaparazziWatermarkSvg(normalized.info.width, normalized.info.height, photo.instagramHandle) : null;
-  const output = await sharp(normalized.data).composite(watermark ? [{ input: watermark }] : []).jpeg({ quality: 90, mozjpeg: true }).toBuffer({ resolveWithObject: true });
+  const output = await renderPaparazziStory(image, photo.instagramHandle);
   await storage.write(photo.processedKey, output.data, "image/jpeg");
-  const updated = await prisma.paparazziPhoto.updateMany({ where: { id: photo.id, status: "PROCESSING", processingStartedAt: startedAt, deletedAt: null, retentionAt: { gt: new Date() } }, data: { status: "READY", processedBytes: BigInt(output.info.size), width: output.info.width, height: output.info.height } });
+  const updated = await prisma.paparazziPhoto.updateMany({
+    where: { id: photo.id, status: "PROCESSING", processingStartedAt: startedAt, deletedAt: null, retentionAt: { gt: new Date() } },
+    data: { status: "READY", storyKey: photo.processedKey, processedBytes: BigInt(output.info.size), width: output.info.width, height: output.info.height },
+  });
   if (updated.count !== 1) {
     const current = await prisma.paparazziPhoto.findUnique({ where: { id: photo.id } });
     if (current?.deletedAt) await deletePaparazziPhotoObjects(prisma, s3, bucket, photo.id);
     else if (current?.status !== "READY") await storage.delete(photo.processedKey);
   }
   await storage.delete(photo.sourceKey);
+}
+
+export async function upgradePaparazziStoryPhotos(prisma: PrismaClient, s3: S3Client | null, bucket?: string) {
+  const photos = await prisma.paparazziPhoto.findMany({
+    where: {
+      status: "READY", storyKey: null, instagramHandle: { not: null }, consentVersion: PAPARAZZI_CONSENT_VERSION,
+      deletedAt: null, storageDeletedAt: null, retentionAt: { gt: new Date() },
+      ...(s3 && bucket ? {} : { storageProvider: "SERVER" }),
+    },
+    take: 8, orderBy: { createdAt: "desc" },
+    select: { id: true, processedKey: true, storageProvider: true, instagramHandle: true },
+  });
+  let failed = 0;
+  for (const photo of photos) {
+    try {
+      const storyKey = legacyStoryKey(photo.processedKey);
+      if (storyKey === photo.processedKey) throw new Error("Invalid legacy Paparazi key");
+      const signal = AbortSignal.timeout(120_000);
+      const storage = paparazziStorage(photo.storageProvider, s3, bucket, signal);
+      const source = await readPhotoBytes(storage, photo.processedKey, signal);
+      const image = sharp(source, { failOn: "error", limitInputPixels: 40_000_000 });
+      const metadata = await image.metadata();
+      if (metadata.format !== "jpeg" || !metadata.width || !metadata.height) throw new Error("Invalid saved Paparazi image");
+      const output = await renderPaparazziStory(cropLegacyPaparazziStamp(image, metadata.width, metadata.height), photo.instagramHandle);
+      await prisma.$transaction(async tx => {
+        const updated = await tx.paparazziPhoto.updateMany({
+          where: { id: photo.id, processedKey: photo.processedKey, status: "READY", storyKey: null, deletedAt: null, retentionAt: { gt: new Date() } },
+          data: { storyKey, width: output.info.width, height: output.info.height, processedBytes: BigInt(output.info.size) },
+        });
+        // Hold the row through the variant write so deletion cannot leave an orphan.
+        if (updated.count === 1) await storage.write(storyKey, output.data, "image/jpeg");
+      }, { timeout: 30_000 });
+    } catch {
+      failed++;
+    }
+  }
+  if (failed) process.stderr.write(`[background-worker] ${failed} Paparazi Story photo conversions will be retried.\n`);
 }
 
 export async function failPaparazziPhoto(prisma: PrismaClient, s3: S3Client | null, bucket: string | undefined, value: unknown) {

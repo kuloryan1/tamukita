@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { ArrowUpRight, Camera, QrCode } from "lucide-react";
 
-export function InvitationPaparazzi({ token, isOpen }: { token: string; isOpen: boolean }) {
+export function InvitationPaparazzi({ token }: { token: string }) {
   const guestUrl = `/paparazi/${encodeURIComponent(token)}`;
 
   return (
@@ -16,7 +16,7 @@ export function InvitationPaparazzi({ token, isOpen }: { token: string; isOpen: 
           <span className="eyebrow"><Camera size={14} /> PAPARAZI ACARA</span>
           <h2 id="invitation-paparazzi-title">Bagikan momen <em>bersama.</em></h2>
           <p>Pindai QR untuk mengirim foto acara, atau buka galeri melalui tautan berikut.</p>
-          <span className={`invitation-paparazzi-status${isOpen ? " is-open" : ""}`} role="status">{isOpen ? "Unggahan foto dibuka" : "Galeri tersedia · unggahan foto ditutup"}</span>
+          <span className="invitation-paparazzi-status is-open" role="status">Unggahan foto dibuka</span>
           <a href={guestUrl} target="_blank" rel="noopener noreferrer"><QrCode size={16} /> Buka Paparazi <ArrowUpRight size={14} /></a>
         </div>
       </div>

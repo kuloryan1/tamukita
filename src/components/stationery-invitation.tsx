@@ -132,14 +132,13 @@ function ShareDialog({ dialogRef, recipient, basePath }: { dialogRef: RefObject<
   </dialog>;
 }
 
-export function StationeryInvitation({ template, recipient, isTestableSample = false, slug, guestToken, paparazziToken, paparazziOpen = false, draft, calendarHref = "/api/templates/demo/calendar" }: {
+export function StationeryInvitation({ template, recipient, isTestableSample = false, slug, guestToken, paparazziToken, draft, calendarHref = "/api/templates/demo/calendar" }: {
   template: WeddingTemplate;
   recipient: string;
   isTestableSample?: boolean;
   slug?: string;
   guestToken?: string;
   paparazziToken?: string;
-  paparazziOpen?: boolean;
   draft?: InvitationDraft;
   calendarHref?: string;
 }) {
@@ -472,7 +471,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
           {eventSchedule.length > 0 && <section className="event-rundown" aria-labelledby="event-rundown-title"><div className="event-rundown-heading"><span className="eyebrow">{copy("scheduleSectionEyebrow", "RANGKAIAN ACARA")}</span><h3 id="event-rundown-title">{copy("scheduleSectionHeading", "Rundown acara")}</h3><p>{copy("scheduleSectionIntro", "Setiap momen istimewa telah kami siapkan.")}</p></div><ol>{eventSchedule.filter((item) => item.time.trim() && item.title.trim()).map((item, index) => <li key={item.id}><time dateTime={item.time}>{item.time}<small>WIB</small></time><span className="event-rundown-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><div className="event-rundown-content"><b>{item.title}</b>{item.description && <p>{item.description}</p>}</div></li>)}</ol></section>}
           <a className="text-link rsvp-jump" href="#konfirmasi">{copy("rsvpJumpLabel", "Konfirmasi kehadiran")} <ArrowDown size={15} /></a>
         </section>
-        {paparazziToken && <InvitationPaparazzi token={paparazziToken} isOpen={paparazziOpen} />}
+        {paparazziToken && <InvitationPaparazzi token={paparazziToken} />}
         {galleryPhotos.length > 0 && <section className="event-gallery-section" aria-label={`Galeri foto ${hostOne} dan ${hostTwo}`}><div className="event-gallery-heading"><span className="eyebrow">{copy("gallerySectionEyebrow", "POTONGAN CERITA")}</span><h2 style={{ whiteSpace: "pre-line" }}>{copy("gallerySectionHeading", "Momen yang ingin kami kenang.")}</h2><p>{copy("gallerySectionIntro", "Foto-foto kenangan dari hari istimewa kami.")}</p></div><div className="event-gallery-grid">{galleryPhotos.slice(0, 6).map((photo, index) => <figure key={photo}><Image src={photo} alt={`Foto ${index + 1} ${hostOne} dan ${hostTwo}`} width={640} height={480} sizes="(max-width: 720px) 50vw, 33vw" unoptimized /></figure>)}</div></section>}
         <RSVP template={template} recipient={guest} isTestableSample={isTestableSample} slug={slug} guestToken={guestToken} copy={{ eyebrow: copy("rsvpSectionEyebrow", "KONFIRMASI KEHADIRAN"), heading: copy("rsvpSectionHeading", "Sebuah kabar, berarti bagi kami."), intro: copy("rsvpSectionIntro", "Isi konfirmasi kehadiran dan titipkan ucapan hangat untuk hari istimewa kami."), question: copy("rsvpFormQuestion", "Berkenan hadir?"), submit: copy("rsvpSubmitActionLabel", "Kirim konfirmasi") }} />
         {giftAccounts.length > 0 && <section className="gift-section content-section" id="hadiah" aria-labelledby="gift-title"><div className="section-heading"><Gift size={20} strokeWidth={1.2} /><span className="eyebrow">{copy("giftSectionEyebrow", "TANDA KASIH")}</span><h2 id="gift-title" style={{ whiteSpace: "pre-line" }}>{copy("giftSectionHeading", "Kehadiranmu adalah hadiah terindah.")}</h2></div><p className="gift-message">{giftMessage}</p><div className="gift-account-grid">{giftAccounts.map((account) => <article className="gift-account-card" key={account.id}><span className="gift-account-recipient">{account.recipientLabel}</span><span className="eyebrow">{account.bankName}</span><b>{account.accountName}</b><strong>{account.accountNumber}</strong><PublicInvitationGiftCopy accountNumber={account.accountNumber} label={copy("giftCopyActionLabel", "Salin nomor rekening")} /></article>)}</div></section>}

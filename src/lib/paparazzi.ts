@@ -2,6 +2,8 @@ import { z } from "zod";
 import { guardianConsentMatchesChildData } from "./child-data-consent";
 
 export const PAPARAZZI_MAX_BYTES = 10_000_000;
+export const PAPARAZZI_STORY_WIDTH = 1080;
+export const PAPARAZZI_STORY_HEIGHT = 1920;
 export const PAPARAZZI_RETENTION_DAYS = 90;
 export const PAPARAZZI_UPLOAD_TTL_MS = 15 * 60 * 1_000;
 export const PAPARAZZI_CONSENT_VERSION = "paparazzi-public-2026-11-v2";
