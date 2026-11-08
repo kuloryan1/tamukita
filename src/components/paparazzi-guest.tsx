@@ -23,6 +23,7 @@ export function PaparazziGuest({ token, initial }: { token: string; initial: Pap
   const [phase, setPhase] = useState<"idle" | "uploading" | "processing" | "sent">("idle");
   const [error, setError] = useState(""); const [front, setFront] = useState(false);
   const busy = phase === "uploading" || phase === "processing";
+  const cameraFullScreen = camera.active || camera.opening;
   const parsedInstagramHandle = paparazziInstagramHandleSchema.safeParse(instagramHandle);
 
   useEffect(() => {
@@ -105,12 +106,12 @@ export function PaparazziGuest({ token, initial }: { token: string; initial: Pap
       {initial.open && <>
         <input ref={galleryInput} aria-label="Pilih foto dari galeri" className="paparazzi-file-input" type="file" accept="image/*" onChange={select} />
         <input ref={nativeInput} aria-label="Ambil dengan kamera HP" className="paparazzi-file-input" type="file" accept="image/*" capture="environment" onChange={select} />
-        <dialog ref={uploadDialog} className="paparazzi-upload-dialog" aria-label="Unggah foto ke galeri acara" onCancel={event => { event.preventDefault(); dismissUpload(); }} onClose={() => { setUploadOpen(false); camera.stop(); }}>
-          <div className="paparazzi-upload-dialog-content">
+        <dialog ref={uploadDialog} className={`paparazzi-upload-dialog${cameraFullScreen ? " paparazzi-upload-dialog--camera" : ""}`} aria-label="Unggah foto ke galeri acara" onCancel={event => { event.preventDefault(); dismissUpload(); }} onClose={() => { setUploadOpen(false); camera.stop(); }}>
+          <div className={`paparazzi-upload-dialog-content${cameraFullScreen ? " paparazzi-upload-dialog-content--camera" : ""}`}>
             <div className="paparazzi-upload-dialog-heading"><div><p className="eyebrow">KENANGAN BERSAMA</p><h2 id="paparazzi-upload-title">Bagikan foto ke galeri</h2><p>Hasil foto berformat Story vertikal {PAPARAZZI_STORY_WIDTH} × {PAPARAZZI_STORY_HEIGHT} piksel, dengan nama Instagram dan lambang WR.</p></div><button type="button" className="paparazzi-upload-dialog-close" aria-label="Tutup unggahan" onClick={dismissUpload} disabled={busy}><X size={19} /></button></div>
             <label className="paparazzi-instagram-field"><span>Nama Instagram <b>Wajib</b></span><input aria-label="Nama Instagram" type="text" value={instagramHandle} onChange={event => setInstagramHandle(event.target.value)} maxLength={31} autoComplete="off" autoCapitalize="none" spellCheck={false} placeholder="@namakamu" required aria-invalid={instagramHandle.trim().length > 0 && !parsedInstagramHandle.success} aria-describedby="paparazzi-instagram-help" disabled={busy} /><small id="paparazzi-instagram-help">Username ini akan dicantumkan pada foto yang dibagikan.</small>{instagramHandle.trim().length > 0 && !parsedInstagramHandle.success && <small className="paparazzi-handle-error">Gunakan 1–30 huruf, angka, titik, atau garis bawah.</small>}</label>
         {camera.active || camera.opening ? <section className="paparazzi-camera" aria-label="Kamera acara">
-          <div className="paparazzi-camera-bar"><span>{camera.opening ? "Menunggu izin kamera" : "Cari momen terbaikmu"}</span><button type="button" aria-label="Tutup kamera" onClick={camera.stop}><X size={21} /></button></div>
+          <div className="paparazzi-camera-bar"><span aria-live="polite">{camera.opening ? "Menghubungkan kamera…" : `Foto Story ${PAPARAZZI_STORY_WIDTH} × ${PAPARAZZI_STORY_HEIGHT}`}</span><button type="button" aria-label="Tutup kamera" onClick={camera.stop}><X size={21} /></button></div>
           {camera.active ? <video ref={camera.videoRef} autoPlay playsInline muted aria-label="Pratinjau kamera" onLoadedData={() => camera.setReady(true)} onClick={() => { void camera.videoRef.current?.play(); }} /> : <div className="paparazzi-camera-wait"><Loader2 className="paparazzi-spin" size={30} /><p>Izinkan penggunaan kamera pada browser.</p></div>}
           <div className="paparazzi-camera-controls"><button type="button" className="button button--outline" disabled={camera.opening} aria-label="Ganti kamera" onClick={() => { const next = !front; setFront(next); void camera.start(next ? "user" : "environment"); }}><SwitchCamera size={19} /></button><button type="button" className="paparazzi-shutter" disabled={!camera.ready} aria-label="Ambil foto" onClick={() => { void camera.capture().then(chooseFile); }}><Camera size={26} /></button><span>Ambil foto</span></div>
         </section> : phase === "sent" ? <section className="paparazzi-sent" role="status"><span><CheckCircle2 size={34} /></span><h2>Foto sudah diterima!</h2><p>Terima kasih sudah ikut mengabadikan momen. Buka galeri acara di bawah untuk melihat kenangan bersama.</p><button type="button" className="button button--dark button--wide" onClick={reset}><Camera size={17} /> Kirim foto lain</button><button type="button" className="text-link" onClick={() => { dismissUpload(); window.location.hash = "galeri-acara"; }}>Lihat galeri acara</button></section> : file && preview ? <section className="paparazzi-review">
@@ -119,7 +120,7 @@ export function PaparazziGuest({ token, initial }: { token: string; initial: Pap
             <Image className="paparazzi-photo-preview" src={preview} alt="Pratinjau foto sebelum dikirim" width={PAPARAZZI_STORY_WIDTH} height={PAPARAZZI_STORY_HEIGHT} unoptimized />
             {parsedInstagramHandle.success && <span className="paparazzi-watermark-preview">
               <small>{parsedInstagramHandle.data}</small>
-              <Image src="/images/paparazi/wr-crest.png" alt="" width={36} height={36} unoptimized />
+              <Image src="/images/paparazi/wr-crest.png" alt="Watermark W&R" width={36} height={36} unoptimized />
             </span>}
           </div>
           <form onSubmit={send} className="paparazzi-consent-form">

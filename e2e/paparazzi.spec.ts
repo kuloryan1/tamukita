@@ -7,6 +7,7 @@ import { Pool } from "pg";
 import sharp from "sharp";
 import jsQR from "jsqr";
 import { createInitialDraft } from "../src/lib/invitations";
+import { PAPARAZZI_STORY_HEIGHT, PAPARAZZI_STORY_WIDTH } from "../src/lib/paparazzi";
 
 async function signIn(page: Page, email: string, password: string) {
   await page.goto("/login"); await page.getByLabel("Alamat email").fill(email);
@@ -84,10 +85,20 @@ test("event QR opens the camera, stores validated photos, and immediately publis
     await guest.getByLabel("Nama Instagram").fill("nara_raka");
     await guest.getByRole("button", { name: "Buka kamera", exact: true }).click();
     await expect(guest.getByRole("button", { name: "Ambil foto", exact: true })).toBeEnabled();
+    const cameraDialog = guest.getByRole("dialog", { name: "Unggah foto ke galeri acara" });
+    await expect(cameraDialog).toHaveClass(/paparazzi-upload-dialog--camera/);
+    await expect(guest.getByRole("button", { name: "Tutup kamera", exact: true })).toBeVisible();
+    await expect(guest.getByRole("button", { name: "Ganti kamera", exact: true })).toBeVisible();
+    const cameraBounds = await cameraDialog.evaluate((dialog: HTMLDialogElement) => {
+      const rect = dialog.getBoundingClientRect();
+      return { width: rect.width, height: rect.height, viewportWidth: innerWidth, viewportHeight: innerHeight };
+    });
+    expect(Math.abs(cameraBounds.width - cameraBounds.viewportWidth)).toBeLessThanOrEqual(1);
+    expect(Math.abs(cameraBounds.height - cameraBounds.viewportHeight)).toBeLessThanOrEqual(1);
     expect(await guest.locator("video").evaluate((video: HTMLVideoElement) => video.videoWidth)).toBeGreaterThan(0);
     await guest.getByRole("button", { name: "Ambil foto", exact: true }).click();
     await expect(guest.getByRole("heading", { name: "Siap dibagikan?" })).toBeVisible();
-    await expect(guest.locator(".paparazzi-watermark-preview")).toContainText("W&R");
+    await expect(guest.locator(".paparazzi-watermark-preview img")).toHaveAttribute("alt", "Watermark W&R");
     await expect(guest.locator(".paparazzi-watermark-preview")).toContainText("@nara_raka");
     await capture("guest-mobile-preview", guest);
     const send = guest.getByRole("button", { name: "Bagikan ke galeri acara", exact: true }); await expect(send).toBeDisabled();
@@ -100,6 +111,9 @@ test("event QR opens the camera, stores validated photos, and immediately publis
     await expect(guest.locator(".paparazzi-public-photo img")).toHaveCount(1);
     expect((await request.get(photoPath)).headers()["content-type"]).toBe("image/jpeg");
     expect((await request.get(photoPath)).headers()["cache-control"]).toContain("no-store");
+    const capturedStory = await sharp(await (await request.get(photoPath)).body()).metadata();
+    expect(capturedStory.width).toBe(PAPARAZZI_STORY_WIDTH);
+    expect(capturedStory.height).toBe(PAPARAZZI_STORY_HEIGHT);
     await expect(guest.locator(".paparazzi-public-photo figcaption").filter({ hasText: "@nara_raka" })).toBeVisible();
     const storedPhoto = (await pool.query('SELECT "instagramHandle", "consentVersion" FROM paparazzi_photos WHERE id=$1', [firstTicket.photoId])).rows[0];
     expect(storedPhoto.instagramHandle).toBe("@nara_raka");
@@ -138,7 +152,7 @@ test("event QR opens the camera, stores validated photos, and immediately publis
     expect((await request.post(`${publicPath}/photos/${second.photoId}`, { data: { receipt: second.receipt } })).ok()).toBeTruthy();
     await expect.poll(async () => (await request.get(`${galleryPath}/${second.photoId}`)).status(), { timeout: 90_000 }).toBe(200);
     const processed = await sharp(await (await request.get(`${galleryPath}/${second.photoId}`)).body()).metadata();
-    expect(processed.format).toBe("jpeg"); expect(processed.width).toBe(64); expect(processed.height).toBe(96);
+    expect(processed.format).toBe("jpeg"); expect(processed.width).toBe(PAPARAZZI_STORY_WIDTH); expect(processed.height).toBe(PAPARAZZI_STORY_HEIGHT);
     expect(processed.exif).toBeUndefined(); expect(processed.orientation).toBeUndefined();
     const stored = (await pool.query('SELECT "sourceKey", "processedKey", "storageProvider", "consentVersion", "guardianConsentVersion" FROM paparazzi_photos WHERE id=$1', [second.photoId])).rows[0];
     expect(stored.consentVersion).toBe("paparazzi-public-2026-11-v2"); expect(stored.guardianConsentVersion).toBe("child-paparazzi-public-guardian-2026-10-v1");

@@ -37,12 +37,13 @@
 .paparazzi-guest-footnote{max-width:500px;margin:22px auto 0;color:#859080;font-size:10px;line-height:1.9;text-align:center}
 .paparazzi-footer{display:flex;justify-content:center;gap:9px;padding:28px 16px 34px;color:#8e9789;font-size:10px}
 .paparazzi-footer>span{color:#4e6a52}
-.paparazzi-camera{padding:0;overflow:hidden;background:#15261f;color:white}
+.paparazzi-camera{width:min(100%,clamp(200px,34dvh,288px));padding:0;overflow:hidden;background:#15261f;color:white}
 .paparazzi-camera-bar{padding:13px 16px;display:flex;justify-content:space-between;align-items:center;font-size:12px}
 .paparazzi-camera-bar button{display:flex;align-items:center;justify-content:center;min-width:40px;min-height:40px;border:1px solid #52705e;border-radius:50%;color:white;background:transparent}
-.paparazzi-camera video{display:block;width:100%;height:min(55dvh,480px);object-fit:contain;background:#0b1712}
-.paparazzi-camera-wait{height:290px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;font-size:13px;line-height:1.8;padding:20px;text-align:center}
-.paparazzi-camera-controls{display:flex;align-items:center;justify-content:center;gap:25px;padding:19px 16px}
+.paparazzi-camera video,.paparazzi-camera-wait{width:100%;aspect-ratio:9/16;background:#0b1712}
+.paparazzi-camera video{display:block;height:auto;object-fit:cover;object-position:center}
+.paparazzi-camera-wait{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;font-size:13px;line-height:1.8;padding:20px;text-align:center}
+.paparazzi-camera-controls{display:flex;align-items:center;justify-content:center;gap:10px;padding:19px 8px}
 .paparazzi-camera-controls>.button{padding:0;min-width:45px;height:45px;border-color:#5c7667;color:white;background:transparent}
 .paparazzi-camera-controls>span{font-size:11px;min-width:45px}
 .paparazzi-shutter{height:70px;width:70px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:50%;border:5px solid #c7d3c6;background:white;color:#244a37;box-shadow:0 0 0 3px #4b6754}
@@ -201,7 +202,21 @@
 .paparazzi-watermark-preview{display:flex;align-items:center;justify-content:center;gap:3px;min-width:0;padding:5px 12px 12px;color:white}
 .paparazzi-watermark-preview small{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font:700 11px/1.2 Arial,sans-serif}
 .paparazzi-watermark-preview img{flex:none;filter:brightness(0) invert(1)}
-.paparazzi-upload-dialog .paparazzi-start,.paparazzi-upload-dialog .paparazzi-review,.paparazzi-upload-dialog .paparazzi-sent,.paparazzi-upload-dialog .paparazzi-camera{margin:0 auto;background:#fff}
+.paparazzi-upload-dialog .paparazzi-start,.paparazzi-upload-dialog .paparazzi-review,.paparazzi-upload-dialog .paparazzi-sent{margin:0 auto;background:#fff}
 .paparazzi-upload-dialog .paparazzi-guest-footnote{margin-bottom:0}
 .paparazzi-guest .paparazzi-error{max-width:none}
 @media(max-width:600px){.paparazzi-gallery-heading{align-items:center;gap:10px}.paparazzi-gallery-actions{gap:6px}.paparazzi-gallery-actions>.button{min-width:42px;padding:8px 10px;font-size:10px}.paparazzi-upload-dialog-content{padding:22px 16px}.paparazzi-upload-dialog-heading h2{font-size:25px}}
+
+.paparazzi-upload-dialog--camera{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:#07100b;overflow:hidden}
+.paparazzi-upload-dialog--camera::backdrop{background:#050907;backdrop-filter:none}
+.paparazzi-upload-dialog-content--camera{position:absolute;inset:0;width:100%;height:100%;max-height:none;min-height:100%;padding:0;overflow:hidden;border:0;border-radius:0;background:#07100b;box-shadow:none}
+.paparazzi-upload-dialog-content--camera>.paparazzi-upload-dialog-heading,.paparazzi-upload-dialog-content--camera>.paparazzi-instagram-field,.paparazzi-upload-dialog-content--camera>.paparazzi-guest-footnote{display:none}
+.paparazzi-upload-dialog-content--camera>.paparazzi-camera{position:absolute;inset:0;display:block;width:100%;height:100%;max-width:none;min-height:0;margin:0;padding:0;overflow:hidden;border:0;border-radius:0;background:#07100b;color:#fff;box-shadow:none}
+.paparazzi-upload-dialog-content--camera .paparazzi-camera video{position:absolute;top:50%;left:50%;z-index:0;width:min(100vw,56.25dvh);height:100dvh;max-width:100vw;max-height:100dvh;aspect-ratio:9/16;transform:translate(-50%,-50%);object-fit:cover;object-position:center;background:#07100b}
+.paparazzi-upload-dialog-content--camera .paparazzi-camera-wait{position:absolute;inset:0;z-index:0;display:flex;width:100%;height:100%;aspect-ratio:auto;padding:24px;color:#fff}
+.paparazzi-upload-dialog-content--camera .paparazzi-camera-bar{position:absolute;inset:0 0 auto;z-index:1;padding:calc(env(safe-area-inset-top,0px) + 14px) 20px 30px;background:linear-gradient(180deg,#050907c7,transparent);font-size:13px}
+.paparazzi-upload-dialog-content--camera .paparazzi-camera-controls{position:absolute;inset:auto 0 0;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) 74px minmax(0,1fr);grid-template-rows:74px auto;gap:8px 12px;padding:22px 24px calc(22px + env(safe-area-inset-bottom,0px));background:linear-gradient(0deg,#050907db,transparent)}
+.paparazzi-upload-dialog-content--camera .paparazzi-camera-controls>.button{grid-column:1;grid-row:1;justify-self:start;align-self:center;min-width:48px;height:48px}
+.paparazzi-upload-dialog-content--camera .paparazzi-camera-controls>.paparazzi-shutter{grid-column:2;grid-row:1;justify-self:center;align-self:center}
+.paparazzi-upload-dialog-content--camera .paparazzi-camera-controls>span{grid-column:2;grid-row:2;justify-self:center;min-width:0;text-align:center}
+@media(orientation:portrait){.paparazzi-upload-dialog-content--camera .paparazzi-camera video{width:100vw;height:100dvh}}

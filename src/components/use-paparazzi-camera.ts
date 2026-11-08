@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { PAPARAZZI_STORY_HEIGHT, PAPARAZZI_STORY_WIDTH } from "@/lib/paparazzi";
 
 export function usePaparazziCamera() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -47,10 +48,16 @@ export function usePaparazziCamera() {
   async function capture() {
     const video = videoRef.current;
     if (!video?.videoWidth || !video.videoHeight) { setError("Kamera sedang disiapkan. Tunggu sebentar."); return null; }
-    const scale = Math.min(1, 1920 / Math.max(video.videoWidth, video.videoHeight));
-    const canvas = document.createElement("canvas"); canvas.width = Math.round(video.videoWidth * scale); canvas.height = Math.round(video.videoHeight * scale);
+    const storyRatio = PAPARAZZI_STORY_WIDTH / PAPARAZZI_STORY_HEIGHT;
+    const cropWidth = Math.min(video.videoWidth, video.videoHeight * storyRatio);
+    const cropHeight = Math.min(video.videoHeight, video.videoWidth / storyRatio);
+    const cropLeft = (video.videoWidth - cropWidth) / 2;
+    const cropTop = (video.videoHeight - cropHeight) / 2;
+    const canvas = document.createElement("canvas");
+    canvas.width = PAPARAZZI_STORY_WIDTH;
+    canvas.height = PAPARAZZI_STORY_HEIGHT;
     const context = canvas.getContext("2d"); if (!context) { setError("Foto belum dapat diambil. Gunakan kamera bawaan HP."); return null; }
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    context.drawImage(video, cropLeft, cropTop, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
     const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/jpeg", 0.88));
     if (!blob) { setError("Foto belum dapat disiapkan. Coba lagi."); return null; }
     stop(); return new File([blob], "foto-acara.jpg", { type: "image/jpeg" });
