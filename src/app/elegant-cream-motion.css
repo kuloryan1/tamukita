@@ -29,13 +29,19 @@
   translate: 0 var(--cream-parallax-y, 0px);
 }
 
-@supports (animation-timeline: view()) and (view-timeline: --cream-hero block) and (animation-range: cover 0% cover 100%) {
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation :is(.hero-botanical, .cover-photo-frame, .closing-botanical) {
-    animation: elegant-cream-scroll-depth linear both;
-    animation-duration: auto !important;
-    animation-timeline: var(--cream-layer-timeline);
-    animation-range: cover 0% cover 100%;
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) and (view-timeline: --cream-hero block) and (animation-range: cover 0% cover 100%) {
+    .stationery-demo.theme-elegant-cream.is-open .opened-invitation :is(.hero-botanical, .cover-photo-frame, .closing-botanical) {
+      animation: elegant-cream-scroll-depth linear both;
+      animation-duration: auto;
+      animation-timeline: var(--cream-layer-timeline);
+      animation-range: cover 0% cover 100%;
+    }
   }
+}
+
+.stationery-demo.theme-elegant-cream .cover-stage.is-cream-fallback .cream-envelope-cover {
+  animation: stationery-open-paper 760ms cubic-bezier(.4, 0, .2, 1) both;
 }
 
 /* The text keeps its final line breaks while the letters appear. */
@@ -54,6 +60,11 @@
 .stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] :is(.invitation-message, .hero-date, .detail-link) { animation-delay: 240ms; }
 .stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .hero-flourish {
   animation: elegant-cream-ink-rule var(--cream-intro-duration) var(--cream-motion-ease) 480ms backwards;
+}
+.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro="queued"] .invitation-hero :is(
+  .cream-type-letter, .monogram, .eyebrow, .hero-names, .invitation-message, .hero-date, .detail-link, .hero-flourish
+) {
+  animation-play-state: paused;
 }
 
 .stationery-demo.theme-elegant-cream .countdown { gap: clamp(6px, 1.8vw, 14px); }
@@ -115,6 +126,10 @@
   from { opacity: .15; }
   to { opacity: 1; }
 }
+@keyframes elegant-cream-cover-dissolve {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
 @keyframes elegant-cream-letter-ink {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -129,6 +144,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .stationery-demo.theme-elegant-cream .cover-stage.is-cream-fallback .cream-envelope-cover {
+    animation-name: elegant-cream-cover-dissolve;
+    animation-duration: 320ms !important;
+  }
   .stationery-demo.theme-elegant-cream.is-open .opened-invitation {
     --cream-intro-duration: 660ms;
     --cream-reveal-duration: 320ms;
@@ -136,10 +155,13 @@
     --cream-type-start: 410ms;
     --cream-type-speed: .37;
   }
-  .stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .hero-flourish { animation-name: elegant-cream-soft-intro; }
+  .stationery-demo.theme-elegant-cream .cream-type-letter { animation-duration: 120ms !important; }
+  .stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .hero-flourish {
+    animation-name: elegant-cream-soft-intro;
+    animation-duration: var(--cream-intro-duration) !important;
+  }
   .stationery-demo.theme-elegant-cream .countdown-digit { animation: none; }
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation .hero-botanical { --cream-parallax-depth: 20px; }
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation .hero-botanical.corner-bottom { --cream-parallax-depth: -16px; }
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation .cover-photo-frame { --cream-parallax-depth: 10px; }
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation .closing-botanical { --cream-parallax-depth: 18px; }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation :is(.hero-botanical, .hero-botanical.corner-bottom, .cover-photo-frame, .closing-botanical) {
+    --cream-parallax-depth: 0px;
+  }
 }

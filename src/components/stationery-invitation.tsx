@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
+import { flushSync } from "react-dom";
 import Image from "next/image";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, Check, Clock3, Copy, Gift, Heart, LayoutGrid, Mail, MapPin, RotateCcw, Share2, Users, X } from "lucide-react";
 import { BotanicalCorner, BotanicalWreath, SatinBow, TinyFlourish } from "@/components/stationery-ornaments";
@@ -17,12 +18,24 @@ import { useCreamParallax } from "@/components/use-cream-parallax";
 
 const listedStationeryTemplates = filterListedTemplates(templates);
 const ELEGANT_CREAM_OPENING_VIDEO = "/templates/elegant-cream-envelope-v1.mp4";
+const ELEGANT_CREAM_COUPLE_COVERS = new Set([
+  "/qa-fixtures/couple-cover.webp",
+  "/templates/elegant-cream/wulan-dan-ryan-couple.webp",
+]);
 const ENVELOPE_START_TIMEOUT_MS = 3_000;
 const ENVELOPE_PLAY_TIMEOUT_MS = 7_000;
 const ENVELOPE_HANDOFF_TIMEOUT_MS = 1_300;
+const ENVELOPE_FALLBACK_TIMEOUT_MS = 1_100;
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 
-type OpeningPhase = "idle" | "loading" | "playing" | "revealing";
+type OpeningPhase = "idle" | "loading" | "playing" | "revealing" | "fallback";
+
+function releaseOpeningVideo(video: HTMLVideoElement | null) {
+  if (!video?.hasAttribute("src")) return;
+  video.pause();
+  video.removeAttribute("src");
+  video.load();
+}
 
 function Monogram({ small = false, hostOne = WEDDING.groom, hostTwo = WEDDING.bride, customMonogram = "", crestSrc = "/images/monograms/wr-crest.png" }: { small?: boolean; hostOne?: string; hostTwo?: string; customMonogram?: string; crestSrc?: string }) {
   const firstInitial = (name: string) => Array.from(name.trim())[0]?.toLocaleUpperCase("id-ID") ?? "?";
@@ -184,37 +197,42 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   const recipientQuery = guest === "Anda" ? "" : `?to=${encodeURIComponent(guest)}`;
   const catalogUrl = `/templates${recipientQuery}`;
   const style = { "--paper": template.paper, "--ink": template.ink, "--muted": template.muted, "--accent": template.accent, "--line": template.line, "--scene": template.background } as CSSProperties;
-  const framedPortrait = (name: string, parents: string, photoUrl: string, position: string, placement: string, horizontalOffset: string) => (
-    <figure className={`cover-photo-tile ${placement}`} aria-label={`Potret ${name}`}>
-      <div className="cover-photo-frame">
-        <div className="cover-photo-window">
-          {photoUrl && <Image
-            className={`cover-photo-image${photoUrl === draft?.coverPhoto ? "" : " cover-photo-image--individual"}`}
-            src={photoUrl}
-            alt={`Potret ${name}`}
-            width={1600}
-            height={1000}
+  const framedPortrait = (name: string, parents: string, individualPhoto: string | undefined, position: string, placement: string, horizontalOffset: string) => {
+    const photoUrl = individualPhoto || draft?.coverPhoto;
+    const isCreamCoupleCover = hasEnvelopeOpening && !individualPhoto && ELEGANT_CREAM_COUPLE_COVERS.has(photoUrl ?? "");
+    const photoClass = individualPhoto ? " cover-photo-image--individual" : isCreamCoupleCover ? " cover-photo-image--cream-sample" : "";
+    return (
+      <figure className={`cover-photo-tile ${placement}`} aria-label={`Potret ${name}`}>
+        <div className="cover-photo-frame">
+          <div className="cover-photo-window">
+            {photoUrl && <Image
+              className={`cover-photo-image${photoClass}`}
+              src={photoUrl}
+              alt={`Potret ${name}`}
+              width={isCreamCoupleCover ? 1086 : 1600}
+              height={isCreamCoupleCover ? 1448 : 1000}
+              sizes="(max-width: 640px) 33vw, 340px"
+              unoptimized
+              style={photoClass ? undefined : { objectPosition: position, "--portrait-offset-x": horizontalOffset } as CSSProperties}
+            />}
+          </div>
+          <Image
+            className="cover-photo-ornament"
+            src="/images/frames/rococo-silver-oval-v2.png"
+            alt=""
+            aria-hidden="true"
+            width={1254}
+            height={1254}
             sizes="(max-width: 640px) 33vw, 340px"
-            unoptimized
-            style={{ objectPosition: photoUrl === draft?.coverPhoto ? position : "50% 50%", "--portrait-offset-x": horizontalOffset } as CSSProperties}
-          />}
+          />
         </div>
-        <Image
-          className="cover-photo-ornament"
-          src="/images/frames/rococo-silver-oval-v2.png"
-          alt=""
-          aria-hidden="true"
-          width={1254}
-          height={1254}
-          sizes="(max-width: 640px) 33vw, 340px"
-        />
-      </div>
-      <figcaption className="cover-photo-caption">
-        <h3>{name}</h3>
-        {parents.trim() && <div className="cover-photo-parents"><span>Nama orang tua</span><p>{parents}</p></div>}
-      </figcaption>
-    </figure>
-  );
+        <figcaption className="cover-photo-caption">
+          <h3>{name}</h3>
+          {parents.trim() && <div className="cover-photo-parents"><span>Nama orang tua</span><p>{parents}</p></div>}
+        </figcaption>
+      </figure>
+    );
+  };
 
   useEffect(() => {
     let scrollTimer: number | null = null;
@@ -226,9 +244,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
       openingTimeout.current = undefined;
       openingComplete.current = true;
       openingAttempt.current += 1;
-      openingVideoRef.current?.pause();
-      openingVideoRef.current?.removeAttribute("src");
-      openingVideoRef.current?.load();
+      releaseOpeningVideo(openingVideoRef.current);
       setOpeningPhase("idle");
       setOpened(true);
       setActiveSection(hash);
@@ -250,10 +266,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
     return () => {
       window.clearTimeout(openingTimeout.current);
       openingAttempt.current += 1;
-      if (!video?.hasAttribute("src")) return;
-      video.pause();
-      video.removeAttribute("src");
-      video.load();
+      releaseOpeningVideo(video);
     };
   }, [hasEnvelopeOpening]);
   useEffect(() => {
@@ -307,16 +320,14 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
     openingAttempt.current += 1;
     window.clearTimeout(openingTimeout.current);
     openingTimeout.current = undefined;
-    openingVideoRef.current?.pause();
-    openingVideoRef.current?.removeAttribute("src");
-    openingVideoRef.current?.load();
+    releaseOpeningVideo(openingVideoRef.current);
     setOpeningPhase("idle");
     setOpened(true);
     if (!keepScroll) window.scrollTo({ top: 0, behavior: "instant" });
     window.setTimeout(() => { if (!mainRef.current?.contains(document.activeElement)) mainRef.current?.focus({ preventScroll: true }); }, 0);
   }
   function finishEnvelopeOpening() {
-    if (openingComplete.current) return;
+    if (openingComplete.current || !openingVideoRef.current?.hasAttribute("src")) return;
     openingComplete.current = true;
     window.clearTimeout(openingTimeout.current);
     openingVideoRef.current?.pause();
@@ -328,43 +339,53 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
       if (openingAttempt.current === attempt) revealInvitation(true);
     }, ENVELOPE_HANDOFF_TIMEOUT_MS);
   }
-  function showEnvelopeVideo() {
-    if (openingPhase !== "loading" || openingComplete.current) return;
+  function startCoverFallback(attempt: number) {
+    if (openingComplete.current || openingAttempt.current !== attempt) return;
+    openingAttempt.current += 1;
     window.clearTimeout(openingTimeout.current);
-    setOpeningPhase("playing");
-    openingTimeout.current = window.setTimeout(finishEnvelopeOpening, ENVELOPE_PLAY_TIMEOUT_MS);
+    releaseOpeningVideo(openingVideoRef.current);
+    setOpeningPhase("fallback");
+    openingTimeout.current = window.setTimeout(revealInvitation, ENVELOPE_FALLBACK_TIMEOUT_MS);
   }
   function openInvitation() {
     if (opening || openingTimeout.current !== undefined) return;
-    if (window.matchMedia(REDUCED_MOTION_QUERY).matches) return revealInvitation();
+    const reducedMotion = window.matchMedia(REDUCED_MOTION_QUERY).matches;
     if (!hasEnvelopeOpening) {
+      if (reducedMotion) return revealInvitation();
       setOpeningPhase("playing");
       openingTimeout.current = window.setTimeout(revealInvitation, 650);
       return;
     }
 
     setPlayHeroIntro(true);
-    const video = openingVideoRef.current;
-    if (!video) return revealInvitation();
-    const bounds = coverRef.current?.getBoundingClientRect();
-    if (bounds) setOpeningBounds({ "--cream-video-left": `${bounds.left}px`, "--cream-video-top": `${bounds.top}px`, "--cream-video-width": `${bounds.width}px`, "--cream-video-height": `${bounds.height}px` } as CSSProperties);
     openingComplete.current = false;
     const attempt = ++openingAttempt.current;
-    setOpeningPhase("loading");
-    openingTimeout.current = window.setTimeout(revealInvitation, ENVELOPE_START_TIMEOUT_MS);
-    // Request the clip on demand and keep play() inside the button gesture.
-    video.src = ELEGANT_CREAM_OPENING_VIDEO;
-    void video.play().catch(() => {
-      if (!openingComplete.current && openingAttempt.current === attempt && openingVideoRef.current === video) revealInvitation();
+    const video = openingVideoRef.current;
+    if (reducedMotion || !video) return startCoverFallback(attempt);
+
+    const bounds = coverRef.current?.getBoundingClientRect();
+    // Make the video renderable before play(), inside the same button gesture.
+    flushSync(() => {
+      if (bounds) setOpeningBounds({ "--cream-video-left": `${bounds.left}px`, "--cream-video-top": `${bounds.top}px`, "--cream-video-width": `${bounds.width}px`, "--cream-video-height": `${bounds.height}px` } as CSSProperties);
+      setOpeningPhase("loading");
     });
+    openingTimeout.current = window.setTimeout(() => startCoverFallback(attempt), ENVELOPE_START_TIMEOUT_MS);
+    video.src = ELEGANT_CREAM_OPENING_VIDEO;
+    void video.play().then(
+      () => {
+        if (openingComplete.current || openingAttempt.current !== attempt) return;
+        window.clearTimeout(openingTimeout.current);
+        setOpeningPhase("playing");
+        openingTimeout.current = window.setTimeout(finishEnvelopeOpening, ENVELOPE_PLAY_TIMEOUT_MS);
+      },
+      () => startCoverFallback(attempt),
+    );
   }
   function reopenCover() {
     openingAttempt.current += 1;
     window.clearTimeout(openingTimeout.current);
     openingTimeout.current = undefined;
-    openingVideoRef.current?.pause();
-    openingVideoRef.current?.removeAttribute("src");
-    openingVideoRef.current?.load();
+    releaseOpeningVideo(openingVideoRef.current);
     openingComplete.current = false;
     setOpeningPhase("idle");
     setOpened(false);
@@ -381,9 +402,11 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
       <div className="header-actions"><a className="catalog-link" href={catalogUrl}><LayoutGrid size={15} /><span>{copy("catalogLinkLabel", "Koleksi template")}</span></a><button type="button" className="icon-button share-trigger" aria-label={copy("shareActionLabel", "Bagikan undangan")} onClick={() => dialogRef.current?.showModal()}><Share2 size={16} /></button></div>
     </header>
 
-    {!opened ? <main className={`cover-stage${animatingCover ? " is-opening" : ""}${hasEnvelopeOpening ? " is-cream-envelope" : ""}`}>
+    {!opened ? <main className={`cover-stage${animatingCover ? " is-opening" : ""}${hasEnvelopeOpening ? " is-cream-envelope" : ""}${openingPhase === "fallback" ? " is-cream-fallback" : ""}`}>
       <div className="stage-caption"><span className="eyebrow">{copy("stageCaption", "SEBUAH UNDANGAN DARI HATI")}</span><span className="edition-mark">{dateHeading.day} · {dateHeading.monthNumber} · {dateHeading.year}</span></div>
-      {hasEnvelopeOpening ? <div className="cream-envelope-cover" ref={coverRef}>
+      {hasEnvelopeOpening ? <div className="cream-envelope-cover" ref={coverRef} onAnimationEnd={(event) => {
+        if (event.target === event.currentTarget && openingPhase === "fallback") revealInvitation();
+      }}>
         <Image className="cream-envelope-cover-art" src="/templates/reference-prototypes/cream-envelope-poster.jpg" alt="" fill preload sizes="(max-width: 640px) 82vw, 390px" />
         <div className="cream-envelope-monogram"><Monogram small hostOne={hostOne} hostTwo={hostTwo} customMonogram={customMonogram} crestSrc={monogramCrestSrc} /></div>
         <div className="cream-envelope-cover-details">
@@ -417,7 +440,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
       </div>
       <noscript>Aktifkan JavaScript untuk membuka undangan. Acara: {dateLabel}, {eventTimeLabel}, {venue}.</noscript>
     </main> : <>
-      <main className="opened-invitation" ref={mainRef} tabIndex={-1} data-cream-intro={playHeroIntro || undefined}>
+      <main className="opened-invitation" ref={mainRef} tabIndex={-1} data-cream-intro={playHeroIntro ? (openingPhase === "revealing" ? "queued" : "running") : undefined}>
         <section className="invitation-hero paper" id="undangan" aria-labelledby="invitation-heading">
           <div className="paper-border" /><BotanicalCorner className="hero-botanical corner-top" variant={template.ornament} /><BotanicalCorner className="hero-botanical corner-bottom" variant={template.ornament} /><Monogram small hostOne={hostOne} hostTwo={hostTwo} customMonogram={customMonogram} crestSrc={monogramCrestSrc} />
           <p className="eyebrow">{copy("invitationKicker", "HARI YANG KAMI NANTIKAN")}</p>
@@ -434,8 +457,8 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
           <section className="cover-photo-section" aria-label={`Foto ${hostOne} dan ${hostTwo}`}>
             <div className="cover-photo-stage">
               <div className="cover-photo-grid">
-                {framedPortrait(hostTwo, draft?.hostTwoParents ?? "", draft?.hostTwoPhoto || draft?.coverPhoto || "", hostTwoCoverPhotoPosition, "cover-photo-tile--host-two", "-13.2%")}
-                {framedPortrait(hostOne, draft?.hostOneParents ?? "", draft?.hostOnePhoto || draft?.coverPhoto || "", hostOneCoverPhotoPosition, "cover-photo-tile--host-one", "9.9%")}
+                {framedPortrait(hostTwo, draft?.hostTwoParents ?? "", draft?.hostTwoPhoto, hostTwoCoverPhotoPosition, "cover-photo-tile--host-two", "-13.2%")}
+                {framedPortrait(hostOne, draft?.hostOneParents ?? "", draft?.hostOnePhoto, hostOneCoverPhotoPosition, "cover-photo-tile--host-one", "9.9%")}
               </div>
             </div>
           </section>
@@ -459,12 +482,12 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
       <footer className="site-footer"><a href={catalogUrl}><ArrowLeft size={14} />{copy("catalogLinkLabel", "Koleksi template")}</a><span>{template.name} · {hostOne} & {hostTwo}</span><button type="button" onClick={reopenCover}><RotateCcw size={13} />{copy("reopenCoverLabel", "Lihat sampul")}</button></footer>
       <nav className="bottom-nav" aria-label="Navigasi undangan" style={{ gridTemplateColumns: `repeat(${giftAccounts.length > 0 ? 4 : 3}, minmax(0, 1fr))` }}>{[{ id: "undangan", text: copy("navInvitationLabel", "Undangan"), Icon: Mail }, { id: "detail-acara", text: copy("navEventLabel", "Acara"), Icon: CalendarDays }, { id: "konfirmasi", text: copy("navRsvpLabel", "Kehadiran"), Icon: Users }, ...(giftAccounts.length > 0 ? [{ id: "hadiah", text: copy("navGiftLabel", "Hadiah"), Icon: Gift }] : [])].map(({ id, text, Icon }) => <a href={`#${id}`} key={id} aria-current={activeSection === id ? "location" : undefined} className={activeSection === id ? "active" : ""}><Icon size={17} strokeWidth={1.5} /><span>{text}</span></a>)}</nav>
     </>}
-    {hasEnvelopeOpening && <section className={`cover-opening-overlay${openingPhase === "loading" ? " is-loading" : ""}${openingPhase === "revealing" ? " is-revealing" : ""}`} style={openingBounds} hidden={!opening} aria-label="Animasi pembukaan amplop" onTransitionEnd={(event) => {
+    {hasEnvelopeOpening && <section className={`cover-opening-overlay${openingPhase === "loading" ? " is-loading" : ""}${openingPhase === "revealing" ? " is-revealing" : ""}`} style={openingBounds} hidden={!opening || openingPhase === "fallback"} aria-label="Animasi pembukaan amplop" onTransitionEnd={(event) => {
       if (event.target === event.currentTarget && event.propertyName === "opacity" && openingPhase === "revealing") revealInvitation(true);
     }}>
       <span className="sr-only" role="status">Membuka amplop undangan.</span>
-      <video ref={openingVideoRef} className="cover-opening-video" width={540} height={960} muted playsInline preload="none" disablePictureInPicture aria-hidden="true" tabIndex={-1} onPlaying={showEnvelopeVideo} onEnded={finishEnvelopeOpening} onError={(event) => {
-        if (event.currentTarget.error && opening && !openingComplete.current) revealInvitation();
+      <video ref={openingVideoRef} className="cover-opening-video" width={540} height={960} muted playsInline preload="none" disablePictureInPicture aria-hidden="true" tabIndex={-1} onEnded={finishEnvelopeOpening} onError={(event) => {
+        if (event.currentTarget.error && event.currentTarget.hasAttribute("src")) startCoverFallback(openingAttempt.current);
       }}>Video pembukaan amplop Elegant Cream.</video>
     </section>}
     <ShareDialog dialogRef={dialogRef} recipient={guest} basePath={shareBasePath} />

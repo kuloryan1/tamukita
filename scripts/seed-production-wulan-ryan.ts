@@ -55,6 +55,29 @@ async function main() {
   const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 
   try {
+    const createOnly = process.argv.includes("--if-missing");
+    const preservedMessage = `Production sample already exists: /${invitationSlug}; saved invitation and Paparazi settings preserved.\n`;
+    const existing = await prisma.invitation.findUnique({
+      where: { slug: invitationSlug },
+      select: {
+        id: true, ownerId: true, createdById: true, organizationId: true, status: true,
+        deletedAt: true, publishedAt: true, draftData: true, publishedSnapshot: true,
+        owner: { select: { platformRole: true } }, organization: { select: { type: true, status: true } },
+      },
+    });
+    if (existing && createOnly) {
+      process.stdout.write(preservedMessage);
+      return;
+    }
+    if (existing && (existing.owner.platformRole !== "SUPER_ADMIN"
+      || existing.organization.type !== "PERSONAL"
+      || existing.organization.status !== "ACTIVE"
+      || existing.deletedAt
+      || !["DRAFT", "PUBLISHED"].includes(existing.status)
+      || (existing.status === "PUBLISHED" && !isAdminSampleSnapshot(existing.publishedSnapshot)))) {
+      throw new Error("The requested public slug is already used by a non-sample invitation; no invitation data was changed.");
+    }
+
     const now = new Date();
     const existingTemplate = await prisma.template.findUnique({ where: { slug: templateData.slug }, include: { activeVersion: true } });
     if (existingTemplate?.activeVersion && compareVersions(existingTemplate.activeVersion.version, templateData.version) > 0) {
@@ -103,23 +126,6 @@ async function main() {
     });
     if (!admin?.memberships[0]) throw new Error("No active Super Admin personal workspace is available for the sample invitation.");
 
-    const existing = await prisma.invitation.findUnique({
-      where: { slug: invitationSlug },
-      select: {
-        id: true, ownerId: true, createdById: true, organizationId: true, status: true,
-        deletedAt: true, publishedAt: true, draftData: true, publishedSnapshot: true,
-        owner: { select: { platformRole: true } }, organization: { select: { type: true, status: true } },
-      },
-    });
-    if (existing && (existing.owner.platformRole !== "SUPER_ADMIN"
-      || existing.organization.type !== "PERSONAL"
-      || existing.organization.status !== "ACTIVE"
-      || existing.deletedAt
-      || !["DRAFT", "PUBLISHED"].includes(existing.status)
-      || (existing.status === "PUBLISHED" && !isAdminSampleSnapshot(existing.publishedSnapshot)))) {
-      throw new Error("The requested public slug is already used by a non-sample invitation; no invitation data was changed.");
-    }
-
     const invitationId = existing?.id ?? randomUUID();
     const ownerId = existing?.ownerId ?? admin.id;
     const organizationId = existing?.organizationId ?? admin.memberships[0].organizationId;
@@ -153,20 +159,22 @@ async function main() {
     const savedAlbum = await prisma.paparazziAlbum.findUnique({ where: { invitationId }, select: { token: true } });
     const albumToken = savedAlbum?.token && /^[0-9a-f]{64}$/.test(savedAlbum.token) ? savedAlbum.token : randomBytes(32).toString("hex");
 
-    await prisma.$transaction(async (tx) => {
-      await tx.invitation.upsert({
+    const reconciled = await prisma.$transaction(async (tx) => {
+      const savedInvitation = await tx.invitation.upsert({
         where: { slug: invitationSlug },
         create: {
           id: invitationId, organizationId, ownerId, createdById, templateVersionId: version.id, slug: invitationSlug, title,
           status: "PUBLISHED", draftData: jsonDraft, publishedSnapshot: jsonSnapshot, publishedAt,
           formCompletedAt: now, startsAt, expiresAt,
         },
-        update: {
+        update: createOnly ? {} : {
           templateVersionId: version.id, title, status: "PUBLISHED", draftData: jsonDraft,
           publishedSnapshot: jsonSnapshot, publishedAt, formCompletedAt: existing?.status === "PUBLISHED" ? undefined : now,
           startsAt, expiresAt, deletedAt: null,
         },
+        select: { id: true },
       });
+      if (createOnly && savedInvitation.id !== invitationId) return false;
 
       const eventData = { title, startsAt, venue: wedding.venue, address: wedding.address, mapsUrl: baseDraft.mapsUrl };
       const events = await tx.event.updateMany({ where: { invitationId }, data: eventData });
@@ -213,9 +221,10 @@ async function main() {
           },
         });
       }
+      return true;
     });
 
-    process.stdout.write(`Production sample reconciled: /${invitationSlug}; Elegant Cream and Paparazi are enabled.\n`);
+    process.stdout.write(reconciled ? `Production sample reconciled: /${invitationSlug}; Elegant Cream and Paparazi are enabled.\n` : preservedMessage);
   } finally {
     await prisma.$disconnect();
   }

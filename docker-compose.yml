@@ -33,7 +33,7 @@ services:
       target: migrate
       args:
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
-    command: ["sh", "-c", "npm run db:deploy && npm run db:seed:production-wulan-ryan"]
+    command: ["sh", "-c", "npm run db:deploy && npm run db:seed:production-wulan-ryan -- --if-missing"]
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-tamukita}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD before starting the application stack}@postgres:5432/${POSTGRES_DB:-tamukita}?schema=public
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}

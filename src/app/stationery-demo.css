@@ -292,6 +292,18 @@
 .stationery-demo.theme-elegant-cream .cover-photo-tile--host-two { grid-column: 1; grid-row: 1; }
 .stationery-demo.theme-elegant-cream .cover-photo-tile--host-one { grid-column: 1; grid-row: 2; }
 .stationery-demo.theme-elegant-cream .cover-photo-frame { flex-basis: min(36%, 340px); max-width: 340px; }
+.stationery-demo.theme-elegant-cream .cover-photo-tile--host-two .cover-photo-caption { text-align: end; }
+.stationery-demo.theme-elegant-cream .cover-photo-image--cream-sample {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 245%;
+  height: auto;
+  max-width: none;
+  transform: translate(var(--cream-portrait-x), var(--cream-portrait-y));
+}
+.stationery-demo.theme-elegant-cream .cover-photo-tile--host-one { --cream-portrait-x: -45%; --cream-portrait-y: -23%; }
+.stationery-demo.theme-elegant-cream .cover-photo-tile--host-two { --cream-portrait-x: -68%; --cream-portrait-y: -35%; }
 .stationery-demo.theme-elegant-cream .cover-photo-caption h3 { font-size: clamp(46px, 5vw, 58px); line-height: 1.1; }
 .stationery-demo.theme-elegant-cream .cover-photo-caption h3,
 .stationery-demo.theme-elegant-cream .cover-photo-parents p { overflow-wrap: normal; word-break: normal; text-wrap: pretty; }
