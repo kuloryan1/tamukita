@@ -144,12 +144,12 @@
   height: 100svh;
   height: 100dvh;
   min-height: 100svh;
-  padding: 0;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
   overflow: hidden;
   background: var(--scene);
 }
-.stationery-demo .cream-envelope-cover { position: relative; isolation: isolate; flex: none; width: 100%; height: 100%; max-width: none; aspect-ratio: auto; overflow: hidden; background: var(--scene); }
-.stationery-demo .cream-envelope-cover-art { object-fit: cover; object-position: center; }
+.stationery-demo .cream-envelope-cover { position: relative; isolation: isolate; flex: none; width: min(100%, 360px, calc((100svh - 32px) * 9 / 16)); height: auto; max-width: none; aspect-ratio: 9 / 16; overflow: hidden; background: var(--scene); box-shadow: 0 10px 32px #5147351c; }
+.stationery-demo .cream-envelope-cover-art { object-fit: contain; object-position: center; }
 .stationery-demo .cream-envelope-monogram { position: absolute; z-index: 1; top: 50%; left: 50%; transform: translate(-50%, -50%); transition: opacity .3s ease; }
 .stationery-demo .cream-envelope-monogram .monogram { width: 54px; height: 54px; color: #8e7045; }
 .stationery-demo .cream-envelope-monogram .monogram > svg { display: none; }
@@ -157,7 +157,7 @@
 .stationery-demo .cream-envelope-cover-details {
   position: absolute;
   z-index: 2;
-  inset: auto 0 max(7.2svh, env(safe-area-inset-bottom));
+  inset: auto 0 max(4.5%, 12px);
   display: flex;
   min-height: 34.8%;
   flex-direction: column;
