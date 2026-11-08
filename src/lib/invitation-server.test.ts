@@ -6,7 +6,8 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/lib/prisma", () => ({ getPrismaClient: () => prismaMock }));
 
 import { createInitialDraft } from "@/lib/invitations";
-import { getWritableOrganizationId, invitationDraftSchema, parseInvitationDraft } from "@/lib/invitation-server";
+import { invitationCopy } from "@/lib/invitation-copy";
+import { getWritableOrganizationId, invitationDraftSchema, normalizeStoredInvitationDraft, parseInvitationDraft } from "@/lib/invitation-server";
 
 beforeEach(() => {
   prismaMock.membership.findFirst.mockReset().mockResolvedValue({ organizationId: "customer-workspace" });
@@ -80,4 +81,44 @@ test("rejects the staging QA cover in non-staging environments", () => {
   };
 
   expect(parseInvitationDraft(fixture)).toBeNull();
+});
+
+test("normalizes a legacy sample draft so cleared cover and invitation copy stays empty publicly", () => {
+  vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://tamukita.io");
+  const legacyDraft = {
+    ...createInitialDraft(),
+    slug: undefined,
+    id: undefined,
+    templateId: "elegant-cream",
+    coverPhoto: "/templates/elegant-cream/wulan-dan-ryan-couple.webp",
+    story: "",
+    customFields: {
+      recipientGreeting: "Kepada Yth.",
+      coverMessage: "",
+      invitationHeadline: "",
+    },
+    familyDetails: undefined,
+    hostOneParents: undefined,
+    hostTwoParents: undefined,
+    hostOnePhoto: undefined,
+    hostTwoPhoto: undefined,
+    coverPositionX: undefined,
+    galleryPhotos: undefined,
+    eventSchedule: undefined,
+    giftMessage: undefined,
+    musicUrl: undefined,
+    musicTitle: undefined,
+  };
+  const normalizedDraft = normalizeStoredInvitationDraft(legacyDraft, {
+    id: "aa342692-9bc0-4a73-87b0-8540e8adc36f",
+    slug: "wulan-dan-ryan",
+    updatedAt: "2026-11-08T05:17:25.187Z",
+    isPublished: true,
+  });
+  const parsedDraft = normalizedDraft ? parseInvitationDraft(normalizedDraft) : null;
+
+  expect(parsedDraft).not.toBeNull();
+  expect(parsedDraft?.story).toBe("");
+  expect(parsedDraft && invitationCopy(parsedDraft, "invitationHeadline", "Dengan penuh sukacita, kami mengundang Anda.")).toBe("");
+  expect(parsedDraft && invitationCopy(parsedDraft, "coverMessage", "Dengan penuh sukacita, kami mengundang Anda.")).toBe("");
 });

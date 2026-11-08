@@ -5,12 +5,12 @@ import { z } from "zod";
 import { getTemplate } from "@/lib/templates";
 import { ensureInvitationCopySection } from "@/lib/invitation-copy";
 import { INVITATION_THEME_COLOR_VALUES } from "@/lib/invitation-theme-colors";
-import { EVENT_KINDS, safeHttpsUrl, type InvitationDraft } from "@/lib/invitations";
+import { EVENT_KINDS, normalizeInvitationCustomFields, safeHttpsUrl, type InvitationDraft } from "@/lib/invitations";
 import { getPrismaClient } from "@/lib/prisma";
 import { mediaKeyFromPublicUrl, isMediaPublicUrl } from "@/lib/media-storage-url";
 import { isEditorCompatibleTemplate, isSafeTemplateFieldKey, TEMPLATE_SDK_VERSION, validateTemplateManifest } from "@/lib/template-sdk";
 import { templateVersionRequiresAdminReview } from "@/templates/registry";
-import { SEAL_MONOGRAM_PATTERN } from "@/lib/seal-monogram";
+import { normalizeSealMonogram, SEAL_MONOGRAM_PATTERN } from "@/lib/seal-monogram";
 
 const stagingQaOrigin = "https://staging.tamukita.io";
 const stagingQaFixtureSlug = "qa-blueprint-fixture";
@@ -104,6 +104,37 @@ export function parseInvitationDraft(value: unknown): InvitationDraft | null {
     && result.data.coverPhoto === productionSampleCoverPhoto;
   if (result.data.coverPhoto === productionSampleCoverPhoto && !isProductionSampleCover) return null;
   return result.data as InvitationDraft;
+}
+
+export function normalizeStoredInvitationDraft(
+  value: unknown,
+  metadata: Pick<InvitationDraft, "id" | "slug" | "updatedAt" | "isPublished">,
+) {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
+  const draftData = value as Record<string, unknown>;
+  return {
+    ...draftData,
+    ...metadata,
+    sealMonogram: normalizeSealMonogram(draftData.sealMonogram),
+    familyDetails: typeof draftData.familyDetails === "string" ? draftData.familyDetails : "",
+    hostOneParents: typeof draftData.hostOneParents === "string" ? draftData.hostOneParents : "",
+    hostTwoParents: typeof draftData.hostTwoParents === "string" ? draftData.hostTwoParents : "",
+    hostOnePhoto: typeof draftData.hostOnePhoto === "string" ? draftData.hostOnePhoto : "",
+    hostTwoPhoto: typeof draftData.hostTwoPhoto === "string" ? draftData.hostTwoPhoto : "",
+    coverPositionX: typeof draftData.coverPositionX === "number" ? draftData.coverPositionX : 50,
+    galleryPhotos: Array.isArray(draftData.galleryPhotos) ? draftData.galleryPhotos : [],
+    eventSchedule: Array.isArray(draftData.eventSchedule) ? draftData.eventSchedule : [],
+    giftMessage: typeof draftData.giftMessage === "string" ? draftData.giftMessage : "",
+    giftBankName: typeof draftData.giftBankName === "string" ? draftData.giftBankName : "",
+    giftAccountName: typeof draftData.giftAccountName === "string" ? draftData.giftAccountName : "",
+    giftAccountNumber: typeof draftData.giftAccountNumber === "string" ? draftData.giftAccountNumber : "",
+    giftBankName2: typeof draftData.giftBankName2 === "string" ? draftData.giftBankName2 : "",
+    giftAccountName2: typeof draftData.giftAccountName2 === "string" ? draftData.giftAccountName2 : "",
+    giftAccountNumber2: typeof draftData.giftAccountNumber2 === "string" ? draftData.giftAccountNumber2 : "",
+    musicUrl: typeof draftData.musicUrl === "string" ? draftData.musicUrl : "",
+    musicTitle: typeof draftData.musicTitle === "string" ? draftData.musicTitle : "",
+    customFields: normalizeInvitationCustomFields(draftData.customFields),
+  };
 }
 
 export async function ownsInvitationCoverPhoto(userId: string, invitationId: string, coverPhoto: string) {

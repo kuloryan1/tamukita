@@ -6,7 +6,7 @@ import { cache } from "react";
 import { PublicInvitation } from "@/components/public-invitation";
 import { InvitationPreview } from "@/components/invitation-preview";
 import { createDemoDraft, DEMO_COUPLE_NAMES, isBuiltInDemoSlug, reservedSlugs } from "@/lib/invitations";
-import { parseInvitationDraft } from "@/lib/invitation-server";
+import { normalizeStoredInvitationDraft, parseInvitationDraft } from "@/lib/invitation-server";
 import { getPrismaClient } from "@/lib/prisma";
 import { getTemplate } from "@/lib/templates";
 import { isEditorCompatibleTemplate, validateTemplateManifest } from "@/lib/template-sdk";
@@ -61,12 +61,16 @@ const findPublished = cache(async (slug: string) => {
   // Admin sample invitations are editable test links. Render their latest
   // autosaved draft so the editor preview and public tester link stay in sync.
   const currentSampleDraft = isTestableSample
-    ? await getPrismaClient().invitation.findUnique({ where: { id: invitation.id }, select: { draftData: true } })
+    ? await getPrismaClient().invitation.findUnique({ where: { id: invitation.id }, select: { draftData: true, updatedAt: true } })
     : null;
-  const latestSampleDraftData = currentSampleDraft?.draftData;
-  const normalizedSampleDraftData = typeof latestSampleDraftData === "object" && latestSampleDraftData !== null && !Array.isArray(latestSampleDraftData)
-    ? { ...latestSampleDraftData, id: invitation.id, slug }
-    : latestSampleDraftData;
+  const normalizedSampleDraftData = currentSampleDraft
+    ? normalizeStoredInvitationDraft(currentSampleDraft.draftData, {
+        id: invitation.id,
+        slug,
+        updatedAt: currentSampleDraft.updatedAt.toISOString(),
+        isPublished: true,
+      })
+    : null;
   const draft = isTestableSample
     ? parseInvitationDraft(normalizedSampleDraftData) ?? parseInvitationDraft(invitation.publishedSnapshot)
     : parseInvitationDraft(invitation.publishedSnapshot);
