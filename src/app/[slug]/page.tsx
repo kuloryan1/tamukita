@@ -63,8 +63,12 @@ const findPublished = cache(async (slug: string) => {
   const currentSampleDraft = isTestableSample
     ? await getPrismaClient().invitation.findUnique({ where: { id: invitation.id }, select: { draftData: true } })
     : null;
+  const latestSampleDraftData = currentSampleDraft?.draftData;
+  const normalizedSampleDraftData = typeof latestSampleDraftData === "object" && latestSampleDraftData !== null && !Array.isArray(latestSampleDraftData)
+    ? { ...latestSampleDraftData, id: invitation.id, slug }
+    : latestSampleDraftData;
   const draft = isTestableSample
-    ? parseInvitationDraft(currentSampleDraft?.draftData) ?? parseInvitationDraft(invitation.publishedSnapshot)
+    ? parseInvitationDraft(normalizedSampleDraftData) ?? parseInvitationDraft(invitation.publishedSnapshot)
     : parseInvitationDraft(invitation.publishedSnapshot);
   const manifest = validateTemplateManifest(invitation.templateVersion.manifest);
   const template = manifest.success
