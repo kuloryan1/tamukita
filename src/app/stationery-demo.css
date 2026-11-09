@@ -406,6 +406,10 @@
 .stationery-demo .bottom-nav > a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 52px; border-radius: 40px; color: var(--muted); font-size: 9px; transition: color .2s ease, background .2s ease; }
 .stationery-demo .bottom-nav > a.active { background: color-mix(in srgb, var(--accent) 11%, transparent); color: var(--ink); }
 .stationery-demo .bottom-nav > a:hover { color: var(--ink); background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.stationery-demo .stationery-music { position: fixed; z-index: 19; right: max(14px, calc((100vw - 330px) / 2)); bottom: calc(100px + env(safe-area-inset-bottom, 0px)); }
+.stationery-demo .stationery-music audio { display: none; }
+.stationery-demo .stationery-music .public-music-toggle { background: color-mix(in srgb, var(--paper) 94%, transparent); border-color: var(--line); color: var(--ink); font-size: 9px; min-height: 36px; padding: 0 14px; }
+.stationery-demo .stationery-music .public-music-toggle:hover { background: var(--paper); border-color: var(--accent); }
 
 /* Native dialog preserves focus trapping and Escape-to-close behavior. */
 .stationery-demo .share-dialog { width: 470px; max-width: calc(100vw - 36px); max-height: calc(100svh - 40px); margin: auto; padding: 0; overflow: auto; border: 1px solid var(--line); border-radius: 2px; background: var(--paper); color: var(--ink); box-shadow: 0 24px 90px #29251e29; }
@@ -606,6 +610,7 @@
   .stationery-demo .site-footer > span { order: 3; width: 100%; text-align: center; font-size: 9px; }
   .stationery-demo .site-footer > a, .stationery-demo .site-footer > button { font-size: 10px; }
   .stationery-demo .bottom-nav { width: 310px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); min-height: 66px; }
+  .stationery-demo .stationery-music { right: max(14px, calc((100vw - 310px) / 2)); }
   .stationery-demo .bottom-nav > a { font-size: 10px; min-height: 51px; }
   .stationery-demo .share-dialog { max-width: calc(100vw - 30px); }
   .stationery-demo .share-dialog-content { padding: 42px 26px 24px; }

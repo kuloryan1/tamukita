@@ -6,7 +6,7 @@ import Image from "next/image";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, Check, Clock3, Copy, Gift, Heart, LayoutGrid, Mail, MapPin, RotateCcw, Share2, Users, X } from "lucide-react";
 import { BotanicalCorner, BotanicalWreath, SatinBow, TinyFlourish } from "@/components/stationery-ornaments";
 import { RSVP } from "@/components/stationery-demo-rsvp";
-import { PublicInvitationGiftCopy } from "@/components/public-invitation-actions";
+import { PublicInvitationGiftCopy, PublicInvitationMusic } from "@/components/public-invitation-actions";
 import { invitationCopy, type InvitationCopyKey } from "@/lib/invitation-copy";
 import { invitationGiftAccounts, safeHttpsUrl, type InvitationDraft } from "@/lib/invitations";
 import { normalizeSealMonogram } from "@/lib/seal-monogram";
@@ -482,6 +482,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
       </main>
       <footer className="site-footer"><a href={catalogUrl}><ArrowLeft size={14} />{copy("catalogLinkLabel", "Koleksi template")}</a><span>{template.name} · {hostOne} & {hostTwo}</span><button type="button" onClick={reopenCover}><RotateCcw size={13} />{copy("reopenCoverLabel", "Lihat sampul")}</button></footer>
       <nav className="bottom-nav" aria-label="Navigasi undangan" style={{ gridTemplateColumns: `repeat(${giftAccounts.length > 0 ? 4 : 3}, minmax(0, 1fr))` }}>{[{ id: "undangan", text: copy("navInvitationLabel", "Undangan"), Icon: Mail }, { id: "detail-acara", text: copy("navEventLabel", "Acara"), Icon: CalendarDays }, { id: "konfirmasi", text: copy("navRsvpLabel", "Kehadiran"), Icon: Users }, ...(giftAccounts.length > 0 ? [{ id: "hadiah", text: copy("navGiftLabel", "Hadiah"), Icon: Gift }] : [])].map(({ id, text, Icon }) => <a href={`#${id}`} key={id} aria-current={activeSection === id ? "location" : undefined} className={activeSection === id ? "active" : ""}><Icon size={17} strokeWidth={1.5} /><span>{text}</span></a>)}</nav>
+      {draft?.musicUrl && <div className="stationery-music"><PublicInvitationMusic src={draft.musicUrl} title={draft.musicTitle} /></div>}
     </>}
     {hasEnvelopeOpening && <section className={`cover-opening-overlay${openingPhase === "loading" ? " is-loading" : ""}${openingPhase === "revealing" ? " is-revealing" : ""}`} style={openingBounds} hidden={!opening || openingPhase === "fallback"} aria-label="Animasi pembukaan amplop" onTransitionEnd={(event) => {
       if (event.target === event.currentTarget && event.propertyName === "opacity" && openingPhase === "revealing") revealInvitation(true);
