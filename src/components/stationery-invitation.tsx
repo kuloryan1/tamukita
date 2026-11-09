@@ -36,6 +36,43 @@ function releaseOpeningVideo(video: HTMLVideoElement | null) {
   video.load();
 }
 
+function playEnvelopeOpeningSound() {
+  try {
+    const context = new AudioContext();
+    const duration = 1.05;
+    const sampleCount = Math.round(context.sampleRate * duration);
+    const buffer = context.createBuffer(1, sampleCount, context.sampleRate);
+    const samples = buffer.getChannelData(0);
+    let previousSample = 0;
+    for (let index = 0; index < sampleCount; index += 1) {
+      const whiteNoise = Math.random() * 2 - 1;
+      previousSample = (previousSample + 0.028 * whiteNoise) / 1.028;
+      samples[index] = previousSample * 5.5;
+    }
+
+    const source = context.createBufferSource();
+    source.buffer = buffer;
+    const filter = context.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(650, context.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(1_900, context.currentTime + 0.25);
+    filter.frequency.exponentialRampToValueAtTime(950, context.currentTime + duration);
+    filter.Q.value = 0.75;
+    const volume = context.createGain();
+    volume.gain.setValueAtTime(0.0001, context.currentTime);
+    volume.gain.exponentialRampToValueAtTime(0.045, context.currentTime + 0.11);
+    volume.gain.exponentialRampToValueAtTime(0.025, context.currentTime + 0.36);
+    volume.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + duration);
+    source.connect(filter).connect(volume).connect(context.destination);
+    source.onended = () => { void context.close().catch(() => {}); };
+    source.start(context.currentTime);
+    source.stop(context.currentTime + duration);
+    void context.resume().catch(() => { void context.close().catch(() => {}); });
+  } catch {
+    // The envelope animation and invitation still open if Web Audio is unavailable.
+  }
+}
+
 function Monogram({ small = false, hostOne = WEDDING.groom, hostTwo = WEDDING.bride, customMonogram = "", crestSrc = "/images/monograms/wr-crest.png" }: { small?: boolean; hostOne?: string; hostTwo?: string; customMonogram?: string; crestSrc?: string }) {
   const firstInitial = (name: string) => Array.from(name.trim())[0]?.toLocaleUpperCase("id-ID") ?? "?";
   const initials = normalizeSealMonogram(customMonogram);
@@ -149,6 +186,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   const [activeSection, setActiveSection] = useState("undangan");
   const mainRef = useRef<HTMLElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const musicContainerRef = useRef<HTMLDivElement>(null);
   const openingVideoRef = useRef<HTMLVideoElement>(null);
   const coverRef = useRef<HTMLDivElement>(null);
   const [openingBounds, setOpeningBounds] = useState<CSSProperties>({});
@@ -354,6 +392,11 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   }
   function openInvitation() {
     if (opening || openingTimeout.current !== undefined) return;
+    if (hasEnvelopeOpening) {
+      const audio = musicContainerRef.current?.querySelector("audio");
+      if (audio?.paused) void audio.play().catch(() => {});
+      playEnvelopeOpeningSound();
+    }
     if (!hasEnvelopeOpening) {
       if (window.matchMedia(REDUCED_MOTION_QUERY).matches) return revealInvitation();
       setOpeningPhase("playing");
@@ -389,6 +432,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
     openingAttempt.current += 1;
     window.clearTimeout(openingTimeout.current);
     openingTimeout.current = undefined;
+    musicContainerRef.current?.querySelector("audio")?.pause();
     releaseOpeningVideo(openingVideoRef.current);
     openingComplete.current = false;
     setOpeningPhase("idle");
@@ -482,7 +526,6 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
       </main>
       <footer className="site-footer"><a href={catalogUrl}><ArrowLeft size={14} />{copy("catalogLinkLabel", "Koleksi template")}</a><span>{template.name} · {hostOne} & {hostTwo}</span><button type="button" onClick={reopenCover}><RotateCcw size={13} />{copy("reopenCoverLabel", "Lihat sampul")}</button></footer>
       <nav className="bottom-nav" aria-label="Navigasi undangan" style={{ gridTemplateColumns: `repeat(${giftAccounts.length > 0 ? 4 : 3}, minmax(0, 1fr))` }}>{[{ id: "undangan", text: copy("navInvitationLabel", "Undangan"), Icon: Mail }, { id: "detail-acara", text: copy("navEventLabel", "Acara"), Icon: CalendarDays }, { id: "konfirmasi", text: copy("navRsvpLabel", "Kehadiran"), Icon: Users }, ...(giftAccounts.length > 0 ? [{ id: "hadiah", text: copy("navGiftLabel", "Hadiah"), Icon: Gift }] : [])].map(({ id, text, Icon }) => <a href={`#${id}`} key={id} aria-current={activeSection === id ? "location" : undefined} className={activeSection === id ? "active" : ""}><Icon size={17} strokeWidth={1.5} /><span>{text}</span></a>)}</nav>
-      {draft?.musicUrl && <div className="stationery-music"><PublicInvitationMusic src={draft.musicUrl} title={draft.musicTitle} /></div>}
     </>}
     {hasEnvelopeOpening && <section className={`cover-opening-overlay${openingPhase === "loading" ? " is-loading" : ""}${openingPhase === "revealing" ? " is-revealing" : ""}`} style={openingBounds} hidden={!opening || openingPhase === "fallback"} aria-label="Animasi pembukaan amplop" onTransitionEnd={(event) => {
       if (event.target === event.currentTarget && event.propertyName === "opacity" && openingPhase === "revealing") revealInvitation(true);
@@ -492,6 +535,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
         if (event.currentTarget.error && event.currentTarget.hasAttribute("src")) startCoverFallback(openingAttempt.current);
       }}>Video pembukaan amplop Elegant Cream.</video>
     </section>}
+    {draft?.musicUrl && <div className="stationery-music" ref={musicContainerRef} hidden={!opened}><PublicInvitationMusic src={draft.musicUrl} title={draft.musicTitle} /></div>}
     <ShareDialog dialogRef={dialogRef} recipient={guest} basePath={shareBasePath} />
   </div>;
 }
