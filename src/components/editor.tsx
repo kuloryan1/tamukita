@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, Check, CheckCircle2, ChevronLeft, ChevronRight, 
 import Cropper, { type Area } from "react-easy-crop";
 import "react-easy-crop/react-easy-crop.css";
 import { InvitationPreview } from "@/components/invitation-preview";
+import { GuestRecipientEditor } from "@/components/guest-recipient-editor";
 import { EditorEventSchedule } from "@/components/editor-event-schedule";
 import { INVITATION_THEME_PALETTES } from "@/lib/invitation-theme-colors";
 import { EditorFeedbackDialog } from "@/components/editor-feedback-dialog";
@@ -1058,6 +1059,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
 
             {step === 4 && <div className="form-step-content final-step-content">
               <div className="review-summary"><span className="review-check"><CheckCircle2 size={20} /></span><div><b>{draft.isPublished ? "Tinjau perubahan undangan" : "Periksa undangan sebelum diterbitkan"}</b><small>{draft.isPublished ? "Perubahan pada undangan ini mengikuti alur pembaruan yang tersedia." : "Buat tautan demo publik untuk melihat tampilan tanpa memulai pembayaran atau menerbitkan undangan."}</small></div></div>
+              {featureAccess.rsvp && <GuestRecipientEditor key={draft.id} invitationId={draft.id} slug={draft.slug} eventTitle={draft.eventKind === "Pernikahan" ? `${draft.hostOne} & ${draft.hostTwo}` : draft.eventTitle} isPublished={Boolean(draft.isPublished)} />}
               {!draft.isPublished && <section className="editor-demo-panel" aria-labelledby="editor-demo-title">
                 <div className="editor-demo-copy"><span className="editor-demo-icon"><Sparkles size={16} /></span><div><b id="editor-demo-title">Tautan DEMO publik</b><p>Siapa pun yang menerima tautan dapat melihat isi draft selama 7 hari. Demo tidak menerbitkan undangan; RSVP dan ucapan tidak aktif.</p></div></div>
                 {!demoLink && <button type="button" className="button button--outline button--small editor-demo-create" onClick={() => void handleCreateDemoLink()} disabled={demoLinkBusy}><ExternalLink size={14} />{demoLinkBusy ? "Membuat tautan…" : "Buat tautan demo"}</button>}

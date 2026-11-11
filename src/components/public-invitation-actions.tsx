@@ -145,8 +145,8 @@ export function PublicInvitationRsvp({ slug, initialCount, recipientName, guestT
   );
 }
 
-export function PublicInvitationGuestbook({ slug, entries, copy }: { slug: string; entries: GuestbookMessage[]; copy?: { eyebrow?: string; heading?: string; intro?: string; submit?: string } }) {
-  const [name, setName] = useState("");
+export function PublicInvitationGuestbook({ slug, entries, recipientName, guestToken, copy }: { slug: string; entries: GuestbookMessage[]; recipientName?: string; guestToken?: string; copy?: { eyebrow?: string; heading?: string; intro?: string; submit?: string } }) {
+  const [name, setName] = useState(recipientName ?? "");
   const [message, setMessage] = useState("");
   const [includesChildData, setIncludesChildData] = useState(false);
   const [guardianConsent, setGuardianConsent] = useState(false);
@@ -166,7 +166,7 @@ export function PublicInvitationGuestbook({ slug, entries, copy }: { slug: strin
     const response = await fetch(`/api/public/invitations/${encodeURIComponent(slug)}/guestbook`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), message: message.trim(), includesChildData, guardianConsent }),
+      body: JSON.stringify({ ...(guestToken ? { guestToken } : { name: name.trim() }), message: message.trim(), includesChildData, guardianConsent }),
     }).catch(() => null);
     const result = await response?.json().catch(() => ({})) as { error?: string } | undefined;
     setSending(false);
@@ -174,7 +174,7 @@ export function PublicInvitationGuestbook({ slug, entries, copy }: { slug: strin
       setError(result?.error ?? "Ucapan belum dapat dikirim. Periksa koneksi dan coba lagi.");
       return;
     }
-    setName("");
+    if (!guestToken) setName("");
     setMessage("");
     setIncludesChildData(false);
     setGuardianConsent(false);
@@ -204,7 +204,7 @@ export function PublicInvitationGuestbook({ slug, entries, copy }: { slug: strin
       <div className="guestbook-inner">
         <div className="guestbook-heading"><span className="eyebrow">{copy?.eyebrow ?? "UCAPAN & DOA"}</span><h2>{copy?.heading ?? <>Kirimkan <em>doa terbaikmu.</em></>}</h2><p>{copy?.intro ?? "Tinggalkan doa dan pesan hangat untuk hari istimewa kami."}</p><p className="guestbook-privacy-note">Ucapan ditinjau oleh pemilik undangan sebelum ditampilkan. Jangan masukkan kontak atau data sensitif anak. Persetujuan orang tua atau wali dibutuhkan jika ucapan mencantumkan informasi anak.</p></div>
         <form className="guestbook-form" onSubmit={submit} onInvalidCapture={(event) => { event.preventDefault(); setError(getFirstInvalidFormMessage(event.currentTarget)); }} onChangeCapture={() => setError("")}>
-          <label className="editor-field"><span className="field-label">Namamu</span><input className="text-input" required minLength={2} maxLength={100} value={name} onChange={(event) => setName(event.target.value)} placeholder="Nama lengkap" /></label>
+          {guestToken ? <label className="editor-field"><span className="field-label">Ucapan dari</span><input className="text-input" aria-label="Ucapan dari" value={name} readOnly /></label> : <label className="editor-field"><span className="field-label">Namamu</span><input className="text-input" required minLength={2} maxLength={100} value={name} onChange={(event) => setName(event.target.value)} placeholder="Nama lengkap" /></label>}
           <label className="editor-field"><span className="field-label">Ucapan</span><textarea className="text-input text-area" required minLength={2} maxLength={1000} rows={4} value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Tulis doa atau pesan untuk pengantin..." /></label>
           <label className="public-consent-row"><input type="checkbox" checked={includesChildData} onChange={(event) => { setIncludesChildData(event.target.checked); setGuardianConsent(false); setError(""); }} /><span>Ucapan ini mencantumkan nama atau informasi anak.</span></label>
           {includesChildData && <label className="public-consent-row public-consent-row--nested"><input type="checkbox" name="guardianConsent" required checked={guardianConsent} onChange={(event) => { setGuardianConsent(event.target.checked); setError(""); }} /><span>{GUESTBOOK_CHILD_DATA_GUARDIAN_CONSENT_COPY}</span></label>}

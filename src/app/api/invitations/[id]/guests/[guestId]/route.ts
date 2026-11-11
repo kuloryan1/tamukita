@@ -6,10 +6,16 @@ import { getPrismaClient } from "@/lib/prisma";
 import { allowRequest } from "@/lib/rate-limit";
 import { readJsonBody } from "@/lib/request-json";
 import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
+import { encryptGuestPhone } from "@/lib/guest-contact-crypto";
+import { normalizeWhatsAppPhone } from "@/lib/whatsapp-link";
 
 export const runtime = "nodejs";
 
-const linkActionSchema = z.object({ action: z.enum(["revoke", "rotate"]) });
+const linkActionSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("revoke") }),
+  z.object({ action: z.literal("rotate") }),
+  z.object({ action: z.literal("saveContact"), whatsapp: z.string().trim().min(8).max(300) }),
+]);
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string; guestId: string }> }) {
   const session = await auth();
@@ -23,7 +29,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const body = await readJsonBody(request, 4_000);
   if (!body.ok) return NextResponse.json({ error: "Permintaan tautan tamu tidak valid." }, { status: body.status });
   const parsed = linkActionSchema.safeParse(body.value);
-  if (!parsed.success) return NextResponse.json({ error: "Pilih pencabutan atau penerbitan ulang tautan." }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: "Perubahan kontak atau tautan tamu tidak valid." }, { status: 400 });
   if (!await allowRequest(`guests:link:${userId}`, 60, 60 * 60)) {
     return NextResponse.json({ error: "Batas pengelolaan tautan tamu tercapai. Coba lagi nanti." }, { status: 429 });
   }
@@ -44,8 +50,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!featureAccess.rsvp) return NextResponse.json({ error: "Paket undangan ini tidak mengaktifkan konfirmasi kehadiran dan pengelolaan tamu." }, { status: 403 });
 
   const result = await prisma.$transaction(async (tx) => {
-    const link = await tx.guestLink.findFirst({ where: { invitationId: invitation.id, guestId }, select: { id: true, revokedAt: true } });
+    const link = await tx.guestLink.findFirst({ where: { invitationId: invitation.id, guestId }, select: { id: true, tokenHash: true, revokedAt: true } });
     if (!link) return { status: 404 as const };
+
+    if (parsed.data.action === "saveContact") {
+      const phone = normalizeWhatsAppPhone(parsed.data.whatsapp);
+      if (!phone) return { status: 400 as const };
+      await tx.guest.update({ where: { id: guestId }, data: { phoneCiphertext: encryptGuestPhone(phone) } });
+      await tx.auditLog.create({ data: { organizationId: invitation.organizationId, actorId: userId, action: "guest.contact_updated", targetType: "Guest", targetId: guestId, metadata: { invitationId: invitation.id } } });
+      return { status: 200 as const, whatsapp: phone };
+    }
 
     if (parsed.data.action === "revoke") {
       if (link.revokedAt) return { status: 200 as const, revoked: true as const };
@@ -56,10 +70,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return { status: 200 as const, revoked: true as const };
     }
 
-    if (!link.revokedAt) return { status: 409 as const };
     const token = randomBytes(32).toString("base64url");
     const updated = await tx.guestLink.updateMany({
-      where: { id: link.id, revokedAt: { not: null } },
+      where: { id: link.id, tokenHash: link.tokenHash },
       data: { tokenHash: createHash("sha256").update(token).digest("hex"), revokedAt: null },
     });
     if (updated.count !== 1) return { status: 409 as const };
@@ -68,7 +81,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   });
 
   if (result.status === 404) return NextResponse.json({ error: "Tautan tamu tidak ditemukan." }, { status: 404 });
+  if (result.status === 400) return NextResponse.json({ error: "Masukkan nomor WhatsApp yang valid." }, { status: 400 });
   if (result.status === 409) return NextResponse.json({ error: "Status tautan berubah. Muat ulang daftar tamu lalu coba lagi." }, { status: 409 });
   if ("token" in result) return NextResponse.json({ token: result.token }, { headers: { "Cache-Control": "no-store" } });
+  if ("whatsapp" in result) return NextResponse.json({ whatsapp: result.whatsapp }, { headers: { "Cache-Control": "private, no-store" } });
   return NextResponse.json({ revoked: true });
 }

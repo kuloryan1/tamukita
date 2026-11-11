@@ -1168,6 +1168,25 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .guest-link-state--revoked { color: #a35c55; }
 .guest-list-row b { color: #46584a; font-size: 11px; }
 .guest-list-row small { color: #979b92; font-size: 8px; }
+.editor-recipient-panel { background: #fbfaf7; border: 1px solid #e8e5dc; margin: 20px 0; padding: 20px; }
+.editor-recipient-heading { align-items: flex-start; display: flex; gap: 12px; }
+.editor-recipient-icon { align-items: center; background: #e8eee6; border-radius: 50%; color: #547259; display: flex; flex: 0 0 36px; height: 36px; justify-content: center; }
+.editor-recipient-heading h3 { color: #35473b; font-family: var(--serif); font-size: 22px; font-weight: 400; margin: 5px 0; }
+.editor-recipient-heading p { color: #858b82; font-size: 10px; line-height: 1.65; margin: 0; }
+.editor-recipient-form { display: flex; flex-direction: column; gap: 11px; margin: 17px 0; }
+.editor-recipient-form .editor-field { margin: 0; }
+.editor-recipient-form .editor-field small { color: #858b82; display: block; font-size: 9px; line-height: 1.6; margin-top: 5px; }
+.editor-recipient-form > .button { align-self: flex-start; }
+.editor-recipient-list { background: #fff; border: 1px solid #edece7; margin-top: 14px; }
+.editor-recipient-list-heading { align-items: center; display: flex; justify-content: space-between; padding: 12px 14px; }
+.editor-recipient-list-heading b { color: #46584a; font-size: 11px; }
+.editor-recipient-list-heading span { color: #92968f; font-size: 9px; }
+.editor-recipient-row { align-items: center; border-top: 1px solid #eeede8; display: grid; gap: 8px; grid-template-columns: minmax(100px, .8fr) minmax(140px, 1fr) auto auto; padding: 10px 12px; }
+.editor-recipient-identity { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.editor-recipient-identity b { color: #46584a; font-size: 10px; overflow-wrap: anywhere; }
+.editor-recipient-identity small { color: #979b92; font-size: 8px; }
+.editor-recipient-phone .text-input { font-size: 11px; min-height: 34px; padding: 7px 9px; }
+.sr-only { clip: rect(0, 0, 0, 0); clip-path: inset(50%); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
 .reseller-application-card { background: #fff; border: 1px solid #edece7; margin: 9vh auto; max-width: 570px; padding: 32px; text-align: center; }
 .reseller-icon { align-items: center; background: #f0eee7; border-radius: 50%; color: #9a8359; display: flex; height: 48px; justify-content: center; margin: 0 auto 14px; width: 48px; }
 .reseller-application-card h1 { color: #35473b; font-family: var(--serif); font-size: 34px; font-weight: 400; margin: 10px 0; }
@@ -1884,6 +1903,11 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
   .guest-link-row > span { grid-column: 1 / -1; grid-row: 2; }
   .guest-list-card .guest-list-row { align-items: flex-start; flex-direction: column; gap: 8px; }
   .guest-list-actions { justify-content: flex-start; }
+  .editor-recipient-panel { padding: 15px; }
+  .editor-recipient-row { align-items: stretch; grid-template-columns: 1fr auto; }
+  .editor-recipient-identity { grid-column: 1 / -1; }
+  .editor-recipient-phone { grid-column: 1 / -1; }
+  .editor-recipient-row > .button { justify-content: center; }
   .reseller-topup-card { gap: 15px; grid-template-columns: 1fr; padding: 17px; }
   .reseller-credit-grid .stat-card:last-child { grid-column: auto; min-height: 135px; }
   .reseller-customer-form { align-items: stretch; grid-template-columns: 1fr; }
