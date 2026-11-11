@@ -1181,7 +1181,10 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .editor-recipient-list-heading { align-items: center; display: flex; justify-content: space-between; padding: 12px 14px; }
 .editor-recipient-list-heading b { color: #46584a; font-size: 11px; }
 .editor-recipient-list-heading span { color: #92968f; font-size: 9px; }
-.editor-recipient-row { align-items: center; border-top: 1px solid #eeede8; display: grid; gap: 8px; grid-template-columns: minmax(100px, .8fr) minmax(140px, 1fr) auto auto; padding: 10px 12px; }
+.editor-recipient-row { align-items: center; border-top: 1px solid #eeede8; display: grid; gap: 8px; grid-template-columns: minmax(110px, .8fr) minmax(155px, 1fr) minmax(0, 1.8fr); padding: 10px 12px; }
+.editor-recipient-row-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.editor-recipient-form-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.editor-recipient-form-actions input { display: none; }
 .editor-recipient-identity { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .editor-recipient-identity b { color: #46584a; font-size: 10px; overflow-wrap: anywhere; }
 .editor-recipient-identity small { color: #979b92; font-size: 8px; }
@@ -1904,10 +1907,10 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
   .guest-list-card .guest-list-row { align-items: flex-start; flex-direction: column; gap: 8px; }
   .guest-list-actions { justify-content: flex-start; }
   .editor-recipient-panel { padding: 15px; }
-  .editor-recipient-row { align-items: stretch; grid-template-columns: 1fr auto; }
+  .editor-recipient-row { align-items: stretch; grid-template-columns: 1fr; }
   .editor-recipient-identity { grid-column: 1 / -1; }
   .editor-recipient-phone { grid-column: 1 / -1; }
-  .editor-recipient-row > .button { justify-content: center; }
+  .editor-recipient-row-actions { grid-column: 1 / -1; justify-content: flex-start; }
   .reseller-topup-card { gap: 15px; grid-template-columns: 1fr; padding: 17px; }
   .reseller-credit-grid .stat-card:last-child { grid-column: auto; min-height: 135px; }
   .reseller-customer-form { align-items: stretch; grid-template-columns: 1fr; }
