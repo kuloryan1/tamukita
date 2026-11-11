@@ -18,7 +18,7 @@ export function ElegantCreamTemplate({ draft, recipientName, full = false }: Tem
       <div className="invite-details template-cream-details">
         <p className="invite-greeting">{invitationCopy(draft, "recipientGreeting", "Kepada Yth.")}{recipientName ? ` ${recipientName}` : ""}</p>
         <InvitationFamilyDetails draft={draft} />
-        <p className="invite-message">{draft.story || "Dengan hangat, kami menantikan kehadiran Anda di hari istimewa kami."}</p>
+        {draft.story.trim() && <p className="invite-message">{draft.story}</p>}
         <div className="template-cream-event"><CalendarDays size={14} /><span>{draft.eventTime || "Waktu menyusul"} WIB</span><MapPin size={14} /><span>{draft.venue || "Lokasi acara"}</span></div>
         {full && <div className="invite-footer-wordmark">sebuah cerita · TamuKita</div>}
       </div>

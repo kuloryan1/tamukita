@@ -47,6 +47,22 @@ test("preserves host parent names and canonicalizes the seal monogram through sa
   expect(parseInvitationDraft(published)?.hostOneParents).toBe("Bapak Ali dan Ibu Sari");
 });
 
+test("retains editable copy fields beyond the legacy 32-field normalization limit", () => {
+  const customFields = Object.fromEntries(Array.from({ length: 40 }, (_, index) => [`field${index + 1}`, `value${index + 1}`]));
+  customFields.scheduleSectionHeading = "Rundown acara";
+  customFields.closingNames = "";
+  const normalized = normalizeStoredInvitationDraft({ ...createInitialDraft(), customFields }, {
+    id: "73ea210e-c986-4e31-8b44-603812b5b1ac",
+    slug: "wulan-dan-ryan",
+    updatedAt: "2026-11-08T05:17:25.187Z",
+    isPublished: true,
+  });
+
+  expect(normalized?.customFields.field40).toBe("value40");
+  expect(normalized?.customFields.scheduleSectionHeading).toBe("Rundown acara");
+  expect(normalized?.customFields.closingNames).toBe("");
+});
+
 test("keeps older snapshots compatible with automatic initials and rejects unsupported seal letters", () => {
   const snapshot = { ...createInitialDraft(), id: "73ea210e-c986-4e31-8b44-603812b5b1ac", sealMonogram: undefined };
   expect(parseInvitationDraft(snapshot)?.sealMonogram).toBe("");

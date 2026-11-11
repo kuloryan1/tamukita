@@ -70,6 +70,17 @@ test("adds all invitation copy controls to every source template without collidi
   }
 });
 
+test("Elegant Cream copy defaults match its public text", () => {
+  const elegantCream = ensureInvitationCopySection(templates.find((template) => template.slug === "elegant-cream")!);
+  const copyFields = getInvitationCopySections(elegantCream).flatMap((section) => section.fields);
+  const headline = copyFields.find((field) => field.key === "invitationHeadline");
+  const rundownHeading = copyFields.find((field) => field.key === "scheduleSectionHeading");
+
+  expect(headline?.defaultValue).toBe("");
+  expect(applyTemplateFieldDefaults(elegantCream).invitationHeadline).toBe("");
+  expect(rundownHeading?.defaultValue).toBe("Rundown acara");
+});
+
 test("rejects unsafe keys, duplicate custom keys, and extra image slots", () => {
   expect(isSafeTemplateFieldKey("guestMessage")).toBe(true);
   expect(isSafeTemplateFieldKey("__proto__")).toBe(false);

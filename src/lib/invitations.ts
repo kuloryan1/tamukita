@@ -202,7 +202,7 @@ export function createDemoDraft(): InvitationDraft {
 export function normalizeInvitationCustomFields(value: unknown): Record<string, string> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return {};
   const fields: Record<string, string> = Object.create(null);
-  for (const [key, fieldValue] of Object.entries(value).slice(0, 32)) {
+  for (const [key, fieldValue] of Object.entries(value).slice(0, 96)) {
     if (isSafeTemplateFieldKey(key) && typeof fieldValue === "string" && fieldValue.length <= 1_000) {
       fields[key] = fieldValue;
     }

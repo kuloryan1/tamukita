@@ -65,6 +65,15 @@ test("invitation copy overrides render in every template preview", () => {
   }
 });
 
+test("Elegant Cream editor preview does not add story copy missing from the public invitation", () => {
+  const template = templates.find((item) => item.slug === "elegant-cream")!;
+  const draft = { ...createInitialDraft(), templateId: template.slug, templateVersion: template.version, story: "" };
+  const markup = renderToStaticMarkup(createElement(InvitationPreview, { draft, full: true, template, mode: "editor" }));
+
+  expect(markup).not.toContain("Dengan hangat, kami menantikan kehadiran Anda di hari istimewa kami.");
+  expect(markup).toContain("Kepada Yth.");
+});
+
 test("modern font mode is passed through the complete public page for every catalog template", () => {
   const draft = { ...createInitialDraft(), themeFont: "modern" as const };
 

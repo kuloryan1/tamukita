@@ -15,7 +15,7 @@ const invitationCopyFields = [
   { key: "eventSectionHeading", type: "textarea", label: "Judul bagian acara", defaultValue: "Sampai jumpa di hari bahagia.", maxLength: 200 },
   { key: "locationLabel", type: "text", label: "Label lokasi acara", defaultValue: "LOKASI ACARA", maxLength: 80 },
   { key: "scheduleSectionEyebrow", type: "text", label: "Keterangan kecil rundown", defaultValue: "RANGKAIAN ACARA", maxLength: 120 },
-  { key: "scheduleSectionHeading", type: "text", label: "Judul rundown", defaultValue: "Susunan acara.", maxLength: 160 },
+  { key: "scheduleSectionHeading", type: "text", label: "Judul rundown", defaultValue: "Rundown acara", maxLength: 160 },
   { key: "scheduleSectionIntro", type: "textarea", label: "Pengantar rundown", defaultValue: "Setiap momen istimewa telah kami siapkan.", maxLength: 240 },
   { key: "gallerySectionEyebrow", type: "text", label: "Keterangan kecil galeri", defaultValue: "POTONGAN CERITA", maxLength: 120 },
   { key: "gallerySectionHeading", type: "textarea", label: "Judul galeri", defaultValue: "Momen yang ingin kami kenang.", maxLength: 200 },
@@ -118,17 +118,26 @@ export function getInvitationCopySections(template: Template): TemplateSchema["s
   })).filter((section) => section.fields.length > 0);
 }
 
+function invitationCopyFieldForTemplate(template: Template, field: TemplateSchemaField): TemplateSchemaField {
+  if (template.slug === "elegant-cream" && field.key === "invitationHeadline") {
+    return { ...field, defaultValue: "", placeholder: "Kosongkan untuk menyembunyikan judul ini." };
+  }
+  return field;
+}
+
 export function ensureInvitationCopySection(template: Template): Template {
   const sections = template.schema.sections.map((section) => ({
     ...section,
-    fields: section.fields.map((field) => invitationCopyFieldByKey.get(field.key) ?? field),
+    fields: section.fields.map((field) => invitationCopyFieldForTemplate(template, invitationCopyFieldByKey.get(field.key) ?? field)),
   }));
   const existingKeys = new Set(sections.flatMap((section) => section.fields.map((field) => field.key)));
   const missingBySection = INVITATION_COPY_SECTIONS.map((section) => ({
     ...section,
-    fields: section.fields.filter((field) => !existingKeys.has(field.key)),
+    fields: section.fields.map((field) => invitationCopyFieldForTemplate(template, field)).filter((field) => !existingKeys.has(field.key)),
   }));
-  if (missingBySection.every((section) => section.fields.length === 0)) return template;
+  if (missingBySection.every((section) => section.fields.length === 0)) {
+    return { ...template, schema: { ...template.schema, sections } };
+  }
 
   for (const copySection of missingBySection) {
     if (copySection.fields.length === 0) continue;
