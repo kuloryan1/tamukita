@@ -323,15 +323,14 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
     if (!opened || !hasEnvelopeOpening || !main || !("IntersectionObserver" in window)) return;
     const panels = main.querySelectorAll<HTMLElement>([
       ".cover-photo-tile", ".countdown-section", ".event-section > .section-heading",
-      ".event-card", ".event-rundown", ".event-gallery-section", ".rsvp-intro", ".rsvp-card",
+      ".event-card", ".event-rundown", ".event-rundown li", ".event-gallery-section", ".rsvp-intro", ".rsvp-card",
       ".gift-account-card", ".closing-section",
     ].join(", "));
     const leadIn = 24;
     const observer = new IntersectionObserver((entries) => {
       for (const entry of entries) {
         if (!entry.isIntersecting) continue;
-        const jumpedPastStart = entry.boundingClientRect.top < window.innerHeight / 4;
-        entry.target.setAttribute("data-cream-reveal", jumpedPastStart ? "skip" : "visible");
+        entry.target.setAttribute("data-cream-reveal", "visible");
         observer.unobserve(entry.target);
       }
     }, { rootMargin: `0px 0px ${leadIn}px 0px` });
@@ -455,7 +454,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
       {hasEnvelopeOpening ? <div className="cream-envelope-cover" ref={coverRef} onAnimationEnd={(event) => {
         if (event.target === event.currentTarget && openingPhase === "fallback") revealInvitation();
       }}>
-        <Image className="cream-envelope-cover-art" src="/templates/reference-prototypes/cream-envelope-poster.jpg" alt="" fill preload sizes="100vw" />
+        <Image className="cream-envelope-cover-art" src="/templates/reference-prototypes/cream-envelope-poster.jpg" alt="" fill preload sizes="(max-width: 400px) calc(100vw - 40px), 360px" />
         <div className="cream-envelope-monogram"><Monogram small hostOne={hostOne} hostTwo={hostTwo} customMonogram={customMonogram} crestSrc={monogramCrestSrc} /></div>
         <div className="cream-envelope-cover-details">
           <div className="cream-envelope-cover-copy">

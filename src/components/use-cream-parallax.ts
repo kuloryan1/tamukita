@@ -14,6 +14,7 @@ export function useCreamParallax(mainRef: RefObject<HTMLElement | null>, enabled
       element,
       parent: element.closest(".invitation-hero, .cover-photo-tile, .closing-section") ?? main,
       depth: 0,
+      depthX: 0,
     }));
     let frame = 0;
     const update = () => {
@@ -26,13 +27,20 @@ export function useCreamParallax(mainRef: RefObject<HTMLElement | null>, enabled
       const offsets = layers.map((layer) => {
         const rect = rects.get(layer.parent) ?? layer.parent.getBoundingClientRect();
         const progress = Math.min(1, Math.max(0, (viewport - rect.top) / (viewport + rect.height)));
-        return (progress - .5) * layer.depth;
+        return { x: (progress - .5) * layer.depthX, y: (progress - .5) * layer.depth };
       });
-      layers.forEach((layer, index) => { layer.element.style.setProperty("--cream-parallax-y", `${offsets[index].toFixed(2)}px`); });
+      layers.forEach((layer, index) => {
+        layer.element.style.setProperty("--cream-parallax-x", `${offsets[index].x.toFixed(2)}px`);
+        layer.element.style.setProperty("--cream-parallax-y", `${offsets[index].y.toFixed(2)}px`);
+      });
     };
     const schedule = () => { if (!frame) frame = window.requestAnimationFrame(update); };
     const refresh = () => {
-      for (const layer of layers) layer.depth = Number.parseFloat(getComputedStyle(layer.element).getPropertyValue("--cream-parallax-depth")) || 0;
+      for (const layer of layers) {
+        const styles = getComputedStyle(layer.element);
+        layer.depth = Number.parseFloat(styles.getPropertyValue("--cream-parallax-depth")) || 0;
+        layer.depthX = Number.parseFloat(styles.getPropertyValue("--cream-parallax-x-depth")) || 0;
+      }
       schedule();
     };
     window.addEventListener("scroll", schedule, { passive: true });
@@ -44,7 +52,10 @@ export function useCreamParallax(mainRef: RefObject<HTMLElement | null>, enabled
       window.removeEventListener("resize", refresh);
       reducedMotion.removeEventListener("change", refresh);
       window.cancelAnimationFrame(frame);
-      for (const layer of layers) layer.element.style.removeProperty("--cream-parallax-y");
+      for (const layer of layers) {
+        layer.element.style.removeProperty("--cream-parallax-x");
+        layer.element.style.removeProperty("--cream-parallax-y");
+      }
     };
   }, [enabled, mainRef]);
 }

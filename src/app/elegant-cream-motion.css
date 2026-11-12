@@ -1,9 +1,10 @@
 /* Scroll depth belongs to ornaments and frames; printed copy stays anchored. */
 .stationery-demo.theme-elegant-cream.is-open .opened-invitation {
+  --cream-parallax-x-depth: 0px;
   --cream-motion-ease: cubic-bezier(.34, .14, .23, 1);
   --cream-intro-duration: 1780ms;
-  --cream-reveal-duration: 1900ms;
-  --cream-reveal-rise: 38px;
+  --cream-reveal-duration: 1220ms;
+  --cream-reveal-rise: 84px;
   --cream-type-start: 700ms;
   --cream-type-speed: 1;
 }
@@ -14,19 +15,23 @@
 
 .stationery-demo.theme-elegant-cream.is-open .opened-invitation .hero-botanical {
   --cream-parallax-depth: 64px;
+  --cream-parallax-x-depth: 22px;
   --cream-layer-timeline: --cream-hero;
 }
-.stationery-demo.theme-elegant-cream.is-open .opened-invitation .hero-botanical.corner-bottom { --cream-parallax-depth: -48px; }
+.stationery-demo.theme-elegant-cream.is-open .opened-invitation .hero-botanical.corner-bottom { --cream-parallax-depth: -52px; --cream-parallax-x-depth: -18px; }
 .stationery-demo.theme-elegant-cream.is-open .opened-invitation .cover-photo-frame {
-  --cream-parallax-depth: 24px;
+  --cream-parallax-depth: 56px;
+  --cream-parallax-x-depth: 28px;
   --cream-layer-timeline: --cream-portrait;
 }
+.stationery-demo.theme-elegant-cream.is-open .opened-invitation .cover-photo-tile--host-one .cover-photo-frame { --cream-parallax-x-depth: -30px; }
 .stationery-demo.theme-elegant-cream.is-open .opened-invitation .closing-botanical {
   --cream-parallax-depth: 56px;
+  --cream-parallax-x-depth: -24px;
   --cream-layer-timeline: --cream-closing;
 }
 .stationery-demo.theme-elegant-cream.is-open .opened-invitation :is(.hero-botanical, .cover-photo-frame, .closing-botanical) {
-  translate: 0 var(--cream-parallax-y, 0px);
+  translate: var(--cream-parallax-x, 0px) var(--cream-parallax-y, 0px);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -57,6 +62,9 @@
   animation-duration: var(--cream-intro-duration) !important;
 }
 .stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .hero-names { animation-delay: 160ms; }
+.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .hero-names > span:first-child { animation: elegant-cream-name-from-left 1280ms var(--cream-motion-ease) 180ms backwards; }
+.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .hero-names > .name-amp { animation: elegant-cream-name-join 900ms cubic-bezier(.2, .7, .25, 1.2) 340ms backwards; }
+.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .hero-names > span:last-child { animation: elegant-cream-name-from-right 1280ms var(--cream-motion-ease) 260ms backwards; }
 .stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] :is(.invitation-message, .hero-date, .detail-link) { animation-delay: 240ms; }
 .stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .hero-flourish {
   animation: elegant-cream-ink-rule var(--cream-intro-duration) var(--cream-motion-ease) 480ms backwards;
@@ -93,11 +101,22 @@
 /* Only cards below the initial viewport wait for the one-time reveal. */
 .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="pending"] {
   opacity: 0;
-  transform: translateY(var(--cream-reveal-rise));
+  transform: translate3d(0, var(--cream-reveal-rise), 0) scale(.985);
 }
+.stationery-demo.theme-elegant-cream.is-open .opened-invitation .cover-photo-tile--host-two[data-cream-reveal="pending"] { transform: translate3d(48px, var(--cream-reveal-rise), 0) rotate(1.2deg) scale(.97); }
+.stationery-demo.theme-elegant-cream.is-open .opened-invitation .cover-photo-tile--host-one[data-cream-reveal="pending"] { transform: translate3d(-48px, var(--cream-reveal-rise), 0) rotate(-1.2deg) scale(.97); }
+.stationery-demo.theme-elegant-cream.is-open .opened-invitation .event-card:first-child[data-cream-reveal="pending"] { transform: translate3d(-38px, 52px, 0) rotate(-1deg) scale(.97); }
+.stationery-demo.theme-elegant-cream.is-open .opened-invitation .event-card:nth-child(2)[data-cream-reveal="pending"] { transform: translate3d(38px, 52px, 0) rotate(1deg) scale(.97); }
+.stationery-demo.theme-elegant-cream.is-open .opened-invitation .event-gallery-section[data-cream-reveal="pending"] { transform: translate3d(0, 92px, 0) scale(.965); }
+.stationery-demo.theme-elegant-cream.is-open .opened-invitation .rsvp-card[data-cream-reveal="pending"] { transform: translate3d(52px, 58px, 0) rotateY(2.5deg) scale(.97); transform-origin: left center; }
+.stationery-demo.theme-elegant-cream.is-open .opened-invitation .gift-account-card:first-child[data-cream-reveal="pending"] { transform: translate3d(-30px, 48px, 0) rotate(-1deg) scale(.96); }
+.stationery-demo.theme-elegant-cream.is-open .opened-invitation .gift-account-card:nth-child(2)[data-cream-reveal="pending"] { transform: translate3d(30px, 48px, 0) rotate(1deg) scale(.96); }
+.stationery-demo.theme-elegant-cream.is-open .opened-invitation .closing-section[data-cream-reveal="pending"] { transform: translate3d(0, 80px, 0) rotateX(1.2deg) scale(.97); }
+.stationery-demo.theme-elegant-cream.is-open .opened-invitation .event-rundown li[data-cream-reveal="pending"] { transform: translate3d(-34px, 34px, 0) scale(.985); }
+.stationery-demo.theme-elegant-cream.is-open .opened-invitation .event-rundown li:nth-child(even)[data-cream-reveal="pending"] { transform: translate3d(34px, 34px, 0) scale(.985); }
 .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] {
   opacity: 1;
-  transform: none;
+  transform: translate3d(0, 0, 0) scale(1);
   transition: opacity var(--cream-reveal-duration) var(--cream-motion-ease), transform var(--cream-reveal-duration) var(--cream-motion-ease);
   transition-duration: var(--cream-reveal-duration) !important;
   transition-delay: var(--cream-reveal-delay, 0ms);
@@ -108,23 +127,48 @@
   transition: none;
 }
 
-@media (min-width: 641px) and (prefers-reduced-motion: no-preference) {
-  .stationery-demo.theme-elegant-cream .event-card + .event-card { --cream-reveal-delay: 140ms; }
+.stationery-demo.theme-elegant-cream .cover-photo-tile--host-one,
+.stationery-demo.theme-elegant-cream .event-card + .event-card,
+.stationery-demo.theme-elegant-cream .gift-account-card + .gift-account-card {
+  --cream-reveal-delay: 130ms;
 }
 
 @media (max-width: 640px) {
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation { --cream-reveal-rise: 27px; }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation { --cream-reveal-rise: 64px; }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation .cover-photo-frame { --cream-parallax-depth: 42px; }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation .cover-photo-tile--host-two[data-cream-reveal="pending"] { transform: translate3d(24px, 52px, 0) rotate(1deg) scale(.98); }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation .cover-photo-tile--host-one[data-cream-reveal="pending"] { transform: translate3d(-24px, 52px, 0) rotate(-1deg) scale(.98); }
 }
 
 .stationery-demo.theme-elegant-cream .cover-opening-overlay.is-revealing { transition-duration: 900ms !important; }
 
 @keyframes elegant-cream-scroll-depth {
-  from { translate: 0 calc(var(--cream-parallax-depth) * -.5); }
-  to { translate: 0 calc(var(--cream-parallax-depth) * .5); }
+  from { translate: calc(var(--cream-parallax-x-depth, 0px) * -.5) calc(var(--cream-parallax-depth) * -.5); }
+  to { translate: calc(var(--cream-parallax-x-depth, 0px) * .5) calc(var(--cream-parallax-depth) * .5); }
 }
 @keyframes elegant-cream-soft-intro {
-  from { opacity: .15; }
-  to { opacity: 1; }
+  from { opacity: .15; transform: translate3d(0, 22px, 0) scale(.985); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes elegant-cream-name-from-left {
+  from { opacity: 0; transform: translate3d(-28px, 12px, 0) scale(.985); }
+  72% { opacity: 1; transform: translate3d(3px, -2px, 0) scale(1.01); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes elegant-cream-name-from-right {
+  from { opacity: 0; transform: translate3d(28px, 12px, 0) scale(.985); }
+  72% { opacity: 1; transform: translate3d(-3px, -2px, 0) scale(1.01); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes elegant-cream-name-join {
+  from { opacity: 0; transform: translate3d(0, 10px, 0) scale(.72) rotate(-20deg); }
+  68% { opacity: 1; transform: translate3d(0, -2px, 0) scale(1.12) rotate(7deg); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1) rotate(0); }
+}
+@keyframes elegant-cream-gallery-arrive {
+  from { opacity: 0; transform: translate3d(0, 36px, 0) scale(.94) rotate(var(--cream-gallery-tilt, -1deg)); }
+  72% { opacity: 1; transform: translate3d(0, -4px, 0) scale(1.015) rotate(0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1) rotate(0); }
 }
 @keyframes elegant-cream-cover-dissolve {
   from { opacity: 1; }
@@ -139,8 +183,26 @@
   to { opacity: 1; clip-path: inset(0); }
 }
 @keyframes elegant-cream-digit-rise {
-  from { opacity: .55; translate: 0 .24em; }
-  to { opacity: 1; translate: 0 0; }
+  from { opacity: .45; transform: translate3d(0, .4em, 0) scale(.88); }
+  72% { opacity: 1; transform: translate3d(0, -.04em, 0) scale(1.04); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure {
+    --cream-gallery-tilt: -1deg;
+    animation: elegant-cream-gallery-arrive 920ms var(--cream-motion-ease) both;
+  }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure:nth-child(even) { --cream-gallery-tilt: 1deg; }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure:nth-child(2) { animation-delay: 70ms; }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure:nth-child(3) { animation-delay: 140ms; }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure:nth-child(4) { animation-delay: 210ms; }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure:nth-child(5) { animation-delay: 280ms; }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure:nth-child(6) { animation-delay: 350ms; }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure:nth-child(7) { animation-delay: 420ms; }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure:nth-child(8) { animation-delay: 490ms; }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure:nth-child(9) { animation-delay: 560ms; }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure:nth-child(10) { animation-delay: 630ms; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -163,5 +225,6 @@
   .stationery-demo.theme-elegant-cream .countdown-digit { animation: none; }
   .stationery-demo.theme-elegant-cream.is-open .opened-invitation :is(.hero-botanical, .hero-botanical.corner-bottom, .cover-photo-frame, .closing-botanical) {
     --cream-parallax-depth: 0px;
+    --cream-parallax-x-depth: 0px;
   }
 }
