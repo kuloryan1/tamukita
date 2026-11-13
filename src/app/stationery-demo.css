@@ -389,6 +389,7 @@
 .stationery-demo.theme-elegant-cream .akad-event-card .event-time { color: var(--muted); }
 .stationery-demo.theme-elegant-cream .akad-event-card .date-month { border-color: var(--line); }
 .stationery-demo.theme-elegant-cream .akad-event-card .date-composition strong { color: var(--ink); }
+.stationery-demo.theme-elegant-cream .akad-event-card .akad-address { max-width: 100%; margin: -10px 0 0; color: var(--muted); font-size: 12px; line-height: 1.65; overflow-wrap: anywhere; white-space: pre-line; }
 .stationery-demo .event-card > .button { min-width: 195px; max-width: 100%; min-height: 45px; margin-top: auto; font-size: 11px; }
 .stationery-demo .venue-card h3 { max-width: 260px; margin: 19px 0 9px; font-family: var(--font-display); font-size: 35px; font-weight: 400; line-height: 1.06; letter-spacing: -.025em; }
 .stationery-demo .venue-card > p { margin: 0; color: var(--muted); font-size: 12px; }

@@ -11,6 +11,7 @@ import { InvitationPaparazzi } from "@/components/invitation-paparazzi";
 import { PublicInvitationGiftCopy, PublicInvitationGuestbook, PublicInvitationMusic } from "@/components/public-invitation-actions";
 import { invitationCopy, type InvitationCopyKey } from "@/lib/invitation-copy";
 import { invitationGiftAccounts, safeHttpsUrl, type InvitationDraft } from "@/lib/invitations";
+import { getAkadEventDetails } from "@/lib/akad-event";
 import { normalizeSealMonogram } from "@/lib/seal-monogram";
 import { templates, WEDDING, type WeddingTemplate } from "@/lib/stationery-demo";
 import { MAX_RECIPIENT_LENGTH, normalizeRecipient } from "@/lib/stationery-recipient";
@@ -199,21 +200,8 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   const eventDate = draft?.eventDate || WEDDING.eventDate;
   const eventTime = draft?.eventTime || WEDDING.eventTime;
   const eventDateTime = new Date(`${eventDate}T${eventTime}:00+07:00`);
-  const akadDate = draft?.customFields.akadDate?.trim() ?? "";
-  const akadTime = draft?.customFields.akadTime?.trim() ?? "";
-  const parsedAkadDate = /^\d{4}-\d{2}-\d{2}$/.test(akadDate) ? new Date(`${akadDate}T12:00:00+07:00`) : null;
-  const hasAkadDate = template.slug === "elegant-cream" && Boolean(parsedAkadDate && Number.isFinite(parsedAkadDate.getTime()) && parsedAkadDate.toISOString().slice(0, 10) === akadDate);
-  const akadDateParts = hasAkadDate && parsedAkadDate
-    ? new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "2-digit", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).formatToParts(parsedAkadDate)
-    : [];
-  const akadDatePart = (type: Intl.DateTimeFormatPartTypes) => akadDateParts.find((part) => part.type === type)?.value ?? "";
-  const akadDateHeading = {
-    weekday: akadDatePart("weekday").toLocaleUpperCase("id-ID"),
-    day: akadDatePart("day"),
-    month: akadDatePart("month").toLocaleUpperCase("id-ID"),
-    year: akadDatePart("year"),
-  };
-  const validAkadTime = /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(akadTime) ? akadTime : "";
+  const akadEvent = getAkadEventDetails(template.slug, draft?.customFields);
+  const hasAkadDate = Boolean(akadEvent);
   const dateLabel = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(eventDateTime);
   const dateParts = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "2-digit", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).formatToParts(eventDateTime);
   const datePart = (type: Intl.DateTimeFormatPartTypes) => dateParts.find((part) => part.type === type)?.value ?? "";
@@ -480,7 +468,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
         <section className="event-section content-section" id="detail-acara" aria-labelledby="event-title">
           <div className="section-heading"><span className="eyebrow">{copy("eventSectionEyebrow", "SIMPAN TANGGALNYA")}</span><h2 id="event-title" style={{ whiteSpace: "pre-line" }}>{copy("eventSectionHeading", "Sampai jumpa di hari bahagia.")}</h2><TinyFlourish className="section-flourish" /></div>
           <div className={`event-grid${hasAkadDate ? " event-grid--with-akad" : ""}${isElegantCream ? " event-grid--location-below" : ""}`}>
-            {hasAkadDate && <article className="event-card akad-event-card"><CalendarDays size={25} strokeWidth={1.1} /><span className="eyebrow">AKAD NIKAH</span><div className="date-composition"><span className="date-weekday">{akadDateHeading.weekday}</span><strong>{akadDateHeading.day}</strong><span className="date-month">{akadDateHeading.month}<br />{akadDateHeading.year}</span></div>{validAkadTime && <p className="event-time"><Clock3 size={15} />{validAkadTime} WIB</p>}</article>}
+            {akadEvent && <article className="event-card akad-event-card"><CalendarDays size={25} strokeWidth={1.1} /><span className="eyebrow">AKAD NIKAH</span><div className="date-composition"><span className="date-weekday">{akadEvent.weekday}</span><strong>{akadEvent.day}</strong><span className="date-month">{akadEvent.month}<br />{akadEvent.year}</span></div>{akadEvent.time && <p className="event-time"><Clock3 size={15} />{akadEvent.time} WIB</p>}{akadEvent.address && <p className="akad-address">{akadEvent.address}</p>}</article>}
             <article className="event-card"><CalendarDays size={25} strokeWidth={1.1} /><span className="eyebrow">{copy("eventDateLabel", "HARI & TANGGAL")}</span><div className="date-composition"><span className="date-weekday">{dateHeading.weekday}</span><strong>{dateHeading.day}</strong><span className="date-month">{dateHeading.month}<br />{dateHeading.year}</span></div><p className="event-time"><Clock3 size={15} />{eventTimeLabel}</p><a className="button secondary" href={calendarHref} download>{copy("calendarActionLabel", "Simpan ke kalender")} <ArrowDown size={15} /></a></article>
             <article className="event-card venue-card">
               <MapPin size={25} strokeWidth={1.1} />

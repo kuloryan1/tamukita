@@ -36,7 +36,7 @@ const invitationSchema: TemplateSchema = {
 };
 
 const elegantCreamInvitationSchema: TemplateSchema = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   sections: invitationSchema.sections.map((section) => section.key === "schedule"
     ? {
       ...section,
@@ -44,6 +44,7 @@ const elegantCreamInvitationSchema: TemplateSchema = {
         ...section.fields,
         { key: "akadDate", type: "datetime", label: "Tanggal akad", helpText: "Tanggal akad dapat berbeda dari tanggal resepsi." },
         { key: "akadTime", type: "time", label: "Waktu akad", helpText: "Opsional. Ditampilkan terpisah dari waktu resepsi." },
+        { key: "akadAddress", type: "textarea", label: "Alamat akad", helpText: "Opsional. Ditampilkan sebagai teks tanpa peta.", maxLength: 300 },
       ],
     }
     : section),
@@ -69,8 +70,8 @@ export const templates: Template[] = [
   }),
   defineTemplate({
     slug: "elegant-cream",
-    version: "1.0.2",
-    schemaVersion: 2,
+    version: "1.0.3",
+    schemaVersion: 3,
     activationSku: "BASIC_ACTIVATION",
     name: "Elegant Cream",
     subtitle: "Hangat & romantis",

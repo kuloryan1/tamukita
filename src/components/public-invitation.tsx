@@ -10,6 +10,7 @@ import { PublicInvitationGiftCopy, PublicInvitationGuestbook, PublicInvitationMu
 import { legacyInvitationFeatureAccess, type InvitationFeatureAccess } from "@/lib/invitation-features";
 import { invitationCopy, type InvitationCopyKey } from "@/lib/invitation-copy";
 import { invitationGiftAccounts, safeHttpsUrl, type InvitationDraft } from "@/lib/invitations";
+import { getAkadEventDetails } from "@/lib/akad-event";
 
 type GuestbookMessage = { id: string; displayName: string; message: string; createdAt: string };
 
@@ -38,6 +39,7 @@ export function PublicInvitation({ slug, initialDraft, initialRsvpCount, initial
   const eventSchedule = (draft.eventSchedule ?? []).filter((item) => item.time.trim() && item.title.trim());
   const giftAccounts = invitationGiftAccounts(draft);
   const activeTemplateSlug = templateSlug || draft.templateId;
+  const akadEvent = getAkadEventDetails(activeTemplateSlug, draft.customFields);
   const isGardenTemplate = activeTemplateSlug === "taman-abadi";
   const invitationUrl = new URL(sharePath || `/${encodeURIComponent(slug)}`, process.env.NEXT_PUBLIC_APP_URL || "https://tamukita.io").toString();
   const shareText = `${draft.eventKind === "Pernikahan" ? `Undangan pernikahan ${hostNames.join(" & ")}` : draft.eventTitle} — ${invitationUrl}`;
@@ -71,8 +73,9 @@ export function PublicInvitation({ slug, initialDraft, initialRsvpCount, initial
         : <section className="public-detail-section" id="detail-acara">
         <div className="public-detail-inner">
           <span className="eyebrow">{invitationCopy(draft, "eventSectionEyebrow", "SIMPAN TANGGALNYA")}</span><h2 style={{ whiteSpace: "pre-line" }}>{invitationCopy(draft, "eventSectionHeading", "Sampai jumpa di hari bahagia.")}</h2>
-          <div className="public-detail-cards">
+          <div className={`public-detail-cards${akadEvent ? " public-detail-cards--with-akad" : ""}`}>
             <div className="public-detail-card"><span className="detail-card-icon"><CalendarDays size={18} /></span><small>{copy("eventTimeLabel", "WAKTU")}</small><b>{dateString}</b><span>{draft.eventTime} WIB</span></div>
+            {akadEvent && <div className="public-detail-card public-akad-card"><span className="detail-card-icon"><CalendarDays size={18} /></span><small>AKAD NIKAH</small><b>{akadEvent.dateLabel}</b>{akadEvent.time && <span>{akadEvent.time} WIB</span>}{akadEvent.address && <p>{akadEvent.address}</p>}</div>}
             <div className="public-detail-card"><span className="detail-card-icon"><MapPin size={18} /></span><small>{copy("locationLabel", "LOKASI")}</small><b>{draft.venue || "Lokasi acara"}</b><span>{draft.address}</span>{mapsUrl && <a href={mapsUrl} target="_blank" rel="noreferrer">{copy("mapActionLabel", "Buka peta")} <ArrowUpRight size={13} /></a>}</div>
           </div>
           {isExample

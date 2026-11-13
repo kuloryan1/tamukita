@@ -12,6 +12,7 @@ const renderers = new Map<string, TemplateRendererRegistration>([
   ["elegant-cream@1.0.0", { component: ElegantCreamTemplate, requiresAdminReview: false }],
   ["elegant-cream@1.0.1", { component: ElegantCreamTemplate, requiresAdminReview: false }],
   ["elegant-cream@1.0.2", { component: ElegantCreamTemplate, requiresAdminReview: false }],
+  ["elegant-cream@1.0.3", { component: ElegantCreamTemplate, requiresAdminReview: false }],
   ["modern-sage@1.0.0", { component: ModernSageTemplate, requiresAdminReview: false }],
   ["modern-sage@1.0.1", { component: ModernSageTemplate, requiresAdminReview: false }],
   ["modern-sage@1.0.2", { component: ModernSageTemplate, requiresAdminReview: false }],
