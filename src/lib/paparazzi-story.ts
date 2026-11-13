@@ -2,11 +2,13 @@ import { fileURLToPath } from "node:url";
 import sharp, { type OverlayOptions, type Sharp } from "sharp";
 import { PAPARAZZI_STORY_HEIGHT, PAPARAZZI_STORY_WIDTH } from "./paparazzi";
 
-export const PAPARAZZI_STORY_LAYOUT_VERSION = 4;
+export const PAPARAZZI_STORY_LAYOUT_VERSION = 5;
 const logoPath = fileURLToPath(new URL("../../public/images/paparazi/wr-crest.png", import.meta.url));
 const photoAreaHeight = 1600;
 const logoSize = 144;
 const stampCenterY = photoAreaHeight + (PAPARAZZI_STORY_HEIGHT - photoAreaHeight) / 2;
+const stampLeft = Math.floor((PAPARAZZI_STORY_WIDTH - logoSize) / 2);
+const stampTop = Math.floor(stampCenterY - logoSize / 2);
 
 async function monochromeLogo(shade: number) {
   // This is the visible crest inside the supplied transparent 128 × 128 PNG.
@@ -29,13 +31,29 @@ function storyBackground(light: boolean) {
   return light ? "#f9f6ee" : "#17201c";
 }
 
-async function storyStamp(): Promise<OverlayOptions[]> {
-  const logo = await monochromeLogo(255);
+async function storyStamp(image: Sharp): Promise<OverlayOptions[]> {
+  const [{ input: logo, raw }, { data: photo, info }] = await Promise.all([
+    monochromeLogo(255),
+    image.clone().extract({ left: stampLeft, top: stampTop, width: logoSize, height: logoSize })
+      .removeAlpha().raw().toBuffer({ resolveWithObject: true }),
+  ]);
+  for (let index = 0; index < logo.length; index += 4) {
+    const photoIndex = (index / 4) * info.channels;
+    const red = photo[photoIndex] ?? 0;
+    const green = photo[photoIndex + 1] ?? red;
+    const blue = photo[photoIndex + 2] ?? red;
+    const luminance = .2126 * red + .7152 * green + .0722 * blue;
+    const shade = luminance >= 145 ? 0 : 255;
+    logo[index] = shade;
+    logo[index + 1] = shade;
+    logo[index + 2] = shade;
+  }
   return [{
-    ...logo,
-    left: Math.floor((PAPARAZZI_STORY_WIDTH - logoSize) / 2),
-    top: Math.floor(stampCenterY - logoSize / 2),
-    blend: "difference",
+    input: logo,
+    raw,
+    left: stampLeft,
+    top: stampTop,
+    blend: "over",
   }];
 }
 
@@ -59,11 +77,11 @@ export function cropLegacyPaparazziStamp(image: Sharp, width: number, height: nu
 }
 
 export async function renderPaparazziStory(image: Sharp) {
-  const stamp = await storyStamp();
-  return image.clone().rotate()
+  const photo = image.clone().rotate()
     .resize({ width: PAPARAZZI_STORY_WIDTH, height: PAPARAZZI_STORY_HEIGHT, fit: "cover", position: "centre" })
-    .toColourspace("srgb")
-    .composite(stamp)
+    .toColourspace("srgb");
+  const stamp = await storyStamp(photo);
+  return photo.composite(stamp)
     .jpeg({ quality: 90, mozjpeg: true })
     .toBuffer({ resolveWithObject: true });
 }
