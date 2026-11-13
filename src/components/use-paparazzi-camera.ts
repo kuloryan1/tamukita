@@ -60,7 +60,7 @@ export function usePaparazziCamera() {
     context.drawImage(video, cropLeft, cropTop, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
     const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/jpeg", 0.88));
     if (!blob) { setError("Foto belum dapat disiapkan. Coba lagi."); return null; }
-    stop(); return new File([blob], "foto-acara.jpg", { type: "image/jpeg" });
+    return new File([blob], "foto-acara.jpg", { type: "image/jpeg" });
   }
   return { videoRef, active, opening, ready, setReady, error, start, stop, capture };
 }

@@ -4,6 +4,7 @@ import { guardianConsentMatchesChildData } from "./child-data-consent";
 export const PAPARAZZI_MAX_BYTES = 10_000_000;
 export const PAPARAZZI_STORY_WIDTH = 1080;
 export const PAPARAZZI_STORY_HEIGHT = 1920;
+export const PAPARAZZI_MAX_BATCH_PHOTOS = 10;
 export const PAPARAZZI_RETENTION_DAYS = 90;
 export const PAPARAZZI_UPLOAD_TTL_MS = 15 * 60 * 1_000;
 export const PAPARAZZI_GUARDIAN_COPY = "Saya orang tua/wali yang berwenang dan menyetujui TamuKita memproses foto anak ini serta menampilkannya melalui tautan keluarga.";

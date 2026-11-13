@@ -4,7 +4,7 @@ import type { Prisma, PrismaClient } from "../generated/prisma/client";
 import { PAPARAZZI_MAX_BYTES, PAPARAZZI_STORY_HEIGHT, PAPARAZZI_STORY_WIDTH, PAPARAZZI_UPLOAD_TTL_MS, paparazziJobSchema } from "./paparazzi";
 import { paparazziStorage } from "./paparazzi-storage";
 import { removePaparazziTemporaryFiles } from "./paparazzi-server-files";
-import { cropLegacyPaparazziStamp, PAPARAZZI_STORY_LAYOUT_VERSION, refreshPaparazziStoryStamp, renderPaparazziStory } from "./paparazzi-story";
+import { cropLegacyPaparazziStamp, extractLegacyPaparazziStoryPhoto, PAPARAZZI_STORY_LAYOUT_VERSION, renderPaparazziStory } from "./paparazzi-story";
 
 export class InvalidPaparazziPhotoError extends Error {}
 
@@ -114,9 +114,10 @@ export async function upgradePaparazziStoryPhotos(prisma: PrismaClient, s3: S3Cl
       const metadata = await image.metadata();
       if (metadata.format !== "jpeg" || !metadata.width || !metadata.height) throw new Error("Invalid saved Paparazi image");
       if (photo.storyKey && (metadata.width !== PAPARAZZI_STORY_WIDTH || metadata.height !== PAPARAZZI_STORY_HEIGHT)) throw new Error("Invalid saved Story dimensions");
-      const output = photo.storyKey
-        ? await refreshPaparazziStoryStamp(image)
-        : await renderPaparazziStory(cropLegacyPaparazziStamp(image, metadata.width, metadata.height));
+      const legacyPhoto = photo.storyKey
+        ? await extractLegacyPaparazziStoryPhoto(image)
+        : cropLegacyPaparazziStamp(image, metadata.width, metadata.height);
+      const output = await renderPaparazziStory(legacyPhoto);
       await prisma.$transaction(async tx => {
         const updated = await tx.paparazziPhoto.updateMany({
           where: {
