@@ -35,6 +35,20 @@ const invitationSchema: TemplateSchema = {
   ],
 };
 
+const elegantCreamInvitationSchema: TemplateSchema = {
+  schemaVersion: 2,
+  sections: invitationSchema.sections.map((section) => section.key === "schedule"
+    ? {
+      ...section,
+      fields: [
+        ...section.fields,
+        { key: "akadDate", type: "datetime", label: "Tanggal akad", helpText: "Tanggal akad dapat berbeda dari tanggal resepsi." },
+        { key: "akadTime", type: "time", label: "Waktu akad", helpText: "Opsional. Ditampilkan terpisah dari waktu resepsi." },
+      ],
+    }
+    : section),
+};
+
 export const templates: Template[] = [
   defineTemplate({
     slug: "royal-gold",
@@ -55,8 +69,8 @@ export const templates: Template[] = [
   }),
   defineTemplate({
     slug: "elegant-cream",
-    version: "1.0.1",
-    schemaVersion: 1,
+    version: "1.0.2",
+    schemaVersion: 2,
     activationSku: "BASIC_ACTIVATION",
     name: "Elegant Cream",
     subtitle: "Hangat & romantis",
@@ -67,7 +81,7 @@ export const templates: Template[] = [
     style: "cream",
     tags: ["Botani", "Lembut", "Minimalis"],
     features: ["cover", "gallery", "gift-info", "maps", "music", "rsvp", "whatsapp-share"],
-    schema: invitationSchema,
+    schema: elegantCreamInvitationSchema,
   }),
   defineTemplate({
     slug: "modern-sage",

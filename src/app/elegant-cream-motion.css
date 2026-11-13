@@ -3,8 +3,8 @@
   --cream-parallax-x-depth: 0px;
   --cream-motion-ease: cubic-bezier(.34, .14, .23, 1);
   --cream-intro-duration: 1780ms;
-  --cream-reveal-duration: 1220ms;
-  --cream-reveal-rise: 84px;
+  --cream-reveal-duration: 1550ms;
+  --cream-reveal-rise: 96px;
   --cream-type-start: 700ms;
   --cream-type-speed: 1;
 }
@@ -14,19 +14,19 @@
 .stationery-demo.theme-elegant-cream.is-open .opened-invitation .closing-section { view-timeline: --cream-closing block; }
 
 .stationery-demo.theme-elegant-cream.is-open .opened-invitation .hero-botanical {
-  --cream-parallax-depth: 64px;
-  --cream-parallax-x-depth: 22px;
+  --cream-parallax-depth: 88px;
+  --cream-parallax-x-depth: 28px;
   --cream-layer-timeline: --cream-hero;
 }
-.stationery-demo.theme-elegant-cream.is-open .opened-invitation .hero-botanical.corner-bottom { --cream-parallax-depth: -52px; --cream-parallax-x-depth: -18px; }
+.stationery-demo.theme-elegant-cream.is-open .opened-invitation .hero-botanical.corner-bottom { --cream-parallax-depth: -70px; --cream-parallax-x-depth: -24px; }
 .stationery-demo.theme-elegant-cream.is-open .opened-invitation .cover-photo-frame {
-  --cream-parallax-depth: 56px;
-  --cream-parallax-x-depth: 28px;
+  --cream-parallax-depth: 76px;
+  --cream-parallax-x-depth: 24px;
   --cream-layer-timeline: --cream-portrait;
 }
 .stationery-demo.theme-elegant-cream.is-open .opened-invitation .cover-photo-tile--host-one .cover-photo-frame { --cream-parallax-x-depth: -30px; }
 .stationery-demo.theme-elegant-cream.is-open .opened-invitation .closing-botanical {
-  --cream-parallax-depth: 56px;
+  --cream-parallax-depth: 72px;
   --cream-parallax-x-depth: -24px;
   --cream-layer-timeline: --cream-closing;
 }
@@ -35,12 +35,32 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation :is(.hero-botanical, .cover-photo-frame, .closing-botanical) {
+    --cream-ambient-name: elegant-cream-ornament-sway;
+    --cream-ambient-duration: 12s;
+    animation: var(--cream-ambient-name) var(--cream-ambient-duration) ease-in-out infinite alternate;
+    animation-play-state: var(--cream-ambient-state, paused);
+  }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation .cover-photo-frame {
+    --cream-ambient-name: elegant-cream-frame-float;
+    --cream-ambient-duration: 9s;
+  }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation .event-gallery-grid img {
+    animation: elegant-cream-photo-drift 16s ease-in-out infinite alternate;
+    animation-play-state: var(--cream-ambient-state, paused);
+  }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation .invitation-hero .monogram > :is(img, svg) {
+    animation: elegant-cream-crest-breathe 8s ease-in-out infinite alternate;
+    animation-play-state: var(--cream-ambient-state, paused);
+  }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-layer-active] { --cream-ambient-state: running; }
   @supports (animation-timeline: view()) and (view-timeline: --cream-hero block) and (animation-range: cover 0% cover 100%) {
     .stationery-demo.theme-elegant-cream.is-open .opened-invitation :is(.hero-botanical, .cover-photo-frame, .closing-botanical) {
-      animation: elegant-cream-scroll-depth linear both;
-      animation-duration: auto;
-      animation-timeline: var(--cream-layer-timeline);
-      animation-range: cover 0% cover 100%;
+      animation: elegant-cream-scroll-depth linear both, var(--cream-ambient-name) var(--cream-ambient-duration) ease-in-out infinite alternate;
+      animation-duration: auto, var(--cream-ambient-duration);
+      animation-timeline: var(--cream-layer-timeline), auto;
+      animation-range: cover 0% cover 100%, normal;
+      animation-play-state: running, var(--cream-ambient-state, paused);
     }
   }
 }
@@ -98,46 +118,60 @@
   animation: elegant-cream-digit-rise 480ms cubic-bezier(.22, .62, .31, 1) backwards;
 }
 
-/* Only cards below the initial viewport wait for the one-time reveal. */
-.stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="pending"] {
-  opacity: 0;
-  transform: translate3d(0, var(--cream-reveal-rise), 0) scale(.985);
-}
-.stationery-demo.theme-elegant-cream.is-open .opened-invitation .cover-photo-tile--host-two[data-cream-reveal="pending"] { transform: translate3d(48px, var(--cream-reveal-rise), 0) rotate(1.2deg) scale(.97); }
-.stationery-demo.theme-elegant-cream.is-open .opened-invitation .cover-photo-tile--host-one[data-cream-reveal="pending"] { transform: translate3d(-48px, var(--cream-reveal-rise), 0) rotate(-1.2deg) scale(.97); }
-.stationery-demo.theme-elegant-cream.is-open .opened-invitation .event-card:first-child[data-cream-reveal="pending"] { transform: translate3d(-38px, 52px, 0) rotate(-1deg) scale(.97); }
-.stationery-demo.theme-elegant-cream.is-open .opened-invitation .event-card:nth-child(2)[data-cream-reveal="pending"] { transform: translate3d(38px, 52px, 0) rotate(1deg) scale(.97); }
-.stationery-demo.theme-elegant-cream.is-open .opened-invitation .event-gallery-section[data-cream-reveal="pending"] { transform: translate3d(0, 92px, 0) scale(.965); }
-.stationery-demo.theme-elegant-cream.is-open .opened-invitation .rsvp-card[data-cream-reveal="pending"] { transform: translate3d(52px, 58px, 0) rotateY(2.5deg) scale(.97); transform-origin: left center; }
-.stationery-demo.theme-elegant-cream.is-open .opened-invitation .gift-account-card:first-child[data-cream-reveal="pending"] { transform: translate3d(-30px, 48px, 0) rotate(-1deg) scale(.96); }
-.stationery-demo.theme-elegant-cream.is-open .opened-invitation .gift-account-card:nth-child(2)[data-cream-reveal="pending"] { transform: translate3d(30px, 48px, 0) rotate(1deg) scale(.96); }
-.stationery-demo.theme-elegant-cream.is-open .opened-invitation .closing-section[data-cream-reveal="pending"] { transform: translate3d(0, 80px, 0) rotateX(1.2deg) scale(.97); }
-.stationery-demo.theme-elegant-cream.is-open .opened-invitation .event-rundown li[data-cream-reveal="pending"] { transform: translate3d(-34px, 34px, 0) scale(.985); }
-.stationery-demo.theme-elegant-cream.is-open .opened-invitation .event-rundown li:nth-child(even)[data-cream-reveal="pending"] { transform: translate3d(34px, 34px, 0) scale(.985); }
-.stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] {
-  opacity: 1;
-  transform: translate3d(0, 0, 0) scale(1);
-  transition: opacity var(--cream-reveal-duration) var(--cream-motion-ease), transform var(--cream-reveal-duration) var(--cream-motion-ease);
-  transition-duration: var(--cream-reveal-duration) !important;
-  transition-delay: var(--cream-reveal-delay, 0ms);
-}
-.stationery-demo.theme-elegant-cream.is-open .opened-invitation :is([data-cream-reveal="skip"], [data-cream-reveal]:focus-within) {
-  opacity: 1;
-  transform: none;
-  transition: none;
-}
+/* Each card and photo enters on its own; unobserved content remains readable. */
+.stationery-demo.theme-elegant-cream .cover-photo-tile--host-two { --cream-reveal-x: 32px; --cream-reveal-tilt: .8deg; }
+.stationery-demo.theme-elegant-cream .cover-photo-tile--host-one { --cream-reveal-x: -32px; --cream-reveal-tilt: -.8deg; }
+.stationery-demo.theme-elegant-cream .event-card:first-child,
+.stationery-demo.theme-elegant-cream .gift-account-card:first-child { --cream-reveal-x: -24px; --cream-reveal-tilt: -.6deg; }
+.stationery-demo.theme-elegant-cream .event-card:last-child,
+.stationery-demo.theme-elegant-cream .gift-account-card:nth-child(2) { --cream-reveal-x: 24px; --cream-reveal-tilt: .6deg; }
+.stationery-demo.theme-elegant-cream .event-card:nth-child(2) { --cream-reveal-delay: 150ms; }
+.stationery-demo.theme-elegant-cream .event-card:nth-child(3) { --cream-reveal-delay: 300ms; }
+.stationery-demo.theme-elegant-cream .gift-account-card:nth-child(2) { --cream-reveal-delay: 180ms; }
+.stationery-demo.theme-elegant-cream .rsvp-card { --cream-reveal-x: 28px; }
+.stationery-demo.theme-elegant-cream .event-rundown li { --cream-reveal-x: -24px; --cream-reveal-rise: 48px; }
+.stationery-demo.theme-elegant-cream .event-rundown li:nth-child(even) { --cream-reveal-x: 24px; }
+.stationery-demo.theme-elegant-cream .countdown-unit { --cream-reveal-rise: 44px; }
+.stationery-demo.theme-elegant-cream .countdown-unit:nth-child(2) { --cream-reveal-delay: 90ms; }
+.stationery-demo.theme-elegant-cream .countdown-unit:nth-child(3) { --cream-reveal-delay: 180ms; }
+.stationery-demo.theme-elegant-cream .countdown-unit:nth-child(4) { --cream-reveal-delay: 270ms; }
+.stationery-demo.theme-elegant-cream .event-gallery-grid figure { --cream-reveal-rise: 68px; --cream-reveal-tilt: -1deg; }
+.stationery-demo.theme-elegant-cream .event-gallery-grid figure:nth-child(even) { --cream-reveal-tilt: 1deg; }
+.stationery-demo.theme-elegant-cream .event-gallery-grid figure:nth-child(5n + 2) { --cream-reveal-delay: 90ms; }
+.stationery-demo.theme-elegant-cream .event-gallery-grid figure:nth-child(5n + 3) { --cream-reveal-delay: 180ms; }
+.stationery-demo.theme-elegant-cream .event-gallery-grid figure:nth-child(5n + 4) { --cream-reveal-delay: 270ms; }
+.stationery-demo.theme-elegant-cream .event-gallery-grid figure:nth-child(5n + 5) { --cream-reveal-delay: 360ms; }
 
-.stationery-demo.theme-elegant-cream .cover-photo-tile--host-one,
-.stationery-demo.theme-elegant-cream .event-card + .event-card,
-.stationery-demo.theme-elegant-cream .gift-account-card + .gift-account-card {
-  --cream-reveal-delay: 130ms;
+@media (prefers-reduced-motion: no-preference) {
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] {
+    animation: elegant-cream-panel-rise var(--cream-reveal-duration) var(--cream-motion-ease) var(--cream-reveal-delay, 0ms) backwards;
+  }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal]:focus-within { animation: none; }
+  .stationery-demo.theme-elegant-cream .cover-photo-tile[data-cream-reveal="visible"] .cover-photo-caption > * {
+    animation: elegant-cream-copy-rise 1300ms var(--cream-motion-ease) 220ms backwards;
+  }
+  .stationery-demo.theme-elegant-cream .cover-photo-tile[data-cream-reveal="visible"] .cover-photo-parents { animation-delay: 420ms; }
+  .stationery-demo.theme-elegant-cream [data-cream-reveal="visible"] :is(.section-flourish, .venue-rule) {
+    animation: elegant-cream-ink-rule 1400ms var(--cream-motion-ease) 180ms backwards;
+  }
+  .stationery-demo.theme-elegant-cream .event-card[data-cream-reveal="visible"] > svg,
+  .stationery-demo.theme-elegant-cream .event-rundown li[data-cream-reveal="visible"] .event-rundown-index {
+    animation: elegant-cream-icon-bloom 1100ms var(--cream-motion-ease) 200ms backwards;
+  }
+  .stationery-demo.theme-elegant-cream .event-card[data-cream-reveal="visible"] .date-composition strong {
+    animation: elegant-cream-copy-rise 1400ms var(--cream-motion-ease) 260ms backwards;
+  }
 }
 
 @media (max-width: 640px) {
   .stationery-demo.theme-elegant-cream.is-open .opened-invitation { --cream-reveal-rise: 64px; }
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation .cover-photo-frame { --cream-parallax-depth: 42px; }
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation .cover-photo-tile--host-two[data-cream-reveal="pending"] { transform: translate3d(24px, 52px, 0) rotate(1deg) scale(.98); }
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation .cover-photo-tile--host-one[data-cream-reveal="pending"] { transform: translate3d(-24px, 52px, 0) rotate(-1deg) scale(.98); }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation .cover-photo-frame { --cream-parallax-depth: 52px; --cream-parallax-x-depth: 12px; }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation .cover-photo-tile--host-one .cover-photo-frame { --cream-parallax-x-depth: -12px; }
+  .stationery-demo.theme-elegant-cream .cover-photo-tile--host-two { --cream-reveal-x: 16px; }
+  .stationery-demo.theme-elegant-cream .cover-photo-tile--host-one { --cream-reveal-x: -16px; }
+  .stationery-demo.theme-elegant-cream .event-card:nth-child(n) { --cream-reveal-delay: 0ms; }
+  .stationery-demo.theme-elegant-cream .event-gallery-grid figure:nth-child(n) { --cream-reveal-delay: 0ms; }
+  .stationery-demo.theme-elegant-cream .event-gallery-grid figure:nth-child(even) { --cream-reveal-delay: 100ms; }
 }
 
 .stationery-demo.theme-elegant-cream .cover-opening-overlay.is-revealing { transition-duration: 900ms !important; }
@@ -165,10 +199,34 @@
   68% { opacity: 1; transform: translate3d(0, -2px, 0) scale(1.12) rotate(7deg); }
   to { opacity: 1; transform: translate3d(0, 0, 0) scale(1) rotate(0); }
 }
-@keyframes elegant-cream-gallery-arrive {
-  from { opacity: 0; transform: translate3d(0, 36px, 0) scale(.94) rotate(var(--cream-gallery-tilt, -1deg)); }
-  72% { opacity: 1; transform: translate3d(0, -4px, 0) scale(1.015) rotate(0); }
-  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1) rotate(0); }
+@keyframes elegant-cream-panel-rise {
+  from { opacity: 0; transform: translate3d(var(--cream-reveal-x, 0px), var(--cream-reveal-rise), 0) rotate(var(--cream-reveal-tilt, 0deg)) scale(.97); }
+  70% { opacity: 1; }
+  to { opacity: 1; transform: translate3d(0, 0, 0) rotate(0) scale(1); }
+}
+@keyframes elegant-cream-copy-rise {
+  from { opacity: 0; transform: translate3d(0, 28px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes elegant-cream-icon-bloom {
+  from { opacity: .2; transform: scale(.65) rotate(-12deg); }
+  to { opacity: 1; transform: scale(1) rotate(0); }
+}
+@keyframes elegant-cream-ornament-sway {
+  from { rotate: -1.5deg; }
+  to { rotate: 2deg; }
+}
+@keyframes elegant-cream-frame-float {
+  from { transform: translate3d(0, 7px, 0) rotate(-.65deg); }
+  to { transform: translate3d(0, -9px, 0) rotate(.65deg); }
+}
+@keyframes elegant-cream-photo-drift {
+  from { transform: scale(1.015); }
+  to { transform: scale(1.09); }
+}
+@keyframes elegant-cream-crest-breathe {
+  from { scale: .97; rotate: -1deg; }
+  to { scale: 1.035; rotate: 1deg; }
 }
 @keyframes elegant-cream-cover-dissolve {
   from { opacity: 1; }
@@ -186,23 +244,6 @@
   from { opacity: .45; transform: translate3d(0, .4em, 0) scale(.88); }
   72% { opacity: 1; transform: translate3d(0, -.04em, 0) scale(1.04); }
   to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure {
-    --cream-gallery-tilt: -1deg;
-    animation: elegant-cream-gallery-arrive 920ms var(--cream-motion-ease) both;
-  }
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure:nth-child(even) { --cream-gallery-tilt: 1deg; }
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure:nth-child(2) { animation-delay: 70ms; }
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure:nth-child(3) { animation-delay: 140ms; }
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure:nth-child(4) { animation-delay: 210ms; }
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure:nth-child(5) { animation-delay: 280ms; }
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure:nth-child(6) { animation-delay: 350ms; }
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure:nth-child(7) { animation-delay: 420ms; }
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure:nth-child(8) { animation-delay: 490ms; }
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure:nth-child(9) { animation-delay: 560ms; }
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] .event-gallery-grid figure:nth-child(10) { animation-delay: 630ms; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -223,6 +264,9 @@
     animation-duration: var(--cream-intro-duration) !important;
   }
   .stationery-demo.theme-elegant-cream .countdown-digit { animation: none; }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation :is([data-cream-reveal], [data-cream-reveal] *, [data-cream-layer-active]) {
+    animation: none !important;
+  }
   .stationery-demo.theme-elegant-cream.is-open .opened-invitation :is(.hero-botanical, .hero-botanical.corner-bottom, .cover-photo-frame, .closing-botanical) {
     --cream-parallax-depth: 0px;
     --cream-parallax-x-depth: 0px;

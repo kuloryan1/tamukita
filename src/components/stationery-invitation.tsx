@@ -4,7 +4,8 @@ import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 
 import { flushSync } from "react-dom";
 import Image from "next/image";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, Check, Clock3, Copy, Gift, Heart, LayoutGrid, Mail, MapPin, RotateCcw, Share2, Users, X } from "lucide-react";
-import { BotanicalCorner, BotanicalWreath, SatinBow, TinyFlourish } from "@/components/stationery-ornaments";
+import { BotanicalCorner, SatinBow, TinyFlourish } from "@/components/stationery-ornaments";
+import { Monogram } from "@/components/stationery-monogram";
 import { RSVP } from "@/components/stationery-demo-rsvp";
 import { PublicInvitationGiftCopy, PublicInvitationMusic } from "@/components/public-invitation-actions";
 import { invitationCopy, type InvitationCopyKey } from "@/lib/invitation-copy";
@@ -14,6 +15,8 @@ import { templates, WEDDING, type WeddingTemplate } from "@/lib/stationery-demo"
 import { MAX_RECIPIENT_LENGTH, normalizeRecipient } from "@/lib/stationery-recipient";
 import { filterListedTemplates } from "@/lib/template-visibility";
 import { useCreamParallax } from "@/components/use-cream-parallax";
+import { useCreamReveal } from "@/components/use-cream-reveal";
+import { CreamTypedHeadline } from "@/components/cream-typed-headline";
 
 const listedStationeryTemplates = filterListedTemplates(templates);
 const ELEGANT_CREAM_OPENING_VIDEO = "/templates/elegant-cream-envelope-v1.mp4";
@@ -71,27 +74,6 @@ function playEnvelopeOpeningSound() {
   } catch {
     // The envelope animation and invitation still open if Web Audio is unavailable.
   }
-}
-
-function Monogram({ small = false, hostOne = WEDDING.groom, hostTwo = WEDDING.bride, customMonogram = "", crestSrc = "/images/monograms/wr-crest.png" }: { small?: boolean; hostOne?: string; hostTwo?: string; customMonogram?: string; crestSrc?: string }) {
-  const firstInitial = (name: string) => Array.from(name.trim())[0]?.toLocaleUpperCase("id-ID") ?? "?";
-  const initials = normalizeSealMonogram(customMonogram);
-  if (initials === "WR") return <div className={`monogram monogram--custom-crest${small ? " monogram-small" : ""}`} role="img" aria-label={`Monogram W R untuk ${hostOne} dan ${hostTwo}`}><Image className="monogram-custom-artwork" src={crestSrc} alt="" aria-hidden="true" width={500} height={500} sizes="(max-width: 640px) 108px, 125px" /></div>;
-  return <div className={`monogram${small ? " monogram-small" : ""}`} role="img" aria-label={initials ? `Monogram ${initials} untuk ${hostOne} dan ${hostTwo}` : `Monogram ${hostOne} dan ${hostTwo}`}><BotanicalWreath /><span>{initials || <>{firstInitial(hostOne)}<span className="monogram-amp">&</span>{firstInitial(hostTwo)}</>}</span></div>;
-}
-
-function CreamTypedHeadline({ text }: { text: string }) {
-  const letters = typeof Intl.Segmenter === "function"
-    ? Array.from(new Intl.Segmenter("id", { granularity: "grapheme" }).segment(text), ({ segment, index }) => ({ letter: segment, offset: index }))
-    : Array.from(text, (letter, offset) => ({ letter, offset }));
-  const step = Math.min(58, 2_600 / Math.max(letters.length, 1));
-  return (
-    <span aria-hidden="true" style={{ "--cream-letter-step": `${step}ms` } as CSSProperties}>
-      {letters.map(({ letter, offset }, index) => (
-        <span className="cream-type-letter" key={offset} style={{ "--cream-letter-index": index } as CSSProperties}>{letter}</span>
-      ))}
-    </span>
-  );
 }
 
 const countdownUnits = ["Hari", "Jam", "Menit", "Detik"] as const;
@@ -197,6 +179,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   const copy = (key: InvitationCopyKey, fallback?: string) => draft ? invitationCopy(draft, key, fallback) : fallback ?? "";
   const hasEnvelopeOpening = template.slug === "elegant-cream";
   useCreamParallax(mainRef, opened && hasEnvelopeOpening);
+  useCreamReveal(mainRef, opened && hasEnvelopeOpening);
   const hostOne = draft?.hostOne || WEDDING.groom;
   const hostTwo = draft?.hostTwo || WEDDING.bride;
   const isWulanRyanSample = isTestableSample && template.slug === "elegant-cream" && slug === "wulan-dan-ryan";
@@ -210,6 +193,21 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   const eventDate = draft?.eventDate || WEDDING.eventDate;
   const eventTime = draft?.eventTime || WEDDING.eventTime;
   const eventDateTime = new Date(`${eventDate}T${eventTime}:00+07:00`);
+  const akadDate = draft?.customFields.akadDate?.trim() ?? "";
+  const akadTime = draft?.customFields.akadTime?.trim() ?? "";
+  const parsedAkadDate = /^\d{4}-\d{2}-\d{2}$/.test(akadDate) ? new Date(`${akadDate}T12:00:00+07:00`) : null;
+  const hasAkadDate = template.slug === "elegant-cream" && Boolean(parsedAkadDate && Number.isFinite(parsedAkadDate.getTime()) && parsedAkadDate.toISOString().slice(0, 10) === akadDate);
+  const akadDateParts = hasAkadDate && parsedAkadDate
+    ? new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "2-digit", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).formatToParts(parsedAkadDate)
+    : [];
+  const akadDatePart = (type: Intl.DateTimeFormatPartTypes) => akadDateParts.find((part) => part.type === type)?.value ?? "";
+  const akadDateHeading = {
+    weekday: akadDatePart("weekday").toLocaleUpperCase("id-ID"),
+    day: akadDatePart("day"),
+    month: akadDatePart("month").toLocaleUpperCase("id-ID"),
+    year: akadDatePart("year"),
+  };
+  const validAkadTime = /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(akadTime) ? akadTime : "";
   const dateLabel = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(eventDateTime);
   const dateParts = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "2-digit", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).formatToParts(eventDateTime);
   const datePart = (type: Intl.DateTimeFormatPartTypes) => dateParts.find((part) => part.type === type)?.value ?? "";
@@ -318,45 +316,6 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
     ["undangan", "detail-acara", "konfirmasi", "hadiah"].forEach((id) => { const element = document.getElementById(id); if (element) observer.observe(element); });
     return () => observer.disconnect();
   }, [opened]);
-  useEffect(() => {
-    const main = mainRef.current;
-    if (!opened || !hasEnvelopeOpening || !main || !("IntersectionObserver" in window)) return;
-    const panels = main.querySelectorAll<HTMLElement>([
-      ".cover-photo-tile", ".countdown-section", ".event-section > .section-heading",
-      ".event-card", ".event-rundown", ".event-rundown li", ".event-gallery-section", ".rsvp-intro", ".rsvp-card",
-      ".gift-account-card", ".closing-section",
-    ].join(", "));
-    const leadIn = 24;
-    const observer = new IntersectionObserver((entries) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        entry.target.setAttribute("data-cream-reveal", "visible");
-        observer.unobserve(entry.target);
-      }
-    }, { rootMargin: `0px 0px ${leadIn}px 0px` });
-    for (const panel of panels) {
-      if (panel.getBoundingClientRect().top <= window.innerHeight + leadIn) continue;
-      panel.dataset.creamReveal = "pending";
-      observer.observe(panel);
-    }
-    const revealAnchor = () => {
-      const target = document.getElementById(window.location.hash.slice(1));
-      if (!target || !main.contains(target)) return;
-      for (const panel of panels) {
-        if (!target.contains(panel) && !panel.contains(target)) continue;
-        panel.dataset.creamReveal = "skip";
-        observer.unobserve(panel);
-      }
-    };
-    revealAnchor();
-    window.addEventListener("hashchange", revealAnchor);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("hashchange", revealAnchor);
-      for (const panel of panels) delete panel.dataset.creamReveal;
-    };
-  }, [hasEnvelopeOpening, opened]);
-
   function revealInvitation(keepScroll = false) {
     openingComplete.current = true;
     openingAttempt.current += 1;
@@ -511,7 +470,8 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
         <Countdown targetDate={eventStartsAt} accessibleDate={`${dateLabel} pukul ${eventTime} WIB`} label={copy("countdownLabel", "Menuju hari bahagia")} animate={hasEnvelopeOpening} />
         <section className="event-section content-section" id="detail-acara" aria-labelledby="event-title">
           <div className="section-heading"><span className="eyebrow">{copy("eventSectionEyebrow", "SIMPAN TANGGALNYA")}</span><h2 id="event-title" style={{ whiteSpace: "pre-line" }}>{copy("eventSectionHeading", "Sampai jumpa di hari bahagia.")}</h2><TinyFlourish className="section-flourish" /></div>
-          <div className="event-grid">
+          <div className={`event-grid${hasAkadDate ? " event-grid--with-akad" : ""}`}>
+            {hasAkadDate && <article className="event-card akad-event-card"><CalendarDays size={25} strokeWidth={1.1} /><span className="eyebrow">AKAD NIKAH</span><div className="date-composition"><span className="date-weekday">{akadDateHeading.weekday}</span><strong>{akadDateHeading.day}</strong><span className="date-month">{akadDateHeading.month}<br />{akadDateHeading.year}</span></div>{validAkadTime && <p className="event-time"><Clock3 size={15} />{validAkadTime} WIB</p>}</article>}
             <article className="event-card"><CalendarDays size={25} strokeWidth={1.1} /><span className="eyebrow">{copy("eventDateLabel", "HARI & TANGGAL")}</span><div className="date-composition"><span className="date-weekday">{dateHeading.weekday}</span><strong>{dateHeading.day}</strong><span className="date-month">{dateHeading.month}<br />{dateHeading.year}</span></div><p className="event-time"><Clock3 size={15} />{eventTimeLabel}</p><a className="button secondary" href={calendarHref} download>{copy("calendarActionLabel", "Simpan ke kalender")} <ArrowDown size={15} /></a></article>
             <article className="event-card venue-card"><MapPin size={25} strokeWidth={1.1} /><span className="eyebrow">{copy("locationLabel", "LOKASI ACARA")}</span><h3>{venue}</h3><p>{city}</p><div className="venue-rule"><span /><Heart size={14} strokeWidth={1} /><span /></div><a className="button secondary" href={mapUrl} target="_blank" rel="noopener noreferrer">{copy("mapActionLabel", "Buka peta")} <ArrowUpRight size={16} /></a></article>
           </div>

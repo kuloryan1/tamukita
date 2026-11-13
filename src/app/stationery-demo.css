@@ -335,6 +335,7 @@
 .stationery-demo .section-flourish { width: 82px; height: auto; margin: 20px auto 0; color: var(--accent); }
 .stationery-demo .event-section { border-top: 1px solid color-mix(in srgb, var(--line) 40%, transparent); }
 .stationery-demo .event-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.stationery-demo.theme-elegant-cream .event-grid--with-akad { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .stationery-demo .event-rundown { margin: 42px auto 0; max-width: 620px; }
 .stationery-demo .event-rundown-heading { margin-bottom: 21px; text-align: center; }
 .stationery-demo .event-rundown-heading > .eyebrow { color: var(--muted); font-size: 9px; }
@@ -357,6 +358,14 @@
 .stationery-demo .date-composition strong { font-family: var(--font-display); font-size: 76px; font-weight: 400; line-height: .95; letter-spacing: -.04em; }
 .stationery-demo .date-month { padding-left: 13px; border-left: 1px solid var(--line); color: var(--muted); font-size: 9px; line-height: 1.8; letter-spacing: .08em; text-align: left; }
 .stationery-demo .event-time { display: inline-flex; align-items: center; justify-content: center; gap: 7px; margin: 17px 0 22px; color: var(--muted); font-size: 12px; }
+.stationery-demo.theme-elegant-cream .akad-event-card { background: color-mix(in srgb, #edf1e8 84%, var(--paper)); border-color: color-mix(in srgb, #647c61 38%, transparent); }
+.stationery-demo.theme-elegant-cream .akad-event-card > svg { color: #5f785d; }
+.stationery-demo.theme-elegant-cream .akad-event-card > .eyebrow,
+.stationery-demo.theme-elegant-cream .akad-event-card .date-weekday,
+.stationery-demo.theme-elegant-cream .akad-event-card .date-month,
+.stationery-demo.theme-elegant-cream .akad-event-card .event-time { color: var(--muted); }
+.stationery-demo.theme-elegant-cream .akad-event-card .date-month { border-color: var(--line); }
+.stationery-demo.theme-elegant-cream .akad-event-card .date-composition strong { color: var(--ink); }
 .stationery-demo .event-card > .button { min-width: 195px; max-width: 100%; min-height: 45px; margin-top: auto; font-size: 11px; }
 .stationery-demo .venue-card h3 { max-width: 260px; margin: 19px 0 9px; font-family: var(--font-display); font-size: 35px; font-weight: 400; line-height: 1.06; letter-spacing: -.025em; }
 .stationery-demo .venue-card > p { margin: 0; color: var(--muted); font-size: 12px; }
@@ -489,6 +498,9 @@
   .stationery-demo .opened-invitation { padding: 34px 26px 25px; }
   .stationery-demo .invitation-hero { padding-left: 55px; padding-right: 55px; }
   .stationery-demo .event-card { padding-left: 22px; padding-right: 22px; }
+  .stationery-demo.theme-elegant-cream .event-grid--with-akad { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stationery-demo.theme-elegant-cream .event-grid--with-akad .venue-card { grid-column: 1 / -1; }
+  .stationery-demo.theme-elegant-cream .event-grid--with-akad { gap: 14px; }
   .stationery-demo .site-footer { padding-left: 26px; padding-right: 26px; }
 }
 
@@ -575,6 +587,7 @@
   .stationery-demo .section-heading h2 { font-size: 42px; margin-top: 12px; }
   .stationery-demo .section-flourish { width: 75px; margin-top: 17px; }
   .stationery-demo .event-grid { grid-template-columns: minmax(0, 1fr); gap: 17px; }
+  .stationery-demo.theme-elegant-cream .event-grid--with-akad { grid-template-columns: minmax(0, 1fr); }
   .stationery-demo .event-rundown { margin-top: 36px; }
   .stationery-demo .event-rundown-heading h3 { font-size: 33px; }
   .stationery-demo .event-rundown > ol { gap: 8px; }

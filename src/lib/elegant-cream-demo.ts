@@ -28,6 +28,8 @@ export function createElegantCreamDemoDraft(templateVersion: string): Invitation
     customFields: {
       eventSectionHeading: "Detail Acara",
       closingNames: "Ryan & Wulan",
+      akadDate: "2026-11-21",
+      akadTime: "08:00",
     },
   };
 }
