@@ -174,7 +174,7 @@ export function PublicInvitationRsvp({ slug, initialCount, recipientName, guestT
   );
 }
 
-export function PublicInvitationGuestbook({ slug, entries, recipientName, guestToken, copy }: { slug: string; entries: GuestbookMessage[]; recipientName?: string; guestToken?: string; copy?: { eyebrow?: string; heading?: string; intro?: string; submit?: string } }) {
+export function PublicInvitationGuestbook({ slug, entries, recipientName, guestToken, copy, entriesOnly = false }: { slug: string; entries: GuestbookMessage[]; recipientName?: string; guestToken?: string; entriesOnly?: boolean; copy?: { eyebrow?: string; heading?: string; intro?: string; submit?: string } }) {
   const [name, setName] = useState(recipientName ?? "");
   const [message, setMessage] = useState("");
   const [includesChildData, setIncludesChildData] = useState(false);
@@ -229,10 +229,10 @@ export function PublicInvitationGuestbook({ slug, entries, recipientName, guestT
   };
 
   return (
-    <section className="public-guestbook-section">
+    <section className={`public-guestbook-section${entriesOnly ? " public-guestbook-section--entries-only" : ""}`}>
       <div className="guestbook-inner">
-        <div className="guestbook-heading"><span className="eyebrow">{copy?.eyebrow ?? "UCAPAN & DOA"}</span><h2>{copy?.heading ?? <>Kirimkan <em>doa terbaikmu.</em></>}</h2><p>{copy?.intro ?? "Tinggalkan doa dan pesan hangat untuk hari istimewa kami."}</p><p className="guestbook-privacy-note">Ucapan ditinjau oleh pemilik undangan sebelum ditampilkan. Jangan masukkan kontak atau data sensitif anak. Persetujuan orang tua atau wali dibutuhkan jika ucapan mencantumkan informasi anak.</p></div>
-        <form className="guestbook-form" onSubmit={submit} onInvalidCapture={(event) => { event.preventDefault(); setError(getFirstInvalidFormMessage(event.currentTarget)); }} onChangeCapture={() => setError("")}>
+        <div className="guestbook-heading"><span className="eyebrow">{copy?.eyebrow ?? "UCAPAN & DOA"}</span><h2>{copy?.heading ?? <>Kirimkan <em>doa terbaikmu.</em></>}</h2><p>{copy?.intro ?? "Tinggalkan doa dan pesan hangat untuk hari istimewa kami."}</p>{!entriesOnly && <p className="guestbook-privacy-note">Ucapan ditinjau oleh pemilik undangan sebelum ditampilkan. Jangan masukkan kontak atau data sensitif anak. Persetujuan orang tua atau wali dibutuhkan jika ucapan mencantumkan informasi anak.</p>}</div>
+        {!entriesOnly && <form className="guestbook-form" onSubmit={submit} onInvalidCapture={(event) => { event.preventDefault(); setError(getFirstInvalidFormMessage(event.currentTarget)); }} onChangeCapture={() => setError("")}>
           {guestToken ? <label className="editor-field"><span className="field-label">Ucapan dari</span><input className="text-input" aria-label="Ucapan dari" value={name} readOnly /></label> : <label className="editor-field"><span className="field-label">Namamu</span><input className="text-input" required minLength={2} maxLength={100} value={name} onChange={(event) => setName(event.target.value)} placeholder="Nama lengkap" /></label>}
           <label className="editor-field"><span className="field-label">Ucapan</span><textarea className="text-input text-area" required minLength={2} maxLength={1000} rows={4} value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Tulis doa atau pesan untuk pengantin..." /></label>
           <label className="public-consent-row"><input type="checkbox" checked={includesChildData} onChange={(event) => { setIncludesChildData(event.target.checked); setGuardianConsent(false); setError(""); }} /><span>Ucapan ini mencantumkan nama atau informasi anak.</span></label>
@@ -240,7 +240,7 @@ export function PublicInvitationGuestbook({ slug, entries, recipientName, guestT
           {error && <div className="editor-error" role="alert">{error}</div>}
           {sent && <p className="guestbook-success" role="status">Terima kasih. Ucapanmu menunggu persetujuan pengundang.</p>}
           <button className="button button--dark" type="submit" disabled={sending}>{sending ? "Mengirim..." : copy?.submit ?? "Kirim ucapan"} <Send size={14} /></button>
-        </form>
+        </form>}
         <div className="guestbook-list" aria-live="polite">
           {entries.length ? entries.map((entry) => <article className="guestbook-entry" key={entry.id}>
             <span className="guestbook-heart"><Heart size={14} fill="currentColor" /></span>

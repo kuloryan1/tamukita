@@ -149,6 +149,7 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
       isTestableSample
       slug={slug}
       guestToken={guestLink ? candidateToken ?? undefined : undefined}
+      initialGuestbook={record.template.slug === "elegant-cream" ? guestbook.map((entry) => ({ ...entry, createdAt: entry.createdAt.toISOString() })) : []}
       paparazziToken={paparazziToken}
       calendarHref={record.template.slug === "elegant-cream" ? "/api/templates/demo/calendar?template=elegant-cream" : "/api/templates/demo/calendar"}
     />;
