@@ -57,6 +57,7 @@ export type InvitationDraft = {
   id: string;
   slug: string;
   eventKind: EventKind;
+  childrenInvited: boolean;
   eventTitle: string;
   hostOne: string;
   hostTwo: string;
@@ -140,6 +141,7 @@ export function createInitialDraft(): InvitationDraft {
     id: "invitation-demo",
     slug: "ryan-wulan",
     eventKind: "Pernikahan",
+    childrenInvited: true,
     eventTitle: "Undangan Pernikahan",
     hostOne: "Ryan",
     hostTwo: "Wulan",

@@ -30,8 +30,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const prisma = getPrismaClient();
   const result = await prisma.$transaction(async tx => {
     await tx.$queryRaw`SELECT id FROM "invitations" WHERE id = ${id}::uuid FOR UPDATE`;
-    const invitation = await tx.invitation.findFirst({ where: paparazziOwnerWhere(userId, id), select: { ...paparazziInvitationSelect, paparazziAlbum: true } });
+    const invitation = await tx.invitation.findFirst({ where: paparazziOwnerWhere(userId, id), select: { ...paparazziInvitationSelect, paparazziAlbum: true, draftData: true } });
     if (!invitation) return { error: "Undangan tidak ditemukan.", status: 404 };
+    const storedDraft = invitation.draftData;
+    const draftData = (typeof storedDraft === "object" && storedDraft !== null && !Array.isArray(storedDraft) ? storedDraft : {}) as Record<string, unknown>;
+    const childrenInvited = typeof draftData.childrenInvited === "boolean" ? draftData.childrenInvited : true;
     const now = new Date(); const existing = invitation.paparazziAlbum;
     const defaultClose = new Date(Math.max(now.getTime(), invitation.startsAt?.getTime() ?? now.getTime()) + 7 * 86_400_000);
     const closesAt = parsed.data.closesAt ? new Date(parsed.data.closesAt) : existing?.closesAt ?? new Date(Math.min(defaultClose.getTime(), invitation.expiresAt?.getTime() ?? defaultClose.getTime()));
@@ -39,8 +42,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if ((parsed.data.closesAt || parsed.data.enabled === true) && (closesAt <= now || (invitation.expiresAt && closesAt > invitation.expiresAt))) return { error: "Pilih waktu tutup setelah sekarang dan sebelum masa hosting berakhir.", status: 400 };
     const album = await tx.paparazziAlbum.upsert({
       where: { invitationId: id },
-      create: { invitationId: id, token: randomBytes(32).toString("hex"), enabled: parsed.data.enabled ?? false, closesAt },
-      update: { ...(parsed.data.enabled !== undefined ? { enabled: parsed.data.enabled } : {}), closesAt, ...(parsed.data.rotateQr ? { token: randomBytes(32).toString("hex") } : {}) },
+      create: { invitationId: id, token: randomBytes(32).toString("hex"), enabled: parsed.data.enabled ?? false, childrenInvited, closesAt },
+      update: { ...(parsed.data.enabled !== undefined ? { enabled: parsed.data.enabled } : {}), childrenInvited, closesAt, ...(parsed.data.rotateQr ? { token: randomBytes(32).toString("hex") } : {}) },
     });
     await tx.auditLog.create({ data: { actorId: userId, organizationId: invitation.organizationId, action: "paparazzi.settings_updated", targetType: "PaparazziAlbum", targetId: album.id, metadata: { enabled: album.enabled, closesAt: album.closesAt.toISOString(), qrRotated: Boolean(parsed.data.rotateQr), visibility: "PUBLIC_EVENT_GALLERY" } } });
     return { error: null, status: 200 };

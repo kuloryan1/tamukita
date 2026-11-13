@@ -19,6 +19,9 @@ menonaktifkan tautan lama untuk unggahan dan akses foto.
 - Maksimal 200 foto aktif per acara, 10 MB per unggahan, JPG/PNG/WebP.
 - Pengunggah menyatakan berusia minimal 18 tahun dan memiliki izin membagikan foto.
   Foto anak memerlukan pernyataan persetujuan orang tua/wali untuk publikasi.
+- Di editor undangan, pemilik memilih apakah anak di bawah 18 tahun diundang.
+  Jika tidak, formulir Paparazi tidak menampilkan pilihan foto anak dan API
+  menolak unggahan yang ditandai sebagai foto anak.
 - Galeri dapat dilihat tanpa login melalui QR atau tautan acara dan diberi `noindex`.
 - Kontrol pemilik memeriksa pemilik undangan dan keanggotaan organisasi aktif.
 - Laporan konten masuk ke moderasi undangan; peninjau dapat membuka galeri acara.

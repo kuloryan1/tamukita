@@ -6,7 +6,7 @@ import { Camera, CameraOff, Check, CheckCircle2, ImagePlus, Loader2, Users, Rota
 import { usePaparazziCamera } from "@/components/use-paparazzi-camera";
 import { PaparazziPublicGallery } from "@/components/paparazzi-public-gallery";
 import { PublicInvitationReport } from "@/components/public-invitation-report";
-import { PAPARAZZI_FAMILY_LINK_COPY, PAPARAZZI_GUARDIAN_COPY, PAPARAZZI_STORY_HEIGHT, PAPARAZZI_STORY_WIDTH, paparazziInstagramHandleSchema, type PaparazziPublicAlbum } from "@/lib/paparazzi";
+import { PAPARAZZI_GUARDIAN_COPY, PAPARAZZI_STORY_HEIGHT, PAPARAZZI_STORY_WIDTH, paparazziInstagramHandleSchema, type PaparazziPublicAlbum } from "@/lib/paparazzi";
 
 type Ticket = { photoId: string; receipt: string; uploadUrl: string; uploadHeaders?: Record<string, string>; uploadExpiresAt: number; uploaded: boolean; completed: boolean };
 const pause = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -108,7 +108,7 @@ export function PaparazziGuest({ token, initial }: { token: string; initial: Pap
         <input ref={nativeInput} aria-label="Ambil dengan kamera HP" className="paparazzi-file-input" type="file" accept="image/*" capture="environment" onChange={select} />
         <dialog ref={uploadDialog} className={`paparazzi-upload-dialog${cameraFullScreen ? " paparazzi-upload-dialog--camera" : ""}`} aria-label="Unggah foto ke galeri keluarga" onCancel={event => { event.preventDefault(); dismissUpload(); }} onClose={() => { setUploadOpen(false); camera.stop(); }}>
           <div className={`paparazzi-upload-dialog-content${cameraFullScreen ? " paparazzi-upload-dialog-content--camera" : ""}`}>
-            <div className="paparazzi-upload-dialog-heading"><div><p className="eyebrow">KENANGAN BERSAMA</p><h2 id="paparazzi-upload-title">Bagikan foto ke galeri keluarga</h2><p>Foto Story {PAPARAZZI_STORY_WIDTH} × {PAPARAZZI_STORY_HEIGHT} piksel. Watermark W&amp;R tampil lebih besar di tengah bawah tanpa nama Instagram.</p></div><button type="button" className="paparazzi-upload-dialog-close" aria-label="Tutup unggahan" onClick={dismissUpload} disabled={busy}><X size={19} /></button></div>
+            <div className="paparazzi-upload-dialog-heading"><div><p className="eyebrow">KENANGAN BERSAMA</p><h2 id="paparazzi-upload-title">Bagikan foto ke galeri keluarga</h2></div><button type="button" className="paparazzi-upload-dialog-close" aria-label="Tutup unggahan" onClick={dismissUpload} disabled={busy}><X size={19} /></button></div>
             <label className="paparazzi-instagram-field"><span>Nama Instagram <b>Wajib</b></span><input aria-label="Nama Instagram" type="text" value={instagramHandle} onChange={event => setInstagramHandle(event.target.value)} maxLength={31} autoComplete="off" autoCapitalize="none" spellCheck={false} placeholder="@namakamu" required aria-invalid={instagramHandle.trim().length > 0 && !parsedInstagramHandle.success} aria-describedby="paparazzi-instagram-help" disabled={busy} /><small id="paparazzi-instagram-help">Nama ini hanya menjadi keterangan galeri, tidak dicetak pada foto.</small>{instagramHandle.trim().length > 0 && !parsedInstagramHandle.success && <small className="paparazzi-handle-error">Gunakan 1–30 huruf, angka, titik, atau garis bawah.</small>}</label>
         {camera.active || camera.opening ? <section className="paparazzi-camera" aria-label="Kamera acara">
           <div className="paparazzi-camera-bar"><span aria-live="polite">{camera.opening ? "Menghubungkan kamera…" : `Foto Story ${PAPARAZZI_STORY_WIDTH} × ${PAPARAZZI_STORY_HEIGHT}`}</span><button type="button" aria-label="Tutup kamera" onClick={camera.stop}><X size={21} /></button></div>
@@ -123,9 +123,8 @@ export function PaparazziGuest({ token, initial }: { token: string; initial: Pap
             </span>
           </div>
           <form onSubmit={send} className="paparazzi-consent-form">
-            <p className="paparazzi-family-note">{PAPARAZZI_FAMILY_LINK_COPY}</p>
-            <label className="paparazzi-check"><input type="checkbox" checked={child} disabled={busy} onChange={event => { setChild(event.target.checked); setGuardian(false); }} /><span>Foto ini memuat anak di bawah 18 tahun.</span></label>
-            {child && <label className="paparazzi-check paparazzi-guardian"><input type="checkbox" checked={guardian} required disabled={busy} onChange={event => setGuardian(event.target.checked)} /><span>{PAPARAZZI_GUARDIAN_COPY}</span></label>}
+            {initial.childrenInvited && <label className="paparazzi-check"><input type="checkbox" checked={child} disabled={busy} onChange={event => { setChild(event.target.checked); setGuardian(false); }} /><span>Foto ini memuat anak di bawah 18 tahun.</span></label>}
+            {initial.childrenInvited && child && <label className="paparazzi-check paparazzi-guardian"><input type="checkbox" checked={guardian} required disabled={busy} onChange={event => setGuardian(event.target.checked)} /><span>{PAPARAZZI_GUARDIAN_COPY}</span></label>}
             <button type="submit" className="button button--dark button--wide" disabled={busy || !parsedInstagramHandle.success || (child && !guardian)}>{busy ? <Loader2 size={18} className="paparazzi-spin" /> : <Upload size={18} />}{phase === "uploading" ? "Mengunggah foto…" : phase === "processing" ? "Menyiapkan foto untuk galeri…" : ticketRef.current?.uploaded ? "Periksa unggahan" : "Kirim ke galeri keluarga"}</button>
             {busy && <p role="status" className="paparazzi-processing-note">Jaga halaman tetap terbuka. Foto tidak akan dikirim dua kali saat pemeriksaan diulang.</p>}
           </form>

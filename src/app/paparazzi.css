@@ -25,7 +25,6 @@
 .paparazzi-consent-form{display:grid;gap:16px}
 .paparazzi-check{display:flex;align-items:flex-start;gap:11px;font-size:12px;line-height:1.8;color:#526453;cursor:pointer}
 .paparazzi-check input{flex-shrink:0;width:18px;height:18px;margin:2px 0 0;accent-color:#315e4b}
-.paparazzi-family-note{margin:0;color:#718071;font-size:11px;line-height:1.8}
 .paparazzi-guardian{background:#f3f3eb;padding:13px;border-radius:8px}
 .paparazzi-consent-form .button{min-height:49px}
 .paparazzi-processing-note{font-size:11px;line-height:1.8;color:#7e877a;text-align:center}
@@ -187,7 +186,6 @@
 .paparazzi-upload-dialog-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:22px}
 .paparazzi-upload-dialog-heading .eyebrow{color:#8d8272;font-size:9px;letter-spacing:2px;margin-bottom:8px}
 .paparazzi-upload-dialog-heading h2{font-family:Georgia,serif;font-size:28px;font-weight:400;line-height:1.25;margin:0 0 7px}
-.paparazzi-upload-dialog-heading p:not(.eyebrow){font-size:12px;line-height:1.7;color:#718071}
 .paparazzi-upload-dialog-close{display:grid;place-items:center;flex-shrink:0;width:44px;height:44px;border:1px solid #d8dfd4;border-radius:50%;background:#fff;color:#395347}
 .paparazzi-upload-dialog-close:disabled{opacity:.5;cursor:not-allowed}
 .paparazzi-instagram-field{display:grid;gap:8px;margin-bottom:18px;color:#425449;font-size:12px;font-weight:600}

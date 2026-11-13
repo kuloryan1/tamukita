@@ -38,7 +38,7 @@ export async function getPublicPaparazziAlbum(token: string): Promise<PaparazziP
   if (!album) return null;
   const invitation = album.invitation;
   const visible = paparazziGalleryVisible(invitation);
-  return { title: visible ? invitation.title : "Acara TamuKita", open: paparazziIsOpen(album), galleryAvailable: visible, invitationSlug: visible ? invitation.slug : null, closesAt: album.closesAt.toISOString(), maxBytes: PAPARAZZI_MAX_BYTES, retentionDays: PAPARAZZI_RETENTION_DAYS };
+  return { title: visible ? invitation.title : "Acara TamuKita", open: paparazziIsOpen(album), galleryAvailable: visible, childrenInvited: album.childrenInvited, invitationSlug: visible ? invitation.slug : null, closesAt: album.closesAt.toISOString(), maxBytes: PAPARAZZI_MAX_BYTES, retentionDays: PAPARAZZI_RETENTION_DAYS };
 }
 
 export async function getOwnerPaparazziAlbum(userId: string, invitationId: string, cursor?: string): Promise<PaparazziOwnerAlbum | null> {

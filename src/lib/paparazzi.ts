@@ -6,7 +6,6 @@ export const PAPARAZZI_STORY_WIDTH = 1080;
 export const PAPARAZZI_STORY_HEIGHT = 1920;
 export const PAPARAZZI_RETENTION_DAYS = 90;
 export const PAPARAZZI_UPLOAD_TTL_MS = 15 * 60 * 1_000;
-export const PAPARAZZI_FAMILY_LINK_COPY = "Galeri hanya dibuka melalui QR atau tautan khusus dan tidak tampil di halaman undangan umum. Siapa pun yang memiliki tautan dapat melihatnya, jadi bagikan hanya kepada keluarga.";
 export const PAPARAZZI_GUARDIAN_COPY = "Saya orang tua/wali yang berwenang dan menyetujui TamuKita memproses foto anak ini serta menampilkannya melalui tautan keluarga.";
 
 export const paparazziTokenSchema = z.string().regex(/^[a-f0-9]{64}$/);
@@ -45,7 +44,7 @@ export function paparazziIsOpen(album: { enabled: boolean; closesAt: Date; invit
   return Boolean(album?.enabled && album.closesAt > now && paparazziGalleryVisible(album.invitation, now));
 }
 
-export type PaparazziPublicAlbum = { title: string; open: boolean; galleryAvailable: boolean; invitationSlug: string | null; closesAt: string; maxBytes: number; retentionDays: number };
+export type PaparazziPublicAlbum = { title: string; open: boolean; galleryAvailable: boolean; childrenInvited: boolean; invitationSlug: string | null; closesAt: string; maxBytes: number; retentionDays: number };
 export type PaparazziOwnerPhoto = { id: string; status: string; isVisible: boolean; createdAt: string; retentionAt: string; width: number | null; height: number | null };
 export type PaparazziGallery = { photos: Array<{ id: string; width: number | null; height: number | null; createdAt: string; instagramHandle: string | null }>; nextCursor: string | null };
 export type PaparazziOwnerAlbum = {

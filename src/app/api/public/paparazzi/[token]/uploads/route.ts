@@ -32,6 +32,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
     const album = await tx.paparazziAlbum.findFirst({ where: { id: initial.id, token }, include: { invitation: { select: paparazziInvitationSelect } } });
     if (!album) return { error: "QR acara sudah diganti. Minta QR terbaru kepada pemilik acara.", status: 404 } as const;
     if (!paparazziIsOpen(album, now)) return { error: "Pengumpulan foto belum dibuka atau sudah ditutup oleh pemilik acara.", status: 410 } as const;
+    if (!album.childrenInvited && parsed.data.includesChildData) return { error: "Acara ini tidak mengundang anak di bawah 18 tahun.", status: 400 } as const;
     const count = album.maxPhotos === null ? 0 : await tx.paparazziPhoto.count({ where: { albumId: album.id, deletedAt: null, retentionAt: { gt: now }, OR: [{ status: { in: ["PROCESSING", "READY"] } }, { status: "PENDING", createdAt: { gt: new Date(now.getTime() - PAPARAZZI_UPLOAD_TTL_MS) } }] } });
     if (album.maxPhotos !== null && count >= album.maxPhotos) return { error: "Album acara sudah penuh. Hubungi pemilik acara.", status: 409 } as const;
     const prefix = `${album.invitation.organizationId}/${album.invitationId}/${photoId}`;

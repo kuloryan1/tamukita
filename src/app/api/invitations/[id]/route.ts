@@ -86,6 +86,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         },
       });
       if (record.count === 0) return false;
+      await tx.paparazziAlbum.updateMany({ where: { invitationId: id }, data: { childrenInvited: draft.childrenInvited } });
       if (existing.status === "PUBLISHED") return true;
       const event = await tx.event.findFirst({ where: { invitationId: id }, select: { id: true } });
       if (event) {
