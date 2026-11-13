@@ -168,6 +168,8 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   const [activeSection, setActiveSection] = useState("undangan");
   const mainRef = useRef<HTMLElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const galleryDialogRef = useRef<HTMLDialogElement>(null);
+  const [activeGalleryPhoto, setActiveGalleryPhoto] = useState<number | null>(null);
   const musicContainerRef = useRef<HTMLDivElement>(null);
   const openingVideoRef = useRef<HTMLVideoElement>(null);
   const coverRef = useRef<HTMLDivElement>(null);
@@ -182,6 +184,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   useCreamReveal(mainRef, opened && hasEnvelopeOpening);
   const hostOne = draft?.hostOne || WEDDING.groom;
   const hostTwo = draft?.hostTwo || WEDDING.bride;
+  const isElegantCream = template.slug === "elegant-cream";
   const isWulanRyanSample = isTestableSample && template.slug === "elegant-cream" && slug === "wulan-dan-ryan";
   const [firstHeroName, secondHeroName] = isWulanRyanSample
     ? ["Wulan", "Ryan"]
@@ -221,6 +224,8 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   const coverMessage = copy("coverMessage", "Dengan penuh sukacita, kami mengundang Anda.");
   const eventSchedule = draft?.eventSchedule ?? WEDDING.eventSchedule;
   const galleryPhotos = draft?.galleryPhotos ?? [];
+  const activeGalleryPhotoSrc = activeGalleryPhoto === null ? null : galleryPhotos[activeGalleryPhoto];
+  const activeGalleryPhotoAlt = activeGalleryPhoto === null ? "" : `Foto ${activeGalleryPhoto + 1} ${hostOne} dan ${hostTwo}`;
   const coverPositionX = draft?.coverPositionX ?? 50;
   const coverPositionY = draft?.coverPosition ?? 50;
   const hostOneCoverPhotoPosition = `${Math.max(0, coverPositionX - 35)}% ${coverPositionY}%`;
@@ -478,7 +483,27 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
           {eventSchedule.length > 0 && <section className="event-rundown" aria-labelledby="event-rundown-title"><div className="event-rundown-heading"><span className="eyebrow">{copy("scheduleSectionEyebrow", "RANGKAIAN ACARA")}</span><h3 id="event-rundown-title">{copy("scheduleSectionHeading", "Rundown acara")}</h3><p>{copy("scheduleSectionIntro", "Setiap momen istimewa telah kami siapkan.")}</p></div><ol>{eventSchedule.filter((item) => item.time.trim() && item.title.trim()).map((item, index) => <li key={item.id}><time dateTime={item.time}>{item.time}<small>WIB</small></time><span className="event-rundown-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><div className="event-rundown-content"><b>{item.title}</b>{item.description && <p>{item.description}</p>}</div></li>)}</ol></section>}
           <a className="text-link rsvp-jump" href="#konfirmasi">{copy("rsvpJumpLabel", "Konfirmasi kehadiran")} <ArrowDown size={15} /></a>
         </section>
-        {galleryPhotos.length > 0 && <section className="event-gallery-section" aria-label={`Galeri foto ${hostOne} dan ${hostTwo}`}><div className="event-gallery-heading"><span className="eyebrow">{copy("gallerySectionEyebrow", "POTONGAN CERITA")}</span><h2 style={{ whiteSpace: "pre-line" }}>{copy("gallerySectionHeading", "Momen yang ingin kami kenang.")}</h2><p>{copy("gallerySectionIntro", "Foto-foto kenangan dari hari istimewa kami.")}</p></div><div className="event-gallery-grid">{galleryPhotos.slice(0, 6).map((photo, index) => <figure key={photo}><Image src={photo} alt={`Foto ${index + 1} ${hostOne} dan ${hostTwo}`} width={640} height={480} sizes="(max-width: 720px) 50vw, 33vw" unoptimized /></figure>)}</div></section>}
+        {galleryPhotos.length > 0 && <section className="event-gallery-section" aria-label={`Galeri foto ${hostOne} dan ${hostTwo}`}>
+          <div className="event-gallery-heading"><span className="eyebrow">{copy("gallerySectionEyebrow", "POTONGAN CERITA")}</span><h2 style={{ whiteSpace: "pre-line" }}>{copy("gallerySectionHeading", "Momen yang ingin kami kenang.")}</h2><p>{copy("gallerySectionIntro", "Foto-foto kenangan dari hari istimewa kami.")}</p></div>
+          <div className="event-gallery-grid">{galleryPhotos.slice(0, 6).map((photo, index) => {
+            const imageAlt = `Foto ${index + 1} ${hostOne} dan ${hostTwo}`;
+            const image = <Image src={photo} alt={imageAlt} width={640} height={480} sizes="(max-width: 720px) 50vw, 33vw" unoptimized />;
+            return <figure key={photo}>{isElegantCream
+              ? <button type="button" aria-haspopup="dialog" aria-label={`Perbesar ${imageAlt}`} onClick={() => {
+                setActiveGalleryPhoto(index);
+                galleryDialogRef.current?.showModal();
+              }}>{image}</button>
+              : image}</figure>;
+          })}</div>
+        </section>}
+        {isElegantCream && galleryPhotos.length > 0 && <dialog className="share-dialog event-gallery-lightbox" ref={galleryDialogRef} aria-label={activeGalleryPhotoAlt || `Galeri foto ${hostOne} dan ${hostTwo}`} onClose={() => setActiveGalleryPhoto(null)} onClick={(event) => {
+          if (event.target === event.currentTarget) galleryDialogRef.current?.close();
+        }}>
+          <div className="share-dialog-content event-gallery-lightbox-content">
+            <button type="button" className="icon-button dialog-close" aria-label="Tutup foto" onClick={() => galleryDialogRef.current?.close()}><X size={19} /></button>
+            {activeGalleryPhotoSrc && <Image className="event-gallery-lightbox-image" src={activeGalleryPhotoSrc} alt={activeGalleryPhotoAlt} width={640} height={480} sizes="100vw" unoptimized />}
+          </div>
+        </dialog>}
         <RSVP template={template} recipient={guest} isTestableSample={isTestableSample} slug={slug} guestToken={guestToken} copy={{ eyebrow: copy("rsvpSectionEyebrow", "KONFIRMASI KEHADIRAN"), heading: copy("rsvpSectionHeading", "Sebuah kabar, berarti bagi kami."), intro: copy("rsvpSectionIntro", "Isi konfirmasi kehadiran dan titipkan ucapan hangat untuk hari istimewa kami."), question: copy("rsvpFormQuestion", "Berkenan hadir?"), submit: copy("rsvpSubmitActionLabel", "Kirim konfirmasi") }} />
         {giftAccounts.length > 0 && <section className="gift-section content-section" id="hadiah" aria-labelledby="gift-title"><div className="section-heading"><Gift size={20} strokeWidth={1.2} /><span className="eyebrow">{copy("giftSectionEyebrow", "TANDA KASIH")}</span><h2 id="gift-title" style={{ whiteSpace: "pre-line" }}>{copy("giftSectionHeading", "Kehadiranmu adalah hadiah terindah.")}</h2></div><p className="gift-message">{giftMessage}</p><div className="gift-account-grid">{giftAccounts.map((account) => <article className="gift-account-card" key={account.id}><span className="gift-account-recipient">{account.recipientLabel}</span><span className="eyebrow">{account.bankName}</span><b>{account.accountName}</b><strong>{account.accountNumber}</strong><PublicInvitationGiftCopy accountNumber={account.accountNumber} label={copy("giftCopyActionLabel", "Salin nomor rekening")} /></article>)}</div></section>}
         <section className="closing-section paper"><BotanicalCorner className="closing-botanical" variant={template.ornament} /><TinyFlourish className="section-flourish" /><span className="eyebrow">{copy("closingSectionEyebrow", "DENGAN PENUH SUKACITA")}</span><h2 style={{ whiteSpace: "pre-line" }}>{copy("closingSectionHeading", "Hari istimewa ini, lebih indah bersama Anda.")}</h2>{intro.trim() && <p>{intro}</p>}<div className="closing-names" style={{ whiteSpace: "pre-line" }}>{closingNames}</div><span className="closing-date">{dateLabel.toLocaleUpperCase("id-ID")}</span><button type="button" className="text-link" onClick={() => dialogRef.current?.showModal()}>{copy("shareActionLabel", "Bagikan undangan")} <Share2 size={14} /></button></section>
