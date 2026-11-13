@@ -12,6 +12,30 @@
   outline-offset: -3px;
 }
 
+.captionActions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.shareButton {
+  display: grid;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #4b6e51;
+  cursor: pointer;
+}
+
+.shareButton:focus-visible {
+  outline: 3px solid #315e4b;
+  outline-offset: -3px;
+}
+
 .dialog {
   width: min(920px, calc(100vw - 28px));
   max-width: none;
