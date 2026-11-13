@@ -36,6 +36,8 @@
 .paparazzi-guardian{background:#f3f3eb;padding:13px;border-radius:8px}
 .paparazzi-consent-form .button{min-height:49px}
 .paparazzi-processing-note{font-size:11px;line-height:1.8;color:#7e877a;text-align:center}
+.paparazzi-upload-progress{height:4px;width:100%;overflow:hidden;border-radius:999px;background:var(--line)}
+.paparazzi-upload-progress>span{display:block;width:35%;height:100%;border-radius:inherit;background:var(--forest);animation:paparazzi-upload-progress 1.2s ease-in-out infinite alternate}
 .paparazzi-sent{text-align:center}
 .paparazzi-sent>span{display:inline-flex;align-items:center;justify-content:center;width:74px;height:74px;border-radius:50%;background:#e8f0e4;color:#406f48;margin-bottom:21px}
 .paparazzi-sent .text-link{display:inline-block;margin-top:20px;font-size:13px}
@@ -125,6 +127,7 @@
 .paparazzi-photo-actions>.button{padding:8px;font-size:9px;gap:4px;min-height:38px}
 .paparazzi-delete{color:#ab7465!important}
 @keyframes paparazzi-rotate{to{transform:rotate(360deg)}}
+@keyframes paparazzi-upload-progress{from{transform:translateX(-100%)}to{transform:translateX(280%)}}
 .paparazzi-spin{animation:paparazzi-rotate 1.2s linear infinite}
 @media(max-width:1050px){.paparazzi-owner-layout{grid-template-columns:1fr}
 .paparazzi-qr-panel .paparazzi-print-sheet img{max-width:310px}
@@ -168,7 +171,7 @@
 .paparazzi-close-setting .text-input{font-size:12px!important}
 .paparazzi-owner-info{font-size:11px!important}
 .paparazzi-rotate{font-size:11px;min-height:40px}}
-@media(prefers-reduced-motion:reduce){.paparazzi-spin{animation:none}}
+@media(prefers-reduced-motion:reduce){.paparazzi-spin{animation:none}.paparazzi-upload-progress>span{width:100%;transform:none;animation:none;opacity:.45}}
 @media print{body:has(.paparazzi-owner) *{visibility:hidden}body:has(.paparazzi-owner) .paparazzi-print-sheet,body:has(.paparazzi-owner) .paparazzi-print-sheet *{visibility:visible}body:has(.paparazzi-owner) .paparazzi-print-sheet{position:fixed;inset:0;background:white;padding:45px 25px;text-align:center}body:has(.paparazzi-owner) .paparazzi-print-sheet img{max-width:430px}body:has(.paparazzi-owner) .paparazzi-print-sheet h3{font-size:34px}}
 
 .paparazzi-content-report{margin-top:24px;text-align:center}
