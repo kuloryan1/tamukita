@@ -86,6 +86,7 @@ export function RSVP({ template, recipient, isTestableSample = false, slug, gues
   copy?: { eyebrow?: string; heading?: string; intro?: string; question?: string; submit?: string };
 }) {
   const id = useId();
+  const showChildDataConsent = !(isTestableSample && template.slug === "elegant-cream" && slug === "wulan-dan-ryan");
   const recipientRef = useRef(recipient);
   recipientRef.current = recipient;
   const formRef = useRef<HTMLFormElement>(null);
@@ -407,11 +408,11 @@ export function RSVP({ template, recipient, isTestableSample = false, slug, gues
                   {fields.message && <span id={`${id}-message-error`} className="form-error">{fields.message}</span>}
                 </div>
 
-                <div className="rsvp-consent-group">
+                {showChildDataConsent && <div className="rsvp-consent-group">
                   <label className="rsvp-consent-row"><input type="checkbox" name="includesChildData" checked={draft.includesChildData} onChange={(event) => changeChildData(event.target.checked)} disabled={busy !== ""} /><span>Konfirmasi kehadiran ini mencantumkan nama atau informasi anak.</span></label>
                   {draft.includesChildData && <><label className="rsvp-consent-row rsvp-consent-row-nested"><input type="checkbox" name="guardianConsent" checked={draft.guardianConsent} onChange={(event) => changeField("guardianConsent", event.target.checked)} required disabled={busy !== ""} aria-invalid={!!fields.guardianConsent} aria-describedby={fields.guardianConsent ? `${id}-guardian-error` : `${id}-guardian-note`} /><span>{RSVP_CHILD_DATA_GUARDIAN_CONSENT_COPY}</span></label><p id={`${id}-guardian-note`} className="rsvp-consent-demo-note">Persetujuan ini hanya disimulasikan di demo. Tidak ada data yang dikirim kepada mempelai.</p>{fields.guardianConsent && <span id={`${id}-guardian-error`} className="form-error">{fields.guardianConsent}</span>}</>}
                   {isTestableSample && draft.message.trim() && <><label className="rsvp-consent-row"><input type="checkbox" name="guestbookIncludesChildData" checked={guestbookIncludesChildData} onChange={(event) => changeGuestbookChildData(event.target.checked)} disabled={busy !== ""} /><span>Ucapan ini mencantumkan nama atau informasi anak.</span></label>{guestbookIncludesChildData && <><label className="rsvp-consent-row rsvp-consent-row-nested"><input type="checkbox" name="guestbookGuardianConsent" checked={guestbookGuardianConsent} onChange={(event) => { setGuestbookGuardianConsent(event.target.checked); setFields((previous) => ({ ...previous, guestbookGuardianConsent: "" })); }} required disabled={busy !== ""} aria-invalid={!!fields.guestbookGuardianConsent} /><span>{GUESTBOOK_CHILD_DATA_GUARDIAN_CONSENT_COPY}</span></label>{fields.guestbookGuardianConsent && <span className="form-error">{fields.guestbookGuardianConsent}</span>}</>}</>}
-                </div>
+                </div>}
 
                 <div className="rsvp-honeypot" aria-hidden="true"><label htmlFor={`${id}-website`}>Website<input id={`${id}-website`} type="text" name="website" autoComplete="off" tabIndex={-1} value={draft.website} onChange={(event) => changeField("website", event.target.value)} /></label></div>
 
