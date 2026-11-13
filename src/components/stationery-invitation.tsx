@@ -478,10 +478,28 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
         <Countdown targetDate={eventStartsAt} accessibleDate={`${dateLabel} pukul ${eventTime} WIB`} label={copy("countdownLabel", "Menuju hari bahagia")} animate={hasEnvelopeOpening} />
         <section className="event-section content-section" id="detail-acara" aria-labelledby="event-title">
           <div className="section-heading"><span className="eyebrow">{copy("eventSectionEyebrow", "SIMPAN TANGGALNYA")}</span><h2 id="event-title" style={{ whiteSpace: "pre-line" }}>{copy("eventSectionHeading", "Sampai jumpa di hari bahagia.")}</h2><TinyFlourish className="section-flourish" /></div>
-          <div className={`event-grid${hasAkadDate ? " event-grid--with-akad" : ""}`}>
+          <div className={`event-grid${hasAkadDate ? " event-grid--with-akad" : ""}${isElegantCream ? " event-grid--location-below" : ""}`}>
             {hasAkadDate && <article className="event-card akad-event-card"><CalendarDays size={25} strokeWidth={1.1} /><span className="eyebrow">AKAD NIKAH</span><div className="date-composition"><span className="date-weekday">{akadDateHeading.weekday}</span><strong>{akadDateHeading.day}</strong><span className="date-month">{akadDateHeading.month}<br />{akadDateHeading.year}</span></div>{validAkadTime && <p className="event-time"><Clock3 size={15} />{validAkadTime} WIB</p>}</article>}
             <article className="event-card"><CalendarDays size={25} strokeWidth={1.1} /><span className="eyebrow">{copy("eventDateLabel", "HARI & TANGGAL")}</span><div className="date-composition"><span className="date-weekday">{dateHeading.weekday}</span><strong>{dateHeading.day}</strong><span className="date-month">{dateHeading.month}<br />{dateHeading.year}</span></div><p className="event-time"><Clock3 size={15} />{eventTimeLabel}</p><a className="button secondary" href={calendarHref} download>{copy("calendarActionLabel", "Simpan ke kalender")} <ArrowDown size={15} /></a></article>
-            <article className="event-card venue-card"><MapPin size={25} strokeWidth={1.1} /><span className="eyebrow">{copy("locationLabel", "LOKASI ACARA")}</span><h3>{venue}</h3><p>{city}</p><div className="venue-rule"><span /><Heart size={14} strokeWidth={1} /><span /></div><a className="button secondary" href={mapUrl} target="_blank" rel="noopener noreferrer">{copy("mapActionLabel", "Buka peta")} <ArrowUpRight size={16} /></a></article>
+            <article className="event-card venue-card">
+              <MapPin size={25} strokeWidth={1.1} />
+              <span className="eyebrow">{copy("locationLabel", "LOKASI ACARA")}</span>
+              <h3>{venue}</h3>
+              <p>{city}</p>
+              <div className="venue-rule"><span /><Heart size={14} strokeWidth={1} /><span /></div>
+              {isElegantCream && mapQuery && (
+                <div className="venue-map-preview">
+                  <iframe
+                    title={`Peta lokasi ${venue || "acara"}`}
+                    src={`https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    allowFullScreen
+                  />
+                </div>
+              )}
+              <a className="button secondary" href={mapUrl} target="_blank" rel="noopener noreferrer">{copy("mapActionLabel", "Buka peta")} <ArrowUpRight size={16} /></a>
+            </article>
           </div>
           {eventSchedule.length > 0 && <section className="event-rundown" aria-labelledby="event-rundown-title"><div className="event-rundown-heading"><span className="eyebrow">{copy("scheduleSectionEyebrow", "RANGKAIAN ACARA")}</span><h3 id="event-rundown-title">{copy("scheduleSectionHeading", "Rundown acara")}</h3><p>{copy("scheduleSectionIntro", "Setiap momen istimewa telah kami siapkan.")}</p></div><ol>{eventSchedule.filter((item) => item.time.trim() && item.title.trim()).map((item, index) => <li key={item.id}><time dateTime={item.time}>{item.time}<small>WIB</small></time><span className="event-rundown-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><div className="event-rundown-content"><b>{item.title}</b>{item.description && <p>{item.description}</p>}</div></li>)}</ol></section>}
           <a className="text-link rsvp-jump" href="#konfirmasi">{copy("rsvpJumpLabel", "Konfirmasi kehadiran")} <ArrowDown size={15} /></a>
