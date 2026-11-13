@@ -6,7 +6,7 @@ import { getPrismaClient } from "@/lib/prisma";
 import { readJsonBody } from "@/lib/request-json";
 import { isTemplateSelectable } from "@/lib/template-sdk";
 import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
-import { isAdminSampleSnapshot } from "@/lib/invitation-publication";
+import { getAdminSampleTemplateId, isAdminSampleSnapshot } from "@/lib/invitation-publication";
 import { isTemplateListed } from "@/lib/template-visibility";
 
 export const runtime = "nodejs";
@@ -38,7 +38,7 @@ export async function GET(request: Request) {
     updatedAt: invitation.updatedAt.toISOString(),
     isPublished: invitation.status === "PUBLISHED",
   });
-  return NextResponse.json({ draft: draftData, featureAccess, adminSample: isAdminSampleSnapshot(invitation.publishedSnapshot) });
+  return NextResponse.json({ draft: draftData, featureAccess, adminSample: isAdminSampleSnapshot(invitation.publishedSnapshot), adminSampleTemplateId: getAdminSampleTemplateId(invitation.publishedSnapshot) });
 }
 
 export async function POST(request: Request) {
