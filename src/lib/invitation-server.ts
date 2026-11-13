@@ -81,6 +81,7 @@ export const invitationDraftSchema = z.object({
   giftAccountNumber2: z.string().trim().max(60).default(""),
   musicUrl: z.string().trim().max(2048).default("").refine((value) => !value || isMediaPublicUrl(value)),
   musicTitle: z.string().trim().max(80).default(""),
+  musicStartAtSeconds: z.number().int().min(0).max(86_400).default(0),
   customFields: z.record(z.string().refine(isSafeTemplateFieldKey), z.string().max(1_000)).default({}).superRefine((fields, context) => {
     if (Object.keys(fields).length > 96) context.addIssue({ code: "custom", message: "Terlalu banyak field template." });
     if (new TextEncoder().encode(JSON.stringify(fields)).byteLength > 20_000) context.addIssue({ code: "custom", message: "Data field template terlalu besar." });
@@ -135,6 +136,9 @@ export function normalizeStoredInvitationDraft(
     giftAccountNumber2: typeof draftData.giftAccountNumber2 === "string" ? draftData.giftAccountNumber2 : "",
     musicUrl: typeof draftData.musicUrl === "string" ? draftData.musicUrl : "",
     musicTitle: typeof draftData.musicTitle === "string" ? draftData.musicTitle : "",
+    musicStartAtSeconds: typeof draftData.musicStartAtSeconds === "number" && Number.isInteger(draftData.musicStartAtSeconds) && draftData.musicStartAtSeconds >= 0 && draftData.musicStartAtSeconds <= 86_400
+      ? draftData.musicStartAtSeconds
+      : 0,
     customFields: normalizeInvitationCustomFields(draftData.customFields),
   };
 }

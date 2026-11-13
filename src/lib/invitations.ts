@@ -92,6 +92,7 @@ export type InvitationDraft = {
   giftAccountNumber2: string;
   musicUrl: string;
   musicTitle: string;
+  musicStartAtSeconds: number;
   customFields: Record<string, string>;
   updatedAt: string;
   publishedAt?: string;
@@ -176,6 +177,7 @@ export function createInitialDraft(): InvitationDraft {
     giftAccountNumber2: "",
     musicUrl: "",
     musicTitle: "",
+    musicStartAtSeconds: 0,
     customFields: {},
     updatedAt: new Date().toISOString(),
   };

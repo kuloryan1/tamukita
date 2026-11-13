@@ -96,7 +96,7 @@ export function ReferenceInvitation({
     <ReferenceMotionProvider isExample={isExample}>
       <main className={`reference-invitation reference-invitation--${preset.slug}${hasLongTitle ? " reference-invitation--long-title" : ""}`} data-template={preset.slug} data-theme-font={draft.themeFont ?? "classic"} data-theme-color={draft.themeColor ?? "default"} data-invitation-publication={isExample ? "demo" : "published"}>
         <div className="reference-invitation-frame" data-reference-content>
-          {draft.musicUrl && featureAccess.music && <div className="reference-music"><PublicInvitationMusic src={draft.musicUrl} title={draft.musicTitle} /></div>}
+          {draft.musicUrl && featureAccess.music && <div className="reference-music"><PublicInvitationMusic src={draft.musicUrl} title={draft.musicTitle} startAtSeconds={draft.musicStartAtSeconds} /></div>}
           <section className="reference-hero" aria-label="Undangan pernikahan">
             <ReferenceHeroMedia preset={preset} />
             <div className="reference-hero-shade" aria-hidden="true" />

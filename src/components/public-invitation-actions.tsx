@@ -8,9 +8,28 @@ import { getFirstInvalidFormMessage } from "@/lib/form-validation-message";
 type GuestbookMessage = { id: string; displayName: string; message: string; createdAt: string };
 type ReportReason = "SPAM" | "HARASSMENT" | "PERSONAL_INFORMATION" | "OTHER";
 
-export function PublicInvitationMusic({ src, title }: { src: string; title: string }) {
+export function PublicInvitationMusic({ src, title, startAtSeconds = 0 }: { src: string; title: string; startAtSeconds?: number }) {
   const [playing, setPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const startPositionApplied = useRef(false);
+  useEffect(() => {
+    const audio = audioRef.current;
+    startPositionApplied.current = false;
+    setPlaying(false);
+    if (!audio) return;
+    audio.pause();
+    const seekToStart = () => {
+      if (startPositionApplied.current) return;
+      try {
+        const maximumStart = Number.isFinite(audio.duration) && audio.duration > 0 ? Math.max(0, Math.floor(audio.duration) - 1) : startAtSeconds;
+        audio.currentTime = Math.min(Math.max(0, startAtSeconds), maximumStart);
+        startPositionApplied.current = true;
+      } catch { /* The browser will seek when the media is ready. */ }
+    };
+    if (audio.readyState >= HTMLMediaElement.HAVE_METADATA) seekToStart();
+    else audio.addEventListener("loadedmetadata", seekToStart, { once: true });
+    return () => audio.removeEventListener("loadedmetadata", seekToStart);
+  }, [src, startAtSeconds]);
   const toggle = async () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -18,13 +37,23 @@ export function PublicInvitationMusic({ src, title }: { src: string; title: stri
       audio.pause();
       return;
     }
-    await audio.play().catch(() => setPlaying(false));
+    if (!startPositionApplied.current) {
+      try {
+        const maximumStart = Number.isFinite(audio.duration) && audio.duration > 0 ? Math.max(0, Math.floor(audio.duration) - 1) : startAtSeconds;
+        audio.currentTime = Math.min(Math.max(0, startAtSeconds), maximumStart);
+        startPositionApplied.current = true;
+      } catch { /* The browser will seek when the media is ready. */ }
+    }
+    await audio.play().catch(() => {
+      startPositionApplied.current = false;
+      setPlaying(false);
+    });
   };
 
   return (
     <>
       {/* biome-ignore lint/a11y/useMediaCaption: Optional background music has no speech or dialogue to caption. */}
-      <audio ref={audioRef} src={src} loop preload="none" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} />
+      <audio key={src} ref={audioRef} src={src} loop preload="none" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} />
       <button type="button" className="public-music-toggle" onClick={() => void toggle()} aria-label={`${playing ? "Jeda" : "Putar"} musik latar${title ? `: ${title}` : ""}`} title={title || undefined}>
         {playing ? <Pause size={13} /> : <Play size={13} />}<Music2 size={13} /><span>{playing ? "Jeda musik" : "Putar musik"}</span>
       </button>

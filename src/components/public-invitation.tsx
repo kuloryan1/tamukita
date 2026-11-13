@@ -49,7 +49,7 @@ export function PublicInvitation({ slug, initialDraft, initialRsvpCount, initial
         <Link href="/" className="public-brand"><Heart size={14} fill="currentColor" /> tamukita</Link>
         <span>{copy("publicBrandLabel", "UNDANGAN DIGITAL")}</span>
         {isExample && <span className="public-demo-pill">{demoLabel ?? "CONTOH"}</span>}
-        {draft.musicUrl && featureAccess.music && <PublicInvitationMusic src={draft.musicUrl} title={draft.musicTitle} />}
+        {draft.musicUrl && featureAccess.music && <PublicInvitationMusic src={draft.musicUrl} title={draft.musicTitle} startAtSeconds={draft.musicStartAtSeconds} />}
         <span className="public-top-spacer" />
       </div>
       <div className="public-invitation-layout">

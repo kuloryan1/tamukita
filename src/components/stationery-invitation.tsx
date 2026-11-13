@@ -520,7 +520,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
         if (event.currentTarget.error && event.currentTarget.hasAttribute("src")) startCoverFallback(openingAttempt.current);
       }}>Video pembukaan amplop Elegant Cream.</video>
     </section>}
-    {draft?.musicUrl && <div className="stationery-music" ref={musicContainerRef} hidden={!opened}><PublicInvitationMusic src={draft.musicUrl} title={draft.musicTitle} /></div>}
+    {draft?.musicUrl && <div className="stationery-music" ref={musicContainerRef} hidden={!opened}><PublicInvitationMusic src={draft.musicUrl} title={draft.musicTitle} startAtSeconds={draft.musicStartAtSeconds} /></div>}
     <ShareDialog dialogRef={dialogRef} recipient={guest} basePath={shareBasePath} />
   </div>;
 }

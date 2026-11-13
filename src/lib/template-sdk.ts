@@ -8,7 +8,7 @@ export const TEMPLATE_SDK_VERSION = "1.1.0";
 const reservedDraftFieldKeys = new Set([
   "id", "slug", "eventKind", "templateId", "templateVersion", "themeColor", "themeFont", "sectionOrder", "sealMonogram", "hostOneParents", "hostTwoParents",
   "familyDetails", "coverPosition", "coverPositionX", "galleryPhotos", "eventSchedule", "giftMessage", "giftBankName",
-  "giftAccountName", "giftAccountNumber", "giftBankName2", "giftAccountName2", "giftAccountNumber2", "musicUrl", "musicTitle", "customFields", "updatedAt", "publishedAt", "isPublished",
+  "giftAccountName", "giftAccountNumber", "giftBankName2", "giftAccountName2", "giftAccountNumber2", "musicUrl", "musicTitle", "musicStartAtSeconds", "customFields", "updatedAt", "publishedAt", "isPublished",
   "constructor", "prototype", "__proto__", "toString", "toLocaleString", "valueOf", "hasOwnProperty",
   "isPrototypeOf", "propertyIsEnumerable", "__defineGetter__", "__lookupGetter__", "__defineSetter__", "__lookupSetter__",
 ]);
