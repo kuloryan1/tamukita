@@ -318,6 +318,8 @@
 .stationery-demo .event-gallery-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
 .stationery-demo .event-gallery-grid figure { aspect-ratio: 4 / 3; background: var(--paper); border: 1px solid color-mix(in srgb, var(--line) 55%, transparent); margin: 0; overflow: hidden; padding: 6px; }
 .stationery-demo .event-gallery-grid img { display: block; height: 100%; object-fit: cover; width: 100%; }
+.stationery-demo.theme-elegant-cream .event-gallery-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.stationery-demo.theme-elegant-cream .event-gallery-grid figure { aspect-ratio: 1 / 1; }
 
 .stationery-demo .countdown-section { max-width: 510px; margin: 52px auto 20px; padding: 17px 15px 28px; text-align: center; }
 .stationery-demo .countdown-section > .eyebrow { font-size: 9px; }
