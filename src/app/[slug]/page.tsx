@@ -12,6 +12,7 @@ import { getTemplate } from "@/lib/templates";
 import { isEditorCompatibleTemplate, validateTemplateManifest } from "@/lib/template-sdk";
 import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
 import { isAdminSampleSnapshot } from "@/lib/invitation-publication";
+import { paparazziIsOpen } from "@/lib/paparazzi";
 import { StationeryInvitation } from "@/components/stationery-invitation";
 import { getTemplate as getStationeryTemplate } from "@/lib/stationery-demo";
 import { normalizeRecipient } from "@/lib/stationery-recipient";
@@ -50,6 +51,7 @@ const findPublished = cache(async (slug: string) => {
       expiresAt: true,
       organization: { select: { status: true } },
       publishedSnapshot: true,
+      paparazziAlbum: { select: { token: true, enabled: true, closesAt: true } },
       templateVersion: { select: { version: true, manifest: true, template: { select: { slug: true } } } },
       _count: { select: { rsvps: true } },
     },
@@ -135,6 +137,11 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
   const stationeryTemplate = isTestableSample ? getStationeryTemplate(record.template.slug) : undefined;
   if (stationeryTemplate) {
     const recipient = guestLink?.guest.name ?? normalizeRecipient(Array.isArray(query.to) ? query.to[0] : query.to);
+    const paparazziAlbum = record.paparazziAlbum;
+    const paparazziToken = record.template.slug === "elegant-cream" && paparazziAlbum
+      && paparazziIsOpen({ ...paparazziAlbum, invitation: record })
+      ? paparazziAlbum.token
+      : undefined;
     return <StationeryInvitation
       template={stationeryTemplate}
       draft={record.draft}
@@ -142,6 +149,7 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
       isTestableSample
       slug={slug}
       guestToken={guestLink ? candidateToken ?? undefined : undefined}
+      paparazziToken={paparazziToken}
       calendarHref={record.template.slug === "elegant-cream" ? "/api/templates/demo/calendar?template=elegant-cream" : "/api/templates/demo/calendar"}
     />;
   }
