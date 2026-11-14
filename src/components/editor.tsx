@@ -19,7 +19,7 @@ import { ensureInvitationCopySection, getInvitationCopySections, isInvitationCop
 import { applyTemplateFieldDefaults, templateFieldMaximumLength, templateImageAspectRatio, type Template } from "@/lib/template-sdk";
 import { createInitialDraft, EVENT_KINDS, EVENT_KIND_TITLE_SUGGESTIONS, familyDetailsPrompt, isSlugAllowed, slugify, type EventKind, type InvitationDraft } from "@/lib/invitations";
 import { validateInvitationDraft, validateTemplateFields } from "@/lib/validation";
-import { legacyInvitationFeatureAccess, resolveInvitationFeatureAccess, summarizeInvitationFeatureAccess, validateDraftFeatureAccess, type InvitationFeatureAccess } from "@/lib/invitation-features";
+import { getInvitationGalleryLimit, legacyInvitationFeatureAccess, MAX_INVITATION_GALLERY_PHOTOS, resolveInvitationFeatureAccess, summarizeInvitationFeatureAccess, validateDraftFeatureAccess, type InvitationFeatureAccess } from "@/lib/invitation-features";
 
 const steps = ["Acara", "Detail", "Foto", "Tampilan", "Preview"];
 const eventKindIcons: Record<EventKind, string> = {
@@ -276,6 +276,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
   const [fallbackPricing, setFallbackPricing] = useState({ activationPriceIdr: 0, hostingTermDays: 365 });
   const [selectedPlanId, setSelectedPlanId] = useState("");
   const [featureAccess, setFeatureAccess] = useState<InvitationFeatureAccess>(legacyInvitationFeatureAccess);
+  const galleryLimit = getInvitationGalleryLimit(draft.templateId, featureAccess);
   const [photoToCrop, setPhotoToCrop] = useState<{ file: File; previewUrl: string; targetField: "coverPhoto" | PortraitPhotoField; assetId?: string; baseRevision?: number; initialArea?: Area } | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -567,7 +568,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
         } else if (task.kind === "gallery") {
           replaceDraft((current) => {
             const photos = current.galleryPhotos ?? [];
-            return photos.includes(publicUrl) || photos.length >= 6 ? current : { ...current, galleryPhotos: [...photos, publicUrl] };
+            return photos.includes(publicUrl) || photos.length >= MAX_INVITATION_GALLERY_PHOTOS ? current : { ...current, galleryPhotos: [...photos, publicUrl] };
           });
         } else if (task.kind === "music") {
           replaceDraft((current) => current.musicUrl === (task.previousUrl ?? "")
@@ -819,8 +820,8 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
     event.target.value = "";
     if (!files.length) return;
     const existing = draft.galleryPhotos ?? [];
-    if (files.length > 6 - existing.length) {
-      setError(`Galeri maksimal 6 foto. Saat ini tersedia ${6 - existing.length} slot.`);
+    if (files.length > galleryLimit - existing.length) {
+      setError(`Galeri maksimal ${galleryLimit} foto. Saat ini tersedia ${galleryLimit - existing.length} slot.`);
       return;
     }
     const invalidType = files.find((file) => !("image/jpeg image/png image/webp").split(" ").includes(file.type));
@@ -1105,7 +1106,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
               {showFramedPortraitUploads && <section className="portrait-upload-section" aria-label="Foto mempelai di dalam bingkai"><div className="gallery-editor-heading"><span><b>Foto di dalam bingkai</b><small>Unggah foto mempelai pria dan wanita secara terpisah. Foto sampul dipakai sementara jika slot belum diisi.</small></span></div><div className="portrait-upload-grid">{([{ field: "hostTwoPhoto", title: "Foto mempelai wanita" }, { field: "hostOnePhoto", title: "Foto mempelai pria" }] as const).map(({ field, title }) => <div className="portrait-upload-card" key={field}><div className="portrait-upload-preview" role="img" aria-label={title} style={draft[field] ? { backgroundImage: `url(${draft[field]})` } : undefined}><span>{uploadingPortraitSlot === field ? "Menyimpan foto…" : draft[field] ? "Foto terpilih" : draft.coverPhoto ? "Memakai foto sampul" : "Belum ada foto"}</span></div><label className="button button--outline button--small">{draft[field] ? "Ganti foto" : "Unggah foto"}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingPhoto || uploadingPortraitSlot !== null} onChange={(event) => handlePhoto(event, field)} /></label>{draft[field] && <button type="button" className="remove-photo" disabled={uploadingPhoto || uploadingPortraitSlot !== null} onClick={() => update(field, "")}><X size={13} /> Hapus foto khusus</button>}</div>)}</div></section>}
               {additionalMediaFields.length > 0 && <div className="schema-fields-grid editor-media-extra-fields">{additionalMediaFields.map((field) => <div className={field.type === "textarea" || field.type === "url" ? "schema-grid-item schema-grid-item--full" : "schema-grid-item"} key={field.key}>{renderSchemaField(field)}</div>)}</div>}
               <div className="private-note"><Info size={15} /><span>Foto asli dan pengaturan crop tersimpan privat. Versi WebP dan nilai field template ditampilkan di undangan.</span></div>
-              <div className="gallery-editor-section"><div className="gallery-editor-heading"><span><b>Galeri foto</b><small>{featureAccess.galleryLimit > 0 ? `Tambahkan hingga ${featureAccess.galleryLimit} foto, maksimal 5 MB per foto.` : "Galeri foto belum termasuk paket ini."}</small></span>{featureAccess.galleryLimit > 0 && <label className="button button--outline button--small">{uploadingGallery ? "Mengunggah..." : "Tambah foto"}<input type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={uploadingGallery || (draft.galleryPhotos?.length ?? 0) >= featureAccess.galleryLimit} onChange={(event) => void uploadGalleryFiles(event)} /></label>}</div>{draft.galleryPhotos?.length ? <div className="gallery-editor-grid">{draft.galleryPhotos.map((photo, index) => <div className="gallery-editor-photo" key={photo} style={{ backgroundImage: `url(${photo})` }}><span>Foto {index + 1}</span><button type="button" onClick={() => update("galleryPhotos", draft.galleryPhotos.filter((_, photoIndex) => photoIndex !== index))} aria-label={`Hapus foto galeri ${index + 1}`}><X size={13} /></button></div>)}</div> : <p className="gallery-editor-empty">Belum ada foto tambahan.</p>}</div>
+              <div className="gallery-editor-section"><div className="gallery-editor-heading"><span><b>Galeri foto</b><small>{galleryLimit > 0 ? `Tambahkan hingga ${galleryLimit} foto, maksimal 5 MB per foto.` : "Galeri foto belum termasuk paket ini."}</small></span>{galleryLimit > 0 && <label className="button button--outline button--small">{uploadingGallery ? "Mengunggah..." : "Tambah foto"}<input type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={uploadingGallery || (draft.galleryPhotos?.length ?? 0) >= galleryLimit} onChange={(event) => void uploadGalleryFiles(event)} /></label>}</div>{draft.galleryPhotos?.length ? <div className="gallery-editor-grid">{draft.galleryPhotos.map((photo, index) => <div className="gallery-editor-photo" key={photo} style={{ backgroundImage: `url(${photo})` }}><span>Foto {index + 1}</span><button type="button" onClick={() => update("galleryPhotos", draft.galleryPhotos.filter((_, photoIndex) => photoIndex !== index))} aria-label={`Hapus foto galeri ${index + 1}`}><X size={13} /></button></div>)}</div> : <p className="gallery-editor-empty">Belum ada foto tambahan.</p>}</div>
               <div className="music-editor-section">
                 <div className="gallery-editor-heading"><span><b>Musik latar</b><small>MP3 maksimal 10 MB · atur titik mulai dan dengarkan pratinjau.</small></span>{draft.musicUrl ? <button className="button button--outline button--small" type="button" disabled={uploadingMusic} onClick={() => { update("musicUrl", ""); update("musicTitle", ""); update("musicStartAtSeconds", 0); }}><X size={13} /> Hapus musik</button> : featureAccess.music ? <label className="button button--outline button--small">{uploadingMusic ? "Mengunggah..." : "Pilih MP3"}<input type="file" accept="audio/mpeg,.mp3" disabled={uploadingMusic} onChange={(event) => void uploadMusicFile(event)} /></label> : null}</div>
                 {draft.musicUrl ? <>

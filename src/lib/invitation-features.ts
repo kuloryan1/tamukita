@@ -7,7 +7,8 @@ export type InvitationFeatureAccess = {
   rsvp: boolean;
 };
 
-export type FeatureDraft = { galleryPhotos: string[]; musicUrl: string };
+export type FeatureDraft = { galleryPhotos: string[]; musicUrl: string; templateId?: string };
+export const MAX_INVITATION_GALLERY_PHOTOS = 12;
 
 export function isValidKnownFeatureEntitlement(featureKey: string, value: unknown) {
   if (featureKey === "gallery.limit") return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 && value <= 6;
@@ -39,11 +40,16 @@ export function resolveInvitationFeatureAccess(grants: readonly FeatureGrantValu
   };
 }
 
+export function getInvitationGalleryLimit(templateId: string | undefined, access: InvitationFeatureAccess) {
+  return templateId === "elegant-cream" && !access.planManaged ? MAX_INVITATION_GALLERY_PHOTOS : access.galleryLimit;
+}
+
 export function validateDraftFeatureAccess(draft: FeatureDraft, access: InvitationFeatureAccess): string | null {
-  if (draft.galleryPhotos.length > access.galleryLimit) {
-    return access.galleryLimit === 0
+  const galleryLimit = getInvitationGalleryLimit(draft.templateId, access);
+  if (draft.galleryPhotos.length > galleryLimit) {
+    return galleryLimit === 0
       ? "Paket ini belum mencakup galeri foto. Hapus foto galeri atau pilih paket lain."
-      : `Paket ini mencakup galeri hingga ${access.galleryLimit} foto. Hapus foto tambahan sebelum melanjutkan.`;
+      : `Paket ini mencakup galeri hingga ${galleryLimit} foto. Hapus foto tambahan sebelum melanjutkan.`;
   }
   if (draft.musicUrl && !access.music) return "Paket ini belum mencakup musik latar. Hapus musik atau pilih paket lain.";
   return null;

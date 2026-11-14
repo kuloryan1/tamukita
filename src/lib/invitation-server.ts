@@ -11,6 +11,7 @@ import { mediaKeyFromPublicUrl, isMediaPublicUrl } from "@/lib/media-storage-url
 import { isEditorCompatibleTemplate, isSafeTemplateFieldKey, TEMPLATE_SDK_VERSION, validateTemplateManifest } from "@/lib/template-sdk";
 import { templateVersionRequiresAdminReview } from "@/templates/registry";
 import { normalizeSealMonogram, SEAL_MONOGRAM_PATTERN } from "@/lib/seal-monogram";
+import { MAX_INVITATION_GALLERY_PHOTOS } from "@/lib/invitation-features";
 
 const stagingQaOrigin = "https://staging.tamukita.io";
 const stagingQaFixtureSlug = "qa-blueprint-fixture";
@@ -65,7 +66,7 @@ export const invitationDraftSchema = z.object({
   hostTwoPhoto: z.string().trim().max(2048).default("").refine((value) => !value || isMediaPublicUrl(value)),
   coverPosition: z.number().int().min(0).max(100),
   coverPositionX: z.number().int().min(0).max(100).default(50),
-  galleryPhotos: z.array(z.string().trim().max(2048)).max(6).default([]).refine((photos) => new Set(photos).size === photos.length && photos.every(isMediaPublicUrl)),
+  galleryPhotos: z.array(z.string().trim().max(2048)).max(MAX_INVITATION_GALLERY_PHOTOS).default([]).refine((photos) => new Set(photos).size === photos.length && photos.every(isMediaPublicUrl)),
   eventSchedule: z.array(z.object({
     id: z.string().trim().min(1).max(64).default(() => randomUUID()),
     time: z.string().regex(/^(?:(?:[01]\d|2[0-3]):[0-5]\d)?$/),

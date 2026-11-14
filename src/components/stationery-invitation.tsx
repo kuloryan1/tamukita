@@ -10,6 +10,7 @@ import { RSVP } from "@/components/stationery-demo-rsvp";
 import { InvitationPaparazzi } from "@/components/invitation-paparazzi";
 import { PublicInvitationGiftCopy, PublicInvitationGuestbook, PublicInvitationMusic } from "@/components/public-invitation-actions";
 import { invitationCopy, type InvitationCopyKey } from "@/lib/invitation-copy";
+import { MAX_INVITATION_GALLERY_PHOTOS } from "@/lib/invitation-features";
 import { invitationGiftAccounts, safeHttpsUrl, type InvitationDraft } from "@/lib/invitations";
 import { getAkadEventDetails } from "@/lib/akad-event";
 import { normalizeSealMonogram } from "@/lib/seal-monogram";
@@ -495,7 +496,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
         </section>
         {galleryPhotos.length > 0 && <section className="event-gallery-section" aria-label={`Galeri foto ${hostOne} dan ${hostTwo}`}>
           <div className="event-gallery-heading"><span className="eyebrow">{copy("gallerySectionEyebrow", "POTONGAN CERITA")}</span><h2 style={{ whiteSpace: "pre-line" }}>{copy("gallerySectionHeading", "Momen yang ingin kami kenang.")}</h2><p>{copy("gallerySectionIntro", "Foto-foto kenangan dari hari istimewa kami.")}</p></div>
-          <div className="event-gallery-grid">{galleryPhotos.slice(0, 6).map((photo, index) => {
+          <div className="event-gallery-grid">{galleryPhotos.slice(0, isElegantCream ? MAX_INVITATION_GALLERY_PHOTOS : 6).map((photo, index) => {
             const imageAlt = `Foto ${index + 1} ${hostOne} dan ${hostTwo}`;
             const image = <Image src={photo} alt={imageAlt} width={640} height={480} sizes="(max-width: 720px) 50vw, 33vw" unoptimized />;
             return <figure key={photo}>{isElegantCream
