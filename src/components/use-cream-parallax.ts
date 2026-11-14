@@ -9,10 +9,10 @@ export function useCreamParallax(mainRef: RefObject<HTMLElement | null>, enabled
     const nativeScroll = window.CSS?.supports?.("(animation-timeline: view()) and (view-timeline: --cream-hero block) and (animation-range: cover 0% cover 100%)");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const layers = Array.from(main.querySelectorAll<HTMLElement | SVGElement>(
-      ".hero-botanical, .cover-photo-frame, .closing-botanical, .event-gallery-grid img, .invitation-hero .monogram > :is(img, svg)",
+      ".hero-botanical, .cover-photo-frame, .closing-botanical, .invitation-hero .monogram > :is(img, svg)",
     )).map((element) => ({
       element,
-      parent: element.closest(".invitation-hero, .cover-photo-tile, .closing-section, .event-gallery-grid figure") ?? main,
+      parent: element.closest(".invitation-hero, .cover-photo-tile, .closing-section") ?? main,
       scrolls: element.matches(".hero-botanical, .cover-photo-frame, .closing-botanical"),
       active: false,
       depth: 0,

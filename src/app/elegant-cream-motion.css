@@ -2,9 +2,10 @@
 .stationery-demo.theme-elegant-cream.is-open .opened-invitation {
   --cream-parallax-x-depth: 0px;
   --cream-motion-ease: cubic-bezier(.34, .14, .23, 1);
-  --cream-intro-duration: 1300ms;
-  --cream-reveal-duration: 1400ms;
+  --cream-intro-duration: 2000ms;
+  --cream-reveal-duration: 2000ms;
   --cream-reveal-rise: 60px;
+  --cream-photo-scale: 1.12;
   --cream-reveal-animation: elegant-cream-panel-rise;
   --cream-type-start: 700ms;
   --cream-type-speed: 1;
@@ -38,20 +39,16 @@
 @media (prefers-reduced-motion: no-preference) {
   .stationery-demo.theme-elegant-cream.is-open .opened-invitation :is(.hero-botanical, .cover-photo-frame, .closing-botanical) {
     --cream-ambient-name: elegant-cream-ornament-sway;
-    --cream-ambient-duration: 12s;
+    --cream-ambient-duration: 6s;
     animation: var(--cream-ambient-name) var(--cream-ambient-duration) ease-in-out infinite alternate;
     animation-play-state: var(--cream-ambient-state, paused);
   }
   .stationery-demo.theme-elegant-cream.is-open .opened-invitation .cover-photo-frame {
     --cream-ambient-name: elegant-cream-frame-float;
-    --cream-ambient-duration: 9s;
-  }
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation .event-gallery-grid img {
-    animation: elegant-cream-photo-drift 16s ease-in-out infinite alternate;
-    animation-play-state: var(--cream-ambient-state, paused);
+    --cream-ambient-duration: 5.5s;
   }
   .stationery-demo.theme-elegant-cream.is-open .opened-invitation .invitation-hero .monogram > :is(img, svg) {
-    animation: elegant-cream-crest-breathe 8s ease-in-out infinite alternate;
+    animation: elegant-cream-crest-breathe 6s ease-in-out infinite alternate;
     animation-play-state: var(--cream-ambient-state, paused);
   }
   .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-layer-active] { --cream-ambient-state: running; }
@@ -84,17 +81,17 @@
   animation-timing-function: var(--cream-motion-ease);
   animation-fill-mode: backwards;
 }
-.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .invitation-hero > .eyebrow { animation-delay: 160ms; }
-.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .invitation-hero > h1 { animation-delay: 300ms; }
-.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .hero-names { animation-delay: 440ms; }
-.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .hero-names > span:first-child { animation: elegant-cream-name-from-left 1280ms var(--cream-motion-ease) 500ms backwards; }
-.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .hero-names > .name-amp { animation: elegant-cream-name-join 900ms cubic-bezier(.2, .7, .25, 1.2) 660ms backwards; }
-.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .hero-names > span:last-child { animation: elegant-cream-name-from-right 1280ms var(--cream-motion-ease) 780ms backwards; }
-.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .invitation-message { animation-delay: 680ms; }
-.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .hero-date { animation-delay: 880ms; }
-.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .detail-link { animation-delay: 1080ms; }
+.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .invitation-hero > .eyebrow { animation-delay: 200ms; }
+.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .invitation-hero > h1 { animation-delay: 400ms; }
+.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .hero-names { animation-delay: 600ms; }
+.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .hero-names > span:first-child { animation: elegant-cream-name-from-left 1800ms var(--cream-motion-ease) 600ms backwards; }
+.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .hero-names > .name-amp { animation: elegant-cream-name-join 1100ms cubic-bezier(.2, .7, .25, 1.2) 800ms backwards; }
+.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .hero-names > span:last-child { animation: elegant-cream-name-from-right 1800ms var(--cream-motion-ease) 1000ms backwards; }
+.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .invitation-message { animation-delay: 800ms; }
+.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .hero-date { animation-delay: 1000ms; }
+.stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .detail-link { animation-delay: 1200ms; }
 .stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro] .hero-flourish {
-  animation: elegant-cream-ink-rule var(--cream-intro-duration) var(--cream-motion-ease) 360ms backwards;
+  animation: elegant-cream-ink-rule var(--cream-intro-duration) var(--cream-motion-ease) 400ms backwards;
 }
 .stationery-demo.theme-elegant-cream .opened-invitation[data-cream-intro="queued"] .invitation-hero :is(
   .cream-type-letter, .monogram, .eyebrow, h1, .hero-names, .hero-names > span, .invitation-message, .hero-date, .detail-link, .hero-flourish
@@ -127,60 +124,56 @@
 
 /* Each card and photo enters on its own after observation is ready. */
 .stationery-demo.theme-elegant-cream .cover-photo-tile--host-two { --cream-reveal-x: 32px; --cream-reveal-tilt: .8deg; }
-.stationery-demo.theme-elegant-cream .cover-photo-tile--host-one { --cream-reveal-x: -32px; --cream-reveal-tilt: -.8deg; --cream-reveal-delay: 180ms; }
+.stationery-demo.theme-elegant-cream .cover-photo-tile--host-one { --cream-reveal-x: -32px; --cream-reveal-tilt: -.8deg; --cream-reveal-delay: 200ms; }
 .stationery-demo.theme-elegant-cream .event-card:first-child,
 .stationery-demo.theme-elegant-cream .gift-account-card:first-child { --cream-reveal-x: -24px; --cream-reveal-tilt: -.6deg; }
 .stationery-demo.theme-elegant-cream .event-card:last-child,
 .stationery-demo.theme-elegant-cream .gift-account-card:nth-child(2) { --cream-reveal-x: 24px; --cream-reveal-tilt: .6deg; }
-.stationery-demo.theme-elegant-cream .event-card:nth-child(2) { --cream-reveal-delay: 180ms; }
-.stationery-demo.theme-elegant-cream .event-card:nth-child(3) { --cream-reveal-delay: 360ms; }
-.stationery-demo.theme-elegant-cream .gift-account-card:nth-child(2) { --cream-reveal-delay: 180ms; }
-.stationery-demo.theme-elegant-cream :is(.rsvp-card, .invitation-paparazzi-copy, .guestbook-list) { --cream-reveal-delay: 180ms; }
+.stationery-demo.theme-elegant-cream .event-card:nth-child(2) { --cream-reveal-delay: 200ms; }
+.stationery-demo.theme-elegant-cream .event-card:nth-child(3) { --cream-reveal-delay: 400ms; }
+.stationery-demo.theme-elegant-cream .gift-account-card:nth-child(2) { --cream-reveal-delay: 200ms; }
+.stationery-demo.theme-elegant-cream :is(.rsvp-card, .invitation-paparazzi-copy, .guestbook-list) { --cream-reveal-delay: 200ms; }
 .stationery-demo.theme-elegant-cream .rsvp-card { --cream-reveal-x: 28px; }
 .stationery-demo.theme-elegant-cream .event-rundown li { --cream-reveal-x: -24px; --cream-reveal-rise: 48px; }
 .stationery-demo.theme-elegant-cream .event-rundown li:nth-child(even) { --cream-reveal-x: 24px; }
 .stationery-demo.theme-elegant-cream .countdown-unit { --cream-reveal-rise: 44px; }
-.stationery-demo.theme-elegant-cream .countdown-unit:nth-child(2) { --cream-reveal-delay: 120ms; }
-.stationery-demo.theme-elegant-cream .countdown-unit:nth-child(3) { --cream-reveal-delay: 240ms; }
-.stationery-demo.theme-elegant-cream .countdown-unit:nth-child(4) { --cream-reveal-delay: 360ms; }
-.stationery-demo.theme-elegant-cream .event-gallery-grid figure { --cream-reveal-rise: 68px; --cream-reveal-tilt: -1deg; }
-.stationery-demo.theme-elegant-cream .event-gallery-grid figure:nth-child(even) { --cream-reveal-tilt: 1deg; }
-.stationery-demo.theme-elegant-cream .event-gallery-grid figure:nth-child(3n + 2) { --cream-reveal-delay: 160ms; }
-.stationery-demo.theme-elegant-cream .event-gallery-grid figure:nth-child(3n + 3) { --cream-reveal-delay: 320ms; }
+.stationery-demo.theme-elegant-cream .countdown-unit:nth-child(2) { --cream-reveal-delay: 200ms; }
+.stationery-demo.theme-elegant-cream .countdown-unit:nth-child(3) { --cream-reveal-delay: 400ms; }
+.stationery-demo.theme-elegant-cream .countdown-unit:nth-child(4) { --cream-reveal-delay: 600ms; }
+.stationery-demo.theme-elegant-cream .event-gallery-grid figure:nth-child(3n + 2) { --cream-reveal-delay: 200ms; }
+.stationery-demo.theme-elegant-cream .event-gallery-grid figure:nth-child(3n + 3) { --cream-reveal-delay: 400ms; }
 
 .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="pending"] { opacity: 0; }
 .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal="visible"] {
-  animation: var(--cream-reveal-animation) var(--cream-reveal-duration) var(--cream-motion-ease) var(--cream-reveal-delay, 0ms) backwards;
+  animation: var(--cream-reveal-animation) var(--cream-reveal-duration) var(--cream-motion-ease) calc(var(--cream-reveal-delay, 0ms) + var(--cream-item-delay, 0ms)) backwards;
   animation-duration: var(--cream-reveal-duration) !important;
 }
 .stationery-demo.theme-elegant-cream.is-open .opened-invitation [data-cream-reveal]:focus-within { opacity: 1; animation: none; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .stationery-demo.theme-elegant-cream .cover-photo-tile[data-cream-reveal="visible"] .cover-photo-caption > * {
-    animation: elegant-cream-copy-rise 1300ms var(--cream-motion-ease) 220ms backwards;
+  .stationery-demo.theme-elegant-cream .opened-invitation [data-cream-motion="copy"] {
+    --cream-reveal-animation: elegant-cream-copy-rise;
   }
-  .stationery-demo.theme-elegant-cream .cover-photo-tile[data-cream-reveal="visible"] .cover-photo-parents { animation-delay: 420ms; }
-  .stationery-demo.theme-elegant-cream [data-cream-reveal="visible"] :is(.section-flourish, .venue-rule) {
-    animation: elegant-cream-ink-rule 1400ms var(--cream-motion-ease) 180ms backwards;
+  .stationery-demo.theme-elegant-cream .opened-invitation [data-cream-motion="photo"] {
+    --cream-reveal-animation: elegant-cream-photo-reveal;
+    --cream-reveal-duration: 2200ms;
   }
-  .stationery-demo.theme-elegant-cream .event-card[data-cream-reveal="visible"] > svg,
-  .stationery-demo.theme-elegant-cream .event-rundown li[data-cream-reveal="visible"] .event-rundown-index {
-    animation: elegant-cream-icon-bloom 1100ms var(--cream-motion-ease) 200ms backwards;
-  }
-  .stationery-demo.theme-elegant-cream .event-card[data-cream-reveal="visible"] .date-composition strong {
-    animation: elegant-cream-copy-rise 1400ms var(--cream-motion-ease) 260ms backwards;
+  .stationery-demo.theme-elegant-cream .opened-invitation [data-cream-motion="zoom"] { --cream-reveal-animation: elegant-cream-zoom-reveal; }
+  .stationery-demo.theme-elegant-cream .opened-invitation [data-cream-motion="rule"] { --cream-reveal-animation: elegant-cream-ink-rule; }
+  .stationery-demo.theme-elegant-cream .opened-invitation [data-cream-motion="panel"] {
+    --cream-reveal-animation: elegant-cream-panel-rise;
   }
 }
 
 @media (max-width: 640px) {
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation { --cream-reveal-rise: 64px; }
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation { --cream-reveal-rise: 48px; --cream-photo-scale: 1.08; }
   .stationery-demo.theme-elegant-cream.is-open .opened-invitation .cover-photo-frame { --cream-parallax-depth: 52px; --cream-parallax-x-depth: 12px; }
   .stationery-demo.theme-elegant-cream.is-open .opened-invitation .cover-photo-tile--host-one .cover-photo-frame { --cream-parallax-x-depth: -12px; }
   .stationery-demo.theme-elegant-cream .cover-photo-tile--host-two { --cream-reveal-x: 16px; }
   .stationery-demo.theme-elegant-cream .cover-photo-tile--host-one { --cream-reveal-x: -16px; }
   .stationery-demo.theme-elegant-cream .event-card:nth-child(n) { --cream-reveal-delay: 0ms; }
   .stationery-demo.theme-elegant-cream .event-gallery-grid figure:nth-child(n) { --cream-reveal-delay: 0ms; }
-  .stationery-demo.theme-elegant-cream .event-gallery-grid figure:nth-child(even) { --cream-reveal-delay: 160ms; }
+  .stationery-demo.theme-elegant-cream .event-gallery-grid figure:nth-child(even) { --cream-reveal-delay: 200ms; }
 }
 
 .stationery-demo.theme-elegant-cream .cover-opening-overlay.is-revealing { transition-duration: 900ms !important; }
@@ -190,7 +183,7 @@
   to { translate: calc(var(--cream-parallax-x-depth, 0px) * .5) calc(var(--cream-parallax-depth) * .5); }
 }
 @keyframes elegant-cream-soft-intro {
-  from { opacity: .15; transform: translate3d(0, 22px, 0) scale(.985); }
+  from { opacity: 0; transform: translate3d(0, 36px, 0) scale(.9); }
   to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
 }
 @keyframes elegant-cream-name-from-left {
@@ -209,17 +202,20 @@
   to { opacity: 1; transform: translate3d(0, 0, 0) scale(1) rotate(0); }
 }
 @keyframes elegant-cream-panel-rise {
-  from { opacity: 0; transform: translate3d(var(--cream-reveal-x, 0px), var(--cream-reveal-rise), 0) rotate(var(--cream-reveal-tilt, 0deg)) scale(.97); }
-  70% { opacity: 1; }
+  from { opacity: 0; transform: translate3d(var(--cream-reveal-x, 0px), var(--cream-reveal-rise), 0) rotate(var(--cream-reveal-tilt, 0deg)) scale(.94); }
   to { opacity: 1; transform: translate3d(0, 0, 0) rotate(0) scale(1); }
 }
 @keyframes elegant-cream-copy-rise {
-  from { opacity: 0; transform: translate3d(0, 28px, 0); }
+  from { opacity: 0; transform: translate3d(0, 44px, 0); }
   to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
-@keyframes elegant-cream-icon-bloom {
-  from { opacity: .2; transform: scale(.65) rotate(-12deg); }
-  to { opacity: 1; transform: scale(1) rotate(0); }
+@keyframes elegant-cream-photo-reveal {
+  from { opacity: 0; transform: translate3d(0, 32px, 0) scale(var(--cream-photo-scale)); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes elegant-cream-zoom-reveal {
+  from { opacity: 0; transform: translate3d(0, 16px, 0) scale(.78); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
 }
 @keyframes elegant-cream-ornament-sway {
   from { rotate: -1.5deg; }
@@ -228,10 +224,6 @@
 @keyframes elegant-cream-frame-float {
   from { transform: translate3d(0, 7px, 0) rotate(-.65deg); }
   to { transform: translate3d(0, -9px, 0) rotate(.65deg); }
-}
-@keyframes elegant-cream-photo-drift {
-  from { transform: scale(1.015); }
-  to { transform: scale(1.09); }
 }
 @keyframes elegant-cream-crest-breathe {
   from { scale: .97; rotate: -1deg; }
@@ -280,7 +272,7 @@
     animation-duration: var(--cream-intro-duration) !important;
   }
   .stationery-demo.theme-elegant-cream .countdown-digit { animation: none; }
-  .stationery-demo.theme-elegant-cream.is-open .opened-invitation :is(.hero-names > span, [data-cream-reveal] *, [data-cream-layer-active]) {
+  .stationery-demo.theme-elegant-cream.is-open .opened-invitation :is(.hero-names > span, [data-cream-layer-active]) {
     animation: none !important;
   }
   .stationery-demo.theme-elegant-cream.is-open .opened-invitation :is(.hero-botanical, .hero-botanical.corner-bottom, .cover-photo-frame, .closing-botanical) {
