@@ -6,6 +6,8 @@ import { getPrismaClient } from "@/lib/prisma";
 import { readJsonBody } from "@/lib/request-json";
 import { childDataConsentRecord, CHILD_DATA_CONSENT_ERROR, guardianConsentMatchesChildData } from "@/lib/child-data-consent";
 import { GUESTBOOK_CHILD_DATA_GUARDIAN_CONSENT_VERSION } from "@/lib/consent-versions";
+import { isAdminSampleSnapshot } from "@/lib/invitation-publication";
+import { getGuestbookEntryStatus, getGuestbookFilterWordsFromDraft } from "@/lib/guestbook-word-filter";
 
 export const runtime = "nodejs";
 
@@ -28,9 +30,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   const prisma = getPrismaClient();
   const invitation = await prisma.invitation.findFirst({
     where: { slug, status: "PUBLISHED", deletedAt: null, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }], organization: { status: "ACTIVE" } },
-    select: { id: true },
+    select: { id: true, draftData: true, publishedSnapshot: true, templateVersion: { select: { template: { select: { slug: true } } } } },
   });
   if (!invitation) return NextResponse.json({ error: "Undangan tidak ditemukan atau belum diterbitkan." }, { status: 404 });
+  const guestbookDraft = isAdminSampleSnapshot(invitation.publishedSnapshot) ? invitation.draftData : invitation.publishedSnapshot;
+  const status = getGuestbookEntryStatus(invitation.templateVersion.template.slug, parsed.data.message, getGuestbookFilterWordsFromDraft(guestbookDraft));
 
   let guestId: string | null = null;
   let displayName = parsed.data.name ?? "";
@@ -52,8 +56,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   }
 
   await prisma.guestbookEntry.create({
-    data: { invitationId: invitation.id, guestId, displayName, message: parsed.data.message, ...childDataConsentRecord(parsed.data.includesChildData, GUESTBOOK_CHILD_DATA_GUARDIAN_CONSENT_VERSION) },
+    data: { invitationId: invitation.id, guestId, displayName, message: parsed.data.message, status, ...childDataConsentRecord(parsed.data.includesChildData, GUESTBOOK_CHILD_DATA_GUARDIAN_CONSENT_VERSION) },
     select: { id: true },
   });
-  return NextResponse.json({ saved: true, moderated: true }, { status: 201 });
+  return NextResponse.json({ saved: true, status }, { status: 201 });
 }

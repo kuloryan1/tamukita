@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { CheckCircle2, Copy, Flag, Heart, Music2, Pause, Play, Send, X } from "lucide-react";
 import { GUESTBOOK_CHILD_DATA_GUARDIAN_CONSENT_COPY, RSVP_CHILD_DATA_GUARDIAN_CONSENT_COPY } from "@/lib/consent-copy";
 import { getFirstInvalidFormMessage } from "@/lib/form-validation-message";
@@ -174,13 +175,15 @@ export function PublicInvitationRsvp({ slug, initialCount, recipientName, guestT
   );
 }
 
-export function PublicInvitationGuestbook({ slug, entries, recipientName, guestToken, copy, entriesOnly = false }: { slug: string; entries: GuestbookMessage[]; recipientName?: string; guestToken?: string; entriesOnly?: boolean; copy?: { eyebrow?: string; heading?: string; intro?: string; submit?: string } }) {
+export function PublicInvitationGuestbook({ slug, entries, recipientName, guestToken, copy, entriesOnly = false, autoApprove = false }: { slug: string; entries: GuestbookMessage[]; recipientName?: string; guestToken?: string; entriesOnly?: boolean; autoApprove?: boolean; copy?: { eyebrow?: string; heading?: string; intro?: string; submit?: string } }) {
+  const router = useRouter();
   const [name, setName] = useState(recipientName ?? "");
   const [message, setMessage] = useState("");
   const [includesChildData, setIncludesChildData] = useState(false);
   const [guardianConsent, setGuardianConsent] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
+  const [sentStatus, setSentStatus] = useState<"APPROVED" | "PENDING">("PENDING");
   const [sending, setSending] = useState(false);
   const [reportingEntryId, setReportingEntryId] = useState("");
   const [reportedEntryIds, setReportedEntryIds] = useState<string[]>([]);
@@ -197,7 +200,7 @@ export function PublicInvitationGuestbook({ slug, entries, recipientName, guestT
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ ...(guestToken ? { guestToken } : { name: name.trim() }), message: message.trim(), includesChildData, guardianConsent }),
     }).catch(() => null);
-    const result = await response?.json().catch(() => ({})) as { error?: string } | undefined;
+    const result = await response?.json().catch(() => ({})) as { error?: string; status?: "APPROVED" | "PENDING" } | undefined;
     setSending(false);
     if (!response?.ok) {
       setError(result?.error ?? "Ucapan belum dapat dikirim. Periksa koneksi dan coba lagi.");
@@ -207,7 +210,9 @@ export function PublicInvitationGuestbook({ slug, entries, recipientName, guestT
     setMessage("");
     setIncludesChildData(false);
     setGuardianConsent(false);
+    setSentStatus(result?.status ?? "PENDING");
     setSent(true);
+    if (result?.status === "APPROVED") router.refresh();
   };
 
   const report = async (entryId: string) => {
@@ -231,14 +236,14 @@ export function PublicInvitationGuestbook({ slug, entries, recipientName, guestT
   return (
     <section className={`public-guestbook-section${entriesOnly ? " public-guestbook-section--entries-only" : ""}`}>
       <div className="guestbook-inner">
-        <div className="guestbook-heading"><span className="eyebrow">{copy?.eyebrow ?? "UCAPAN & DOA"}</span><h2>{copy?.heading ?? <>Kirimkan <em>doa terbaikmu.</em></>}</h2><p>{copy?.intro ?? "Tinggalkan doa dan pesan hangat untuk hari istimewa kami."}</p>{!entriesOnly && <p className="guestbook-privacy-note">Ucapan ditinjau oleh pemilik undangan sebelum ditampilkan. Jangan masukkan kontak atau data sensitif anak. Persetujuan orang tua atau wali dibutuhkan jika ucapan mencantumkan informasi anak.</p>}</div>
-        {!entriesOnly && <form className="guestbook-form" onSubmit={submit} onInvalidCapture={(event) => { event.preventDefault(); setError(getFirstInvalidFormMessage(event.currentTarget)); }} onChangeCapture={() => setError("")}>
+        <div className="guestbook-heading"><span className="eyebrow">{copy?.eyebrow ?? "UCAPAN & DOA"}</span><h2>{copy?.heading ?? <>Kirimkan <em>doa terbaikmu.</em></>}</h2><p>{copy?.intro ?? "Tinggalkan doa dan pesan hangat untuk hari istimewa kami."}</p>{!entriesOnly && <p className="guestbook-privacy-note">{autoApprove ? "Ucapan yang lolos filter kata langsung tampil; ucapan yang cocok dengan filter menunggu pemeriksaan." : "Ucapan ditinjau oleh pemilik undangan sebelum ditampilkan."} Jangan masukkan kontak atau data sensitif anak. Persetujuan orang tua atau wali dibutuhkan jika ucapan mencantumkan informasi anak.</p>}</div>
+        {!entriesOnly && <form className="guestbook-form" onSubmit={submit} onInvalidCapture={(event) => { event.preventDefault(); setError(getFirstInvalidFormMessage(event.currentTarget)); }} onChangeCapture={() => { setError(""); setSent(false); }}>
           {guestToken ? <label className="editor-field"><span className="field-label">Ucapan dari</span><input className="text-input" aria-label="Ucapan dari" value={name} readOnly /></label> : <label className="editor-field"><span className="field-label">Namamu</span><input className="text-input" required minLength={2} maxLength={100} value={name} onChange={(event) => setName(event.target.value)} placeholder="Nama lengkap" /></label>}
           <label className="editor-field"><span className="field-label">Ucapan</span><textarea className="text-input text-area" required minLength={2} maxLength={1000} rows={4} value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Tulis doa atau pesan untuk pengantin..." /></label>
           <label className="public-consent-row"><input type="checkbox" checked={includesChildData} onChange={(event) => { setIncludesChildData(event.target.checked); setGuardianConsent(false); setError(""); }} /><span>Ucapan ini mencantumkan nama atau informasi anak.</span></label>
           {includesChildData && <label className="public-consent-row public-consent-row--nested"><input type="checkbox" name="guardianConsent" required checked={guardianConsent} onChange={(event) => { setGuardianConsent(event.target.checked); setError(""); }} /><span>{GUESTBOOK_CHILD_DATA_GUARDIAN_CONSENT_COPY}</span></label>}
           {error && <div className="editor-error" role="alert">{error}</div>}
-          {sent && <p className="guestbook-success" role="status">Terima kasih. Ucapanmu menunggu persetujuan pengundang.</p>}
+          {sent && <p className="guestbook-success" role="status">{autoApprove && sentStatus === "APPROVED" ? "Terima kasih. Ucapanmu langsung tampil." : autoApprove ? "Terima kasih. Ucapanmu menunggu pemeriksaan karena cocok dengan filter kata." : "Terima kasih. Ucapanmu menunggu persetujuan pengundang."}</p>}
           <button className="button button--dark" type="submit" disabled={sending}>{sending ? "Mengirim..." : copy?.submit ?? "Kirim ucapan"} <Send size={14} /></button>
         </form>}
         <div className="guestbook-list" aria-live="polite">

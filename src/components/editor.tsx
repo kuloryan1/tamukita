@@ -20,6 +20,7 @@ import { applyTemplateFieldDefaults, templateFieldMaximumLength, templateImageAs
 import { createInitialDraft, EVENT_KINDS, EVENT_KIND_TITLE_SUGGESTIONS, familyDetailsPrompt, isSlugAllowed, slugify, type EventKind, type InvitationDraft } from "@/lib/invitations";
 import { validateInvitationDraft, validateTemplateFields } from "@/lib/validation";
 import { getInvitationGalleryLimit, legacyInvitationFeatureAccess, MAX_INVITATION_GALLERY_PHOTOS, resolveInvitationFeatureAccess, summarizeInvitationFeatureAccess, validateDraftFeatureAccess, type InvitationFeatureAccess } from "@/lib/invitation-features";
+import { MAX_GUESTBOOK_FILTER_WORD_LENGTH, MAX_GUESTBOOK_FILTER_WORDS, normalizeGuestbookFilterWords } from "@/lib/guestbook-word-filter";
 
 const steps = ["Acara", "Detail", "Foto", "Tampilan", "Preview"];
 const eventKindIcons: Record<EventKind, string> = {
@@ -1076,6 +1077,7 @@ export function InvitationEditor({ invitationId, templateCatalog, isSuperAdmin =
               {detailSections.map((section) => <section className="editor-schema-section" key={section.key}><span className="eyebrow">{section.label}</span><div className="schema-fields-grid">{section.fields.map((field) => <div className={field.type === "textarea" || field.type === "url" ? "schema-grid-item schema-grid-item--full" : "schema-grid-item"} key={field.key}>{renderSchemaField(field)}</div>)}</div></section>)}
               {(detailSections.length > 0 || scheduleFields.some((field) => !["eventDate", "eventTime", "venue", "address", "mapsUrl"].includes(field.key))) && <div className="private-note"><Info size={15} /><span>Field tambahan dari template akan tampil di tautan undangan publik.</span></div>}
               <EditorEventSchedule value={draft.eventSchedule} onChange={(value) => update("eventSchedule", value)} />
+              {activeTemplate.slug === "elegant-cream" && <section className="editor-schema-section" aria-labelledby="guestbook-filter-title"><span className="eyebrow">UCAPAN & DOA</span><h3 id="guestbook-filter-title">Ucapan yang langsung tampil</h3><p>Ucapan langsung disetujui kecuali memuat kata atau frasa di filter.</p><Field label="Kata atau frasa untuk ditinjau" hint={`Satu kata atau frasa per baris. Pencocokan tidak membedakan huruf besar/kecil. Maksimal ${MAX_GUESTBOOK_FILTER_WORDS} baris, ${MAX_GUESTBOOK_FILTER_WORD_LENGTH} karakter per baris.`}><textarea className="text-input text-area" maxLength={MAX_GUESTBOOK_FILTER_WORDS * (MAX_GUESTBOOK_FILTER_WORD_LENGTH + 1)} rows={4} value={(draft.guestbookBlockedWords ?? []).join("\n")} onChange={(event) => update("guestbookBlockedWords", normalizeGuestbookFilterWords(event.target.value.split(/\r?\n/)))} placeholder={"Contoh:\nspam\npromosi tertentu"} /></Field><small className="field-hint">Ucapan yang cocok akan menunggu pemeriksaan di menu Buku tamu.</small></section>}
               <div className="editor-gift-fields">
                 <span className="eyebrow">INFORMASI HADIAH · OPSIONAL</span>
                 <p>Isi satu atau dua rekening. Informasi ini akan tampil di undangan publik.</p>

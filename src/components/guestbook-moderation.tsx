@@ -30,7 +30,7 @@ export function GuestbookModeration({ invitationId, entries }: { invitationId: s
 
   return <div className="guestbook-admin-list">
     {error && <div className="editor-error" role="alert">{error}</div>}
-    {entries.length === 0 ? <div className="dashboard-empty-state"><h3>Belum ada ucapan</h3><p>Ucapan yang dikirim tamu akan tampil di sini untuk diperiksa.</p></div> : entries.map((entry) => <article className="guestbook-admin-entry" data-entry-id={entry.id} key={entry.id}>
+    {entries.length === 0 ? <div className="dashboard-empty-state"><h3>Belum ada ucapan</h3><p>Ucapan tamu akan muncul di sini setelah dikirim.</p></div> : entries.map((entry) => <article className="guestbook-admin-entry" data-entry-id={entry.id} key={entry.id}>
       <div className="guestbook-admin-entry-heading"><div><h3>{entry.displayName}</h3><time dateTime={entry.createdAt}>{new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Jakarta" }).format(new Date(entry.createdAt))}</time></div><span className={`status-pill ${entry.status === "APPROVED" ? "status-pill--live" : "status-pill--draft"}`}><i />{entry.status === "APPROVED" ? "Tampil" : entry.status === "REJECTED" ? "Ditolak" : entry.status === "HIDDEN" ? "Disembunyikan admin" : "Menunggu"}</span></div>
       <p>{entry.message}</p>
       {entry.status === "HIDDEN" ? <small className="guestbook-hidden-note">Ucapan ini disembunyikan moderator platform dan tidak dapat diubah dari workspace.</small> : <>

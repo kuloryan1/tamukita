@@ -93,6 +93,7 @@ export type InvitationDraft = {
   musicUrl: string;
   musicTitle: string;
   musicStartAtSeconds: number;
+  guestbookBlockedWords?: string[];
   customFields: Record<string, string>;
   updatedAt: string;
   publishedAt?: string;
@@ -178,6 +179,7 @@ export function createInitialDraft(): InvitationDraft {
     musicUrl: "",
     musicTitle: "",
     musicStartAtSeconds: 0,
+    guestbookBlockedWords: [],
     customFields: {},
     updatedAt: new Date().toISOString(),
   };

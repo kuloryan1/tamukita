@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import type { WeddingTemplate } from "@/lib/stationery-demo";
 import { GUESTBOOK_CHILD_DATA_GUARDIAN_CONSENT_COPY, RSVP_CHILD_DATA_GUARDIAN_CONSENT_COPY } from "@/lib/consent-copy";
 
@@ -86,6 +87,7 @@ export function RSVP({ template, recipient, isTestableSample = false, slug, gues
   copy?: { eyebrow?: string; heading?: string; intro?: string; question?: string; submit?: string };
 }) {
   const id = useId();
+  const router = useRouter();
   const showChildDataConsent = !(isTestableSample && template.slug === "elegant-cream" && slug === "wulan-dan-ryan");
   const recipientRef = useRef(recipient);
   recipientRef.current = recipient;
@@ -226,17 +228,24 @@ export function RSVP({ template, recipient, isTestableSample = false, slug, gues
           ...(saved.message ? { message: saved.message, guestbookIncludesChildData, guestbookGuardianConsent } : {}),
         }),
       }).catch(() => null);
-      const result = await response?.json().catch(() => null) as { error?: string } | null;
+      const result = await response?.json().catch(() => null) as { error?: string; guestbookStatus?: "APPROVED" | "PENDING" | null } | null;
       if (!response?.ok) {
         setError(result?.error ?? "Konfirmasi kehadiran belum dapat dikirim. Periksa koneksi dan coba lagi.");
         setBusy("");
         return;
       }
-      setNotice(saved.message ? "Konfirmasi terkirim. Ucapan Anda menunggu persetujuan pengundang." : "Konfirmasi kehadiran Anda telah terkirim.");
+      setNotice(saved.message
+        ? result?.guestbookStatus === "APPROVED"
+          ? "Konfirmasi terkirim. Ucapanmu langsung tampil di bagian Ucapan & Doa."
+          : template.slug === "elegant-cream"
+            ? "Konfirmasi terkirim. Ucapanmu menunggu pemeriksaan karena cocok dengan filter kata."
+            : "Konfirmasi terkirim. Ucapan Anda menunggu persetujuan pengundang."
+        : "Konfirmasi kehadiran Anda telah terkirim.");
       setSubmission(saved);
       setDraft(draftFromSubmission(saved));
       setEditing(false);
       setBusy("");
+      router.refresh();
       requestAnimationFrame(() => savedHeadingRef.current?.focus({ preventScroll: true }));
       return;
     }
@@ -420,7 +429,7 @@ export function RSVP({ template, recipient, isTestableSample = false, slug, gues
                   <button className="button primary rsvp-submit" type="submit" disabled={busy !== ""}>{busy === "saving" ? <><span className="spinner" aria-hidden="true" />{isTestableSample ? "Mengirim…" : "Menyimpan…"}</> : isTestableSample ? copy?.submit ?? "Kirim konfirmasi" : storageAvailable ? submission ? "Simpan perubahan di tab ini" : "Simpan jawaban di tab ini" : "Coba jawaban sementara"}<span aria-hidden="true">↗</span></button>
                   {submission && <button className="text-link" type="button" onClick={cancelEditing} disabled={busy !== ""}>Batal mengubah</button>}
                 </div>
-                <p className="rsvp-form-footnote">{isTestableSample ? "Konfirmasi kehadiran dikirim kepada pemilik undangan. Ucapan akan menunggu persetujuan." : storageAvailable ? "Dengan menekan simpan, Anda memilih menyimpan jawaban percobaan hanya di tab ini." : "Jawaban sementara akan hilang ketika halaman dimuat ulang."}</p>
+                <p className="rsvp-form-footnote">{isTestableSample ? template.slug === "elegant-cream" ? "Ucapan yang lolos filter kata langsung tampil; ucapan yang cocok akan menunggu pemeriksaan." : "Konfirmasi kehadiran dikirim kepada pemilik undangan. Ucapan akan menunggu persetujuan." : storageAvailable ? "Dengan menekan simpan, Anda memilih menyimpan jawaban percobaan hanya di tab ini." : "Jawaban sementara akan hilang ketika halaman dimuat ulang."}</p>
               </form>
             )}
           </>

@@ -12,6 +12,7 @@ import { isEditorCompatibleTemplate, isSafeTemplateFieldKey, TEMPLATE_SDK_VERSIO
 import { templateVersionRequiresAdminReview } from "@/templates/registry";
 import { normalizeSealMonogram, SEAL_MONOGRAM_PATTERN } from "@/lib/seal-monogram";
 import { MAX_INVITATION_GALLERY_PHOTOS } from "@/lib/invitation-features";
+import { MAX_GUESTBOOK_FILTER_WORD_LENGTH, MAX_GUESTBOOK_FILTER_WORDS, normalizeGuestbookFilterWords } from "@/lib/guestbook-word-filter";
 
 const stagingQaOrigin = "https://staging.tamukita.io";
 const stagingQaFixtureSlug = "qa-blueprint-fixture";
@@ -83,6 +84,7 @@ export const invitationDraftSchema = z.object({
   musicUrl: z.string().trim().max(2048).default("").refine((value) => !value || isMediaPublicUrl(value)),
   musicTitle: z.string().trim().max(80).default(""),
   musicStartAtSeconds: z.number().int().min(0).max(86_400).default(0),
+  guestbookBlockedWords: z.array(z.string().trim().min(1).max(MAX_GUESTBOOK_FILTER_WORD_LENGTH)).max(MAX_GUESTBOOK_FILTER_WORDS).default([]).transform(normalizeGuestbookFilterWords),
   customFields: z.record(z.string().refine(isSafeTemplateFieldKey), z.string().max(1_000)).default({}).superRefine((fields, context) => {
     if (Object.keys(fields).length > 96) context.addIssue({ code: "custom", message: "Terlalu banyak field template." });
     if (new TextEncoder().encode(JSON.stringify(fields)).byteLength > 20_000) context.addIssue({ code: "custom", message: "Data field template terlalu besar." });
@@ -140,6 +142,7 @@ export function normalizeStoredInvitationDraft(
     musicStartAtSeconds: typeof draftData.musicStartAtSeconds === "number" && Number.isInteger(draftData.musicStartAtSeconds) && draftData.musicStartAtSeconds >= 0 && draftData.musicStartAtSeconds <= 86_400
       ? draftData.musicStartAtSeconds
       : 0,
+    guestbookBlockedWords: normalizeGuestbookFilterWords(draftData.guestbookBlockedWords),
     customFields: normalizeInvitationCustomFields(draftData.customFields),
   };
 }

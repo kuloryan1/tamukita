@@ -7,6 +7,8 @@ import { readJsonBody } from "@/lib/request-json";
 import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
 import { childDataConsentRecord, CHILD_DATA_CONSENT_ERROR, guardianConsentMatchesChildData } from "@/lib/child-data-consent";
 import { GUESTBOOK_CHILD_DATA_GUARDIAN_CONSENT_VERSION, RSVP_CHILD_DATA_GUARDIAN_CONSENT_VERSION } from "@/lib/consent-versions";
+import { isAdminSampleSnapshot } from "@/lib/invitation-publication";
+import { getGuestbookEntryStatus, getGuestbookFilterWordsFromDraft } from "@/lib/guestbook-word-filter";
 
 export const runtime = "nodejs";
 
@@ -34,11 +36,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   const prisma = getPrismaClient();
   const invitation = await prisma.invitation.findFirst({
     where: { slug, status: "PUBLISHED", deletedAt: null, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }], organization: { status: "ACTIVE" } },
-    select: { id: true, title: true, owner: { select: { name: true, email: true } } },
+    select: { id: true, title: true, draftData: true, publishedSnapshot: true, templateVersion: { select: { template: { select: { slug: true } } } }, owner: { select: { name: true, email: true } } },
   });
   if (!invitation) return NextResponse.json({ error: "Undangan tidak ditemukan atau belum diterbitkan." }, { status: 404 });
   const featureAccess = await getInvitationFeatureAccess(invitation.id);
   if (!featureAccess.rsvp) return NextResponse.json({ error: "Paket undangan ini tidak mengaktifkan konfirmasi kehadiran." }, { status: 403 });
+  const guestbookDraft = isAdminSampleSnapshot(invitation.publishedSnapshot) ? invitation.draftData : invitation.publishedSnapshot;
+  const guestbookStatus = parsed.data.message
+    ? getGuestbookEntryStatus(invitation.templateVersion.template.slug, parsed.data.message, getGuestbookFilterWordsFromDraft(guestbookDraft))
+    : null;
 
   let guestId: string | null = null;
   let displayName = parsed.data.name ?? "";
@@ -96,6 +102,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
           guestId,
           displayName,
           message: parsed.data.message,
+          status: guestbookStatus ?? "PENDING",
           ...childDataConsentRecord(parsed.data.guestbookIncludesChildData, GUESTBOOK_CHILD_DATA_GUARDIAN_CONSENT_VERSION, respondedAt),
         },
       });
@@ -122,5 +129,5 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
 
     return { created };
   });
-  return NextResponse.json({ saved: true, created: result.created }, { status: 201 });
+  return NextResponse.json({ saved: true, created: result.created, guestbookStatus }, { status: 201 });
 }
