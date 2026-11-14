@@ -186,7 +186,7 @@ export function StationeryInvitation({ template, recipient, isTestableSample = f
   const copy = (key: InvitationCopyKey, fallback?: string) => draft ? invitationCopy(draft, key, fallback) : fallback ?? "";
   const hasEnvelopeOpening = template.slug === "elegant-cream";
   useCreamParallax(mainRef, opened && hasEnvelopeOpening);
-  useCreamReveal(mainRef, opened && hasEnvelopeOpening);
+  useCreamReveal(mainRef, opened && hasEnvelopeOpening && openingPhase === "idle");
   const hostOne = draft?.hostOne || WEDDING.groom;
   const hostTwo = draft?.hostTwo || WEDDING.bride;
   const isElegantCream = template.slug === "elegant-cream";
