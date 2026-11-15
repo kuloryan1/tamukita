@@ -49,11 +49,12 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       },
     },
   });
-  return NextResponse.json({ guests: links.map(({ guest, revokedAt }) => ({
+  return NextResponse.json({ guests: links.map(({ guest, revokedAt, sentAt }) => ({
     id: guest.id,
     name: guest.name,
     whatsapp: guest.phoneCiphertext ? (() => { try { return decryptGuestPhone(guest.phoneCiphertext); } catch { return null; } })() : null,
     linkRevokedAt: revokedAt?.toISOString() ?? null,
+    sentAt: sentAt?.toISOString() ?? null,
     rsvp: guest.rsvps[0] ? { ...guest.rsvps[0], respondedAt: guest.rsvps[0].respondedAt.toISOString() } : null,
   })) }, { headers: { "Cache-Control": "private, no-store" } });
 }

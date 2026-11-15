@@ -14,6 +14,7 @@ export const runtime = "nodejs";
 const linkActionSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("revoke") }),
   z.object({ action: z.literal("rotate") }),
+  z.object({ action: z.literal("setSent"), sent: z.boolean() }),
   z.object({ action: z.literal("saveContact"), whatsapp: z.string().trim().min(8).max(300) }),
 ]);
 
@@ -50,7 +51,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!featureAccess.rsvp) return NextResponse.json({ error: "Paket undangan ini tidak mengaktifkan konfirmasi kehadiran dan pengelolaan tamu." }, { status: 403 });
 
   const result = await prisma.$transaction(async (tx) => {
-    const link = await tx.guestLink.findFirst({ where: { invitationId: invitation.id, guestId }, select: { id: true, tokenHash: true, revokedAt: true } });
+    const link = await tx.guestLink.findFirst({ where: { invitationId: invitation.id, guestId }, select: { id: true, tokenHash: true, revokedAt: true, sentAt: true } });
     if (!link) return { status: 404 as const };
 
     if (parsed.data.action === "saveContact") {
@@ -59,6 +60,20 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       await tx.guest.update({ where: { id: guestId }, data: { phoneCiphertext: encryptGuestPhone(phone) } });
       await tx.auditLog.create({ data: { organizationId: invitation.organizationId, actorId: userId, action: "guest.contact_updated", targetType: "Guest", targetId: guestId, metadata: { invitationId: invitation.id } } });
       return { status: 200 as const, whatsapp: phone };
+    }
+
+    if (parsed.data.action === "setSent") {
+      if (parsed.data.sent && link.revokedAt) return { status: 409 as const };
+      const sentAt = parsed.data.sent ? link.sentAt ?? new Date() : null;
+      const updated = await tx.guestLink.updateMany({
+        where: { id: link.id, ...(parsed.data.sent ? { revokedAt: null } : {}) },
+        data: { sentAt },
+      });
+      if (updated.count !== 1) return { status: 409 as const };
+      if (Boolean(link.sentAt) !== parsed.data.sent) {
+        await tx.auditLog.create({ data: { organizationId: invitation.organizationId, actorId: userId, action: "guest_link.sent_status_updated", targetType: "GuestLink", targetId: link.id, metadata: { invitationId: invitation.id, guestId, sent: parsed.data.sent } } });
+      }
+      return { status: 200 as const, sentAt };
     }
 
     if (parsed.data.action === "revoke") {
@@ -85,5 +100,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (result.status === 409) return NextResponse.json({ error: "Status tautan berubah. Muat ulang daftar tamu lalu coba lagi." }, { status: 409 });
   if ("token" in result) return NextResponse.json({ token: result.token }, { headers: { "Cache-Control": "no-store" } });
   if ("whatsapp" in result) return NextResponse.json({ whatsapp: result.whatsapp }, { headers: { "Cache-Control": "private, no-store" } });
+  if ("sentAt" in result) return NextResponse.json({ sentAt: result.sentAt?.toISOString() ?? null }, { headers: { "Cache-Control": "private, no-store" } });
   return NextResponse.json({ revoked: true });
 }

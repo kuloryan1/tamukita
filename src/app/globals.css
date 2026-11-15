@@ -1194,6 +1194,8 @@ h1 em, h2 em { color: #76897d; font-weight: 400; }
 .editor-recipient-identity { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .editor-recipient-identity b { color: #46584a; font-size: 10px; overflow-wrap: anywhere; }
 .editor-recipient-identity small { color: #979b92; font-size: 8px; }
+.editor-recipient-sent { align-items: center; color: #69776c; display: flex; font-size: 9px; gap: 6px; }
+.editor-recipient-sent input { accent-color: #315b4c; height: 14px; margin: 0; width: 14px; }
 .editor-recipient-phone .text-input { font-size: 11px; min-height: 34px; padding: 7px 9px; }
 .sr-only { clip: rect(0, 0, 0, 0); clip-path: inset(50%); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
 .reseller-application-card { background: #fff; border: 1px solid #edece7; margin: 9vh auto; max-width: 570px; padding: 32px; text-align: center; }
