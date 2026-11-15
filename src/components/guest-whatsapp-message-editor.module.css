@@ -1,0 +1,19 @@
+.section { border-top: 1px solid #dedfd6; margin: 24px 0; padding-top: 22px; }
+.heading { align-items: flex-start; color: #365247; display: flex; gap: 10px; margin-bottom: 16px; }
+.heading h4 { font-size: 15px; margin: 0 0 5px; }
+.heading p { color: #727d74; font-size: 12px; line-height: 1.6; margin: 0; }
+.columns { display: grid; gap: 20px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.columns > div { min-width: 0; }
+.textarea { font-size: 12px; line-height: 1.7; min-height: 360px; resize: vertical; width: 100%; }
+.tokens { border: 0; display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; padding: 0; }
+.tokens button { background: #fff; border: 1px solid #d8dfd8; border-radius: 5px; color: #365247; cursor: pointer; font-size: 11px; padding: 6px 8px; }
+.tokens button:focus-visible { outline: 2px solid #365247; outline-offset: 2px; }
+.tokens button:disabled { cursor: default; opacity: .5; }
+.help, .counter { color: #68766d; font-size: 11px; line-height: 1.6; margin: 7px 0; }
+.counter { text-align: right; }
+.preview { background: #eef2ec; border: 1px solid #dae2d8; border-radius: 8px; padding: 14px; }
+.message { background: #fff; border: 1px solid #e0e6dc; border-radius: 8px; color: #33413a; font-size: 12px; line-height: 1.75; margin-top: 12px; overflow-wrap: anywhere; padding: 16px; white-space: pre-wrap; }
+.actions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
+.error { color: #a23e32; font-size: 12px; line-height: 1.6; }
+.notice { color: #365247; font-size: 12px; margin: 10px 0 0; }
+@media (max-width: 700px) { .columns { grid-template-columns: minmax(0, 1fr); } .textarea { min-height: 320px; } }

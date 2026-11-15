@@ -401,6 +401,7 @@ model Invitation {
   templateVersionId   String               @db.Uuid
   slug                String               @unique
   title               String
+  guestMessageTemplate String?             @db.Text
   status              InvitationStatus     @default(DRAFT)
   draftData           Json
   publishedSnapshot   Json?

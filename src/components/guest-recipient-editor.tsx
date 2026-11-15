@@ -3,16 +3,13 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { Ban, Copy, FileUp, MessageCircle, RefreshCw, Send, Users } from "lucide-react";
 import { normalizeWhatsAppPhone, whatsappShareUrl } from "@/lib/whatsapp-link";
+import { guestMessageError, renderGuestWhatsAppMessage, WEDDING_GUEST_MESSAGE } from "@/lib/guest-whatsapp-message";
+import { GuestWhatsAppMessageEditor } from "@/components/guest-whatsapp-message-editor";
 
 type GuestRsvp = { attendance: "ATTENDING" | "DECLINED" | "MAYBE"; attendeeCount: number; respondedAt: string };
 type GuestRecipient = { id: string; name: string; whatsapp: string | null; linkRevokedAt: string | null; rsvp: GuestRsvp | null };
-type GuestShare = { id: string; name: string; url: string; whatsappUrl?: string };
+type GuestShare = { id: string; name: string; url: string };
 type RecipientInput = { name: string; whatsapp: string };
-
-function invitationMessage(name: string, eventTitle: string, url: string) {
-  const event = eventTitle.trim() ? ` untuk acara ${eventTitle.trim()}` : "";
-  return `Halo ${name}, kami ingin mengundang Anda${event}. Silakan buka undangan berikut: ${url}`;
-}
 
 function parseRecipientCsv(text: string): RecipientInput[] {
   const rows: string[][] = [];
@@ -49,13 +46,12 @@ function parseRecipientCsv(text: string): RecipientInput[] {
   })).filter((recipient) => recipient.name);
 }
 
-function makeShare(id: string, name: string, token: string, slug: string, whatsapp: string | null, eventTitle: string): GuestShare {
+function makeShare(id: string, name: string, token: string, slug: string): GuestShare {
   const url = `${window.location.origin}/${encodeURIComponent(slug)}?g=${encodeURIComponent(token)}`;
   return {
     id,
     name,
     url,
-    ...(whatsapp ? { whatsappUrl: whatsappShareUrl(whatsapp, invitationMessage(name, eventTitle, url)) } : {}),
   };
 }
 
@@ -77,6 +73,13 @@ export function GuestRecipientEditor({ invitationId, slug, eventTitle, isPublish
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [copiedId, setCopiedId] = useState("");
+  const [messageTemplate, setMessageTemplate] = useState(WEDDING_GUEST_MESSAGE);
+  const [messageReady, setMessageReady] = useState(false);
+  const canShareMessage = messageReady && !guestMessageError(messageTemplate);
+
+  function shareMessage(share: GuestShare) {
+    return renderGuestWhatsAppMessage(messageTemplate, { name: share.name, eventTitle, url: share.url });
+  }
 
   useEffect(() => {
     let active = true;
@@ -137,7 +140,7 @@ export function GuestRecipientEditor({ invitationId, slug, eventTitle, isPublish
     setGuests((current) => [...created, ...current]);
     setPhoneDrafts((current) => ({ ...current, ...Object.fromEntries(created.map((guest) => [guest.id, guest.whatsapp ?? ""])) }));
     if (isPublished) {
-      setShares(Object.fromEntries(result.guests.map((guest) => [guest.id, makeShare(guest.id, guest.name, guest.token, result.slug as string, guest.whatsapp, eventTitle)])));
+      setShares(Object.fromEntries(result.guests.map((guest) => [guest.id, makeShare(guest.id, guest.name, guest.token, result.slug as string)])));
     }
     setRecipientsText("");
     setNotice(`${created.length} tamu tersimpan. ${isPublished ? "Tautan pribadi siap disalin atau dikirim melalui WhatsApp." : "Setelah undangan diterbitkan, tautan pribadi dapat disiapkan."}`);
@@ -173,7 +176,7 @@ export function GuestRecipientEditor({ invitationId, slug, eventTitle, isPublish
     const result = await response?.json().catch(() => null) as { token?: string; error?: string } | null;
     setBusyGuestId("");
     if (!response?.ok || !result?.token) { setError(result?.error ?? "Tautan pribadi belum dapat dibuat."); return; }
-    setShares((current) => ({ ...current, [guest.id]: makeShare(guest.id, guest.name, result.token as string, slug, whatsapp, eventTitle) }));
+    setShares((current) => ({ ...current, [guest.id]: makeShare(guest.id, guest.name, result.token as string, slug) }));
     setGuests((current) => current.map((item) => item.id === guest.id ? { ...item, linkRevokedAt: null, whatsapp } : item));
     setNotice(`Tautan pribadi baru untuk ${guest.name} siap. Tautan sebelumnya sudah tidak berlaku.`);
   }
@@ -202,15 +205,25 @@ export function GuestRecipientEditor({ invitationId, slug, eventTitle, isPublish
     }
   }
 
+  async function copyMessage(share: GuestShare) {
+    if (!canShareMessage) return;
+    try {
+      await navigator.clipboard.writeText(shareMessage(share));
+      setCopiedId(`${share.id}:message`);
+      window.setTimeout(() => setCopiedId(""), 1600);
+    } catch { setError("Pesan belum tersalin. Periksa izin clipboard browser lalu coba lagi."); }
+  }
+
   return <section className="editor-recipient-panel" aria-labelledby="editor-recipient-title">
     <div className="editor-recipient-heading"><span className="editor-recipient-icon"><Users size={17} /></span><div><span className="eyebrow">DAFTAR TAMU & TAUTAN PRIBADI</span><h3 id="editor-recipient-title">Kelola tamu undangan</h3><p>Tambahkan nama dan nomor WhatsApp untuk membuat tautan undangan pribadi.</p></div></div>
     <form className="editor-recipient-form" onSubmit={(event) => void submitRecipients(event)}>
       <label className="editor-field"><span className="field-label">Nama tamu dan WhatsApp · satu baris per orang</span><textarea className="text-input text-area" rows={4} value={recipientsText} onChange={(event) => setRecipientsText(event.target.value)} placeholder={"Ryan Pratama | 62816538034\nDwi Wulan Maulida"} /><small>Format: Nama lengkap | nomor WhatsApp. Nomor bersifat opsional, disimpan terenkripsi, dan hanya terlihat bagi pengelola undangan.</small></label>
       <div className="editor-recipient-form-actions"><label className="button button--outline button--small"><FileUp size={14} /> Impor CSV<input type="file" accept=".csv,text/csv" onChange={importCsv} /></label><button type="submit" className="button button--dark button--small" disabled={busy || loading}>{busy ? "Menyimpan tamu…" : "Simpan nama tamu"} <Send size={14} /></button></div>
     </form>
+    <GuestWhatsAppMessageEditor invitationId={invitationId} slug={slug} eventTitle={eventTitle} guests={guests} shares={shares} template={messageTemplate} onChange={setMessageTemplate} onReady={setMessageReady} />
     {!isPublished && <p className="guest-manager-notice">Terbitkan undangan terlebih dahulu untuk menyiapkan tautan yang bisa dibagikan.</p>}
     {error && <div className="editor-error" role="alert">{error}</div>}
     {notice && <p className="guest-manager-notice" role="status">{notice}</p>}
-    <div className="editor-recipient-list"><div className="editor-recipient-list-heading"><b>Daftar tamu</b><span>{loading ? "Memuat…" : `${guests.length} nama tersimpan`}</span></div>{!loading && guests.length === 0 && <p className="gallery-editor-empty">Belum ada nama tamu untuk undangan ini.</p>}{guests.map((guest) => <div className="editor-recipient-row" key={guest.id}><div className="editor-recipient-identity"><b>{guest.name}</b><small>{rsvpLabel(guest.rsvp)} · {guest.linkRevokedAt ? "Tautan dicabut" : isPublished ? "Tautan aktif" : "Menunggu undangan diterbitkan"}</small></div><label className="editor-recipient-phone"><span className="sr-only">Nomor WhatsApp {guest.name}</span><input className="text-input" value={phoneDrafts[guest.id] ?? ""} onChange={(event) => setPhoneDrafts((current) => ({ ...current, [guest.id]: event.target.value }))} placeholder="Nomor WhatsApp / wa.me" /></label><div className="editor-recipient-row-actions"><button type="button" className="button button--outline button--small" disabled={busyGuestId === guest.id} onClick={() => void saveWhatsApp(guest)}>{busyGuestId === guest.id ? "Menyimpan…" : "Simpan WA"}</button>{shares[guest.id] ? <>{shares[guest.id].whatsappUrl && <a className="button button--dark button--small" href={shares[guest.id].whatsappUrl} target="_blank" rel="noopener noreferrer"><MessageCircle size={13} /> Kirim</a>}<button type="button" className="button button--outline button--small" onClick={() => void copyUrl(shares[guest.id])}><Copy size={13} /> Salin tautan</button></> : <button type="button" className="button button--outline button--small" disabled={busyGuestId === guest.id || loading || !isPublished} onClick={() => void prepareLink(guest)}>{busyGuestId === guest.id ? "Menyiapkan…" : "Siapkan tautan"}</button>}{!guest.linkRevokedAt && <button type="button" className="button button--outline button--small" disabled={busyGuestId === guest.id} onClick={() => void revokeLink(guest)} aria-label={`Cabut tautan untuk ${guest.name}`}><Ban size={13} /> Cabut tautan</button>}{guest.linkRevokedAt && <span className="guest-link-state guest-link-state--revoked"><RefreshCw size={12} /> Tautan dicabut</span>}</div></div>)}</div>
+    <div className="editor-recipient-list"><div className="editor-recipient-list-heading"><b>Daftar tamu</b><span>{loading ? "Memuat…" : `${guests.length} nama tersimpan`}</span></div>{!loading && guests.length === 0 && <p className="gallery-editor-empty">Belum ada nama tamu untuk undangan ini.</p>}{guests.map((guest) => <div className="editor-recipient-row" key={guest.id}><div className="editor-recipient-identity"><b>{guest.name}</b><small>{rsvpLabel(guest.rsvp)} · {guest.linkRevokedAt ? "Tautan dicabut" : isPublished ? "Tautan aktif" : "Menunggu undangan diterbitkan"}</small></div><label className="editor-recipient-phone"><span className="sr-only">Nomor WhatsApp {guest.name}</span><input className="text-input" value={phoneDrafts[guest.id] ?? ""} onChange={(event) => setPhoneDrafts((current) => ({ ...current, [guest.id]: event.target.value }))} placeholder="Nomor WhatsApp / wa.me" /></label><div className="editor-recipient-row-actions"><button type="button" className="button button--outline button--small" disabled={busyGuestId === guest.id} onClick={() => void saveWhatsApp(guest)}>{busyGuestId === guest.id ? "Menyimpan…" : "Simpan WA"}</button>{shares[guest.id] ? <>{guest.whatsapp && (canShareMessage ? <a className="button button--dark button--small" href={whatsappShareUrl(guest.whatsapp, shareMessage(shares[guest.id]))} target="_blank" rel="noopener noreferrer"><MessageCircle size={13} /> Kirim</a> : <button type="button" className="button button--dark button--small" disabled><MessageCircle size={13} /> Kirim</button>)}<button type="button" className="button button--outline button--small" disabled={!canShareMessage} onClick={() => void copyMessage(shares[guest.id])}><Copy size={13} />{copiedId === `${guest.id}:message` ? "Pesan tersalin" : "Salin pesan"}</button><button type="button" className="button button--outline button--small" onClick={() => void copyUrl(shares[guest.id])}><Copy size={13} /> Salin tautan</button></> : <button type="button" className="button button--outline button--small" disabled={busyGuestId === guest.id || loading || !isPublished} onClick={() => void prepareLink(guest)}>{busyGuestId === guest.id ? "Menyiapkan…" : "Siapkan tautan"}</button>}{!guest.linkRevokedAt && <button type="button" className="button button--outline button--small" disabled={busyGuestId === guest.id} onClick={() => void revokeLink(guest)} aria-label={`Cabut tautan untuk ${guest.name}`}><Ban size={13} /> Cabut tautan</button>}{guest.linkRevokedAt && <span className="guest-link-state guest-link-state--revoked"><RefreshCw size={12} /> Tautan dicabut</span>}</div></div>)}</div>
   </section>;
 }
