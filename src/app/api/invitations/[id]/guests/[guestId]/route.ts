@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { getPrismaClient } from "@/lib/prisma";
-import { allowRequest } from "@/lib/rate-limit";
 import { readJsonBody } from "@/lib/request-json";
 import { getInvitationFeatureAccess } from "@/lib/invitation-entitlements";
 import { encryptGuestPhone } from "@/lib/guest-contact-crypto";
@@ -31,9 +30,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!body.ok) return NextResponse.json({ error: "Permintaan tautan tamu tidak valid." }, { status: body.status });
   const parsed = linkActionSchema.safeParse(body.value);
   if (!parsed.success) return NextResponse.json({ error: "Perubahan kontak atau tautan tamu tidak valid." }, { status: 400 });
-  if (!await allowRequest(`guests:link:${userId}`, 60, 60 * 60)) {
-    return NextResponse.json({ error: "Batas pengelolaan tautan tamu tercapai. Coba lagi nanti." }, { status: 429 });
-  }
 
   const prisma = getPrismaClient();
   const invitation = await prisma.invitation.findFirst({
