@@ -82,12 +82,14 @@ test("family QR opens the camera, stores validated photos, and serves an owner-c
     await guest.getByRole("button", { name: "Tambah foto", exact: true }).click();
     await expect(guest.getByRole("dialog", { name: "Unggah foto ke galeri keluarga" })).toBeVisible();
     await expect(guest.getByRole("button", { name: "Buka kamera", exact: true })).toBeDisabled();
-    await guest.getByLabel("Nama Instagram").fill("nara_raka");
+    const instagramInput = guest.getByLabel("Nama Instagram");
+    await expect(instagramInput).toHaveCSS("font-size", "16px");
+    await instagramInput.fill("nara_raka");
     await guest.getByRole("button", { name: "Buka kamera", exact: true }).click();
     await expect(guest.getByRole("button", { name: "Ambil foto", exact: true })).toBeEnabled();
     const cameraDialog = guest.getByRole("dialog", { name: "Unggah foto ke galeri keluarga" });
     await expect(cameraDialog).toHaveClass(/paparazzi-upload-dialog--camera/);
-    await expect(guest.getByRole("button", { name: "Tutup kamera", exact: true })).toBeVisible();
+    await expect(guest.getByRole("button", { name: "Selesai memotret", exact: true })).toBeVisible();
     await expect(guest.getByRole("button", { name: "Ganti kamera", exact: true })).toBeVisible();
     const cameraBounds = await cameraDialog.evaluate((dialog: HTMLDialogElement) => {
       const rect = dialog.getBoundingClientRect();
@@ -97,14 +99,26 @@ test("family QR opens the camera, stores validated photos, and serves an owner-c
     expect(Math.abs(cameraBounds.height - cameraBounds.viewportHeight)).toBeLessThanOrEqual(1);
     expect(await guest.locator("video").evaluate((video: HTMLVideoElement) => video.videoWidth)).toBeGreaterThan(0);
     await guest.getByRole("button", { name: "Ambil foto", exact: true }).click();
+    await guest.getByRole("button", { name: "Selesai (1)", exact: true }).click();
     await expect(guest.getByRole("heading", { name: "Siap dibagikan?" })).toBeVisible();
-    await expect(guest.locator(".paparazzi-watermark-preview img")).toHaveAttribute("alt", "Watermark W&R");
+    await expect(guest.locator(".paparazzi-watermark-preview img")).toHaveAttribute("src", "/images/paparazi/wr-crest.png");
     await expect(guest.locator(".paparazzi-watermark-preview")).not.toContainText("@nara_raka");
+    const actions = guest.locator(".paparazzi-review-actions");
+    await expect(actions.getByRole("button")).toHaveText(["Pilih ulang", "Ambil lagi", "Kirim 1 foto"]);
+    const actionPlacement = await actions.evaluate(row => {
+      const grid = row.parentElement?.querySelector(".paparazzi-review-grid");
+      const buttonTops = Array.from(row.querySelectorAll("button"), button => Math.round(button.getBoundingClientRect().top));
+      return {
+        belowPhotos: Boolean(grid && row.getBoundingClientRect().top >= grid.getBoundingClientRect().bottom),
+        sameRow: new Set(buttonTops).size === 1,
+      };
+    });
+    expect(actionPlacement).toEqual({ belowPhotos: true, sameRow: true });
     await capture("guest-mobile-preview", guest);
-    const send = guest.getByRole("button", { name: "Kirim ke galeri keluarga", exact: true }); await expect(send).toBeEnabled();
+    const send = actions.getByRole("button", { name: "Kirim 1 foto", exact: true }); await expect(send).toBeEnabled();
     const reservationResponse = guest.waitForResponse(response => response.url().endsWith(`${publicPath}/uploads`) && response.request().method() === "POST");
     await send.click(); const firstTicket = await (await reservationResponse).json();
-    await expect(guest.getByRole("heading", { name: "Foto sudah diterima!" })).toBeVisible({ timeout: 90_000 });
+    await expect(guest.getByRole("heading", { name: "1 foto sudah diterima!", exact: true })).toBeVisible({ timeout: 90_000 });
     const photoPath = `${galleryPath}/${firstTicket.photoId}`; const ownerPhoto = `${ownerPath}/photos/${firstTicket.photoId}`;
     await expect.poll(async () => (await (await request.get(galleryPath)).json()).photos.map((photo: { id: string }) => photo.id)).toContain(firstTicket.photoId);
     await expect(guest.locator(".paparazzi-public-photo img")).toHaveCount(1);

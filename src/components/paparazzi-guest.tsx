@@ -37,7 +37,9 @@ export function PaparazziGuest({ token, initial }: { token: string; initial: Pap
     const urls = files.map(file => URL.createObjectURL(file));
     setPreviews(urls);
     if (urls.length) previewHeading.current?.focus();
-    return () => urls.forEach(url => URL.revokeObjectURL(url));
+    return () => {
+      for (const url of urls) URL.revokeObjectURL(url);
+    };
   }, [files]);
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -183,12 +185,15 @@ export function PaparazziGuest({ token, initial }: { token: string; initial: Pap
           {camera.active ? <div className="paparazzi-camera-view"><video ref={camera.videoRef} autoPlay playsInline muted aria-label="Pratinjau kamera" onLoadedData={() => camera.setReady(true)} onClick={() => { void camera.videoRef.current?.play(); }} /><span className="paparazzi-watermark-preview" aria-hidden="true"><Image src="/images/paparazi/wr-crest.png" alt="" width={56} height={56} unoptimized /></span></div> : <div className="paparazzi-camera-wait"><Loader2 className="paparazzi-spin" size={30} /><p>Izinkan penggunaan kamera pada browser.</p></div>}
           <div className="paparazzi-camera-controls"><button type="button" className="button button--outline" disabled={camera.opening || captureBusy || files.length >= PAPARAZZI_MAX_BATCH_PHOTOS} aria-label="Ganti kamera" onClick={() => { const next = !front; setFront(next); void camera.start(next ? "user" : "environment"); }}><SwitchCamera size={19} /></button><button type="button" className="paparazzi-shutter" disabled={!camera.ready || captureBusy || files.length >= PAPARAZZI_MAX_BATCH_PHOTOS} aria-label="Ambil foto" onClick={() => { void capturePhoto(); }}>{captureBusy ? <Loader2 size={24} className="paparazzi-spin" /> : <Camera size={26} />}</button><span>Ambil foto</span><button type="button" className="paparazzi-camera-finish" disabled={!files.length || captureBusy} onClick={finishCamera}>Selesai ({files.length})</button></div>
         </section> : phase === "sent" ? <section className="paparazzi-sent" role="status"><span><CheckCircle2 size={34} /></span><h2>{files.length} foto sudah diterima!</h2><p>Terima kasih sudah ikut mengabadikan momen. Buka galeri keluarga di bawah untuk melihat kenangan bersama.</p><button type="button" className="button button--dark button--wide" onClick={reset}><Camera size={17} /> Kirim foto lain</button><button type="button" className="text-link" onClick={() => { dismissUpload(); window.location.hash = "galeri-keluarga"; }}>Lihat galeri keluarga</button></section> : files.length && previews.length === files.length ? <section className="paparazzi-review">
-          <div className="paparazzi-review-heading"><div><h2 ref={previewHeading} tabIndex={-1}>Siap dibagikan?</h2><p>{files.length} dari {PAPARAZZI_MAX_BATCH_PHOTOS} foto · hapus yang tidak cocok atau ambil ulang.</p></div><div className="paparazzi-review-actions"><button type="button" className="text-link" onClick={reset} disabled={busy || ticketRef.current.some(Boolean)}><RotateCcw size={14} /> Pilih ulang</button><button type="button" className="text-link" onClick={retakeMore} disabled={busy || files.length >= PAPARAZZI_MAX_BATCH_PHOTOS || ticketRef.current.some(Boolean)}><Camera size={14} /> Ambil lagi</button></div></div>
+          <div className="paparazzi-review-heading">
+            <h2 ref={previewHeading} tabIndex={-1}>Siap dibagikan?</h2>
+            <p>{files.length} dari {PAPARAZZI_MAX_BATCH_PHOTOS} foto · hapus yang tidak cocok atau ambil ulang.</p>
+          </div>
           <form onSubmit={send} className="paparazzi-consent-form">
             <div className="paparazzi-review-grid">
-              {files.map((file, index) => <figure className="paparazzi-review-photo" key={`${file.name}-${file.lastModified}-${index}`}>
+              {previews.map((preview, index) => <figure className="paparazzi-review-photo" key={preview}>
                 <div className="paparazzi-photo-preview-frame">
-                  <Image className="paparazzi-photo-preview" src={previews[index] ?? ""} alt={`Pratinjau foto ${index + 1} sebelum dikirim`} width={PAPARAZZI_STORY_WIDTH} height={PAPARAZZI_STORY_HEIGHT} unoptimized />
+                  <Image className="paparazzi-photo-preview" src={preview} alt={`Pratinjau foto ${index + 1} sebelum dikirim`} width={PAPARAZZI_STORY_WIDTH} height={PAPARAZZI_STORY_HEIGHT} unoptimized />
                   <span className="paparazzi-watermark-preview" aria-hidden="true"><Image src="/images/paparazi/wr-crest.png" alt="" width={56} height={56} unoptimized /></span>
                 </div>
                 <figcaption><span>Foto {index + 1}</span><button type="button" aria-label={`Hapus foto ${index + 1}`} onClick={() => removePhoto(index)} disabled={busy || Boolean(ticketRef.current[index])}><Trash2 size={15} /></button></figcaption>
@@ -196,7 +201,14 @@ export function PaparazziGuest({ token, initial }: { token: string; initial: Pap
             </div>
             {initial.childrenInvited && <label className="paparazzi-check"><input type="checkbox" checked={child} disabled={busy} onChange={event => { setChild(event.target.checked); setGuardian(false); }} /><span>Foto ini memuat anak di bawah 18 tahun.</span></label>}
             {initial.childrenInvited && child && <label className="paparazzi-check paparazzi-guardian"><input type="checkbox" checked={guardian} required disabled={busy} onChange={event => setGuardian(event.target.checked)} /><span>{PAPARAZZI_GUARDIAN_COPY}</span></label>}
-            <button type="submit" className="button button--dark button--wide" aria-busy={busy} disabled={busy || !parsedInstagramHandle.success || (child && !guardian)}>{busy ? <Loader2 size={18} className="paparazzi-spin" /> : <Upload size={18} />}{phase === "uploading" ? `Mengunggah foto ${progress}/${files.length}…` : phase === "processing" ? `Menyiapkan foto ${progress}/${files.length}…` : ticketRef.current.some(Boolean) ? "Periksa unggahan" : `Kirim ${files.length} foto ke galeri keluarga`}</button>
+            <div className="paparazzi-review-actions">
+              <button type="button" className="button button--outline" onClick={reset} disabled={busy || ticketRef.current.some(Boolean)}><RotateCcw size={14} /> Pilih ulang</button>
+              <button type="button" className="button button--outline" onClick={retakeMore} disabled={busy || files.length >= PAPARAZZI_MAX_BATCH_PHOTOS || ticketRef.current.some(Boolean)}><Camera size={14} /> Ambil lagi</button>
+              <button type="submit" className="button button--dark" aria-busy={busy} disabled={busy || !parsedInstagramHandle.success || (child && !guardian)}>
+                {busy ? <Loader2 size={18} className="paparazzi-spin" /> : <Upload size={18} />}
+                {phase === "uploading" ? `Mengunggah foto ${progress}/${files.length}…` : phase === "processing" ? `Menyiapkan foto ${progress}/${files.length}…` : ticketRef.current.some(Boolean) ? "Periksa unggahan" : `Kirim ${files.length} foto`}
+              </button>
+            </div>
             {busy && <div className="paparazzi-upload-progress" aria-hidden="true"><span /></div>}
             {busy && <p role="status" className="paparazzi-processing-note" aria-live="polite">{phase === "uploading" ? `Mengunggah foto ${progress}/${files.length}. ` : `Menyiapkan foto ${progress}/${files.length}. `}Jaga halaman tetap terbuka. Foto yang sudah diterima tidak akan dikirim ulang saat pemeriksaan diulang.</p>}
           </form>

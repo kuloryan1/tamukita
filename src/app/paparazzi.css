@@ -18,11 +18,9 @@
 .paparazzi-start>.button{margin:0 0 12px;min-height:49px}
 .paparazzi-native-link{display:inline-block;font-size:12px!important;margin-top:9px;text-decoration:underline;text-underline-offset:4px}
 .paparazzi-file-input{display:none}
-.paparazzi-review-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
+.paparazzi-review-heading{margin-bottom:16px}
 .paparazzi-review-heading h2{font-family:Georgia,serif;font-weight:400;font-size:27px;outline:none}
 .paparazzi-review-heading p{margin:5px 0 0;color:#718071;font-size:11px;line-height:1.6}
-.paparazzi-review-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px}
-.paparazzi-review-heading .text-link{display:flex;align-items:center;gap:5px;font-size:12px;flex-shrink:0}
 .paparazzi-review-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .paparazzi-review-photo{min-width:0;margin:0;overflow:hidden;border:1px solid #e0e6dd;border-radius:9px;background:#fff}
 .paparazzi-review-photo figcaption{display:flex;align-items:center;justify-content:space-between;min-height:40px;padding:2px 8px;color:#536453;font-size:11px}
@@ -34,7 +32,9 @@
 .paparazzi-check{display:flex;align-items:flex-start;gap:11px;font-size:12px;line-height:1.8;color:#526453;cursor:pointer}
 .paparazzi-check input{flex-shrink:0;width:18px;height:18px;margin:2px 0 0;accent-color:#315e4b}
 .paparazzi-guardian{background:#f3f3eb;padding:13px;border-radius:8px}
-.paparazzi-consent-form .button{min-height:49px}
+.paparazzi-review-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) minmax(0,1.5fr);gap:8px}
+.paparazzi-review-actions>.button{min-height:49px;padding:8px;gap:6px;line-height:1.3;text-align:center}
+.paparazzi-review-actions>.button svg{flex-shrink:0}
 .paparazzi-processing-note{font-size:11px;line-height:1.8;color:#7e877a;text-align:center}
 .paparazzi-upload-progress{height:4px;width:100%;overflow:hidden;border-radius:999px;background:var(--line)}
 .paparazzi-upload-progress>span{display:block;width:35%;height:100%;border-radius:inherit;background:var(--forest);animation:paparazzi-upload-progress 1.2s ease-in-out infinite alternate}
@@ -146,6 +146,8 @@
 .paparazzi-camera-art{width:94px;height:94px;margin-bottom:21px}
 .paparazzi-camera-art>svg{width:48px}
 .paparazzi-review-heading h2{font-size:24px}
+.paparazzi-review-actions{grid-template-columns:repeat(2,minmax(0,1fr)) minmax(0,1.7fr);gap:6px}
+.paparazzi-review-actions>.button{flex-direction:column;padding-inline:2px}
 .paparazzi-photo-preview{max-height:400px}
 .paparazzi-check{font-size:11px}
 .paparazzi-guest-footnote{font-size:9px;padding:0 9px}
@@ -204,7 +206,8 @@
 .paparazzi-instagram-field{display:grid;gap:8px;margin-bottom:18px;color:#425449;font-size:12px;font-weight:600}
 .paparazzi-instagram-field>span{display:flex;align-items:center;gap:8px}
 .paparazzi-instagram-field>span b{padding:3px 7px;border-radius:20px;background:#eee7d9;color:#806542;font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
-.paparazzi-instagram-field input{width:100%;min-height:46px;padding:11px 13px;border:1px solid #cfd8cc;border-radius:8px;background:#fff;color:#293c34;font:inherit;font-size:14px}
+/* Keep the input legible enough to prevent focus zoom on iOS Safari. */
+.paparazzi-instagram-field input{width:100%;min-height:46px;padding:11px 13px;border:1px solid #cfd8cc;border-radius:8px;background:#fff;color:#293c34;font:inherit;font-size:16px}
 .paparazzi-instagram-field input:focus-visible{outline:3px solid #84a99166;border-color:#557b60}
 .paparazzi-instagram-field input[aria-invalid="true"]{border-color:#b9715d}
 .paparazzi-instagram-field small{color:#718071;font-size:10px;font-weight:400;line-height:1.6}
@@ -216,7 +219,7 @@
 .paparazzi-upload-dialog .paparazzi-start,.paparazzi-upload-dialog .paparazzi-review,.paparazzi-upload-dialog .paparazzi-sent{margin:0 auto;background:#fff}
 .paparazzi-upload-dialog .paparazzi-guest-footnote{margin-bottom:0}
 .paparazzi-guest .paparazzi-error{max-width:none}
-@media(max-width:600px){.paparazzi-gallery-heading{align-items:center;gap:10px}.paparazzi-gallery-actions{gap:6px}.paparazzi-gallery-actions>.button{min-width:42px;padding:8px 10px;font-size:10px}.paparazzi-upload-dialog-content{padding:22px 16px}.paparazzi-upload-dialog-heading h2{font-size:25px}.paparazzi-review-heading{flex-direction:column;gap:9px}.paparazzi-review-actions{justify-content:flex-start}.paparazzi-review-grid{gap:9px}.paparazzi-camera-finish{padding:0 9px;font-size:11px}}
+@media(max-width:600px){.paparazzi-gallery-heading{align-items:center;gap:10px}.paparazzi-gallery-actions{gap:6px}.paparazzi-gallery-actions>.button{min-width:42px;padding:8px 10px;font-size:10px}.paparazzi-upload-dialog-content{padding:22px 16px}.paparazzi-upload-dialog-heading h2{font-size:25px}.paparazzi-review-grid{gap:9px}.paparazzi-camera-finish{padding:0 9px;font-size:11px}}
 
 .paparazzi-upload-dialog--camera{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:#07100b;overflow:hidden}
 .paparazzi-upload-dialog--camera::backdrop{background:#050907;backdrop-filter:none}
